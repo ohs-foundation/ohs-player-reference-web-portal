@@ -1,0 +1,24 @@
+{
+  "resourceType": "Questionnaire",
+  "status": "active",
+  "url": "https://ohs-player.reference.portal/fhir/Questionnaire/careteam",
+  "version": "1.0.0",
+  "title": "Care Team",
+  "subjectType": ["CareTeam"],
+  "item": [
+    {
+      "linkId": "team-name",
+      "text": "Team name",
+      "type": "string",
+      "required": true,
+      "definition": "http://hl7.org/fhir/StructureDefinition/CareTeam#CareTeam.name"
+    },
+    {
+      "linkId": "team-org",
+      "text": "Managing organization",
+      "type": "reference",
+      "required": true,
+      "definition": "http://hl7.org/fhir/StructureDefinition/CareTeam#CareTeam.managingOrganization"
+    }
+  ]
+}

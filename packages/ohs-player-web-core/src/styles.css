@@ -1,0 +1,6 @@
+/**
+ * Consumer-facing stylesheet for apps that import `ohs-player-web-core/styles.css`.
+ * Matches CSS pulled in by `src/index.ts` (theme + M3 bridge). Material tokens come from JS imports.
+ */
+@import './ui/primitives/theme.css';
+@import './ui/m3/m3-bridge.css';

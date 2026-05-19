@@ -1,0 +1,148 @@
+/*
+ * Maps OHS design tokens (--ohs-*) to Material Web system tokens (--md-sys-*)
+ * so a single `applyTheme()` call rebrands both custom CSS and @material/web
+ * components. See docs/ARCHITECTURE.md.
+ *
+ * :root block provides hardcoded fallbacks for portaled content (md-dialog,
+ * md-menu) that renders outside [data-ohs-root] in document.body.
+ */
+
+:root {
+  /* Color fallbacks — used by portaled Material Web components */
+  --md-sys-color-primary: #1b6ef3;
+  --md-sys-color-on-primary: #fff;
+  --md-sys-color-primary-container: #d6e3ff;
+  --md-sys-color-on-primary-container: #1b6ef3;
+  --md-sys-color-secondary: #575e71;
+  --md-sys-color-on-secondary: #fff;
+  --md-sys-color-secondary-container: #dbe2f9;
+  --md-sys-color-on-secondary-container: #575e71;
+  --md-sys-color-surface: #fff;
+  --md-sys-color-surface-variant: #e7eaf0;
+  --md-sys-color-surface-container: #f4f7fb;
+  --md-sys-color-surface-container-high: #f4f7fb;
+  --md-sys-color-on-surface: #1f2933;
+  --md-sys-color-on-surface-variant: #52606d;
+  --md-sys-color-outline: #cdd7e1;
+  --md-sys-color-outline-variant: #cdd7e1;
+  --md-sys-color-error: #b3261e;
+  --md-sys-color-on-error: #fff;
+  --md-sys-color-error-container: rgba(179, 38, 30, 0.12);
+
+  /* Typeface fallbacks — M3 defaults to Roboto; OHS uses system-ui */
+  --md-ref-typeface-plain: system-ui, sans-serif;
+  --md-ref-typeface-brand: system-ui, sans-serif;
+
+  /* Shape — text fields use extra-small corner; OHS uses 12px */
+  --md-sys-shape-corner-extra-small: 8px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+
+  /* Field-specific shape overrides */
+  --md-outlined-text-field-container-shape: 12px;
+  --md-filled-text-field-container-shape: 12px;
+  --md-outlined-select-container-shape: 12px;
+  --md-filled-select-container-shape: 12px;
+}
+
+[data-ohs-root] {
+  /* Color */
+  --md-sys-color-primary: var(--ohs-color-primary, #1b6ef3);
+  --md-sys-color-on-primary: var(--ohs-color-primary-contrast, #fff);
+  --md-sys-color-primary-container: var(--ohs-color-primary-container, #d6e3ff);
+  --md-sys-color-on-primary-container: var(--ohs-color-primary, #1b6ef3);
+  --md-sys-color-secondary: var(--ohs-color-secondary, #575e71);
+  --md-sys-color-surface: var(--ohs-color-surface, #fff);
+  --md-sys-color-surface-container: var(--ohs-color-background, #f4f7fb);
+  --md-sys-color-surface-container-high: var(--ohs-color-background, #f4f7fb);
+  --md-sys-color-on-surface: var(--ohs-color-text, #1f2933);
+  --md-sys-color-on-surface-variant: var(--ohs-color-text-muted, #52606d);
+  --md-sys-color-outline: var(--ohs-color-border, #cdd7e1);
+  --md-sys-color-outline-variant: var(--ohs-color-border, #cdd7e1);
+  --md-sys-color-error: var(--ohs-color-error, #b3261e);
+  --md-sys-color-on-error: #fff;
+
+  /* Typography */
+  --md-ref-typeface-plain: var(--ohs-font-body, system-ui, sans-serif);
+  --md-ref-typeface-brand: var(--ohs-font-heading, var(--ohs-font-body, system-ui, sans-serif));
+  --md-sys-typescale-body-medium-font: var(--ohs-font-body, system-ui, sans-serif);
+  --md-sys-typescale-label-large-font: var(--ohs-font-body, system-ui, sans-serif);
+  --md-sys-typescale-title-medium-font: var(--ohs-font-heading, system-ui, sans-serif);
+  --md-sys-typescale-headline-small-font: var(--ohs-font-heading, system-ui, sans-serif);
+
+  /* Shape */
+  --md-sys-shape-corner-extra-small: var(--ohs-radius-sm, 8px);
+  --md-sys-shape-corner-small: var(--ohs-radius-sm, 8px);
+  --md-sys-shape-corner-medium: var(--ohs-radius-default, 12px);
+  --md-sys-shape-corner-large: var(--ohs-radius-lg, 16px);
+
+  /* Field-specific shape overrides */
+  --md-outlined-text-field-container-shape: var(--ohs-radius-default, 12px);
+  --md-filled-text-field-container-shape: var(--ohs-radius-default, 12px);
+  --md-outlined-select-container-shape: var(--ohs-radius-default, 12px);
+  --md-filled-select-container-shape: var(--ohs-radius-default, 12px);
+}
+
+.ohs-m3-menu-label {
+  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-4, 16px);
+  font-size: var(--ohs-text-label, 14px);
+  color: var(--ohs-color-text-muted, #52606d);
+  line-height: 1.35;
+}
+
+.ohs-m3-button--sm {
+  --md-filled-button-container-height: 32px;
+  --md-text-button-container-height: 32px;
+  --md-filled-tonal-button-container-height: 32px;
+  --md-outlined-button-container-height: 32px;
+  --md-elevated-button-container-height: 32px;
+}
+
+.ohs-m3-button--danger {
+  --md-filled-button-container-color: var(--ohs-color-error, #b3261e);
+  --md-filled-button-label-text-color: var(--ohs-color-primary-contrast, #fff);
+}
+
+[data-ohs-root] md-linear-progress {
+  --md-linear-progress-active-indicator-color: var(--ohs-color-primary, #1b6ef3);
+  --md-linear-progress-track-color: var(--ohs-color-primary-container, #d6e3ff);
+  height: 4px;
+}
+
+[data-ohs-root] md-switch {
+  --md-switch-selected-track-color: var(--ohs-color-primary, #1b6ef3);
+  --md-switch-selected-hover-track-color: var(--ohs-color-primary-hover, #1456bf);
+  --md-switch-selected-handle-color: var(--ohs-color-primary-contrast, #fff);
+  --md-switch-selected-focus-track-color: var(--ohs-color-primary, #1b6ef3);
+  --md-switch-selected-pressed-track-color: var(--ohs-color-primary, #1b6ef3);
+}
+
+[data-ohs-root] md-checkbox {
+  --md-checkbox-selected-container-color: var(--ohs-color-primary, #1b6ef3);
+  --md-checkbox-selected-hover-container-color: var(--ohs-color-primary-hover, #1456bf);
+  --md-checkbox-selected-focus-container-color: var(--ohs-color-primary, #1b6ef3);
+  --md-checkbox-selected-pressed-container-color: var(--ohs-color-primary, #1b6ef3);
+}
+
+[data-ohs-root] md-list {
+  --md-list-container-color: transparent;
+}
+
+[data-ohs-root] md-list-item {
+  --md-list-item-label-text-color: var(--ohs-color-text, #1f2933);
+  --md-list-item-hover-state-layer-color: var(--ohs-color-primary, #1b6ef3);
+  --md-list-item-hover-state-layer-opacity: 0.08;
+  --md-list-item-pressed-state-layer-color: var(--ohs-color-primary, #1b6ef3);
+  --md-list-item-pressed-state-layer-opacity: 0.12;
+  --md-list-item-container-shape: var(--ohs-radius-sm, 8px);
+  border-radius: var(--ohs-radius-sm, 8px);
+}
+
+[data-ohs-root] md-filter-chip {
+  --md-filter-chip-selected-container-color: var(--ohs-color-primary-container, #d6e3ff);
+  --md-filter-chip-selected-label-text-color: var(--ohs-color-primary, #1b6ef3);
+  --md-filter-chip-selected-hover-label-text-color: var(--ohs-color-primary, #1b6ef3);
+  --md-filter-chip-label-text-color: var(--ohs-color-text, #1f2933);
+  --md-filter-chip-container-shape: var(--ohs-radius-pill, 999px);
+}

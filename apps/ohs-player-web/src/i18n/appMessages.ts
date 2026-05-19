@@ -1,0 +1,91 @@
+import type { MessageCatalog } from 'ohs-player-web-core';
+
+/**
+ * Reference-app-only copy overrides (merged into core English catalog via `platformConfig.i18n`).
+ */
+export const appMessageOverrides = {
+  loginHeading: 'OHS Player Web',
+  loginPrompt: 'Authenticate with your identity provider to continue.',
+  backHome: 'Back home',
+
+  navDashboard: 'Dashboard',
+  navUsers: 'Users',
+  navLocations: 'Locations',
+  navOrganizations: 'Organizations',
+  navCareTeams: 'Care teams',
+  navToggle: 'Toggle navigation',
+  appTopbarTitle: 'OHS Player',
+
+  pageDashboard: 'Dashboard',
+  pageDashboardDescription: 'Live counts from your FHIR server.',
+  countActivePractitioners: 'Active practitioners',
+  countActiveLocations: 'Active locations',
+  countActiveCareTeams: 'Active care teams',
+  dashboardQuickLinks: 'Shortcuts',
+
+  pageUsers: 'Users',
+  pageUsersDescription: 'Search and manage practitioner accounts.',
+  createUser: 'Create user',
+  filterStatus: 'Status',
+  filterStatusAll: 'All statuses',
+  filterStatusActive: 'Active',
+  filterStatusInactive: 'Inactive',
+  filterRole: 'Role / assignment',
+  filterRoleAll: 'All roles',
+  columnName: 'Name',
+  columnActive: 'Active',
+  columnRoles: 'Roles',
+  yes: 'Yes',
+  no: 'No',
+  filterEmpty: 'No practitioners match the current filters.',
+
+  pageUserCreate: 'Create user',
+  pageUserEdit: 'Edit user',
+  givenName: 'Given name',
+  familyName: 'Family name',
+  email: 'Email',
+  rolesCommaSeparated: 'Roles (comma-separated)',
+  deactivateUser: 'Deactivate',
+
+  pageLocations: 'Locations',
+  pageLocationsDescription: 'Browse the location hierarchy.',
+  newLocation: 'New location',
+  pageLocationNew: 'New location',
+  pageLocationEdit: 'Edit location',
+  locationName: 'Location name',
+  parentLocation: 'Parent',
+  rootLocation: '(root)',
+  breadcrumbLocations: 'Locations',
+  circularReferenceBlocked: 'That parent would create a circular reference',
+
+  pageOrganizations: 'Organizations',
+  pageOrganizationsDescription: 'Organisations available in your environment.',
+  organizationName: 'Name',
+
+  pageCareTeams: 'Care teams',
+  pageCareTeamsDescription: 'Create teams and manage participants.',
+  organizationForTeam: 'Organization',
+  teamName: 'Team name',
+  organizationRequired: 'Select an organization for this care team.',
+  teamsHeading: 'Teams',
+  participantsLabel: 'Participants',
+  addPractitioner: 'Add practitioner',
+
+  pageUnauthorized: 'Access denied',
+  pageUnauthorizedDescription: 'You do not have permission to view this page.',
+  goToDashboard: 'Go to dashboard',
+
+  pageLocationEditForbiddenTitle: 'Edit location',
+  pageLocationEditForbiddenDescription: 'You need the location editor role to open this page. You can still view the location list.',
+  createOrganization: 'New organization',
+  dialogCreateOrganization: 'Create organization',
+  dialogCreateLocation: 'New location',
+  createCareTeam: 'New care team',
+  dialogCreateCareTeam: 'Create care team',
+  dialogCreateUser: 'Create user',
+  saveAndClose: 'Save',
+
+  loadingSession: 'Loading session…',
+
+  questionnaireRequiredFields: 'Please complete all required fields.',
+} as const satisfies Partial<MessageCatalog>;
