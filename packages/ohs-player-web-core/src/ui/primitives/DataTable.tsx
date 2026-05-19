@@ -56,7 +56,7 @@ function TableCheckbox({
     return (): void => el.removeEventListener('change', onChange);
   }, [onChange]);
 
-  return <md-checkbox ref={ref as React.RefObject<HTMLElement>} aria-label={label} />;
+  return <md-checkbox ref={ref} aria-label={label} />;
 }
 
 function SortIcon({ dir }: { dir?: SortDir }): React.ReactElement {

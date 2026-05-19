@@ -36,7 +36,7 @@ export function FilterChip({
 
   return (
     <md-filter-chip
-      ref={ref as React.RefObject<HTMLElement>}
+      ref={ref}
       label={label}
       disabled={disabled || undefined}
       elevated={elevated || undefined}
