@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useTranslation } from '../../i18n/I18nProvider';
+import { useMemo, useState, type ReactNode } from 'react';
+import { useTranslation } from 'ohs-player-web-core';
+import { Checkbox } from './Checkbox';
 
 export interface DataTableColumn<Row> {
   key: string;
@@ -27,39 +28,7 @@ export interface DataTableProps<Row> {
 
 type SortDir = 'asc' | 'desc';
 
-type MdCheckboxEl = HTMLElement & { checked: boolean; indeterminate: boolean };
-
-function TableCheckbox({
-  checked,
-  indeterminate,
-  label,
-  onChange,
-}: {
-  checked?: boolean;
-  indeterminate?: boolean;
-  label: string;
-  onChange: () => void;
-}): React.ReactElement {
-  const ref = useRef<MdCheckboxEl | null>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.checked = Boolean(checked);
-    el.indeterminate = Boolean(indeterminate);
-  }, [checked, indeterminate]);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.addEventListener('change', onChange);
-    return (): void => el.removeEventListener('change', onChange);
-  }, [onChange]);
-
-  return <md-checkbox ref={ref} aria-label={label} />;
-}
-
-function SortIcon({ dir }: { dir?: SortDir }): React.ReactElement {
+function SortIcon({ dir }: Readonly<{ dir?: SortDir }>): React.ReactElement {
   if (!dir) {
     return (
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.35, flexShrink: 0 }}>
@@ -89,7 +58,7 @@ export function DataTable<Row>({
   selectable,
   selectedKeys,
   onSelectionChange,
-}: DataTableProps<Row>): React.ReactElement {
+}: Readonly<DataTableProps<Row>>): React.ReactElement {
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -148,7 +117,7 @@ export function DataTable<Row>({
           <tr>
             {selectable ? (
               <th style={{ width: '40px' }}>
-                <TableCheckbox
+                <Checkbox
                   checked={isAllSelected}
                   indeterminate={isSomeSelected}
                   label={t('selectAll')}
@@ -163,9 +132,7 @@ export function DataTable<Row>({
                 aria-sort={
                   c.sortable
                     ? sortKey === c.key
-                      ? sortDir === 'asc'
-                        ? 'ascending'
-                        : 'descending'
+                      ? sortDir === 'asc' ? 'ascending' : 'descending'
                       : 'none'
                     : undefined
                 }
@@ -199,7 +166,7 @@ export function DataTable<Row>({
                 <tr key={key} data-selected={isSelected || undefined}>
                   {selectable ? (
                     <td style={{ width: '40px' }}>
-                      <TableCheckbox
+                      <Checkbox
                         checked={isSelected}
                         label={t('selectRow')}
                         onChange={() => toggleRow(key)}

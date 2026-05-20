@@ -1,9 +1,57 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
-import { Stack, SelectField, TextAreaField, TextField, type SelectFieldOption } from '../ui/primitives';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactElement, type ReactNode } from 'react';
 import {
   buildQuestionnaireResponse,
   validateRequiredAnswers,
 } from './buildQuestionnaireResponse';
+
+export interface SelectFieldOption {
+  value: string;
+  label: ReactNode;
+}
+
+function Stack({ gap = 3, children }: Readonly<{ gap?: number; children: ReactNode }>): ReactElement {
+  return <div className="ohs-stack" data-gap={String(gap)}>{children}</div>;
+}
+
+function TextField({
+  name, label, type = 'text', value, onChange, required, placeholder,
+}: Readonly<{ name: string; label: ReactNode; type?: string; value: string; onChange: (e: ChangeEvent<HTMLInputElement>) => void; required?: boolean; placeholder?: string }>): ReactElement {
+  return (
+    <div className="ohs-field">
+      <label className="ohs-field__title" htmlFor={name}>{label}</label>
+      <input id={name} name={name} type={type} className="ohs-input" value={value} onChange={onChange} required={required} placeholder={placeholder} />
+    </div>
+  );
+}
+
+function TextAreaField({
+  name, label, value, onChange, required,
+}: Readonly<{ name: string; label: ReactNode; value: string; onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void; required?: boolean }>): ReactElement {
+  return (
+    <div className="ohs-field">
+      <label className="ohs-field__title" htmlFor={name}>{label}</label>
+      <textarea id={name} name={name} className="ohs-textarea" value={value} onChange={onChange} required={required} />
+    </div>
+  );
+}
+
+function SelectField({
+  name, label, options, value, onChange, required,
+}: Readonly<{ name: string; label: ReactNode; options: readonly SelectFieldOption[]; value: string; onChange: (e: ChangeEvent<HTMLSelectElement>) => void; required?: boolean }>): ReactElement {
+  return (
+    <div className="ohs-field">
+      <label className="ohs-field__title" htmlFor={name}>{label}</label>
+      <select id={name} name={name} className="ohs-select" value={value} onChange={onChange} required={required}>
+        <option value="" />
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {typeof o.label === 'string' || typeof o.label === 'number' ? String(o.label) : o.value}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 import type { Questionnaire, QuestionnaireItem } from './questionnaireTypes';
 
 export interface QuestionnaireFormRenderContext {
