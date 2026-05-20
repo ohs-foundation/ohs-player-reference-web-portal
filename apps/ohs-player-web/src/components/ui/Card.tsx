@@ -4,7 +4,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   flush?: boolean;
 }
 
-export function Card({ flush, className, ...rest }: CardProps): React.ReactElement {
+export function Card({ flush, className, ...rest }: Readonly<CardProps>): React.ReactElement {
   return (
     <div
       className={['ohs-card', className].filter(Boolean).join(' ')}
@@ -20,19 +20,13 @@ export interface CardHeaderProps {
   actions?: ReactNode;
 }
 
-export function CardHeader({
-  title,
-  description,
-  actions,
-}: CardHeaderProps): React.ReactElement {
+export function CardHeader({ title, description, actions }: Readonly<CardHeaderProps>): React.ReactElement {
   return (
     <header className="ohs-card-header">
       <div className="ohs-inline" data-justify="between">
         <div>
           <div className="ohs-card-header__title">{title}</div>
-          {description ? (
-            <p className="ohs-card-header__description">{description}</p>
-          ) : null}
+          {description ? <p className="ohs-card-header__description">{description}</p> : null}
         </div>
         {actions ?? null}
       </div>

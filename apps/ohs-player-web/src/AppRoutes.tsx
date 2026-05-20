@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useParams, Link } from 'react-router-dom';
-import { Page, PageHeader, useTranslation } from 'ohs-player-web-core';
+import { useTranslation } from 'ohs-player-web-core';
+import { Page, PageHeader } from './components/ui';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { AppLayout } from './layout/AppLayout';
 import { CallbackPage } from './pages/CallbackPage';

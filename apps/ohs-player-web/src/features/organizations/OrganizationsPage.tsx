@@ -1,18 +1,8 @@
 import { useState, type FormEvent, type ReactElement } from 'react';
 import type { Questionnaire } from 'ohs-player-web-core';
 import {
-  Button,
-  DataTable,
-  EmptyState,
-  ErrorState,
-  Inline,
-  LinearProgress,
-  OhsM3Dialog,
-  Page,
-  PageHeader,
+  OhsDialog,
   PermissionGuard,
-  Stack,
-  StatusBadge,
   useCreateResource,
   useFhirClient,
   useSearch,
@@ -22,6 +12,7 @@ import {
   useQuestionnaireFormState,
   buildQuestionnaireResponse,
 } from 'ohs-player-web-core';
+import { Button, DataTable, EmptyState, ErrorState, Inline, LinearProgress, Page, PageHeader, Stack, StatusBadge } from '../../components/ui';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { ORGANIZATION_LINK_IDS, organizationFromAnswers } from '../sdc/resourceFromAnswers';
 
@@ -130,7 +121,7 @@ export function OrganizationsPage() {
         }
       />
 
-      <OhsM3Dialog
+      <OhsDialog
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         headline={t('dialogCreateOrganization')}
@@ -145,7 +136,7 @@ export function OrganizationsPage() {
             globalThis.location.reload();
           }}
         />
-      </OhsM3Dialog>
+      </OhsDialog>
 
       {search.isLoading ? <LinearProgress style={{ marginBottom: 'var(--ohs-spacing-4, 16px)' }} /> : null}
       {!search.isLoading && err ? <ErrorState description={err} /> : null}

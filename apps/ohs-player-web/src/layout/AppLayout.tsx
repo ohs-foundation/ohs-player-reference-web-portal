@@ -1,11 +1,11 @@
 import {
-  IconButton,
   OhsDropdownMenu,
   useAuth,
   useFlag,
   usePermission,
   useTranslation,
 } from 'ohs-player-web-core';
+import { IconButton } from '../components/ui';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useState, type ReactNode } from 'react';
 import { BrandMark } from './BrandMark';
