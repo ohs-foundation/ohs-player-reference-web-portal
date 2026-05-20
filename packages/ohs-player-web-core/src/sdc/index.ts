@@ -19,4 +19,5 @@ export {
   useQuestionnaireFormState,
   type QuestionnaireFormProps,
   type QuestionnaireFormRenderContext,
+  type SelectFieldOption,
 } from './QuestionnaireForm';

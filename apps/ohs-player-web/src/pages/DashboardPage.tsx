@@ -1,16 +1,9 @@
 import {
-  Card,
-  CardHeader,
-  Inline,
-  LinearProgress,
-  Page,
-  PageHeader,
   PermissionGuard,
-  Spinner,
-  Stack,
   useSearch,
   useTranslation,
 } from 'ohs-player-web-core';
+import { Card, CardHeader, Inline, LinearProgress, Page, PageHeader, Spinner, Stack } from '../components/ui';
 import { Link } from 'react-router-dom';
 
 type CountBundle = { total?: number };

@@ -1,4 +1,5 @@
-import { Card, Page, Stack, useAuth, useTranslation } from 'ohs-player-web-core';
+import { useAuth, useTranslation } from 'ohs-player-web-core';
+import { Card, Page, Stack } from '../components/ui';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BrandMark } from '../layout/BrandMark';

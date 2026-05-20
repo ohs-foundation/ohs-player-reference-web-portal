@@ -1,26 +1,11 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   buildQuestionnaireResponse,
-  Button,
-  Card,
-  ChipSet,
-  DataTable,
-  EmptyState,
-  ErrorState,
   FhirError,
-  FilterChip,
   formatOperationOutcomeMessage,
-  Inline,
-  LinearProgress,
-  OhsM3Dialog,
-  Page,
-  PageHeader,
+  OhsDialog,
   PermissionGuard,
   QuestionnaireFields,
-  SelectField,
-  Stack,
-  StatusBadge,
-  TextField,
   useCreateResource,
   useCustomEndpoint,
   useFhirClient,
@@ -28,10 +13,10 @@ import {
   useResource,
   useSearch,
   useTranslation,
-  Spinner,
   useUpdateResource,
   writeAuditEvent,
 } from 'ohs-player-web-core';
+import { Button, Card, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, Inline, LinearProgress, Page, PageHeader, SelectField, Spinner, Stack, StatusBadge, TextField } from '../../components/ui';
 import { Link } from 'react-router-dom';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { USER_LINK_IDS, userBodyFromAnswers } from '../sdc/resourceFromAnswers';
@@ -237,7 +222,7 @@ export function UsersPage() {
 
       {search.isLoading ? <LinearProgress /> : null}
 
-      <OhsM3Dialog
+      <OhsDialog
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         headline={t('dialogCreateUser')}
@@ -252,7 +237,7 @@ export function UsersPage() {
             globalThis.location.reload();
           }}
         />
-      </OhsM3Dialog>
+      </OhsDialog>
 
       <Stack gap={4}>
         <Card>
