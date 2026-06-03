@@ -69,7 +69,7 @@ export function AppLayout() {
           >
             <RiMenuLine size={ICON_SIZE} />
           </IconButton>
-          <BrandMark />
+          <BrandMark size={40} />
           <span className="app-topbar__title">{t('appTopbarTitle')}</span>
         </div>
         <UserMenu

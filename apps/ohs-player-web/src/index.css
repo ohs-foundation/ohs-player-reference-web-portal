@@ -44,6 +44,11 @@ body {
   min-width: 0;
 }
 
+/* Sidebar toggle is only needed where the sidebar collapses (mobile); hidden on desktop. */
+.app-topbar__menu-toggle {
+  display: none;
+}
+
 .app-topbar__title {
   font-weight: 600;
   font-size: var(--ohs-text-title, 18px);
@@ -170,6 +175,10 @@ body {
 }
 
 @media (max-width: 52rem) {
+  .app-topbar__menu-toggle {
+    display: inline-flex;
+  }
+
   .app-shell {
     grid-template:
       'top' auto

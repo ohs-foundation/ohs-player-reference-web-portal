@@ -14,7 +14,7 @@ export const appMessageOverrides = {
   navOrganizations: 'Organizations',
   navCareTeams: 'Care teams',
   navToggle: 'Toggle navigation',
-  appTopbarTitle: 'OHS Player',
+  appTopbarTitle: 'Open Health Stack',
 
   pageDashboard: 'Dashboard',
   pageDashboardDescription: 'Live counts from your FHIR server.',
