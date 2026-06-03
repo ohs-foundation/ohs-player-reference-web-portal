@@ -121,7 +121,9 @@ export function DataTable<Row>({
 
   const toggleAll = (): void => {
     if (!onSelectionChange) return;
-    onSelectionChange(isAllSelected ? new Set() : new Set(allKeys));
+    // Any existing selection (all or indeterminate) clears; only an empty selection selects all.
+    const hasSelection = (selectedKeys?.size ?? 0) > 0;
+    onSelectionChange(hasSelection ? new Set() : new Set(allKeys));
   };
 
   const toggleRow = (key: string): void => {

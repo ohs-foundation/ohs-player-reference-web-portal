@@ -454,8 +454,7 @@
   box-sizing: border-box;
 }
 .ohs-search-field:focus-within {
-  border-color: var(--ohs-color-primary, #094f9a);
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
+  border-color: var(--ohs-color-text-muted, #696969);
 }
 .ohs-search-field__icon {
   flex-shrink: 0;

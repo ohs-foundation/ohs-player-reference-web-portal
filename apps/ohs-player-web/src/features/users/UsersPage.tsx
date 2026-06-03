@@ -1,5 +1,5 @@
 import { type FormEvent, useMemo, useRef, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiEqualizerLine, RiMore2Fill, RiUserFill } from '@remixicon/react';
+import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill, RiUserFill } from '@remixicon/react';
 import {
   buildQuestionnaireResponse,
   FhirError,
@@ -532,7 +532,7 @@ export function UsersPage() {
               <Button
                 variant="secondary"
                 type="button"
-                iconLeft={<RiEqualizerLine size={20} />}
+                iconLeft={<RiFilter3Line size={20} />}
                 aria-expanded={filtersOpen}
                 onClick={() => setFiltersOpen((v) => !v)}
               >
