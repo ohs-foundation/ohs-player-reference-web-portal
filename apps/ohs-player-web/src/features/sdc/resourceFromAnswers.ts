@@ -76,6 +76,50 @@ export function buildCreateUserPayload(
   };
 }
 
+interface TransactionEntry {
+  fullUrl?: string;
+  resource: Record<string, unknown>;
+  request: { method: 'POST'; url: string };
+}
+
+/**
+ * Dev-only fallback for `VITE_USERS_DIRECT_FHIR`: writes the Practitioner and its
+ * PractitionerRole assignments straight to FHIR as one transaction Bundle. Skips the
+ * Keycloak account (gateway-only) — `payload.roles` (realm roles) are intentionally not applied.
+ */
+export function buildCreateUserBundle(payload: CreateUserPayload): {
+  resourceType: 'Bundle';
+  type: 'transaction';
+  entry: TransactionEntry[];
+} {
+  const practitionerUrn = 'urn:uuid:practitioner';
+  const given = payload.givenName ? payload.givenName.split(/\s+/) : [];
+  const practitioner: Record<string, unknown> = {
+    resourceType: 'Practitioner',
+    active: true,
+    name: [{ family: payload.familyName, given }],
+    ...(payload.email ? { telecom: [{ system: 'email', value: payload.email }] } : {}),
+  };
+  const entry: TransactionEntry[] = [
+    { fullUrl: practitionerUrn, resource: practitioner, request: { method: 'POST', url: 'Practitioner' } },
+  ];
+  payload.assignments.forEach((a, i) => {
+    entry.push({
+      fullUrl: `urn:uuid:practitioner-role-${i}`,
+      resource: {
+        resourceType: 'PractitionerRole',
+        active: true,
+        practitioner: { reference: practitionerUrn },
+        organization: { reference: a.organization },
+        location: [{ reference: a.location }],
+        code: [{ coding: [{ system: a.role.system, code: a.role.code }] }],
+      },
+      request: { method: 'POST', url: 'PractitionerRole' },
+    });
+  });
+  return { resourceType: 'Bundle', type: 'transaction', entry };
+}
+
 type PractitionerName = { family?: string; given?: string[] };
 type ContactPoint = { system?: string; value?: string };
 type Identifier = { system?: string; value?: string };

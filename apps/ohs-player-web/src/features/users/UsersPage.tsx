@@ -27,11 +27,13 @@ import {
 } from '../../config/roles';
 import {
   applyUserAnswersToPractitioner,
+  buildCreateUserBundle,
   buildCreateUserPayload,
   type PractitionerRoleAssignment,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
 } from '../sdc/resourceFromAnswers';
+import { env } from '../../config/env';
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
@@ -179,16 +181,26 @@ export function UserCreateForm({
           location: a.location,
           role: { system: PRACTITIONER_ROLE_SYSTEM, code: a.role },
         }));
-        const created = await post.mutateAsync(buildCreateUserPayload(answers, roles, payloadAssignments));
+        const payload = buildCreateUserPayload(answers, roles, payloadAssignments);
+
+        let auditDescription: string;
+        if (env.usersDirectFhir) {
+          await client.transaction(buildCreateUserBundle(payload));
+          auditDescription = 'User created (direct FHIR, dev)';
+        } else {
+          const created = await post.mutateAsync(payload);
+          const keycloakId = keycloakIdFromCreated(created);
+          auditDescription = keycloakId
+            ? `User created via gateway (Keycloak ${keycloakId})`
+            : 'User created via gateway';
+        }
+
         const qr = buildQuestionnaireResponse({ questionnaire, answers, status: 'completed' });
         await createQr.mutateAsync(qr);
-        const keycloakId = keycloakIdFromCreated(created);
         await writeAuditEvent(client, {
           action: 'create',
           resourceType: 'Practitioner',
-          description: keycloakId
-            ? `User created via gateway (Keycloak ${keycloakId})`
-            : 'User created via gateway',
+          description: auditDescription,
         });
         onSuccess();
       } catch (error_) {

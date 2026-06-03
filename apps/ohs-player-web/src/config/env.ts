@@ -9,6 +9,8 @@ export const env = {
   clientId: (import.meta.env.VITE_CLIENT_ID as string | undefined) ?? 'ohs-player-web',
   fhirVersion: import.meta.env.VITE_FHIR_VERSION ?? 'R4',
   themeAlt: import.meta.env.VITE_THEME_ALT === 'true',
+  /** Dev only: write user-create straight to FHIR (no Keycloak account) instead of `POST /custom/users`. */
+  usersDirectFhir: import.meta.env.VITE_USERS_DIRECT_FHIR === 'true',
   flags: {
     userMgmt: import.meta.env.VITE_FLAG_USER_MGMT !== 'false',
     locationMgmt: import.meta.env.VITE_FLAG_LOCATION_MGMT !== 'false',

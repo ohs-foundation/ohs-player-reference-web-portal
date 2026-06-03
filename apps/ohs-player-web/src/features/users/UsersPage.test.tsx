@@ -45,6 +45,11 @@ vi.mock('react-router-dom', async (): Promise<object> => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
+// Hermetic env: exercise the gateway path regardless of the developer's local .env flag.
+vi.mock('../../config/env', () => ({
+  env: { usersDirectFhir: false, questionnaireVariant: 'default' },
+}));
+
 const { UserCreateForm, UserEditForm } = await import('./UsersPage');
 
 const userQuestionnaire = (await import('../../questionnaires/registry')).getBundledQuestionnaires().user;

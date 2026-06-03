@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyUserAnswersToPractitioner,
+  buildCreateUserBundle,
   buildCreateUserPayload,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
@@ -40,6 +41,52 @@ describe('buildCreateUserPayload', () => {
     const payload = buildCreateUserPayload({}, ['care-team-manager'], []);
     expect(payload.assignments).toEqual([]);
     expect(payload.roles).toEqual(['care-team-manager']);
+  });
+});
+
+describe('buildCreateUserBundle (dev direct-to-FHIR)', () => {
+  it('builds a transaction with a Practitioner and one PractitionerRole per assignment', () => {
+    const bundle = buildCreateUserBundle({
+      givenName: 'Jane',
+      familyName: 'Smith',
+      email: 'jane@example.com',
+      roles: ['admin'],
+      assignments: [
+        {
+          organization: 'Organization/o1',
+          location: 'Location/l1',
+          role: { system: 'http://terminology.hl7.org/CodeSystem/practitioner-role', code: 'nurse' },
+        },
+      ],
+    });
+
+    expect(bundle.type).toBe('transaction');
+    expect(bundle.entry).toHaveLength(2);
+
+    const [practEntry, roleEntry] = bundle.entry;
+    expect(practEntry.resource.resourceType).toBe('Practitioner');
+    expect(practEntry.request).toEqual({ method: 'POST', url: 'Practitioner' });
+
+    expect(roleEntry.resource.resourceType).toBe('PractitionerRole');
+    expect(roleEntry.request).toEqual({ method: 'POST', url: 'PractitionerRole' });
+    expect((roleEntry.resource.practitioner as { reference?: string }).reference).toBe(
+      practEntry.fullUrl,
+    );
+    expect((roleEntry.resource.organization as { reference?: string }).reference).toBe(
+      'Organization/o1',
+    );
+  });
+
+  it('omits PractitionerRole entries when there are no assignments', () => {
+    const bundle = buildCreateUserBundle({
+      givenName: 'Jane',
+      familyName: 'Smith',
+      email: '',
+      roles: ['admin'],
+      assignments: [],
+    });
+    expect(bundle.entry).toHaveLength(1);
+    expect(bundle.entry[0].resource.resourceType).toBe('Practitioner');
   });
 });
 

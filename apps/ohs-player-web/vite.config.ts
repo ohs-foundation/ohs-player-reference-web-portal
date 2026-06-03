@@ -7,6 +7,8 @@ const appDir = path.dirname(fileURLToPath(import.meta.url));
 const coreRoot = path.resolve(appDir, '../../packages/ohs-player-web-core');
 
 export default defineConfig({
+  // Load `.env` from the monorepo root (where QUICKSTART/`.env.example` live), not the app dir.
+  envDir: path.resolve(appDir, '../..'),
   plugins: [react()],
   resolve: {
     alias: [

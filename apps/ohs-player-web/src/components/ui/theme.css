@@ -380,6 +380,50 @@
   font-weight: 600;
 }
 
+/* ---------- Chips (FilterChip / ChipSet) ---------- */
+
+.ohs-chip-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ohs-spacing-2, 8px);
+}
+.ohs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ohs-spacing-1, 4px);
+  font-family: inherit;
+  font-size: var(--ohs-text-label, 14px);
+  line-height: 1.2;
+  color: var(--ohs-color-text, #1f2933);
+  background: var(--ohs-color-surface, #fff);
+  border: 1px solid var(--ohs-color-border, #cdd7e1);
+  border-radius: var(--ohs-radius-pill, 999px);
+  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-3, 12px);
+  cursor: pointer;
+  user-select: none;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.ohs-chip:hover:not(:disabled) {
+  border-color: var(--ohs-color-text-muted, #52606d);
+  background: var(--ohs-color-surface-variant, #eef2f7);
+}
+.ohs-chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(31, 111, 235, 0.35));
+}
+.ohs-chip[aria-selected='true'] {
+  background: var(--ohs-color-primary, #1f6feb);
+  border-color: var(--ohs-color-primary, #1f6feb);
+  color: var(--ohs-color-primary-contrast, #fff);
+}
+.ohs-chip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ohs-chip__icon {
+  display: inline-flex;
+}
+
 /* ---------- Field grid (2-column SDC layout) ---------- */
 
 .ohs-field-grid {
