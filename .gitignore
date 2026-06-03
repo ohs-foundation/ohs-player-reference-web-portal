@@ -9,6 +9,9 @@ build/
 out/
 .next/
 
+# Turborepo cache
+.turbo/
+
 # Environment variables (Critical for security)
 .env
 .env.local

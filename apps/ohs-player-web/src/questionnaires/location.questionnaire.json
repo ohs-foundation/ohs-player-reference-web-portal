@@ -1,0 +1,84 @@
+{
+  "resourceType": "Questionnaire",
+  "status": "active",
+  "url": "https://ohs-player.reference.portal/fhir/Questionnaire/location",
+  "version": "1.1.0",
+  "title": "Location",
+  "subjectType": ["Location"],
+  "item": [
+    {
+      "linkId": "loc-name",
+      "text": "Location name",
+      "type": "string",
+      "required": true,
+      "definition": "http://hl7.org/fhir/StructureDefinition/Location#Location.name"
+    },
+    {
+      "linkId": "loc-status",
+      "text": "Status",
+      "type": "choice",
+      "required": true,
+      "answerOption": [
+        {
+          "valueCoding": {
+            "system": "http://hl7.org/fhir/location-status",
+            "code": "active",
+            "display": "Active"
+          }
+        },
+        {
+          "valueCoding": {
+            "system": "http://hl7.org/fhir/location-status",
+            "code": "suspended",
+            "display": "Suspended"
+          }
+        },
+        {
+          "valueCoding": {
+            "system": "http://hl7.org/fhir/location-status",
+            "code": "inactive",
+            "display": "Inactive"
+          }
+        }
+      ],
+      "definition": "http://hl7.org/fhir/StructureDefinition/Location#Location.status"
+    },
+    {
+      "linkId": "loc-mode",
+      "text": "Mode",
+      "type": "choice",
+      "required": true,
+      "answerOption": [
+        {
+          "valueCoding": {
+            "system": "http://hl7.org/fhir/location-mode",
+            "code": "instance",
+            "display": "Instance"
+          }
+        },
+        {
+          "valueCoding": {
+            "system": "http://hl7.org/fhir/location-mode",
+            "code": "kind",
+            "display": "Kind"
+          }
+        }
+      ],
+      "definition": "http://hl7.org/fhir/StructureDefinition/Location#Location.mode"
+    },
+    {
+      "linkId": "loc-address-line",
+      "text": "Address line (optional)",
+      "type": "string",
+      "required": false,
+      "definition": "http://hl7.org/fhir/StructureDefinition/Location#Location.address"
+    },
+    {
+      "linkId": "loc-parent",
+      "text": "Parent location",
+      "type": "reference",
+      "required": false,
+      "definition": "http://hl7.org/fhir/StructureDefinition/Location#Location.partOf"
+    }
+  ]
+}
