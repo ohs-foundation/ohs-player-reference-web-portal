@@ -1,9 +1,11 @@
 import { type FormEvent, useMemo, useRef, useState } from 'react';
+import { RiAddLine, RiArrowDownSLine, RiEqualizerLine, RiMore2Fill, RiUserFill } from '@remixicon/react';
 import {
   buildQuestionnaireResponse,
   FhirError,
   formatOperationOutcomeMessage,
   OhsDialog,
+  OhsDropdownMenu,
   PermissionGuard,
   QuestionnaireFields,
   useCreateResource,
@@ -17,7 +19,7 @@ import {
   useUpdateResource,
   writeAuditEvent,
 } from 'ohs-player-web-core';
-import { Button, Card, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, Inline, LinearProgress, Page, PageHeader, SelectField, type SelectFieldOption, Spinner, Stack, StatusBadge, TextField } from '../../components/ui';
+import { Avatar, Button, Card, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, IconButton, Inline, LinearProgress, Page, PageHeader, SearchField, SelectField, type SelectFieldOption, Spinner, Stack, StatusBadge } from '../../components/ui';
 import { Link, useNavigate } from 'react-router-dom';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import {
@@ -47,7 +49,20 @@ type PractitionerRow = {
   id?: string;
   active?: boolean;
   name?: { family?: string; given?: string[] }[];
+  identifier?: { system?: string; value?: string }[];
+  telecom?: { system?: string; value?: string }[];
 };
+
+function fullName(p: PractitionerRow): string {
+  const n = p.name?.[0];
+  return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim();
+}
+function emailOf(p: PractitionerRow): string {
+  return p.telecom?.find((tc) => tc.system === 'email')?.value ?? '';
+}
+function identifierOf(p: PractitionerRow): string {
+  return p.identifier?.[0]?.value ?? p.id ?? '—';
+}
 
 function practitionerIdFromReference(ref: string | undefined): string | undefined {
   if (!ref) return undefined;
@@ -69,6 +84,36 @@ function buildPractitionerRoleMap(
       pr.code?.flatMap((c) => c.coding?.map((x) => x.code).filter(Boolean) as string[]) ?? [];
     if (!map.has(pid)) map.set(pid, new Set());
     for (const c of codes) map.get(pid)!.add(c);
+  }
+  return map;
+}
+
+/** Practitioner id → organisation id, from PractitionerRole.organization references. */
+function buildPractitionerOrgMap(
+  bundle: { entry?: { resource?: Record<string, unknown> }[] } | undefined,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const ent of bundle?.entry ?? []) {
+    const pr = ent.resource as {
+      practitioner?: { reference?: string };
+      organization?: { reference?: string };
+    };
+    const pid = practitionerIdFromReference(pr.practitioner?.reference);
+    const orgRef = pr.organization?.reference;
+    if (!pid || !orgRef || map.has(pid)) continue;
+    map.set(pid, orgRef.replace(/^Organization\//, ''));
+  }
+  return map;
+}
+
+/** Organisation id → display name, from an Organization search bundle. */
+function buildOrgNameMap(
+  bundle: { entry?: { resource?: { id?: string; name?: string } }[] } | undefined,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const ent of bundle?.entry ?? []) {
+    const org = ent.resource;
+    if (org?.id) map.set(org.id, org.name ?? org.id);
   }
   return map;
 }
@@ -313,11 +358,16 @@ export function UserCreateForm({
 export function UsersPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
+  const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [modalOpen, setModalOpen] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+
+  const activeFilterCount = (statusFilter === 'all' ? 0 : 1) + (roleFilter === 'all' ? 0 : 1);
 
   const questionnaire = getBundledQuestionnaires().user;
 
@@ -328,6 +378,7 @@ export function UsersPage() {
 
   const search = useSearch('Practitioner', params);
   const roleSearch = useSearch('PractitionerRole', { _count: '500' });
+  const orgSearch = useSearch('Organization', { _count: '500' });
 
   const bundle = search.data as Bundle | undefined;
   const rawRows = useMemo(
@@ -342,6 +393,19 @@ export function UsersPage() {
         roleSearch.data as { entry?: { resource?: Record<string, unknown> }[] },
       ),
     [roleSearch.data],
+  );
+
+  const orgIdByPractitioner = useMemo(
+    () =>
+      buildPractitionerOrgMap(
+        roleSearch.data as { entry?: { resource?: Record<string, unknown> }[] },
+      ),
+    [roleSearch.data],
+  );
+
+  const orgNameById = useMemo(
+    () => buildOrgNameMap(orgSearch.data as { entry?: { resource?: { id?: string; name?: string } }[] }),
+    [orgSearch.data],
   );
 
   const roleOptions = useMemo(() => {
@@ -374,23 +438,36 @@ export function UsersPage() {
     searchError = search.error instanceof Error ? search.error.message : String(search.error);
   }
 
+  const openCreate = (): void => {
+    setResetKey((k) => k + 1);
+    setModalOpen(true);
+  };
+
+  const noUsers = !search.isLoading && !searchError && rawRows.length === 0;
+
   return (
     <Page>
       <PageHeader
         title={t('pageUsers')}
         description={t('pageUsersDescription')}
         actions={
-          <PermissionGuard permission="users.create">
-            <Button
-              type="button"
-              onClick={() => {
-                setResetKey((k) => k + 1);
-                setModalOpen(true);
-              }}
-            >
-              {t('createUser')}
-            </Button>
-          </PermissionGuard>
+          <>
+            {rawRows.length > 0 ? (
+              <Button
+                variant="secondary"
+                type="button"
+                iconRight={<RiArrowDownSLine size={20} />}
+                onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
+              >
+                {t('exportLabel')}
+              </Button>
+            ) : null}
+            <PermissionGuard permission="users.create">
+              <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                {t('addUser')}
+              </Button>
+            </PermissionGuard>
+          </>
         }
       />
 
@@ -415,112 +492,188 @@ export function UsersPage() {
         />
       </OhsDialog>
 
-      <Stack gap={4}>
-        <Card>
+      {noUsers ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <EmptyState
+            illustration={
+              <span className="ohs-users-empty-art">
+                <RiUserFill size={56} />
+                <span className="ohs-users-empty-art__badge">
+                  <RiAddLine size={18} />
+                </span>
+              </span>
+            }
+            title={t('usersEmptyTitle')}
+            description={t('usersEmptyDescription')}
+            action={
+              <PermissionGuard permission="users.create">
+                <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                  {t('addUser')}
+                </Button>
+              </PermissionGuard>
+            }
+          />
+        </div>
+      ) : (
+      <DataTable<PractitionerRow>
+        toolbar={
           <Stack gap={3}>
-            <div style={{ flex: '1 1 220px', minWidth: 200 }}>
-              <TextField
+            <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
+              <SearchField
                 label={t('search')}
                 name="userSearch"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="e.g. Smith"
+                placeholder={t('searchByNameOrId')}
               />
-            </div>
-            <Inline justify="start" style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)' }}>
-              <ChipSet>
-                <FilterChip
-                  label={t('filterStatusAll')}
-                  selected={statusFilter === 'all'}
-                  onChange={() => setStatusFilter('all')}
-                />
-                <FilterChip
-                  label={t('filterStatusActive')}
-                  selected={statusFilter === 'active'}
-                  onChange={() => setStatusFilter('active')}
-                />
-                <FilterChip
-                  label={t('filterStatusInactive')}
-                  selected={statusFilter === 'inactive'}
-                  onChange={() => setStatusFilter('inactive')}
-                />
-              </ChipSet>
-              <div style={{ flex: '0 1 220px', minWidth: 180 }}>
-                <SelectField
-                  label={t('filterRole')}
-                  name="roleFilter"
-                  options={roleOptions}
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                />
-              </div>
+              <Button
+                variant="secondary"
+                type="button"
+                iconLeft={<RiEqualizerLine size={20} />}
+                aria-expanded={filtersOpen}
+                onClick={() => setFiltersOpen((v) => !v)}
+              >
+                {activeFilterCount > 0 ? `${t('filterLabel')} (${activeFilterCount})` : t('filterLabel')}
+              </Button>
             </Inline>
+            {filtersOpen ? (
+              <Inline
+                justify="start"
+                style={{
+                  flexWrap: 'wrap',
+                  gap: 'var(--ohs-spacing-4, 16px)',
+                  alignItems: 'center',
+                  paddingTop: 'var(--ohs-spacing-3, 12px)',
+                  borderTop: '1px solid var(--ohs-color-border, #ededed)',
+                }}
+              >
+                <ChipSet>
+                  <FilterChip label={t('filterStatusAll')} selected={statusFilter === 'all'} onChange={() => setStatusFilter('all')} />
+                  <FilterChip label={t('filterStatusActive')} selected={statusFilter === 'active'} onChange={() => setStatusFilter('active')} />
+                  <FilterChip label={t('filterStatusInactive')} selected={statusFilter === 'inactive'} onChange={() => setStatusFilter('inactive')} />
+                </ChipSet>
+                <div style={{ flex: '0 1 240px', minWidth: 200 }}>
+                  <SelectField
+                    label={t('filterRole')}
+                    name="roleFilter"
+                    options={roleOptions}
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                  />
+                </div>
+              </Inline>
+            ) : null}
           </Stack>
-        </Card>
-
-        <DataTable<PractitionerRow>
-          caption={undefined}
-          columns={[
-            {
-              key: 'name',
-              header: t('columnName'),
-              sortable: true,
-              sortValue: (p) => {
-                const given = p.name?.[0]?.given?.join(' ') ?? '';
-                const fam = p.name?.[0]?.family ?? '';
-                return `${fam} ${given}`.trim().toLowerCase();
-              },
-              render: (p) => {
-                const given = p.name?.[0]?.given?.join(' ') ?? '';
-                const fam = p.name?.[0]?.family ?? '';
-                return `${given} ${fam}`.trim() || p.id;
-              },
+        }
+        columns={[
+          {
+            key: 'identifier',
+            header: t('columnIdentifier'),
+            render: (p) => identifierOf(p),
+          },
+          {
+            key: 'name',
+            header: t('columnName'),
+            sortable: true,
+            sortValue: (p) => fullName(p).toLowerCase(),
+            render: (p) => {
+              const name = fullName(p) || (p.id ?? '');
+              const email = emailOf(p);
+              return (
+                <Inline justify="start" style={{ gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
+                  <Avatar name={name} />
+                  <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <Link to={`/users/${p.id}/edit`} style={{ fontSize: 16, fontWeight: 500 }}>
+                      {name}
+                    </Link>
+                    {email ? (
+                      <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                        {email}
+                      </span>
+                    ) : null}
+                  </span>
+                </Inline>
+              );
             },
-            {
-              key: 'active',
-              header: t('columnActive'),
-              sortable: true,
-              sortValue: (p) => (p.active === false ? 0 : 1),
-              render: (p) =>
-                p.active === false ? (
-                  <StatusBadge tone="neutral">{t('no')}</StatusBadge>
-                ) : (
-                  <StatusBadge tone="success">{t('yes')}</StatusBadge>
-                ),
+          },
+          {
+            key: 'role',
+            header: t('columnRole'),
+            render: (p) => {
+              const codes = p.id
+                ? [...(roleMap.get(p.id) ?? [])].sort((a, b) => a.localeCompare(b)).join(', ')
+                : '';
+              return codes || '—';
             },
-            {
-              key: 'roles',
-              header: t('columnRoles'),
-              render: (p) => {
-                const codes = p.id
-                  ? [...(roleMap.get(p.id) ?? [])].sort((a, b) => a.localeCompare(b)).join(', ')
-                  : '';
-                return codes || '—';
-              },
+          },
+          {
+            key: 'organisation',
+            header: t('columnOrganisation'),
+            render: (p) => {
+              const orgId = p.id ? orgIdByPractitioner.get(p.id) : undefined;
+              return (orgId ? orgNameById.get(orgId) : undefined) ?? '—';
             },
-            {
-              key: 'actions',
-              header: '',
-              align: 'right',
-              render: (p) => <Link to={`/users/${p.id}/edit`}>{t('edit')}</Link>,
-            },
-          ]}
-          rows={filteredRows}
-          rowKey={(p) => p.id ?? ''}
-          loading={search.isLoading}
-          errorState={searchError ? <ErrorState description={searchError} /> : undefined}
-          emptyState={
-            <EmptyState
-              title={t('emptyTitle')}
-              description={
-                !search.isLoading && rawRows.length > 0 && filteredRows.length === 0
-                  ? t('filterEmpty')
-                  : t('emptyDescription')
-              }
-            />
-          }
-        />
-      </Stack>
+          },
+          {
+            key: 'status',
+            header: t('columnStatus'),
+            sortable: true,
+            sortValue: (p) => (p.active === false ? 0 : 1),
+            render: (p) =>
+              p.active === false ? (
+                <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>{t('statusInactive')}</StatusBadge>
+              ) : (
+                <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>{t('statusActive')}</StatusBadge>
+              ),
+          },
+          {
+            key: 'actions',
+            header: '',
+            align: 'right',
+            render: (p) => (
+              <OhsDropdownMenu.Root>
+                <OhsDropdownMenu.Trigger asChild>
+                  <IconButton label={t('rowActions')}>
+                    <RiMore2Fill size={20} />
+                  </IconButton>
+                </OhsDropdownMenu.Trigger>
+                <OhsDropdownMenu.Portal>
+                  <OhsDropdownMenu.Content className="ohs-dropdown-content" align="end" sideOffset={4}>
+                    <OhsDropdownMenu.Item
+                      className="ohs-dropdown-item"
+                      onSelect={() => {
+                        void navigate(`/users/${p.id}/edit`);
+                      }}
+                    >
+                      {t('edit')}
+                    </OhsDropdownMenu.Item>
+                  </OhsDropdownMenu.Content>
+                </OhsDropdownMenu.Portal>
+              </OhsDropdownMenu.Root>
+            ),
+          },
+        ]}
+        rows={filteredRows}
+        rowKey={(p) => p.id ?? ''}
+        loading={search.isLoading}
+        selectable
+        selectedKeys={selectedIds}
+        onSelectionChange={setSelectedIds}
+        pagination
+        initialPageSize={10}
+        errorState={searchError ? <ErrorState description={searchError} /> : undefined}
+        emptyState={
+          <EmptyState
+            title={t('emptyTitle')}
+            description={
+              !search.isLoading && rawRows.length > 0 && filteredRows.length === 0
+                ? t('filterEmpty')
+                : t('emptyDescription')
+            }
+          />
+        }
+      />
+      )}
     </Page>
   );
 }

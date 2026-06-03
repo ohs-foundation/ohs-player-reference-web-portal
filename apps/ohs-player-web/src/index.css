@@ -159,9 +159,11 @@ body {
 
 .app-shell__main {
   grid-area: main;
-  padding: var(--ohs-spacing-5, 24px);
+  padding: 0;
   overflow: auto;
   min-height: 0;
+  /* White content surface per the page-container spec; depth comes from neutral borders, not a gray fill. */
+  background: var(--ohs-color-surface, #fff);
 }
 
 /* Full-width main when no chrome (login / callback) */
