@@ -474,6 +474,12 @@
 .ohs-search-field__input::placeholder {
   color: var(--ohs-color-text-quaternary, #9e9e9e);
 }
+/* The container owns the focus ring (:focus-within); suppress the global input ring inside it. */
+.ohs-search-field .ohs-search-field__input:focus,
+.ohs-search-field .ohs-search-field__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
 
 /* ---------- Chips (FilterChip / ChipSet) ---------- */
 

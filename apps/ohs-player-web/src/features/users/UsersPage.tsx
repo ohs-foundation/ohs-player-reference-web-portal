@@ -371,12 +371,8 @@ export function UsersPage() {
 
   const questionnaire = getBundledQuestionnaires().user;
 
-  const params: Record<string, string> = {
-    _count: '500',
-    ...(q.trim() ? { name: q.trim() } : {}),
-  };
-
-  const search = useSearch('Practitioner', params);
+  // Name search is client-side (below) so typing never refires the query — keeps the table from flickering.
+  const search = useSearch('Practitioner', { _count: '500' });
   const roleSearch = useSearch('PractitionerRole', { _count: '500' });
   const orgSearch = useSearch('Organization', { _count: '500' });
 
@@ -421,8 +417,13 @@ export function UsersPage() {
   }, [roleMap, t]);
 
   const filteredRows = useMemo(() => {
+    const term = q.trim().toLowerCase();
     return rawRows.filter((p) => {
       if (!p.id) return false;
+      if (term) {
+        const haystack = `${fullName(p)} ${identifierOf(p)} ${emailOf(p)}`.toLowerCase();
+        if (!haystack.includes(term)) return false;
+      }
       if (statusFilter === 'active' && p.active === false) return false;
       if (statusFilter === 'inactive' && p.active !== false) return false;
       if (roleFilter !== 'all') {
@@ -431,7 +432,7 @@ export function UsersPage() {
       }
       return true;
     });
-  }, [rawRows, statusFilter, roleFilter, roleMap]);
+  }, [rawRows, q, statusFilter, roleFilter, roleMap]);
 
   let searchError: string | null = null;
   if (search.error) {
@@ -443,7 +444,9 @@ export function UsersPage() {
     setModalOpen(true);
   };
 
-  const noUsers = !search.isLoading && !searchError && rawRows.length === 0;
+  const isFiltering = q.trim() !== '' || statusFilter !== 'all' || roleFilter !== 'all';
+  // Only the genuine "no users at all" case hides the toolbar; a no-match search keeps it.
+  const noUsers = !search.isLoading && !searchError && rawRows.length === 0 && !isFiltering;
 
   return (
     <Page>
@@ -665,11 +668,7 @@ export function UsersPage() {
         emptyState={
           <EmptyState
             title={t('emptyTitle')}
-            description={
-              !search.isLoading && rawRows.length > 0 && filteredRows.length === 0
-                ? t('filterEmpty')
-                : t('emptyDescription')
-            }
+            description={isFiltering ? t('filterEmpty') : t('emptyDescription')}
           />
         }
       />
