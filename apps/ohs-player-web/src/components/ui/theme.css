@@ -312,6 +312,74 @@
   padding-right: var(--ohs-spacing-7, 48px);
 }
 
+/* ---------- Select (Radix) ---------- */
+
+.ohs-select-trigger {
+  font-family: inherit;
+  font-size: var(--ohs-text-body, 16px);
+  color: var(--ohs-color-text, #1f2933);
+  background: var(--ohs-color-surface, #fff);
+  border: 1px solid var(--ohs-color-border, #cdd7e1);
+  border-radius: var(--ohs-radius-sm, 8px);
+  padding: 0 var(--ohs-spacing-3, 12px);
+  height: 44px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ohs-spacing-2, 8px);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.ohs-select-trigger:hover:not([data-disabled]) {
+  border-color: var(--ohs-color-text-muted, #52606d);
+}
+.ohs-select-trigger:focus-visible {
+  border-color: var(--ohs-color-primary, #1f6feb);
+  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(31, 111, 235, 0.35));
+}
+.ohs-select-trigger--error {
+  border-color: var(--ohs-color-error, #b3261e);
+}
+.ohs-select-trigger[data-placeholder] {
+  color: var(--ohs-color-text-muted, #52606d);
+}
+.ohs-select-trigger[data-disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ohs-select-icon {
+  display: inline-flex;
+  color: var(--ohs-color-text-muted, #52606d);
+}
+.ohs-select-content {
+  z-index: 60;
+  overflow: hidden;
+  background: var(--ohs-color-surface, #fff);
+  border: 1px solid var(--ohs-color-border, #cdd7e1);
+  border-radius: var(--ohs-radius-default, 8px);
+  box-shadow: var(--ohs-shadow-md, 0 4px 12px rgba(15, 23, 42, 0.15));
+  padding: var(--ohs-spacing-1, 4px);
+  min-width: var(--radix-select-trigger-width);
+  max-height: var(--radix-select-content-available-height);
+}
+.ohs-select-item {
+  font-size: var(--ohs-text-body, 16px);
+  color: var(--ohs-color-text, #1f2933);
+  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-3, 12px);
+  border-radius: var(--ohs-radius-sm, 8px);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+.ohs-select-item[data-highlighted] {
+  background: var(--ohs-color-surface-variant, #eef2f7);
+}
+.ohs-select-item[data-state='checked'] {
+  font-weight: 600;
+}
+
 /* ---------- Field grid (2-column SDC layout) ---------- */
 
 .ohs-field-grid {

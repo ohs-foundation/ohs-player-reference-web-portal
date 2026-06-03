@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useRef, useState } from 'react';
 import {
   buildQuestionnaireResponse,
   FhirError,
@@ -12,14 +12,32 @@ import {
   useQuestionnaireFormState,
   useResource,
   useSearch,
+  useStatusBar,
   useTranslation,
   useUpdateResource,
   writeAuditEvent,
 } from 'ohs-player-web-core';
-import { Button, Card, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, Inline, LinearProgress, Page, PageHeader, SelectField, Spinner, Stack, StatusBadge, TextField } from '../../components/ui';
-import { Link } from 'react-router-dom';
+import { Button, Card, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, Inline, LinearProgress, Page, PageHeader, SelectField, type SelectFieldOption, Spinner, Stack, StatusBadge, TextField } from '../../components/ui';
+import { Link, useNavigate } from 'react-router-dom';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
-import { USER_LINK_IDS, userBodyFromAnswers } from '../sdc/resourceFromAnswers';
+import {
+  ASSIGNABLE_ROLES,
+  PRACTITIONER_ROLE_CODES,
+  PRACTITIONER_ROLE_SYSTEM,
+} from '../../config/roles';
+import {
+  applyUserAnswersToPractitioner,
+  buildCreateUserPayload,
+  type PractitionerRoleAssignment,
+  USER_LINK_IDS,
+  userAnswersFromPractitioner,
+} from '../sdc/resourceFromAnswers';
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 
@@ -53,7 +71,26 @@ function buildPractitionerRoleMap(
   return map;
 }
 
-function UserCreateForm({
+type AssignmentRow = { rowId: number; organization: string; location: string; role: string };
+
+function referenceOptions(
+  bundle: unknown,
+  resourceType: string,
+): SelectFieldOption[] {
+  const entries = (bundle as { entry?: { resource?: { id?: string; name?: string } }[] } | undefined)
+    ?.entry;
+  return (entries ?? [])
+    .map((e) => e.resource)
+    .filter((r): r is { id?: string; name?: string } => Boolean(r?.id))
+    .map((r) => ({ value: `${resourceType}/${r.id ?? ''}`, label: r.name ?? r.id ?? '' }));
+}
+
+function keycloakIdFromCreated(created: unknown): string | undefined {
+  const identifiers = (created as { identifier?: { value?: string }[] } | undefined)?.identifier;
+  return identifiers?.find((i) => i.value)?.value;
+}
+
+export function UserCreateForm({
   questionnaire,
   onSuccess,
   onCancel,
@@ -67,63 +104,187 @@ function UserCreateForm({
   const createQr = useCreateResource('QuestionnaireResponse');
   const client = useFhirClient();
 
+  const orgSearch = useSearch('Organization', { _count: '200' });
+  const locSearch = useSearch('Location', { _count: '500' });
+  const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
+  const locOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
+  const roleCodeOptions = useMemo<SelectFieldOption[]>(
+    () => PRACTITIONER_ROLE_CODES.map((r) => ({ value: r.value, label: r.label })),
+    [],
+  );
+  const refDataLoading = orgSearch.isLoading || locSearch.isLoading;
+  const refDataEmpty = !refDataLoading && (orgOptions.length === 0 || locOptions.length === 0);
+
   const { answers, setAnswer, validateRequired } = useQuestionnaireFormState(questionnaire, {
     [USER_LINK_IDS.given]: '',
     [USER_LINK_IDS.family]: '',
     [USER_LINK_IDS.email]: '',
-    [USER_LINK_IDS.roles]: 'admin',
   });
 
+  const [roles, setRoles] = useState<string[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+  const rowIdRef = useRef(0);
+
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [rolesError, setRolesError] = useState<string | null>(null);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const toggleRole = (value: string, selected: boolean) => {
+    setRoles((prev) => (selected ? [...prev, value] : prev.filter((r) => r !== value)));
+  };
+
+  const addAssignment = () => {
+    rowIdRef.current += 1;
+    setAssignments((prev) => [
+      ...prev,
+      { rowId: rowIdRef.current, organization: '', location: '', role: '' },
+    ]);
+  };
+  const updateAssignment = (rowId: number, key: keyof AssignmentRow, value: string) => {
+    setAssignments((prev) => prev.map((r) => (r.rowId === rowId ? { ...r, [key]: value } : r)));
+  };
+  const removeAssignment = (rowId: number) => {
+    setAssignments((prev) => prev.filter((r) => r.rowId !== rowId));
+  };
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     setValidationError(null);
+    setRolesError(null);
+    setAssignmentError(null);
     setSubmitError(null);
-    const missing = validateRequired();
-    if (missing.length > 0) {
+
+    let valid = true;
+    if (validateRequired().length > 0) {
       setValidationError(t('questionnaireRequiredFields'));
-      return;
+      valid = false;
     }
+    if (roles.length === 0) {
+      setRolesError(t('rolesRequired'));
+      valid = false;
+    }
+    if (assignments.some((a) => !a.organization || !a.location || !a.role)) {
+      setAssignmentError(t('assignmentIncomplete'));
+      valid = false;
+    }
+    if (!valid) return;
+
     void (async () => {
+      setSubmitting(true);
       try {
-        const body = userBodyFromAnswers(answers);
-        await post.mutateAsync(body);
+        const payloadAssignments: PractitionerRoleAssignment[] = assignments.map((a) => ({
+          organization: a.organization,
+          location: a.location,
+          role: { system: PRACTITIONER_ROLE_SYSTEM, code: a.role },
+        }));
+        const created = await post.mutateAsync(buildCreateUserPayload(answers, roles, payloadAssignments));
         const qr = buildQuestionnaireResponse({ questionnaire, answers, status: 'completed' });
         await createQr.mutateAsync(qr);
+        const keycloakId = keycloakIdFromCreated(created);
         await writeAuditEvent(client, {
           action: 'create',
           resourceType: 'Practitioner',
-          description: 'User created via gateway',
+          description: keycloakId
+            ? `User created via gateway (Keycloak ${keycloakId})`
+            : 'User created via gateway',
         });
         onSuccess();
       } catch (error_) {
-        let msg: string;
-        if (error_ instanceof FhirError) {
-          msg = formatOperationOutcomeMessage(error_.outcome);
-        } else if (error_ instanceof Error) {
-          msg = error_.message;
-        } else {
-          msg = String(error_);
-        }
-        setSubmitError(msg);
+        setSubmitError(toErrorMessage(error_));
+      } finally {
+        setSubmitting(false);
       }
     })();
   };
 
-  const isPending = post.isPending || createQr.isPending;
+  const isPending = submitting || post.isPending || createQr.isPending;
 
   return (
-    <form id="user-create-form" onSubmit={onSubmit}>
-      <Stack gap={3}>
+    <form id="user-create-form" onSubmit={onSubmit} noValidate>
+      <Stack gap={4}>
         {validationError ? <ErrorState description={validationError} /> : null}
         {submitError ? <ErrorState description={submitError} /> : null}
-        <QuestionnaireFields
-          questionnaire={questionnaire}
-          answers={answers}
-          setAnswer={setAnswer}
-        />
+
+        <QuestionnaireFields questionnaire={questionnaire} answers={answers} setAnswer={setAnswer} />
+
+        <Stack gap={2}>
+          <span style={{ fontSize: 'var(--ohs-text-label)', fontWeight: 600 }}>{t('rolesLabel')}</span>
+          <ChipSet>
+            {ASSIGNABLE_ROLES.map((r) => (
+              <FilterChip
+                key={r.value}
+                label={r.label}
+                selected={roles.includes(r.value)}
+                onChange={(selected) => toggleRole(r.value, selected)}
+              />
+            ))}
+          </ChipSet>
+          {rolesError ? (
+            <span role="alert" style={{ color: 'var(--ohs-color-error)', fontSize: 'var(--ohs-text-label)' }}>
+              {rolesError}
+            </span>
+          ) : null}
+        </Stack>
+
+        <Stack gap={2}>
+          <span style={{ fontSize: 'var(--ohs-text-label)', fontWeight: 600 }}>{t('assignmentsLabel')}</span>
+          <span style={{ color: 'var(--ohs-color-text-muted)', fontSize: 'var(--ohs-text-label)' }}>
+            {t('assignmentsHint')}
+          </span>
+          {refDataLoading ? <Spinner label={t('loading')} /> : null}
+          {refDataEmpty ? (
+            <span style={{ color: 'var(--ohs-color-text-muted)', fontSize: 'var(--ohs-text-label)' }}>
+              {t('assignmentsNeedData')}
+            </span>
+          ) : null}
+          {assignments.map((row) => (
+            <Inline key={row.rowId} justify="start" style={{ gap: 'var(--ohs-spacing-3, 12px)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div style={{ flex: '1 1 180px', minWidth: 160 }}>
+                <SelectField
+                  label={t('contextOrganization')}
+                  name={`assignment-org-${row.rowId}`}
+                  options={orgOptions}
+                  value={row.organization}
+                  onChange={(e) => updateAssignment(row.rowId, 'organization', e.target.value)}
+                />
+              </div>
+              <div style={{ flex: '1 1 180px', minWidth: 160 }}>
+                <SelectField
+                  label={t('contextLocation')}
+                  name={`assignment-loc-${row.rowId}`}
+                  options={locOptions}
+                  value={row.location}
+                  onChange={(e) => updateAssignment(row.rowId, 'location', e.target.value)}
+                />
+              </div>
+              <div style={{ flex: '1 1 160px', minWidth: 140 }}>
+                <SelectField
+                  label={t('contextRole')}
+                  name={`assignment-role-${row.rowId}`}
+                  options={roleCodeOptions}
+                  value={row.role}
+                  onChange={(e) => updateAssignment(row.rowId, 'role', e.target.value)}
+                />
+              </div>
+              <Button variant="outlined" size="sm" type="button" onClick={() => removeAssignment(row.rowId)}>
+                {t('removeAssignment')}
+              </Button>
+            </Inline>
+          ))}
+          {assignmentError ? (
+            <span role="alert" style={{ color: 'var(--ohs-color-error)', fontSize: 'var(--ohs-text-label)' }}>
+              {assignmentError}
+            </span>
+          ) : null}
+          <Inline justify="start">
+            <Button variant="outlined" size="sm" type="button" onClick={addAssignment} disabled={refDataLoading}>
+              {t('addAssignment')}
+            </Button>
+          </Inline>
+        </Stack>
+
         <Inline justify="end" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
           <Button variant="outlined" type="button" onClick={onCancel} disabled={isPending}>
             {t('cancel')}
@@ -139,6 +300,7 @@ function UserCreateForm({
 
 export function UsersPage() {
   const { t } = useTranslation();
+  const status = useStatusBar();
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -234,7 +396,9 @@ export function UsersPage() {
           onCancel={() => setModalOpen(false)}
           onSuccess={() => {
             setModalOpen(false);
-            globalThis.location.reload();
+            status.notify({ tone: 'success', title: t('userCreated') });
+            void search.refetch();
+            void roleSearch.refetch();
           }}
         />
       </OhsDialog>
@@ -349,6 +513,82 @@ export function UsersPage() {
   );
 }
 
+export function UserEditForm({
+  id,
+  practitioner,
+}: Readonly<{ id: string; practitioner: Record<string, unknown> }>) {
+  const { t } = useTranslation();
+  const client = useFhirClient();
+  const navigate = useNavigate();
+  const questionnaire = getBundledQuestionnaires().userEdit;
+
+  const initialAnswers = useMemo(
+    () => userAnswersFromPractitioner(practitioner),
+    [practitioner],
+  );
+  const { answers, setAnswer, validateRequired } = useQuestionnaireFormState(
+    questionnaire,
+    initialAnswers,
+  );
+
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const goToList = () => {
+    Promise.resolve(navigate('/users')).catch(() => undefined);
+  };
+
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setValidationError(null);
+    setSubmitError(null);
+    if (validateRequired().length > 0) {
+      setValidationError(t('questionnaireRequiredFields'));
+      return;
+    }
+    void (async () => {
+      setSubmitting(true);
+      try {
+        const updated = applyUserAnswersToPractitioner(practitioner, answers);
+        await client.transaction({
+          resourceType: 'Bundle',
+          type: 'transaction',
+          entry: [{ resource: updated, request: { method: 'PUT', url: `Practitioner/${id}` } }],
+        });
+        await writeAuditEvent(client, {
+          action: 'update',
+          resourceType: 'Practitioner',
+          resourceId: id,
+        });
+        goToList();
+      } catch (error_) {
+        setSubmitError(toErrorMessage(error_));
+      } finally {
+        setSubmitting(false);
+      }
+    })();
+  };
+
+  return (
+    <form id="user-edit-form" onSubmit={onSubmit} noValidate>
+      <Stack gap={3}>
+        {validationError ? <ErrorState description={validationError} /> : null}
+        {submitError ? <ErrorState description={submitError} /> : null}
+        <QuestionnaireFields questionnaire={questionnaire} answers={answers} setAnswer={setAnswer} />
+        <Inline justify="end" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Button variant="outlined" type="button" onClick={goToList} disabled={submitting}>
+            {t('cancel')}
+          </Button>
+          <Button type="submit" disabled={submitting} loading={submitting}>
+            {t('save')}
+          </Button>
+        </Inline>
+      </Stack>
+    </form>
+  );
+}
+
 export function UserEditPage({ id }: Readonly<{ id: string }>) {
   const { t } = useTranslation();
   const read = useResource('Practitioner', id);
@@ -356,14 +596,6 @@ export function UserEditPage({ id }: Readonly<{ id: string }>) {
   const update = useUpdateResource('Practitioner');
   const client = useFhirClient();
   const { post: deactivateReq } = useCustomEndpoint('userDeactivate');
-
-  const [family, setFamily] = useState('');
-  useEffect(() => {
-    if (pract) {
-      const n = pract.name as { family?: string }[] | undefined;
-      setFamily(n?.[0]?.family ?? '');
-    }
-  }, [pract]);
 
   if (read.isLoading) {
     return (
@@ -375,6 +607,17 @@ export function UserEditPage({ id }: Readonly<{ id: string }>) {
       </Page>
     );
   }
+  if (read.error) {
+    return (
+      <Page>
+        <PageHeader title={t('pageUserEdit')} />
+        <ErrorState description={toErrorMessage(read.error)} />
+        <p>
+          <Link to="/users">{t('back')}</Link>
+        </p>
+      </Page>
+    );
+  }
   if (!pract) {
     return (
       <Page>
@@ -382,31 +625,6 @@ export function UserEditPage({ id }: Readonly<{ id: string }>) {
       </Page>
     );
   }
-
-  const onSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    void update
-      .mutateAsync({
-        id,
-        body: {
-          ...pract,
-          name: [
-            {
-              family,
-              given: (pract.name as { given?: string[] }[])?.[0]?.given ?? [],
-            },
-          ],
-        },
-      })
-      .then(async () => {
-        await writeAuditEvent(client, {
-          action: 'update',
-          resourceType: 'Practitioner',
-          resourceId: id,
-        });
-        globalThis.location.href = '/users';
-      });
-  };
 
   const onDeactivate = () => {
     void (async () => {
@@ -450,19 +668,7 @@ export function UserEditPage({ id }: Readonly<{ id: string }>) {
       <PageHeader title={t('pageUserEdit')} />
       <Card>
         <Stack gap={3}>
-          <form onSubmit={onSave}>
-            <Stack gap={3}>
-              <TextField
-                label={t('familyName')}
-                name="family"
-                value={family}
-                onChange={(e) => setFamily(e.target.value)}
-              />
-              <Inline justify="start">
-                <Button type="submit">{t('save')}</Button>
-              </Inline>
-            </Stack>
-          </form>
+          <UserEditForm id={id} practitioner={pract} />
           <PermissionGuard permission="users.deactivate">
             <Inline justify="start">
               <Button variant="danger" size="sm" type="button" onClick={onDeactivate}>
