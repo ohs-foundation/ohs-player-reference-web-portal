@@ -11,6 +11,8 @@
  */
 
 [data-ohs-root] {
+  /* Definite height so descendants' `height: 100%` resolves (the wrapper sets only min-height inline). */
+  height: 100%;
   color: var(--ohs-color-text, #1f2933);
   background: var(--ohs-color-background, #f4f7fb);
   font-family: var(--ohs-font-body, system-ui, sans-serif);
