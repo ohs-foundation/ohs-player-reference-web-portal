@@ -453,6 +453,9 @@
   background: var(--ohs-color-surface, #fff);
   box-sizing: border-box;
 }
+.ohs-search-field--lg {
+  height: 56px;
+}
 .ohs-search-field:focus-within {
   border-color: var(--ohs-color-text-muted, #696969);
 }

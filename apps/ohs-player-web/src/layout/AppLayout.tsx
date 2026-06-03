@@ -6,20 +6,24 @@ import {
   useTranslation,
 } from 'ohs-player-web-core';
 import {
+  RiArrowDownSLine,
   RiBuildingFill,
   RiBuildingLine,
   RiDashboardFill,
   RiDashboardLine,
   RiMapPin3Fill,
   RiMapPin3Line,
+  RiMenuFoldLine,
   RiMenuLine,
+  RiMenuUnfoldLine,
+  RiNotificationLine,
   RiTeamFill,
   RiTeamLine,
   RiUserFill,
   RiUserLine,
   type RemixiconComponentType,
 } from '@remixicon/react';
-import { IconButton } from '../components/ui';
+import { Avatar, IconButton, SearchField } from '../components/ui';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useState } from 'react';
 import { BrandMark } from './BrandMark';
@@ -46,6 +50,7 @@ const NAV_DEFS = [
 export function AppLayout() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const { t } = useTranslation();
 
   if (auth.status !== 'authenticated') {
@@ -59,7 +64,11 @@ export function AppLayout() {
   }
 
   return (
-    <div className="app-shell" data-sidebar-open={open ? 'true' : undefined}>
+    <div
+      className="app-shell"
+      data-sidebar-open={open ? 'true' : undefined}
+      data-sidebar-collapsed={collapsed ? 'true' : undefined}
+    >
       <header className="app-topbar">
         <div className="app-topbar__brand">
           <IconButton
@@ -67,17 +76,37 @@ export function AppLayout() {
             className="app-topbar__menu-toggle"
             onClick={() => setOpen((v) => !v)}
           >
-            <RiMenuLine size={ICON_SIZE} />
+            <RiMenuLine size={24} />
           </IconButton>
-          <BrandMark size={40} />
-          <span className="app-topbar__title">{t('appTopbarTitle')}</span>
+          <span className="app-topbar__logo">
+            <BrandMark size={40} />
+            <span className="app-topbar__title">{t('appTopbarTitle')}</span>
+          </span>
+          <IconButton
+            label={t(collapsed ? 'expandSidebar' : 'collapseSidebar')}
+            className="app-topbar__collapse"
+            onClick={() => setCollapsed((v) => !v)}
+          >
+            {collapsed ? <RiMenuUnfoldLine size={24} /> : <RiMenuFoldLine size={24} />}
+          </IconButton>
         </div>
-        <UserMenu
-          name={auth.user?.preferred_username ?? auth.user?.name ?? auth.user?.sub ?? ''}
-          email={auth.user?.email}
-          onSignOut={() => void auth.logout()}
-          signOutLabel={t('signOut')}
-        />
+        <div className="app-topbar__actions">
+          <SearchField
+            size="lg"
+            className="app-topbar__search"
+            label={t('globalSearch')}
+            placeholder={t('globalSearch')}
+          />
+          <IconButton label={t('notifications')} className="app-topbar__bell">
+            <RiNotificationLine size={24} />
+          </IconButton>
+          <UserMenu
+            name={auth.user?.preferred_username ?? auth.user?.name ?? auth.user?.sub ?? ''}
+            email={auth.user?.email}
+            onSignOut={() => void auth.logout()}
+            signOutLabel={t('signOut')}
+          />
+        </div>
       </header>
 
       <aside className="app-sidebar" aria-label="Primary navigation">
@@ -157,10 +186,14 @@ function UserMenu({
           className="app-topbar__user"
           aria-label={name ? `User menu (${name})` : 'User menu'}
         >
-          <span className="app-topbar__avatar" aria-hidden="true">
-            {name.slice(0, 1).toUpperCase() || 'U'}
+          <span className="app-topbar__user-main">
+            <Avatar name={name || 'User'} />
+            <span className="app-topbar__user-text">
+              <span className="app-topbar__user-name">{name || 'User'}</span>
+              {email ? <span className="app-topbar__user-email-inline">{email}</span> : null}
+            </span>
           </span>
-          <span className="app-topbar__user-name">{name || 'User'}</span>
+          <RiArrowDownSLine size={16} className="app-topbar__user-chevron" aria-hidden="true" />
         </button>
       </OhsDropdownMenu.Trigger>
       <OhsDropdownMenu.Portal>
