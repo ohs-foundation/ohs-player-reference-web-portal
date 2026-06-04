@@ -151,6 +151,7 @@ export function DataTable<Row>({
         emptyState
       ) : (
         <>
+          <div className="ohs-table__scroll">
           <table className="ohs-table">
             {caption ? <caption>{caption}</caption> : null}
             <thead>
@@ -221,6 +222,7 @@ export function DataTable<Row>({
               )}
             </tbody>
           </table>
+          </div>
 
           {pagination && total > 0 ? (
             <div className="ohs-pagination">

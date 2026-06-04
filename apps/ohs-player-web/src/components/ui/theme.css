@@ -551,8 +551,13 @@
   overflow: hidden;
   box-shadow: var(--ohs-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
 }
+/* Horizontal scroll for the table only — toolbar and pagination stay full-width. */
+.ohs-table__scroll {
+  overflow-x: auto;
+}
 .ohs-table {
   width: 100%;
+  min-width: 56rem;
   border-collapse: collapse;
 }
 .ohs-table th,
@@ -1447,4 +1452,26 @@
 .ohs-tooltip-content,
 .ohs-toast-root {
   animation: ohs-fade-in 140ms ease-out;
+}
+
+/* ---------- Dark theme ---------- */
+/* The managed colour tokens (primary/surface/background/text/border/error/success/…) flip via
+   applyTheme(figmaThemeDark). These are the tokens defined statically above (not part of the
+   applyTheme contract), plus the document body which sits outside [data-ohs-root]. `data-theme`
+   is set on <html> by ThemeModeProvider. */
+[data-theme='dark'] body {
+  background: #0d0d0d;
+  color: #fafafa;
+}
+/* Both selectors: the html element feeds portalled content (drawers/dialogs/dropdowns/toasts render
+   outside [data-ohs-root]); the [data-ohs-root] selector overrides the light static values it sets itself. */
+[data-theme='dark'],
+[data-theme='dark'] [data-ohs-root] {
+  --ohs-color-surface-variant: #363636; /* Neutral/800 — section headers, chips, avatars */
+  --ohs-color-text-quaternary: #696969; /* Content/Quaternary (Neutral/600) */
+  --ohs-color-border-secondary: #4f4f4f; /* Border/Secondary (Neutral/700) */
+  --ohs-color-border-tertiary: #696969; /* Border/Tertiary (Neutral/600) */
+  --ohs-color-positive: #00e04b; /* Content/Positive (Green/400) */
+  --ohs-color-positive-surface: rgba(0, 224, 75, 0.16);
+  --ohs-color-neutral-surface: rgba(255, 255, 255, 0.08);
 }

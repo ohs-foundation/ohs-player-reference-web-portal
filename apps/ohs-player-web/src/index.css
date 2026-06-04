@@ -55,6 +55,8 @@ body {
   align-items: center;
   gap: var(--ohs-spacing-4, 16px);
   min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
 }
 .app-topbar__logo {
   display: inline-flex;
@@ -62,11 +64,16 @@ body {
   gap: var(--ohs-spacing-2, 8px);
   min-width: 0;
 }
+.app-topbar__collapse {
+  flex-shrink: 0;
+}
 .app-topbar__title {
   font-weight: 600;
   font-size: var(--ohs-text-title, 18px);
   color: var(--ohs-color-text, #0d0d0d);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Mobile-only drawer toggle (desktop uses the collapse toggle) */
@@ -86,7 +93,19 @@ body {
 .app-topbar__actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--ohs-spacing-4, 16px);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Search shrinks (basis 357, no grow) so it never pushes the brand/collapse; icons stay fixed. */
+.app-topbar__search {
+  width: auto;
+  flex: 0 1 357px;
+  min-width: 0;
+}
+.app-topbar__bell {
+  flex-shrink: 0;
 }
 
 .app-topbar__user {
@@ -146,9 +165,9 @@ body {
 
 .app-sidebar {
   grid-area: side;
-  /* Figma Brand/700 + white for the active item; full theme-token alignment is ticket #18. */
-  --sidebar-active-bg: #094f9a;
-  --sidebar-active-fg: #ffffff;
+  /* Brand + inverse for the active item; token-driven so it flips with light/dark. */
+  --sidebar-active-bg: var(--ohs-color-primary, #094f9a);
+  --sidebar-active-fg: var(--ohs-color-primary-contrast, #ffffff);
   display: flex;
   flex-direction: column;
   gap: var(--ohs-spacing-3, 12px);
@@ -227,6 +246,13 @@ body {
 
 .app-shell__main--bare {
   grid-area: main;
+}
+
+/* Mid widths: trim the wide 80px topbar gutter so search + brand fit before the mobile layout. */
+@media (max-width: 75rem) {
+  .app-topbar {
+    padding: var(--ohs-spacing-5, 24px) var(--ohs-spacing-6, 32px);
+  }
 }
 
 @media (max-width: 52rem) {

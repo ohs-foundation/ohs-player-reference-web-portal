@@ -17,6 +17,8 @@ export const appMessageOverrides = {
   appTopbarTitle: 'Open Health Stack',
   globalSearch: 'Global Search',
   notifications: 'Notifications',
+  themeDark: 'Switch to dark mode',
+  themeLight: 'Switch to light mode',
   collapseSidebar: 'Collapse sidebar',
   expandSidebar: 'Expand sidebar',
 

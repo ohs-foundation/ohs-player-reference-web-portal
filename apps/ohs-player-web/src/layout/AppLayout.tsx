@@ -16,7 +16,9 @@ import {
   RiMenuFoldLine,
   RiMenuLine,
   RiMenuUnfoldLine,
+  RiMoonLine,
   RiNotificationLine,
+  RiSunLine,
   RiTeamFill,
   RiTeamLine,
   RiUserFill,
@@ -27,6 +29,7 @@ import { Avatar, IconButton, SearchField } from '../components/ui';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useState } from 'react';
 import { BrandMark } from './BrandMark';
+import { useThemeMode } from '../theme/themeModeContext';
 
 const ICON_SIZE = 20;
 
@@ -52,6 +55,7 @@ export function AppLayout() {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const { t } = useTranslation();
+  const { mode, toggle } = useThemeMode();
 
   if (auth.status !== 'authenticated') {
     return (
@@ -97,6 +101,13 @@ export function AppLayout() {
             label={t('globalSearch')}
             placeholder={t('globalSearch')}
           />
+          <IconButton
+            label={mode === 'dark' ? t('themeLight') : t('themeDark')}
+            className="app-topbar__bell"
+            onClick={toggle}
+          >
+            {mode === 'dark' ? <RiSunLine size={24} /> : <RiMoonLine size={24} />}
+          </IconButton>
           <IconButton label={t('notifications')} className="app-topbar__bell">
             <RiNotificationLine size={24} />
           </IconButton>
