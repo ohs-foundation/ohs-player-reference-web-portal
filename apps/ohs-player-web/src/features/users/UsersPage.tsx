@@ -23,20 +23,15 @@ import {
 import { Avatar, Button, Card, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, IconButton, Inline, LinearProgress, Page, PageHeader, SearchField, SelectField, type SelectFieldOption, Spinner, Stack, StatusBadge } from '../../components/ui';
 import { Link, useNavigate } from 'react-router-dom';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
-import {
-  ASSIGNABLE_ROLES,
-  PRACTITIONER_ROLE_CODES,
-  PRACTITIONER_ROLE_SYSTEM,
-} from '../../config/roles';
+import { PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import {
   applyUserAnswersToPractitioner,
-  buildCreateUserBundle,
+  buildAssignmentsBundle,
   buildCreateUserPayload,
   type PractitionerRoleAssignment,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
 } from '../sdc/resourceFromAnswers';
-import { env } from '../../config/env';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
 
 function toErrorMessage(error: unknown): string {
@@ -170,19 +165,13 @@ export function UserCreateForm({
     [USER_LINK_IDS.email]: '',
   });
 
-  const [roles, setRoles] = useState<string[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const rowIdRef = useRef(0);
 
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [rolesError, setRolesError] = useState<string | null>(null);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const toggleRole = (value: string, selected: boolean) => {
-    setRoles((prev) => (selected ? [...prev, value] : prev.filter((r) => r !== value)));
-  };
 
   const addAssignment = () => {
     rowIdRef.current += 1;
@@ -201,17 +190,12 @@ export function UserCreateForm({
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     setValidationError(null);
-    setRolesError(null);
     setAssignmentError(null);
     setSubmitError(null);
 
     let valid = true;
     if (validateRequired().length > 0) {
       setValidationError(t('questionnaireRequiredFields'));
-      valid = false;
-    }
-    if (roles.length === 0) {
-      setRolesError(t('rolesRequired'));
       valid = false;
     }
     if (assignments.some((a) => !a.organization || !a.location || !a.role)) {
@@ -228,19 +212,17 @@ export function UserCreateForm({
           location: a.location,
           role: { system: PRACTITIONER_ROLE_SYSTEM, code: a.role },
         }));
-        const payload = buildCreateUserPayload(answers, roles, payloadAssignments);
+        const payload = buildCreateUserPayload(answers);
 
-        let auditDescription: string;
-        if (env.usersDirectFhir) {
-          await client.transaction(buildCreateUserBundle(payload));
-          auditDescription = 'User created (direct FHIR, dev)';
-        } else {
-          const created = await post.mutateAsync(payload);
-          const keycloakId = keycloakIdFromCreated(created);
-          auditDescription = keycloakId
-            ? `User created via gateway (Keycloak ${keycloakId})`
-            : 'User created via gateway';
+        const created = await post.mutateAsync(payload);
+        const createdId = (created as { id?: string }).id;
+        if (createdId && payloadAssignments.length > 0) {
+          await client.transaction(buildAssignmentsBundle(createdId, payloadAssignments));
         }
+        const keycloakId = keycloakIdFromCreated(created);
+        const auditDescription = keycloakId
+          ? `User created via backend (Keycloak ${keycloakId})`
+          : 'User created via backend';
 
         const qr = buildQuestionnaireResponse({ questionnaire, answers, status: 'completed' });
         await createQr.mutateAsync(qr);
@@ -267,25 +249,6 @@ export function UserCreateForm({
         {submitError ? <ErrorState description={submitError} /> : null}
 
         <QuestionnaireFields questionnaire={questionnaire} answers={answers} setAnswer={setAnswer} />
-
-        <Stack gap={2}>
-          <span style={{ fontSize: 'var(--ohs-text-label)', fontWeight: 600 }}>{t('rolesLabel')}</span>
-          <ChipSet>
-            {ASSIGNABLE_ROLES.map((r) => (
-              <FilterChip
-                key={r.value}
-                label={r.label}
-                selected={roles.includes(r.value)}
-                onChange={(selected) => toggleRole(r.value, selected)}
-              />
-            ))}
-          </ChipSet>
-          {rolesError ? (
-            <span role="alert" style={{ color: 'var(--ohs-color-error)', fontSize: 'var(--ohs-text-label)' }}>
-              {rolesError}
-            </span>
-          ) : null}
-        </Stack>
 
         <Stack gap={2}>
           <span style={{ fontSize: 'var(--ohs-text-label)', fontWeight: 600 }}>{t('assignmentsLabel')}</span>
@@ -791,7 +754,6 @@ export function UserEditPage({ id }: Readonly<{ id: string }>) {
   const pract = read.data as Record<string, unknown> | undefined;
   const update = useUpdateResource('Practitioner');
   const client = useFhirClient();
-  const { post: deactivateReq } = useCustomEndpoint('userDeactivate');
 
   if (read.isLoading) {
     return (
@@ -826,11 +788,6 @@ export function UserEditPage({ id }: Readonly<{ id: string }>) {
     void (async () => {
       const inactive = { ...pract, active: false };
       await update.mutateAsync({ id, body: inactive });
-      try {
-        await deactivateReq.mutateAsync({ practitionerId: id });
-      } catch {
-        /* gateway optional */
-      }
       const ctSearch = (await client.search('CareTeam', {
         participant: `Practitioner/${id}`,
       })) as Bundle;

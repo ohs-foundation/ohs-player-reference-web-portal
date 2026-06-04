@@ -45,9 +45,8 @@ vi.mock('react-router-dom', async (): Promise<object> => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-// Hermetic env: exercise the gateway path regardless of the developer's local .env flag.
 vi.mock('../../config/env', () => ({
-  env: { usersDirectFhir: false, questionnaireVariant: 'default' },
+  env: { questionnaireVariant: 'default' },
 }));
 
 const { UserCreateForm, UserEditForm } = await import('./UsersPage');
@@ -113,6 +112,7 @@ describe('UserCreateForm', () => {
       id: 'new',
       identifier: [{ value: 'kc-123' }],
     });
+    mockTransaction.mockReset().mockResolvedValue({});
     mockCreateResource.mockReset().mockResolvedValue({});
     mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
   });
@@ -123,20 +123,6 @@ describe('UserCreateForm', () => {
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'jane@example.com' } });
   }
 
-  it('blocks submit and shows an error when no role is selected', async () => {
-    render(
-      <MemoryRouter>
-        <UserCreateForm questionnaire={userQuestionnaire} onSuccess={vi.fn()} onCancel={vi.fn()} />
-      </MemoryRouter>,
-    );
-
-    fillDemographics();
-    fireEvent.click(screen.getByRole('button', { name: 'saveAndClose' }));
-
-    expect(await screen.findByText('rolesRequired')).toBeInTheDocument();
-    expect(mockPost).not.toHaveBeenCalled();
-  });
-
   it('blocks submit when required demographics are missing', () => {
     render(
       <MemoryRouter>
@@ -144,14 +130,13 @@ describe('UserCreateForm', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('option', { name: 'Administrator' }));
     fireEvent.click(screen.getByRole('button', { name: 'saveAndClose' }));
 
     expect(screen.getByText('questionnaireRequiredFields')).toBeInTheDocument();
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('submits a payload with selected roles and demographics', async () => {
+  it('POSTs the backend payload derived from demographics and skips the role bundle when no assignments', async () => {
     const onSuccess = vi.fn();
     render(
       <MemoryRouter>
@@ -160,17 +145,18 @@ describe('UserCreateForm', () => {
     );
 
     fillDemographics();
-    fireEvent.click(screen.getByRole('option', { name: 'Administrator' }));
     fireEvent.click(screen.getByRole('button', { name: 'saveAndClose' }));
 
     await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
     expect(mockPost.mock.calls[0][0]).toEqual({
-      givenName: 'Jane',
-      familyName: 'Smith',
+      username: 'jane',
+      firstName: 'Jane',
+      lastName: 'Smith',
       email: 'jane@example.com',
-      roles: ['admin'],
-      assignments: [],
+      enabled: true,
     });
+    // No Org/Location rows → no PractitionerRole transaction.
+    expect(mockTransaction).not.toHaveBeenCalled();
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
   });

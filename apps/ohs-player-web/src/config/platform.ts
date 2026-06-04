@@ -48,7 +48,6 @@ export const platformConfig: CorePlatformConfig = {
   },
   theme: env.themeAlt ? alternateTheme : figmaTheme,
   customEndpoints: {
-    users: '/custom/users',
-    userDeactivate: '/custom/users/deactivate',
+    users: '/api/users',
   },
 };

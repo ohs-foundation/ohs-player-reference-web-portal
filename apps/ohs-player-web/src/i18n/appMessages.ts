@@ -43,7 +43,6 @@ export const appMessageOverrides = {
   filterRoleAll: 'All roles',
   columnName: 'Name',
   columnActive: 'Active',
-  columnRoles: 'Roles',
   columnIdentifier: 'Identifier',
   columnRole: 'Role/Assignment',
   columnOrganisation: 'Organisation',
@@ -64,9 +63,6 @@ export const appMessageOverrides = {
   givenName: 'Given name',
   familyName: 'Family name',
   email: 'Email',
-  rolesCommaSeparated: 'Roles (comma-separated)',
-  rolesLabel: 'Roles',
-  rolesRequired: 'Select at least one role.',
   assignmentsLabel: 'Organisation & location assignments',
   assignmentsHint:
     'Each assignment links the user to an organisation and location with a role (creates a PractitionerRole).',

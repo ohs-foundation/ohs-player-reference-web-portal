@@ -1,92 +1,62 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyUserAnswersToPractitioner,
-  buildCreateUserBundle,
+  buildAssignmentsBundle,
   buildCreateUserPayload,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
 } from './resourceFromAnswers';
 
 describe('buildCreateUserPayload', () => {
-  it('composes demographics, roles, and assignments', () => {
+  it('maps demographics to the backend shape and derives username from the email', () => {
     const answers = {
       [USER_LINK_IDS.given]: ' Jane ',
       [USER_LINK_IDS.family]: ' Smith ',
-      [USER_LINK_IDS.email]: 'jane@example.com',
+      [USER_LINK_IDS.email]: 'Jane@Example.com',
     };
-    const payload = buildCreateUserPayload(answers, ['admin'], [
-      {
-        organization: 'Organization/o1',
-        location: 'Location/l1',
-        role: { system: 'http://example.com/roles', code: 'nurse' },
-      },
-    ]);
 
-    expect(payload).toEqual({
-      givenName: 'Jane',
-      familyName: 'Smith',
-      email: 'jane@example.com',
-      roles: ['admin'],
-      assignments: [
-        {
-          organization: 'Organization/o1',
-          location: 'Location/l1',
-          role: { system: 'http://example.com/roles', code: 'nurse' },
-        },
-      ],
+    expect(buildCreateUserPayload(answers)).toEqual({
+      username: 'jane',
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'Jane@Example.com',
+      enabled: true,
     });
   });
 
-  it('supports an empty assignment list', () => {
-    const payload = buildCreateUserPayload({}, ['care-team-manager'], []);
-    expect(payload.assignments).toEqual([]);
-    expect(payload.roles).toEqual(['care-team-manager']);
+  it('defaults to empty strings when answers are missing', () => {
+    const payload = buildCreateUserPayload({});
+    expect(payload.username).toBe('');
+    expect(payload.enabled).toBe(true);
   });
 });
 
-describe('buildCreateUserBundle (dev direct-to-FHIR)', () => {
-  it('builds a transaction with a Practitioner and one PractitionerRole per assignment', () => {
-    const bundle = buildCreateUserBundle({
-      givenName: 'Jane',
-      familyName: 'Smith',
-      email: 'jane@example.com',
-      roles: ['admin'],
-      assignments: [
-        {
-          organization: 'Organization/o1',
-          location: 'Location/l1',
-          role: { system: 'http://terminology.hl7.org/CodeSystem/practitioner-role', code: 'nurse' },
-        },
-      ],
-    });
+describe('buildAssignmentsBundle (post-create PractitionerRoles)', () => {
+  it('builds one PractitionerRole POST per assignment, referencing the created Practitioner', () => {
+    const bundle = buildAssignmentsBundle('1000', [
+      {
+        organization: 'Organization/o1',
+        location: 'Location/l1',
+        role: { system: 'http://terminology.hl7.org/CodeSystem/practitioner-role', code: 'nurse' },
+      },
+    ]);
 
     expect(bundle.type).toBe('transaction');
-    expect(bundle.entry).toHaveLength(2);
-
-    const [practEntry, roleEntry] = bundle.entry;
-    expect(practEntry.resource.resourceType).toBe('Practitioner');
-    expect(practEntry.request).toEqual({ method: 'POST', url: 'Practitioner' });
-
+    expect(bundle.entry).toHaveLength(1);
+    const [roleEntry] = bundle.entry;
     expect(roleEntry.resource.resourceType).toBe('PractitionerRole');
     expect(roleEntry.request).toEqual({ method: 'POST', url: 'PractitionerRole' });
     expect((roleEntry.resource.practitioner as { reference?: string }).reference).toBe(
-      practEntry.fullUrl,
+      'Practitioner/1000',
     );
     expect((roleEntry.resource.organization as { reference?: string }).reference).toBe(
       'Organization/o1',
     );
   });
 
-  it('omits PractitionerRole entries when there are no assignments', () => {
-    const bundle = buildCreateUserBundle({
-      givenName: 'Jane',
-      familyName: 'Smith',
-      email: '',
-      roles: ['admin'],
-      assignments: [],
-    });
-    expect(bundle.entry).toHaveLength(1);
-    expect(bundle.entry[0].resource.resourceType).toBe('Practitioner');
+  it('produces an empty transaction when there are no assignments', () => {
+    const bundle = buildAssignmentsBundle('1000', []);
+    expect(bundle.entry).toHaveLength(0);
   });
 });
 
