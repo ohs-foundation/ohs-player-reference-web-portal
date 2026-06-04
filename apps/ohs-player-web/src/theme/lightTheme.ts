@@ -1,12 +1,12 @@
 import type { ThemeConfig } from 'ohs-player-web-core';
 
 /**
- * Figma-aligned default theme (ticket #18). Overrides the managed `--ohs-*` colour/typography/radius
- * tokens with the OHS Player design values; the remaining neutral scale, border-secondary/tertiary,
- * quaternary text, status tints, and the granular type scale are defined in `components/ui/theme.css`
- * (they are not part of the library's `applyTheme` contract).
+ * Light theme — the OHS Player design values for the managed `--ohs-*` colour/typography/radius tokens.
+ * The remaining neutral scale, secondary/tertiary borders, quaternary text, status tints, and the
+ * granular type scale live in `components/ui/theme.css` (not part of the library's `applyTheme`
+ * contract); their dark values are under the `[data-theme='dark']` block there.
  */
-export const figmaTheme: ThemeConfig = {
+export const lightTheme: ThemeConfig = {
   colors: {
     primary: '#094F9A', // Background/Brand, Content/Brand
     primaryHover: '#073C75',

@@ -1,13 +1,13 @@
 import type { ThemeConfig } from 'ohs-player-web-core';
 
 /**
- * Dark counterpart of {@link figmaTheme}. Maps the managed `--ohs-*` colour tokens to dark values per
- * the OHS Player theme spec (foreground inverts across the neutral ramp; surfaces step up from black;
- * accents shift one step lighter so they stay legible on dark surfaces). The non-managed static tokens
- * (surface-variant, border-secondary/tertiary, quaternary text, status tints) flip via the
+ * Dark theme — counterpart of {@link lightTheme}. Maps the managed `--ohs-*` colour tokens to dark
+ * values per the OHS Player theme spec: foreground inverts across the neutral ramp, surfaces step up
+ * from black, and accents shift one step lighter so they stay legible on dark surfaces. The non-managed
+ * static tokens (surface-variant, borders, quaternary text, status tints) flip via the
  * `[data-theme='dark']` block in `components/ui/theme.css`.
  */
-export const figmaThemeDark: ThemeConfig = {
+export const darkTheme: ThemeConfig = {
   colors: {
     primary: '#106AC9', // Brand/600
     primaryHover: '#1F87FC', // Brand/500
@@ -17,7 +17,7 @@ export const figmaThemeDark: ThemeConfig = {
     background: '#0D0D0D', // Background (Neutral/950) — page
     text: '#FAFAFA', // Content/Primary (Neutral/50)
     textMuted: '#9E9E9E', // Content/Tertiary (Neutral/400)
-    border: '#363636', // Border (Neutral/800) — lifted from spec's 900 for visibility on dark surfaces
+    border: '#363636', // Border (Neutral/800) — lifted from the spec's 900 for visibility on dark surfaces
     focusRing: 'rgba(31, 135, 252, 0.4)',
     error: '#FF8F8F', // Negative (Red/200)
     warning: '#FFE066', // Notice (Yellow/300)

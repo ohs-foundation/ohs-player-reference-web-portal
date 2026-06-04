@@ -5,11 +5,11 @@ import { platformConfig } from './config/platform';
 import { AppRoutes } from './AppRoutes';
 import { ThemeModeProvider } from './theme/ThemeModeProvider';
 import { useThemeMode } from './theme/themeModeContext';
-import { figmaThemeDark } from './theme/figmaThemeDark';
+import { darkTheme } from './theme/darkTheme';
 
 function ThemedApp() {
   const { mode } = useThemeMode();
-  const theme = mode === 'dark' ? figmaThemeDark : platformConfig.theme;
+  const theme = mode === 'dark' ? darkTheme : platformConfig.theme;
   const config = useMemo(() => ({ ...platformConfig, theme }), [theme]);
 
   // The provider applies tokens to [data-ohs-root]; also apply them to <html> so Radix portals

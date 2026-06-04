@@ -7,7 +7,7 @@ export interface EmptyStateProps {
   description?: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
-  /** Larger artwork rendered in place of the small icon circle (e.g. the Figma empty illustration). */
+  /** Larger artwork rendered in place of the small icon circle (e.g. the empty-state illustration). */
   illustration?: ReactNode;
 }
 

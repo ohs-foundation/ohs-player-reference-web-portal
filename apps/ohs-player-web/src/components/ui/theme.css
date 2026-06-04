@@ -14,7 +14,7 @@
   /* Definite height so descendants' `height: 100%` resolves (the wrapper sets only min-height inline). */
   height: 100%;
 
-  /* --- Figma tokens not managed by applyTheme (ticket #18). Managed colours/fonts/radius come from figmaTheme. --- */
+  /* --- Design tokens not managed by applyTheme; managed colours/fonts/radius come from lightTheme. --- */
   /* Neutral scale */
   --ohs-neutral-50: #fafafa;
   --ohs-neutral-100: #ededed;
@@ -1456,7 +1456,7 @@
 
 /* ---------- Dark theme ---------- */
 /* The managed colour tokens (primary/surface/background/text/border/error/success/…) flip via
-   applyTheme(figmaThemeDark). These are the tokens defined statically above (not part of the
+   applyTheme(darkTheme). These are the tokens defined statically above (not part of the
    applyTheme contract), plus the document body which sits outside [data-ohs-root]. `data-theme`
    is set on <html> by ThemeModeProvider. */
 [data-theme='dark'] body {

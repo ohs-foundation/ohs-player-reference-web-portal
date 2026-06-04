@@ -2,7 +2,7 @@ import type { CorePlatformConfig, PermissionMap } from 'ohs-player-web-core';
 import { env } from './env';
 import { appMessageOverrides } from '../i18n/appMessages';
 import { alternateTheme } from '../theme/altTheme';
-import { figmaTheme } from '../theme/figmaTheme';
+import { lightTheme } from '../theme/lightTheme';
 
 const permissionMap: PermissionMap = {
   'dashboard.view': ['admin', 'care-team-manager'],
@@ -46,7 +46,7 @@ export const platformConfig: CorePlatformConfig = {
     locale: 'en',
     messages: appMessageOverrides,
   },
-  theme: env.themeAlt ? alternateTheme : figmaTheme,
+  theme: env.themeAlt ? alternateTheme : lightTheme,
   customEndpoints: {
     users: '/api/users',
   },
