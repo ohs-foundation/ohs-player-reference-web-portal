@@ -13,6 +13,9 @@ export type { SearchFieldProps } from './SearchField';
 export { Avatar } from './Avatar';
 export type { AvatarProps } from './Avatar';
 
+export { Drawer } from './Drawer';
+export type { DrawerProps } from './Drawer';
+
 export { Inline, Page, PageHeader, Stack } from './Layout';
 export type { InlineProps, PageHeaderProps, PageProps, StackProps } from './Layout';
 

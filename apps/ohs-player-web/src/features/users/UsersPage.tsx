@@ -1,5 +1,6 @@
 import { type FormEvent, useMemo, useRef, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill, RiUserFill } from '@remixicon/react';
+import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
+import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   buildQuestionnaireResponse,
   FhirError,
@@ -36,6 +37,7 @@ import {
   userAnswersFromPractitioner,
 } from '../sdc/resourceFromAnswers';
 import { env } from '../../config/env';
+import { UserDetailsDrawer } from './UserDetailsDrawer';
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
@@ -364,6 +366,7 @@ export function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [detailsId, setDetailsId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
@@ -498,14 +501,7 @@ export function UsersPage() {
       {noUsers ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <EmptyState
-            illustration={
-              <span className="ohs-users-empty-art">
-                <RiUserFill size={56} />
-                <span className="ohs-users-empty-art__badge">
-                  <RiAddLine size={18} />
-                </span>
-              </span>
-            }
+            illustration={<img src={usersEmptyIllustration} alt="" width={112} height={130} />}
             title={t('usersEmptyTitle')}
             description={t('usersEmptyDescription')}
             action={
@@ -586,9 +582,16 @@ export function UsersPage() {
                 <Inline justify="start" style={{ gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
                   <Avatar name={name} />
                   <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <Link to={`/users/${p.id}/edit`} style={{ fontSize: 16, fontWeight: 500 }}>
+                    <button
+                      type="button"
+                      className="ohs-rowlink"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (p.id) setDetailsId(p.id);
+                      }}
+                    >
                       {name}
-                    </Link>
+                    </button>
                     {email ? (
                       <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
                         {email}
@@ -636,12 +639,20 @@ export function UsersPage() {
             render: (p) => (
               <OhsDropdownMenu.Root>
                 <OhsDropdownMenu.Trigger asChild>
-                  <IconButton label={t('rowActions')}>
+                  <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
                     <RiMore2Fill size={20} />
                   </IconButton>
                 </OhsDropdownMenu.Trigger>
                 <OhsDropdownMenu.Portal>
                   <OhsDropdownMenu.Content className="ohs-dropdown-content" align="end" sideOffset={4}>
+                    <OhsDropdownMenu.Item
+                      className="ohs-dropdown-item"
+                      onSelect={() => {
+                        if (p.id) setDetailsId(p.id);
+                      }}
+                    >
+                      {t('viewDetails')}
+                    </OhsDropdownMenu.Item>
                     <OhsDropdownMenu.Item
                       className="ohs-dropdown-item"
                       onSelect={() => {
@@ -662,6 +673,9 @@ export function UsersPage() {
         selectable
         selectedKeys={selectedIds}
         onSelectionChange={setSelectedIds}
+        onRowClick={(p) => {
+          if (p.id) setDetailsId(p.id);
+        }}
         pagination
         initialPageSize={10}
         errorState={searchError ? <ErrorState description={searchError} /> : undefined}
@@ -673,6 +687,24 @@ export function UsersPage() {
         }
       />
       )}
+
+      {detailsId ? (
+        <UserDetailsDrawer
+          id={detailsId}
+          onClose={() => setDetailsId(null)}
+          onEdit={() => {
+            const target = detailsId;
+            setDetailsId(null);
+            void navigate(`/users/${target}/edit`);
+          }}
+          onDeleted={() => {
+            setDetailsId(null);
+            status.notify({ tone: 'success', title: t('userDeactivated') });
+            void search.refetch();
+            void roleSearch.refetch();
+          }}
+        />
+      ) : null}
     </Page>
   );
 }

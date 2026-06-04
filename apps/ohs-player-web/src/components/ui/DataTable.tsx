@@ -26,6 +26,8 @@ export interface DataTableProps<Row> {
   selectable?: boolean;
   selectedKeys?: ReadonlySet<string>;
   onSelectionChange?: (keys: Set<string>) => void;
+  /** Row click handler (e.g. open a details drawer). The select + actions cells stop propagation. */
+  onRowClick?: (row: Row) => void;
   /** Enable client-side pagination + footer. */
   pagination?: boolean;
   initialPageSize?: number;
@@ -71,6 +73,7 @@ export function DataTable<Row>({
   selectable,
   selectedKeys,
   onSelectionChange,
+  onRowClick,
   pagination,
   initialPageSize = 10,
   pageSizeOptions = [10, 25, 50],
@@ -196,9 +199,14 @@ export function DataTable<Row>({
                   const key = rowKey(row);
                   const isSelected = selectedKeys?.has(key) ?? false;
                   return (
-                    <tr key={key} data-selected={isSelected || undefined}>
+                    <tr
+                      key={key}
+                      data-selected={isSelected || undefined}
+                      onClick={onRowClick ? () => onRowClick(row) : undefined}
+                      style={onRowClick ? { cursor: 'pointer' } : undefined}
+                    >
                       {selectable ? (
-                        <td style={{ width: '40px' }}>
+                        <td style={{ width: '40px' }} onClick={(e) => e.stopPropagation()}>
                           <Checkbox checked={isSelected} ariaLabel={t('selectRow')} onChange={() => toggleRow(key)} />
                         </td>
                       ) : null}

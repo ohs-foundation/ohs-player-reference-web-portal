@@ -26,6 +26,8 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Fail instead of drifting to 5174+ — the OIDC redirect URIs are pinned to :5173.
+    strictPort: true,
   },
   test: {
     environment: 'jsdom',
