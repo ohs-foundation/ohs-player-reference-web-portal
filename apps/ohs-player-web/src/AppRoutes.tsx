@@ -6,7 +6,7 @@ import { AppLayout } from './layout/AppLayout';
 import { CallbackPage } from './pages/CallbackPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
-import { UserEditPage, UsersPage } from './features/users/UsersPage';
+import { UsersPage } from './features/users/UsersPage';
 import { LocationEditPage, LocationsPage } from './features/locations/LocationsPage';
 import { OrganizationsPage } from './features/organizations/OrganizationsPage';
 import { CareTeamsPage } from './features/careteams/CareTeamsPage';
@@ -63,14 +63,6 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/users/:id/edit"
-          element={
-            <ProtectedRoute flag="userMgmt" permission="users.edit">
-              <UserEditWrap />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/locations"
           element={
             <ProtectedRoute flag="locationMgmt" permission="locations.view">
@@ -114,12 +106,6 @@ export function AppRoutes() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-}
-
-function UserEditWrap() {
-  const { id } = useParams();
-  if (!id) return <Navigate to="/users" replace />;
-  return <UserEditPage id={id} />;
 }
 
 function LocationEditWrap() {

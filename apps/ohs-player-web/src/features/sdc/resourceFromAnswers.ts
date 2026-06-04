@@ -41,21 +41,13 @@ export const USER_LINK_IDS = {
   active: 'user-active',
 } as const;
 
-const PRACTITIONER_IDENTIFIER_SYSTEM = 'urn:ohs:reference:practitioner-identifier';
+/** System for the human-facing Practitioner identifier (distinct from the backend's Keycloak-id system). */
+export const PRACTITIONER_IDENTIFIER_SYSTEM = 'urn:ohs:reference:practitioner-identifier';
 
 /**
- * One Organisation + Location context, materialised by the gateway as a `PractitionerRole`.
- * `organization`/`location` are FHIR references (e.g. `Organization/123`).
- */
-export interface PractitionerRoleAssignment {
-  organization: string;
-  location: string;
-  role: { system: string; code: string };
-}
-
-/**
- * Request body for `POST /api/users` (OHS backend). Creates the Keycloak user and a bare
- * Practitioner; Org/Location PractitionerRoles are posted separately (see `buildAssignmentsBundle`).
+ * Request body for `POST /api/users` (OHS backend). Creates the Keycloak user and a Practitioner with
+ * only name + active + the Keycloak-id identifier; every other FHIR field is enriched by the client
+ * afterwards via `buildNewUserBundle`.
  */
 export interface CreateUserPayload {
   username: string;
@@ -65,48 +57,173 @@ export interface CreateUserPayload {
   enabled: boolean;
 }
 
+/** Everything the redesigned Add User drawer collects (bespoke form, not SDC). */
+export interface NewUserFields {
+  givenName: string;
+  familyName: string;
+  email: string;
+  phone: string;
+  /** FHIR administrative-gender code (`male` | `female` | `other` | `unknown`) or ''. */
+  gender: string;
+  qualification: string;
+  /** Human-facing identifier (auto-generated `PRAC-###` or manual); null = none. */
+  identifier: { system: string; value: string } | null;
+  active: boolean;
+  /** PractitionerRole.code coding; null = no clinical role. */
+  role: { system: string; code: string } | null;
+  organizations: string[];
+  locations: string[];
+}
+
 /** Backend requires a username; derive it from the email local-part. */
-function usernameFromEmail(email: string): string {
+export function usernameFromEmail(email: string): string {
   return email.split('@')[0]?.trim().toLowerCase() ?? '';
 }
 
-export function buildCreateUserPayload(answers: Record<string, string>): CreateUserPayload {
-  const email = answers[USER_LINK_IDS.email]?.trim() ?? '';
+function genderToFhir(raw: string): string | undefined {
+  const g = raw.trim().toLowerCase();
+  return g === 'male' || g === 'female' || g === 'other' || g === 'unknown' ? g : undefined;
+}
+
+export function buildNewUserPayload(fields: NewUserFields): CreateUserPayload {
   return {
-    username: usernameFromEmail(email),
-    firstName: answers[USER_LINK_IDS.given]?.trim() ?? '',
-    lastName: answers[USER_LINK_IDS.family]?.trim() ?? '',
-    email,
-    enabled: true,
+    username: usernameFromEmail(fields.email),
+    firstName: fields.givenName.trim(),
+    lastName: fields.familyName.trim(),
+    email: fields.email.trim(),
+    enabled: fields.active,
   };
 }
 
 interface TransactionEntry {
-  resource: Record<string, unknown>;
-  request: { method: 'POST'; url: string };
+  /** Omitted for DELETE entries. */
+  resource?: Record<string, unknown>;
+  request: { method: 'POST' | 'PUT' | 'DELETE'; url: string };
+}
+
+/** Merge the form's demographic fields into a Practitioner, preserving unmanaged fields via spread. */
+function enrichPractitioner(
+  created: Record<string, unknown>,
+  fields: NewUserFields,
+): Record<string, unknown> {
+  const given = fields.givenName.trim() ? fields.givenName.trim().split(/\s+/) : [];
+  const telecom: ContactPoint[] = [];
+  if (fields.email.trim()) telecom.push({ system: 'email', value: fields.email.trim() });
+  if (fields.phone.trim()) telecom.push({ system: 'phone', value: fields.phone.trim() });
+
+  const keycloakIds = Array.isArray(created.identifier)
+    ? (created.identifier as Identifier[]).filter((i) => i.system !== PRACTITIONER_IDENTIFIER_SYSTEM)
+    : [];
+  const identifier = fields.identifier ? [...keycloakIds, fields.identifier] : keycloakIds;
+  const gender = genderToFhir(fields.gender);
+
+  const practitioner: Record<string, unknown> = {
+    ...created,
+    active: fields.active,
+    name: [{ family: fields.familyName.trim(), given }],
+  };
+  if (telecom.length > 0) practitioner.telecom = telecom;
+  else delete practitioner.telecom;
+  if (identifier.length > 0) practitioner.identifier = identifier;
+  else delete practitioner.identifier;
+  if (gender) practitioner.gender = gender;
+  else delete practitioner.gender;
+  if (fields.qualification.trim())
+    practitioner.qualification = [{ code: { text: fields.qualification.trim() } }];
+  else delete practitioner.qualification;
+  return practitioner;
+}
+
+/** One PractitionerRole per organisation (or a single role-only entry when no org is chosen). */
+function roleEntries(ref: string, fields: NewUserFields): TransactionEntry[] {
+  const hasAssignment =
+    Boolean(fields.role) || fields.organizations.length > 0 || fields.locations.length > 0;
+  if (!hasAssignment) return [];
+  const orgs = fields.organizations.length > 0 ? fields.organizations : [''];
+  return orgs.map((org) => {
+    const role: Record<string, unknown> = {
+      resourceType: 'PractitionerRole',
+      active: true,
+      practitioner: { reference: ref },
+    };
+    if (org) role.organization = { reference: org };
+    if (fields.locations.length > 0) role.location = fields.locations.map((l) => ({ reference: l }));
+    if (fields.role) role.code = [{ coding: [{ system: fields.role.system, code: fields.role.code }] }];
+    return { resource: role, request: { method: 'POST' as const, url: 'PractitionerRole' } };
+  });
+}
+
+function addParticipant(ct: Record<string, unknown>, ref: string): TransactionEntry {
+  const ctId = typeof ct.id === 'string' ? ct.id : '';
+  const participant = Array.isArray(ct.participant) ? [...(ct.participant as unknown[])] : [];
+  participant.push({ member: { reference: ref } });
+  return { resource: { ...ct, participant }, request: { method: 'PUT', url: `CareTeam/${ctId}` } };
+}
+
+function removeParticipant(ct: Record<string, unknown>, ref: string): TransactionEntry {
+  const ctId = typeof ct.id === 'string' ? ct.id : '';
+  const participant = (
+    Array.isArray(ct.participant) ? (ct.participant as { member?: { reference?: string } }[]) : []
+  ).filter((p) => p.member?.reference !== ref);
+  return { resource: { ...ct, participant }, request: { method: 'PUT', url: `CareTeam/${ctId}` } };
 }
 
 /**
- * Org/Location assignments → one FHIR transaction of PractitionerRole creates, referencing the
- * Practitioner the backend returned from `POST /api/users` (the backend does not create roles itself).
+ * Post-create FHIR transaction enriching the bare Practitioner the backend returned: PUT it with the
+ * demographics the backend drops (email/phone → telecom, gender, qualification, display identifier),
+ * POST one PractitionerRole per organisation, and PUT each selected CareTeam with the practitioner added
+ * as a participant. The Keycloak-id identifier is preserved.
  */
-export function buildAssignmentsBundle(
-  practitionerId: string,
-  assignments: PractitionerRoleAssignment[],
+export function buildNewUserBundle(
+  created: Record<string, unknown>,
+  fields: NewUserFields,
+  careTeams: Record<string, unknown>[],
 ): { resourceType: 'Bundle'; type: 'transaction'; entry: TransactionEntry[] } {
-  const practitionerRef = `Practitioner/${practitionerId}`;
-  const entry: TransactionEntry[] = assignments.map((a) => ({
-    resource: {
-      resourceType: 'PractitionerRole',
-      active: true,
-      practitioner: { reference: practitionerRef },
-      organization: { reference: a.organization },
-      location: [{ reference: a.location }],
-      code: [{ coding: [{ system: a.role.system, code: a.role.code }] }],
-    },
-    request: { method: 'POST', url: 'PractitionerRole' },
-  }));
-  return { resourceType: 'Bundle', type: 'transaction', entry };
+  const id = typeof created.id === 'string' ? created.id : '';
+  const ref = `Practitioner/${id}`;
+  return {
+    resourceType: 'Bundle',
+    type: 'transaction',
+    entry: [
+      { resource: enrichPractitioner(created, fields), request: { method: 'PUT', url: ref } },
+      ...roleEntries(ref, fields),
+      ...careTeams.filter((ct) => typeof ct.id === 'string').map((ct) => addParticipant(ct, ref)),
+    ],
+  };
+}
+
+/**
+ * Edit-save transaction: PUT the enriched Practitioner, replace its PractitionerRoles (DELETE the
+ * existing ones, POST fresh ones from the form), and reconcile CareTeam membership (PUT additions with
+ * the participant added, removals with it filtered out). FHIR processes DELETE before POST, so the
+ * replace is conflict-free.
+ */
+export function buildUserEditBundle(
+  practitioner: Record<string, unknown>,
+  fields: NewUserFields,
+  opts: {
+    existingRoleIds: string[];
+    careTeamAdds: Record<string, unknown>[];
+    careTeamRemoves: Record<string, unknown>[];
+  },
+): { resourceType: 'Bundle'; type: 'transaction'; entry: TransactionEntry[] } {
+  const id = typeof practitioner.id === 'string' ? practitioner.id : '';
+  const ref = `Practitioner/${id}`;
+  return {
+    resourceType: 'Bundle',
+    type: 'transaction',
+    entry: [
+      { resource: enrichPractitioner(practitioner, fields), request: { method: 'PUT', url: ref } },
+      ...opts.existingRoleIds.map((rid) => ({
+        request: { method: 'DELETE' as const, url: `PractitionerRole/${rid}` },
+      })),
+      ...roleEntries(ref, fields),
+      ...opts.careTeamAdds.filter((ct) => typeof ct.id === 'string').map((ct) => addParticipant(ct, ref)),
+      ...opts.careTeamRemoves
+        .filter((ct) => typeof ct.id === 'string')
+        .map((ct) => removeParticipant(ct, ref)),
+    ],
+  };
 }
 
 type PractitionerName = { family?: string; given?: string[] };

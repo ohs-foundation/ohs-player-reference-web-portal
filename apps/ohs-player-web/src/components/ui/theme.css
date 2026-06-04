@@ -1030,6 +1030,228 @@
   background: rgba(179, 38, 30, 0.06);
 }
 
+/* ---- Add User form drawer ---- */
+/* Header: title + subtitle + close (32/40 padding per spec; 40 is off the spacing scale, see #18). */
+.ohs-form-drawer__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ohs-spacing-4, 16px);
+  padding: 32px 40px;
+  border-bottom: 2px solid var(--ohs-color-border, #ededed);
+}
+.ohs-form-drawer__title {
+  margin: 0;
+  font-size: var(--ohs-font-heading-m-size, 24px);
+  line-height: var(--ohs-font-heading-m-line, 32px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.ohs-form-drawer__subtitle {
+  margin: var(--ohs-spacing-1, 4px) 0 0;
+  font-size: var(--ohs-font-text-m-size, 14px);
+  line-height: var(--ohs-font-text-m-line, 20px);
+  color: var(--ohs-color-text-muted, #696969);
+}
+
+/* Stacked-label field: label on top, control below, inside a bordered 72px box (16/20 padding per spec). */
+.ohs-formfield {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-spacing-1, 4px);
+  min-height: 72px;
+  box-sizing: border-box;
+  justify-content: center;
+  padding: var(--ohs-spacing-4, 16px) 20px;
+  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-radius-default, 8px);
+  background: var(--ohs-color-surface, #fff);
+}
+.ohs-formfield:focus-within {
+  border-color: var(--ohs-color-text-muted, #696969);
+}
+.ohs-formfield--full {
+  grid-column: 1 / -1;
+}
+.ohs-formfield__label {
+  font-size: var(--ohs-font-text-s-size, 12px);
+  line-height: var(--ohs-font-text-s-line, 16px);
+  color: var(--ohs-color-text-quaternary, #9e9e9e);
+}
+.ohs-formfield__input {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--ohs-font-text-m-size, 14px);
+  line-height: var(--ohs-font-text-m-line, 20px);
+  color: var(--ohs-color-text, #0d0d0d);
+  outline: none;
+}
+.ohs-formfield__input::placeholder {
+  color: var(--ohs-color-text-quaternary, #9e9e9e);
+}
+/* Native select sitting flush inside the stacked field, with a remix chevron on the right. */
+.ohs-formfield__selectwrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ohs-formfield__select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  padding-right: var(--ohs-spacing-6, 32px);
+  margin: 0;
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--ohs-font-text-m-size, 14px);
+  line-height: var(--ohs-font-text-m-line, 20px);
+  color: var(--ohs-color-text, #0d0d0d);
+  outline: none;
+  cursor: pointer;
+}
+.ohs-formfield__chevron {
+  position: absolute;
+  right: 0;
+  pointer-events: none;
+  color: var(--ohs-color-text-muted, #696969);
+}
+
+/* Radio group (Identifier mode, Status) — native inputs tinted brand. */
+.ohs-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-spacing-2, 8px);
+}
+.ohs-radio-group__label {
+  font-size: var(--ohs-font-text-s-size, 12px);
+  line-height: var(--ohs-font-text-s-line, 16px);
+  color: var(--ohs-color-text-quaternary, #9e9e9e);
+}
+.ohs-radio-group__options {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-spacing-6, 32px);
+  flex-wrap: wrap;
+}
+.ohs-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ohs-spacing-3, 12px);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  color: var(--ohs-color-text, #0d0d0d);
+  cursor: pointer;
+}
+.ohs-radio input[type='radio'] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ohs-color-primary, #094f9a);
+  cursor: pointer;
+}
+
+/* Multi-select with chips: chips wrap inside the field, an "add" select sits below. */
+.ohs-multiselect__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ohs-spacing-2, 8px);
+}
+.ohs-multiselect__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ohs-spacing-2, 8px);
+  padding: var(--ohs-spacing-1, 4px) var(--ohs-spacing-3, 12px);
+  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-radius-pill, 999px);
+  background: var(--ohs-color-surface-variant, #f5f5f5);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.ohs-multiselect__chip-remove {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ohs-color-text-muted, #696969);
+}
+.ohs-multiselect__chip-remove:hover {
+  color: var(--ohs-color-text, #0d0d0d);
+}
+
+/* Avatar upload (deferred): dashed placeholder + outline button + helper text. */
+.ohs-image-upload {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-spacing-4, 16px);
+}
+.ohs-image-upload__placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border: 1px dashed var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-radius-pill, 999px);
+  color: var(--ohs-color-text-quaternary, #9e9e9e);
+}
+.ohs-image-upload__helper {
+  margin: var(--ohs-spacing-1, 4px) 0 0;
+  font-size: var(--ohs-font-text-s-size, 12px);
+  line-height: var(--ohs-font-text-s-line, 16px);
+  color: var(--ohs-color-text-quaternary, #9e9e9e);
+}
+
+/* ---- Users table: expanded filter panel ---- */
+/* Each filter is a stacked field box (reuses .ohs-formfield) so Status + Role line up by their tops. */
+.ohs-users-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--ohs-spacing-4, 16px);
+  padding-top: var(--ohs-spacing-4, 16px);
+  border-top: 1px solid var(--ohs-color-border, #ededed);
+}
+.ohs-users-filters__field {
+  flex: 0 0 auto;
+  min-width: 280px;
+}
+.ohs-users-filters__field--role {
+  flex: 0 1 280px;
+  min-width: 220px;
+}
+/* The status box holds chips instead of a single input; let it grow to fit them. */
+.ohs-users-filters__field .ohs-chip-set {
+  margin-top: var(--ohs-spacing-1, 4px);
+}
+.ohs-users-filters__clear {
+  align-self: center;
+  margin-left: auto;
+  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-3, 12px);
+  background: none;
+  border: none;
+  border-radius: var(--ohs-radius-default, 8px);
+  font: inherit;
+  font-size: var(--ohs-font-text-m-size, 14px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  color: var(--ohs-color-primary, #094f9a);
+  cursor: pointer;
+}
+.ohs-users-filters__clear:hover {
+  text-decoration: underline;
+}
+.ohs-users-filters__clear:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
+}
+
 /* Table name cell: link-styled button that opens the details drawer */
 .ohs-rowlink {
   background: none;

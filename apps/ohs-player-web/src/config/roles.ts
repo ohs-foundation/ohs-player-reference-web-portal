@@ -22,3 +22,11 @@ export const PRACTITIONER_ROLE_CODES: readonly RoleOption[] = [
   { value: 'researcher', label: 'Researcher' },
   { value: 'teacher', label: 'Teacher / educator' },
 ];
+
+/** FHIR `administrative-gender` codes for the create form's Gender select. */
+export const GENDER_OPTIONS: readonly RoleOption[] = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+  { value: 'unknown', label: 'Unknown' },
+];

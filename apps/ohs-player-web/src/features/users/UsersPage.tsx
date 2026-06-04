@@ -1,44 +1,18 @@
-import { type FormEvent, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
 import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
-  buildQuestionnaireResponse,
-  FhirError,
-  formatOperationOutcomeMessage,
-  OhsDialog,
   OhsDropdownMenu,
   PermissionGuard,
-  QuestionnaireFields,
-  useCreateResource,
-  useCustomEndpoint,
-  useFhirClient,
-  useQuestionnaireFormState,
-  useResource,
   useSearch,
   useStatusBar,
   useTranslation,
-  useUpdateResource,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
-import { Avatar, Button, Card, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, IconButton, Inline, LinearProgress, Page, PageHeader, SearchField, SelectField, type SelectFieldOption, Spinner, Stack, StatusBadge } from '../../components/ui';
-import { Link, useNavigate } from 'react-router-dom';
-import { getBundledQuestionnaires } from '../../questionnaires/registry';
-import { PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
-import {
-  applyUserAnswersToPractitioner,
-  buildAssignmentsBundle,
-  buildCreateUserPayload,
-  type PractitionerRoleAssignment,
-  USER_LINK_IDS,
-  userAnswersFromPractitioner,
-} from '../sdc/resourceFromAnswers';
+import { Avatar, Button, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, IconButton, Inline, LinearProgress, Page, PageHeader, SearchField, Stack, StatusBadge } from '../../components/ui';
+import { UserCreateDrawer } from './UserCreateDrawer';
+import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
+import { StackedSelect } from './userFormControls';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 
@@ -115,227 +89,24 @@ function buildOrgNameMap(
   return map;
 }
 
-type AssignmentRow = { rowId: number; organization: string; location: string; role: string };
-
-function referenceOptions(
-  bundle: unknown,
-  resourceType: string,
-): SelectFieldOption[] {
-  const entries = (bundle as { entry?: { resource?: { id?: string; name?: string } }[] } | undefined)
-    ?.entry;
-  return (entries ?? [])
-    .map((e) => e.resource)
-    .filter((r): r is { id?: string; name?: string } => Boolean(r?.id))
-    .map((r) => ({ value: `${resourceType}/${r.id ?? ''}`, label: r.name ?? r.id ?? '' }));
-}
-
-function keycloakIdFromCreated(created: unknown): string | undefined {
-  const identifiers = (created as { identifier?: { value?: string }[] } | undefined)?.identifier;
-  return identifiers?.find((i) => i.value)?.value;
-}
-
-export function UserCreateForm({
-  questionnaire,
-  onSuccess,
-  onCancel,
-}: Readonly<{
-  questionnaire: ReturnType<typeof getBundledQuestionnaires>['user'];
-  onSuccess: () => void;
-  onCancel: () => void;
-}>) {
-  const { t } = useTranslation();
-  const { post } = useCustomEndpoint('users');
-  const createQr = useCreateResource('QuestionnaireResponse');
-  const client = useFhirClient();
-
-  const orgSearch = useSearch('Organization', { _count: '200' });
-  const locSearch = useSearch('Location', { _count: '500' });
-  const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
-  const locOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
-  const roleCodeOptions = useMemo<SelectFieldOption[]>(
-    () => PRACTITIONER_ROLE_CODES.map((r) => ({ value: r.value, label: r.label })),
-    [],
-  );
-  const refDataLoading = orgSearch.isLoading || locSearch.isLoading;
-  const refDataEmpty = !refDataLoading && (orgOptions.length === 0 || locOptions.length === 0);
-
-  const { answers, setAnswer, validateRequired } = useQuestionnaireFormState(questionnaire, {
-    [USER_LINK_IDS.given]: '',
-    [USER_LINK_IDS.family]: '',
-    [USER_LINK_IDS.email]: '',
-  });
-
-  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
-  const rowIdRef = useRef(0);
-
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [assignmentError, setAssignmentError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const addAssignment = () => {
-    rowIdRef.current += 1;
-    setAssignments((prev) => [
-      ...prev,
-      { rowId: rowIdRef.current, organization: '', location: '', role: '' },
-    ]);
-  };
-  const updateAssignment = (rowId: number, key: keyof AssignmentRow, value: string) => {
-    setAssignments((prev) => prev.map((r) => (r.rowId === rowId ? { ...r, [key]: value } : r)));
-  };
-  const removeAssignment = (rowId: number) => {
-    setAssignments((prev) => prev.filter((r) => r.rowId !== rowId));
-  };
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setValidationError(null);
-    setAssignmentError(null);
-    setSubmitError(null);
-
-    let valid = true;
-    if (validateRequired().length > 0) {
-      setValidationError(t('questionnaireRequiredFields'));
-      valid = false;
-    }
-    if (assignments.some((a) => !a.organization || !a.location || !a.role)) {
-      setAssignmentError(t('assignmentIncomplete'));
-      valid = false;
-    }
-    if (!valid) return;
-
-    void (async () => {
-      setSubmitting(true);
-      try {
-        const payloadAssignments: PractitionerRoleAssignment[] = assignments.map((a) => ({
-          organization: a.organization,
-          location: a.location,
-          role: { system: PRACTITIONER_ROLE_SYSTEM, code: a.role },
-        }));
-        const payload = buildCreateUserPayload(answers);
-
-        const created = await post.mutateAsync(payload);
-        const createdId = (created as { id?: string }).id;
-        if (createdId && payloadAssignments.length > 0) {
-          await client.transaction(buildAssignmentsBundle(createdId, payloadAssignments));
-        }
-        const keycloakId = keycloakIdFromCreated(created);
-        const auditDescription = keycloakId
-          ? `User created via backend (Keycloak ${keycloakId})`
-          : 'User created via backend';
-
-        const qr = buildQuestionnaireResponse({ questionnaire, answers, status: 'completed' });
-        await createQr.mutateAsync(qr);
-        await writeAuditEvent(client, {
-          action: 'create',
-          resourceType: 'Practitioner',
-          description: auditDescription,
-        });
-        onSuccess();
-      } catch (error_) {
-        setSubmitError(toErrorMessage(error_));
-      } finally {
-        setSubmitting(false);
-      }
-    })();
-  };
-
-  const isPending = submitting || post.isPending || createQr.isPending;
-
-  return (
-    <form id="user-create-form" onSubmit={onSubmit} noValidate>
-      <Stack gap={4}>
-        {validationError ? <ErrorState description={validationError} /> : null}
-        {submitError ? <ErrorState description={submitError} /> : null}
-
-        <QuestionnaireFields questionnaire={questionnaire} answers={answers} setAnswer={setAnswer} />
-
-        <Stack gap={2}>
-          <span style={{ fontSize: 'var(--ohs-text-label)', fontWeight: 600 }}>{t('assignmentsLabel')}</span>
-          <span style={{ color: 'var(--ohs-color-text-muted)', fontSize: 'var(--ohs-text-label)' }}>
-            {t('assignmentsHint')}
-          </span>
-          {refDataLoading ? <Spinner label={t('loading')} /> : null}
-          {refDataEmpty ? (
-            <span style={{ color: 'var(--ohs-color-text-muted)', fontSize: 'var(--ohs-text-label)' }}>
-              {t('assignmentsNeedData')}
-            </span>
-          ) : null}
-          {assignments.map((row) => (
-            <Inline key={row.rowId} justify="start" style={{ gap: 'var(--ohs-spacing-3, 12px)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <div style={{ flex: '1 1 180px', minWidth: 160 }}>
-                <SelectField
-                  label={t('contextOrganization')}
-                  name={`assignment-org-${row.rowId}`}
-                  options={orgOptions}
-                  value={row.organization}
-                  onChange={(e) => updateAssignment(row.rowId, 'organization', e.target.value)}
-                />
-              </div>
-              <div style={{ flex: '1 1 180px', minWidth: 160 }}>
-                <SelectField
-                  label={t('contextLocation')}
-                  name={`assignment-loc-${row.rowId}`}
-                  options={locOptions}
-                  value={row.location}
-                  onChange={(e) => updateAssignment(row.rowId, 'location', e.target.value)}
-                />
-              </div>
-              <div style={{ flex: '1 1 160px', minWidth: 140 }}>
-                <SelectField
-                  label={t('contextRole')}
-                  name={`assignment-role-${row.rowId}`}
-                  options={roleCodeOptions}
-                  value={row.role}
-                  onChange={(e) => updateAssignment(row.rowId, 'role', e.target.value)}
-                />
-              </div>
-              <Button variant="outlined" size="sm" type="button" onClick={() => removeAssignment(row.rowId)}>
-                {t('removeAssignment')}
-              </Button>
-            </Inline>
-          ))}
-          {assignmentError ? (
-            <span role="alert" style={{ color: 'var(--ohs-color-error)', fontSize: 'var(--ohs-text-label)' }}>
-              {assignmentError}
-            </span>
-          ) : null}
-          <Inline justify="start">
-            <Button variant="outlined" size="sm" type="button" onClick={addAssignment} disabled={refDataLoading}>
-              {t('addAssignment')}
-            </Button>
-          </Inline>
-        </Stack>
-
-        <Inline justify="end" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="outlined" type="button" onClick={onCancel} disabled={isPending}>
-            {t('cancel')}
-          </Button>
-          <Button type="submit" disabled={isPending} loading={isPending}>
-            {t('saveAndClose')}
-          </Button>
-        </Inline>
-      </Stack>
-    </form>
-  );
-}
-
 export function UsersPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
-  const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [detailsId, setDetailsId] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
-  const activeFilterCount = (statusFilter === 'all' ? 0 : 1) + (roleFilter === 'all' ? 0 : 1);
+  const activeFilterCount = (statusFilter === 'all' ? 0 : 1) + (roleFilter ? 1 : 0);
 
-  const questionnaire = getBundledQuestionnaires().user;
+  const clearFilters = (): void => {
+    setStatusFilter('all');
+    setRoleFilter('');
+  };
 
   // Name search is client-side (below) so typing never refires the query — keeps the table from flickering.
   const search = useSearch('Practitioner', { _count: '500' });
@@ -376,11 +147,8 @@ export function UsersPage() {
       for (const c of s) codes.add(c);
     }
     const sorted = [...codes].sort((a, b) => a.localeCompare(b));
-    return [
-      { value: 'all', label: t('filterRoleAll') },
-      ...sorted.map((code) => ({ value: code, label: code })),
-    ];
-  }, [roleMap, t]);
+    return sorted.map((code) => ({ value: code, label: code }));
+  }, [roleMap]);
 
   const filteredRows = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -392,7 +160,7 @@ export function UsersPage() {
       }
       if (statusFilter === 'active' && p.active === false) return false;
       if (statusFilter === 'inactive' && p.active !== false) return false;
-      if (roleFilter !== 'all') {
+      if (roleFilter) {
         const roles = roleMap.get(p.id);
         if (!roles?.has(roleFilter)) return false;
       }
@@ -406,11 +174,10 @@ export function UsersPage() {
   }
 
   const openCreate = (): void => {
-    setResetKey((k) => k + 1);
-    setModalOpen(true);
+    setCreateOpen(true);
   };
 
-  const isFiltering = q.trim() !== '' || statusFilter !== 'all' || roleFilter !== 'all';
+  const isFiltering = q.trim() !== '' || statusFilter !== 'all' || roleFilter !== '';
   // Only the genuine "no users at all" case hides the toolbar; a no-match search keeps it.
   const noUsers = !search.isLoading && !searchError && rawRows.length === 0 && !isFiltering;
 
@@ -442,24 +209,17 @@ export function UsersPage() {
 
       {search.isLoading ? <LinearProgress /> : null}
 
-      <OhsDialog
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        headline={t('dialogCreateUser')}
-        minWidth="min(96vw, 560px)"
-      >
-        <UserCreateForm
-          key={resetKey}
-          questionnaire={questionnaire}
-          onCancel={() => setModalOpen(false)}
+      {createOpen ? (
+        <UserCreateDrawer
+          onClose={() => setCreateOpen(false)}
           onSuccess={() => {
-            setModalOpen(false);
+            setCreateOpen(false);
             status.notify({ tone: 'success', title: t('userCreated') });
             void search.refetch();
             void roleSearch.refetch();
           }}
         />
-      </OhsDialog>
+      ) : null}
 
       {noUsers ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -499,31 +259,30 @@ export function UsersPage() {
               </Button>
             </Inline>
             {filtersOpen ? (
-              <Inline
-                justify="start"
-                style={{
-                  flexWrap: 'wrap',
-                  gap: 'var(--ohs-spacing-4, 16px)',
-                  alignItems: 'center',
-                  paddingTop: 'var(--ohs-spacing-3, 12px)',
-                  borderTop: '1px solid var(--ohs-color-border, #ededed)',
-                }}
-              >
-                <ChipSet>
-                  <FilterChip label={t('filterStatusAll')} selected={statusFilter === 'all'} onChange={() => setStatusFilter('all')} />
-                  <FilterChip label={t('filterStatusActive')} selected={statusFilter === 'active'} onChange={() => setStatusFilter('active')} />
-                  <FilterChip label={t('filterStatusInactive')} selected={statusFilter === 'inactive'} onChange={() => setStatusFilter('inactive')} />
-                </ChipSet>
-                <div style={{ flex: '0 1 240px', minWidth: 200 }}>
-                  <SelectField
+              <div className="ohs-users-filters">
+                <div className="ohs-formfield ohs-users-filters__field">
+                  <span className="ohs-formfield__label">{t('filterStatus')}</span>
+                  <ChipSet>
+                    <FilterChip label={t('filterStatusAll')} selected={statusFilter === 'all'} onChange={() => setStatusFilter('all')} />
+                    <FilterChip label={t('filterStatusActive')} selected={statusFilter === 'active'} onChange={() => setStatusFilter('active')} />
+                    <FilterChip label={t('filterStatusInactive')} selected={statusFilter === 'inactive'} onChange={() => setStatusFilter('inactive')} />
+                  </ChipSet>
+                </div>
+                <div className="ohs-users-filters__field ohs-users-filters__field--role">
+                  <StackedSelect
                     label={t('filterRole')}
-                    name="roleFilter"
-                    options={roleOptions}
                     value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
+                    onChange={setRoleFilter}
+                    options={roleOptions}
+                    placeholder={t('filterRoleAll')}
                   />
                 </div>
-              </Inline>
+                {activeFilterCount > 0 ? (
+                  <button type="button" className="ohs-users-filters__clear" onClick={clearFilters}>
+                    {t('clearFilters')}
+                  </button>
+                ) : null}
+              </div>
             ) : null}
           </Stack>
         }
@@ -616,14 +375,16 @@ export function UsersPage() {
                     >
                       {t('viewDetails')}
                     </OhsDropdownMenu.Item>
-                    <OhsDropdownMenu.Item
-                      className="ohs-dropdown-item"
-                      onSelect={() => {
-                        void navigate(`/users/${p.id}/edit`);
-                      }}
-                    >
-                      {t('edit')}
-                    </OhsDropdownMenu.Item>
+                    <PermissionGuard permission="users.edit">
+                      <OhsDropdownMenu.Item
+                        className="ohs-dropdown-item"
+                        onSelect={() => {
+                          if (p.id) setEditId(p.id);
+                        }}
+                      >
+                        {t('edit')}
+                      </OhsDropdownMenu.Item>
+                    </PermissionGuard>
                   </OhsDropdownMenu.Content>
                 </OhsDropdownMenu.Portal>
               </OhsDropdownMenu.Root>
@@ -656,9 +417,8 @@ export function UsersPage() {
           id={detailsId}
           onClose={() => setDetailsId(null)}
           onEdit={() => {
-            const target = detailsId;
+            setEditId(detailsId);
             setDetailsId(null);
-            void navigate(`/users/${target}/edit`);
           }}
           onDeleted={() => {
             setDetailsId(null);
@@ -668,172 +428,19 @@ export function UsersPage() {
           }}
         />
       ) : null}
-    </Page>
-  );
-}
 
-export function UserEditForm({
-  id,
-  practitioner,
-}: Readonly<{ id: string; practitioner: Record<string, unknown> }>) {
-  const { t } = useTranslation();
-  const client = useFhirClient();
-  const navigate = useNavigate();
-  const questionnaire = getBundledQuestionnaires().userEdit;
-
-  const initialAnswers = useMemo(
-    () => userAnswersFromPractitioner(practitioner),
-    [practitioner],
-  );
-  const { answers, setAnswer, validateRequired } = useQuestionnaireFormState(
-    questionnaire,
-    initialAnswers,
-  );
-
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const goToList = () => {
-    Promise.resolve(navigate('/users')).catch(() => undefined);
-  };
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setValidationError(null);
-    setSubmitError(null);
-    if (validateRequired().length > 0) {
-      setValidationError(t('questionnaireRequiredFields'));
-      return;
-    }
-    void (async () => {
-      setSubmitting(true);
-      try {
-        const updated = applyUserAnswersToPractitioner(practitioner, answers);
-        await client.transaction({
-          resourceType: 'Bundle',
-          type: 'transaction',
-          entry: [{ resource: updated, request: { method: 'PUT', url: `Practitioner/${id}` } }],
-        });
-        await writeAuditEvent(client, {
-          action: 'update',
-          resourceType: 'Practitioner',
-          resourceId: id,
-        });
-        goToList();
-      } catch (error_) {
-        setSubmitError(toErrorMessage(error_));
-      } finally {
-        setSubmitting(false);
-      }
-    })();
-  };
-
-  return (
-    <form id="user-edit-form" onSubmit={onSubmit} noValidate>
-      <Stack gap={3}>
-        {validationError ? <ErrorState description={validationError} /> : null}
-        {submitError ? <ErrorState description={submitError} /> : null}
-        <QuestionnaireFields questionnaire={questionnaire} answers={answers} setAnswer={setAnswer} />
-        <Inline justify="end" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="outlined" type="button" onClick={goToList} disabled={submitting}>
-            {t('cancel')}
-          </Button>
-          <Button type="submit" disabled={submitting} loading={submitting}>
-            {t('save')}
-          </Button>
-        </Inline>
-      </Stack>
-    </form>
-  );
-}
-
-export function UserEditPage({ id }: Readonly<{ id: string }>) {
-  const { t } = useTranslation();
-  const read = useResource('Practitioner', id);
-  const pract = read.data as Record<string, unknown> | undefined;
-  const update = useUpdateResource('Practitioner');
-  const client = useFhirClient();
-
-  if (read.isLoading) {
-    return (
-      <Page>
-        <Inline justify="start" style={{ gap: 'var(--ohs-spacing-2, 8px)', padding: 'var(--ohs-spacing-4, 16px) 0' }}>
-          <Spinner />
-          <span style={{ color: 'var(--ohs-color-text-muted)' }}>{t('loading')}</span>
-        </Inline>
-      </Page>
-    );
-  }
-  if (read.error) {
-    return (
-      <Page>
-        <PageHeader title={t('pageUserEdit')} />
-        <ErrorState description={toErrorMessage(read.error)} />
-        <p>
-          <Link to="/users">{t('back')}</Link>
-        </p>
-      </Page>
-    );
-  }
-  if (!pract) {
-    return (
-      <Page>
-        <p>{t('empty')}</p>
-      </Page>
-    );
-  }
-
-  const onDeactivate = () => {
-    void (async () => {
-      const inactive = { ...pract, active: false };
-      await update.mutateAsync({ id, body: inactive });
-      const ctSearch = (await client.search('CareTeam', {
-        participant: `Practitioner/${id}`,
-      })) as Bundle;
-      for (const ent of ctSearch.entry ?? []) {
-        const ct = ent.resource as {
-          id?: string;
-          resourceType?: string;
-          participant?: { member?: { reference?: string } }[];
-        };
-        if (!ct.id) continue;
-        const next = {
-          ...ct,
-          participant: (ct.participant ?? []).filter(
-            (p) => p.member?.reference !== `Practitioner/${id}`,
-          ),
-        };
-        await client.update('CareTeam', ct.id, next);
-      }
-      await writeAuditEvent(client, {
-        action: 'update',
-        resourceType: 'Practitioner',
-        resourceId: id,
-        description: 'Deactivated',
-      });
-      globalThis.location.href = '/users';
-    })().catch(console.error);
-  };
-
-  return (
-    <Page>
-      <PageHeader title={t('pageUserEdit')} />
-      <Card>
-        <Stack gap={3}>
-          <UserEditForm id={id} practitioner={pract} />
-          <PermissionGuard permission="users.deactivate">
-            <Inline justify="start">
-              <Button variant="danger" size="sm" type="button" onClick={onDeactivate}>
-                {t('deactivateUser')}
-              </Button>
-            </Inline>
-          </PermissionGuard>
-          <p>
-            <Link to="/users">{t('back')}</Link>
-          </p>
-        </Stack>
-      </Card>
+      {editId ? (
+        <UserEditDrawer
+          id={editId}
+          onClose={() => setEditId(null)}
+          onSuccess={() => {
+            setEditId(null);
+            status.notify({ tone: 'success', title: t('saved') });
+            void search.refetch();
+            void roleSearch.refetch();
+          }}
+        />
+      ) : null}
     </Page>
   );
 }
