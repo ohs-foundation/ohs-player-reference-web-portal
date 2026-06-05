@@ -7,6 +7,15 @@ export type { CardHeaderProps, CardProps } from './Card';
 export { Field, TextField, TextAreaField, SelectField } from './Field';
 export type { FieldRootProps, SelectFieldOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './Field';
 
+export { SearchField } from './SearchField';
+export type { SearchFieldProps } from './SearchField';
+
+export { Avatar } from './Avatar';
+export type { AvatarProps } from './Avatar';
+
+export { Drawer } from './Drawer';
+export type { DrawerProps } from './Drawer';
+
 export { Inline, Page, PageHeader, Stack } from './Layout';
 export type { InlineProps, PageHeaderProps, PageProps, StackProps } from './Layout';
 

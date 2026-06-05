@@ -7,15 +7,21 @@ export interface EmptyStateProps {
   description?: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
+  /** Larger artwork rendered in place of the small icon circle (e.g. the empty-state illustration). */
+  illustration?: ReactNode;
 }
 
-export function EmptyState({ title, description, action, icon }: Readonly<EmptyStateProps>): React.ReactElement {
+export function EmptyState({ title, description, action, icon, illustration }: Readonly<EmptyStateProps>): React.ReactElement {
   const { t } = useTranslation();
   return (
     <div className="ohs-empty" role="status">
-      <span className="ohs-empty__icon" aria-hidden="true">
-        {icon ?? <DefaultEmptyIcon />}
-      </span>
+      {illustration ? (
+        <span className="ohs-empty__illustration" aria-hidden="true">{illustration}</span>
+      ) : (
+        <span className="ohs-empty__icon" aria-hidden="true">
+          {icon ?? <DefaultEmptyIcon />}
+        </span>
+      )}
       <h3 className="ohs-empty__title">{title ?? t('emptyTitle')}</h3>
       <p className="ohs-empty__description">{description ?? t('emptyDescription')}</p>
       {action}

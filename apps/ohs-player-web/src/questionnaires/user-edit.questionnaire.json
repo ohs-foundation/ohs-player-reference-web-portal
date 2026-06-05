@@ -1,9 +1,9 @@
 {
   "resourceType": "Questionnaire",
   "status": "active",
-  "url": "https://ohs-player.reference.portal/fhir/Questionnaire/user",
+  "url": "https://ohs-player.reference.portal/fhir/Questionnaire/user-edit",
   "version": "1.0.0",
-  "title": "User",
+  "title": "Edit User",
   "subjectType": ["Practitioner"],
   "item": [
     {
@@ -37,8 +37,22 @@
       "linkId": "user-email",
       "text": "Email",
       "type": "string",
-      "required": true,
+      "required": false,
       "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.telecom"
+    },
+    {
+      "linkId": "user-identifier",
+      "text": "Identifier",
+      "type": "string",
+      "required": false,
+      "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.identifier"
+    },
+    {
+      "linkId": "user-active",
+      "text": "Active",
+      "type": "boolean",
+      "required": false,
+      "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.active"
     }
   ]
 }
