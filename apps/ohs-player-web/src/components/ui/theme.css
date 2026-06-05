@@ -1075,6 +1075,17 @@
 .ohs-formfield:focus-within {
   border-color: var(--ohs-color-text-muted, #696969);
 }
+.ohs-formfield--error {
+  border-color: var(--ohs-color-error, #b3261e);
+}
+.ohs-formfield--error:focus-within {
+  border-color: var(--ohs-color-error, #b3261e);
+}
+.ohs-formfield__error {
+  font-size: var(--ohs-font-text-s-size, 12px);
+  line-height: var(--ohs-font-text-s-line, 16px);
+  color: var(--ohs-color-error, #b3261e);
+}
 .ohs-formfield--full {
   grid-column: 1 / -1;
 }

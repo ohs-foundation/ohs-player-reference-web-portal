@@ -32,6 +32,7 @@ import {
   StackedSelect,
 } from './userFormControls';
 import { type Option, referenceOptions } from './userFormOptions';
+import { type UserFormErrors, validateUserForm } from './userFormSchema';
 
 interface SearchBundle {
   entry?: { resource?: Record<string, unknown> }[];
@@ -132,8 +133,12 @@ export function UserEditDrawer({
   const [locations, setLocations] = useState<string[]>([]);
   const [careTeamIds, setCareTeamIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<UserFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+
+  const clearError = (key: keyof UserFormErrors) =>
+    setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
 
   const relationsLoading = roleSearch.isLoading || membershipSearch.isLoading;
 
@@ -165,10 +170,22 @@ export function UserEditDrawer({
   const submit = (): void => {
     setError(null);
     if (!pract) return;
-    if (!given.trim() || !family.trim() || !email.trim()) {
-      setError(t('questionnaireRequiredFields'));
-      return;
-    }
+    const errors = validateUserForm(
+      {
+        givenName: given,
+        familyName: family,
+        email,
+        phone,
+        gender,
+        qualification,
+        identifierMode: idMode,
+        identifierValue: idValue,
+      },
+      t,
+    );
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     let identifier: { system: string; value: string } | null = null;
     if (idMode === 'manual') {
       identifier = idValue.trim()
@@ -255,10 +272,43 @@ export function UserEditDrawer({
             <Stack gap={5}>
               <ImageUpload />
               <div className="ohs-detail-grid">
-                <StackedInput label={t('givenName')} value={given} onChange={setGiven} />
-                <StackedInput label={t('familyName')} value={family} onChange={setFamily} />
-                <StackedInput label={t('emailAddress')} type="email" value={email} onChange={setEmail} />
-                <StackedInput label={t('phoneNumber')} value={phone} onChange={setPhone} />
+                <StackedInput
+                  label={t('givenName')}
+                  value={given}
+                  error={fieldErrors.givenName}
+                  onChange={(v) => {
+                    setGiven(v);
+                    clearError('givenName');
+                  }}
+                />
+                <StackedInput
+                  label={t('familyName')}
+                  value={family}
+                  error={fieldErrors.familyName}
+                  onChange={(v) => {
+                    setFamily(v);
+                    clearError('familyName');
+                  }}
+                />
+                <StackedInput
+                  label={t('emailAddress')}
+                  type="email"
+                  value={email}
+                  error={fieldErrors.email}
+                  onChange={(v) => {
+                    setEmail(v);
+                    clearError('email');
+                  }}
+                />
+                <StackedInput
+                  label={t('phoneNumber')}
+                  value={phone}
+                  error={fieldErrors.phone}
+                  onChange={(v) => {
+                    setPhone(v);
+                    clearError('phone');
+                  }}
+                />
                 <StackedSelect
                   full
                   label={t('gender')}
@@ -279,7 +329,16 @@ export function UserEditDrawer({
                 ]}
               />
               {idMode === 'manual' ? (
-                <StackedInput full label={t('columnIdentifier')} value={idValue} onChange={setIdValue} />
+                <StackedInput
+                  full
+                  label={t('columnIdentifier')}
+                  value={idValue}
+                  error={fieldErrors.identifierValue}
+                  onChange={(v) => {
+                    setIdValue(v);
+                    clearError('identifierValue');
+                  }}
+                />
               ) : null}
             </Stack>
           </Section>

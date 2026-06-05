@@ -121,7 +121,7 @@ describe('UserCreateDrawer', () => {
     fireEvent.change(screen.getByLabelText('emailAddress'), { target: { value: 'jane@example.com' } });
   }
 
-  it('blocks submit when required fields are missing', () => {
+  it('blocks submit when required fields are missing', async () => {
     render(
       <MemoryRouter>
         <UserCreateDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
@@ -130,7 +130,7 @@ describe('UserCreateDrawer', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
-    expect(screen.getByText('questionnaireRequiredFields')).toBeInTheDocument();
+    expect(await screen.findByText('validationRequiredGiven')).toBeInTheDocument();
     expect(mockPost).not.toHaveBeenCalled();
   });
 

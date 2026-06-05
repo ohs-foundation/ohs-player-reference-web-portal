@@ -33,6 +33,7 @@ import {
   StackedSelect,
 } from './userFormControls';
 import { type Option, referenceOptions } from './userFormOptions';
+import { type UserFormErrors, validateUserForm } from './userFormSchema';
 
 interface SearchBundle {
   entry?: { resource?: { id?: string; name?: string } }[];
@@ -96,17 +97,33 @@ export function UserCreateDrawer({
   const [locations, setLocations] = useState<string[]>([]);
   const [careTeamIds, setCareTeamIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<UserFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const clearError = (key: keyof UserFormErrors) =>
+    setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
 
   const manualIdentifier =
     idValue.trim().length > 0 ? { system: PRACTITIONER_IDENTIFIER_SYSTEM, value: idValue.trim() } : null;
 
   const submit = (): void => {
     setError(null);
-    if (!given.trim() || !family.trim() || !email.trim()) {
-      setError(t('questionnaireRequiredFields'));
-      return;
-    }
+    const errors = validateUserForm(
+      {
+        givenName: given,
+        familyName: family,
+        email,
+        phone,
+        gender,
+        qualification,
+        identifierMode: idMode,
+        identifierValue: idValue,
+      },
+      t,
+    );
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     const fields: NewUserFields = {
       givenName: given,
       familyName: family,
@@ -183,10 +200,43 @@ export function UserCreateDrawer({
           <Stack gap={5}>
             <ImageUpload />
             <div className="ohs-detail-grid">
-              <StackedInput label={t('givenName')} value={given} onChange={setGiven} />
-              <StackedInput label={t('familyName')} value={family} onChange={setFamily} />
-              <StackedInput label={t('emailAddress')} type="email" value={email} onChange={setEmail} />
-              <StackedInput label={t('phoneNumber')} value={phone} onChange={setPhone} />
+              <StackedInput
+                label={t('givenName')}
+                value={given}
+                error={fieldErrors.givenName}
+                onChange={(v) => {
+                  setGiven(v);
+                  clearError('givenName');
+                }}
+              />
+              <StackedInput
+                label={t('familyName')}
+                value={family}
+                error={fieldErrors.familyName}
+                onChange={(v) => {
+                  setFamily(v);
+                  clearError('familyName');
+                }}
+              />
+              <StackedInput
+                label={t('emailAddress')}
+                type="email"
+                value={email}
+                error={fieldErrors.email}
+                onChange={(v) => {
+                  setEmail(v);
+                  clearError('email');
+                }}
+              />
+              <StackedInput
+                label={t('phoneNumber')}
+                value={phone}
+                error={fieldErrors.phone}
+                onChange={(v) => {
+                  setPhone(v);
+                  clearError('phone');
+                }}
+              />
               <StackedSelect
                 full
                 label={t('gender')}
@@ -211,8 +261,12 @@ export function UserCreateDrawer({
                 full
                 label={t('columnIdentifier')}
                 value={idValue}
-                onChange={setIdValue}
+                error={fieldErrors.identifierValue}
                 placeholder={autoIdentifier}
+                onChange={(v) => {
+                  setIdValue(v);
+                  clearError('identifierValue');
+                }}
               />
             ) : null}
           </Stack>

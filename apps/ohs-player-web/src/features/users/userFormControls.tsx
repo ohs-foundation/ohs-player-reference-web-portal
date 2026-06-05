@@ -25,6 +25,12 @@ export function Section({
   );
 }
 
+function fieldClass(full?: boolean, error?: string): string {
+  return ['ohs-formfield', full ? 'ohs-formfield--full' : '', error ? 'ohs-formfield--error' : '']
+    .filter(Boolean)
+    .join(' ');
+}
+
 export function StackedInput({
   label,
   value,
@@ -32,6 +38,7 @@ export function StackedInput({
   type = 'text',
   placeholder,
   full,
+  error,
 }: Readonly<{
   label: string;
   value: string;
@@ -39,10 +46,11 @@ export function StackedInput({
   type?: string;
   placeholder?: string;
   full?: boolean;
+  error?: string;
 }>): React.ReactElement {
   const id = useId();
   return (
-    <div className={full ? 'ohs-formfield ohs-formfield--full' : 'ohs-formfield'}>
+    <div className={fieldClass(full, error)}>
       <label className="ohs-formfield__label" htmlFor={id}>
         {label}
       </label>
@@ -52,8 +60,14 @@ export function StackedInput({
         type={type}
         value={value}
         placeholder={placeholder}
+        aria-invalid={error ? true : undefined}
         onChange={(e) => onChange(e.target.value)}
       />
+      {error ? (
+        <span className="ohs-formfield__error" role="alert">
+          {error}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -65,6 +79,7 @@ export function StackedSelect({
   options,
   placeholder,
   full,
+  error,
 }: Readonly<{
   label: string;
   value: string;
@@ -72,10 +87,11 @@ export function StackedSelect({
   options: readonly Option[];
   placeholder: string;
   full?: boolean;
+  error?: string;
 }>): React.ReactElement {
   const id = useId();
   return (
-    <div className={full ? 'ohs-formfield ohs-formfield--full' : 'ohs-formfield'}>
+    <div className={fieldClass(full, error)}>
       <label className="ohs-formfield__label" htmlFor={id}>
         {label}
       </label>
@@ -84,6 +100,7 @@ export function StackedSelect({
           id={id}
           className="ohs-formfield__select"
           value={value}
+          aria-invalid={error ? true : undefined}
           onChange={(e) => onChange(e.target.value)}
         >
           <option value="">{placeholder}</option>
@@ -95,6 +112,11 @@ export function StackedSelect({
         </select>
         <RiArrowDownSLine size={20} className="ohs-formfield__chevron" aria-hidden="true" />
       </div>
+      {error ? (
+        <span className="ohs-formfield__error" role="alert">
+          {error}
+        </span>
+      ) : null}
     </div>
   );
 }
