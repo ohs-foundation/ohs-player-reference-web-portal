@@ -39,12 +39,6 @@
       "type": "string",
       "required": true,
       "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.telecom"
-    },
-    {
-      "linkId": "user-roles",
-      "text": "Roles (comma-separated)",
-      "type": "string",
-      "required": false
     }
   ]
 }

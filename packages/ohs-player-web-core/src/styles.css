@@ -1,6 +1,94 @@
 /**
  * Consumer-facing stylesheet for apps that import `ohs-player-web-core/styles.css`.
- * Matches CSS pulled in by `src/index.ts` (theme + M3 bridge). Material tokens come from JS imports.
+ * Provides minimal overlay styles for Radix Dialog, DropdownMenu, and Tabs.
+ * Apps should import their own theme.css for design tokens and component styles.
  */
-@import './ui/primitives/theme.css';
-@import './ui/m3/m3-bridge.css';
+
+/* ─── Dialog ──────────────────────────────────────────────────────────────── */
+
+.ohs-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 50;
+  animation: ohs-fade-in 150ms ease;
+}
+
+.ohs-dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 51;
+  background: var(--ohs-color-surface, #fff);
+  border-radius: var(--ohs-radius-lg, 12px);
+  box-shadow: var(--ohs-shadow-lg, 0 8px 32px rgba(15, 23, 42, 0.2));
+  padding: var(--ohs-spacing-6, 24px);
+  width: min(92vw, 560px);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  animation: ohs-slide-up 180ms ease;
+}
+
+.ohs-dialog-title {
+  margin: 0 0 var(--ohs-spacing-4, 16px);
+  font-size: var(--ohs-text-title, 18px);
+  font-weight: 600;
+  color: var(--ohs-color-text, #1f2933);
+  line-height: 1.3;
+}
+
+.ohs-dialog-body {
+  color: var(--ohs-color-text, #1f2933);
+}
+
+.ohs-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ohs-spacing-3, 12px);
+  margin-top: var(--ohs-spacing-5, 20px);
+  flex-wrap: wrap;
+}
+
+/* ─── Dropdown ────────────────────────────────────────────────────────────── */
+
+.ohs-dropdown-content {
+  background: var(--ohs-color-surface, #fff);
+  border: 1px solid var(--ohs-color-border, #dde3ed);
+  border-radius: var(--ohs-radius-md, 8px);
+  box-shadow: var(--ohs-shadow-md, 0 4px 12px rgba(15, 23, 42, 0.15));
+  padding: var(--ohs-spacing-1, 4px);
+  min-width: 180px;
+  z-index: 52;
+  animation: ohs-fade-in 120ms ease;
+}
+
+.ohs-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-spacing-2, 8px);
+  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-3, 12px);
+  border-radius: var(--ohs-radius-sm, 4px);
+  font-size: var(--ohs-text-body, 14px);
+  color: var(--ohs-color-text, #1f2933);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+
+.ohs-dropdown-item:hover,
+.ohs-dropdown-item[data-highlighted] {
+  background: var(--ohs-color-surface-hover, #f0f4ff);
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes ohs-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ohs-slide-up {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}

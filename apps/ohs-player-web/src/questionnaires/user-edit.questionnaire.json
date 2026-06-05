@@ -1,0 +1,58 @@
+{
+  "resourceType": "Questionnaire",
+  "status": "active",
+  "url": "https://ohs-player.reference.portal/fhir/Questionnaire/user-edit",
+  "version": "1.0.0",
+  "title": "Edit User",
+  "subjectType": ["Practitioner"],
+  "item": [
+    {
+      "linkId": "user-name-group",
+      "text": "Name",
+      "type": "group",
+      "extension": [
+        {
+          "url": "https://ohs-player.reference.portal/fhir/StructureDefinition/questionnaire-grid-columns",
+          "valueInteger": 2
+        }
+      ],
+      "item": [
+        {
+          "linkId": "user-given",
+          "text": "Given name",
+          "type": "string",
+          "required": true,
+          "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.name.given"
+        },
+        {
+          "linkId": "user-family",
+          "text": "Family name",
+          "type": "string",
+          "required": true,
+          "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.name.family"
+        }
+      ]
+    },
+    {
+      "linkId": "user-email",
+      "text": "Email",
+      "type": "string",
+      "required": false,
+      "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.telecom"
+    },
+    {
+      "linkId": "user-identifier",
+      "text": "Identifier",
+      "type": "string",
+      "required": false,
+      "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.identifier"
+    },
+    {
+      "linkId": "user-active",
+      "text": "Active",
+      "type": "boolean",
+      "required": false,
+      "definition": "http://hl7.org/fhir/StructureDefinition/Practitioner#Practitioner.active"
+    }
+  ]
+}

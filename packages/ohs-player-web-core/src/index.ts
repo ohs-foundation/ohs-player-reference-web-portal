@@ -2,11 +2,6 @@
  * @public Library public API surface for `ohs-player-web-core`.
  */
 
-// Register Material Web components before any JSX uses them.
-import './ui/m3/imports';
-import './ui/primitives/theme.css';
-import './ui/m3/m3-bridge.css';
-
 export { OHS_PLAYER_WEB_CORE_VERSION } from './version';
 
 // Types
@@ -71,68 +66,17 @@ export {
 } from './hooks/useFhirData';
 
 export { formatOperationOutcomeMessage } from './ui/operationOutcome';
-export { OhsDialog, OhsToast, OhsTooltip } from './ui/radix';
-export { OhsDropdownMenu } from './ui/m3/OhsM3DropdownMenu';
-export { OhsM3Tabs as OhsTabs } from './ui/m3/OhsM3Tabs';
-export { OhsM3Dialog } from './ui/m3/OhsM3Dialog';
-
-// Token-driven primitive kit (Material 3 via @material/web + OHS field shell)
 export {
-  Button,
-  Card,
-  CardHeader,
-  Checkbox,
-  ChipSet,
-  DataTable,
-  EmptyState,
-  ErrorState,
-  Field,
-  FilterChip,
-  IconButton,
-  Inline,
-  LinearProgress,
-  Page,
-  PageHeader,
-  SelectField,
-  Spinner,
-  Stack,
-  StatusBadge,
-  StatusBarProvider,
-  Switch,
-  TextAreaField,
-  TextField,
-  useStatusBar,
-} from './ui/primitives';
-export type {
-  ButtonProps,
-  ButtonSize,
-  ButtonVariant,
-  CardHeaderProps,
-  CardProps,
-  CheckboxProps,
-  ChipSetProps,
-  DataTableColumn,
-  DataTableProps,
-  EmptyStateProps,
-  ErrorStateProps,
-  FieldRootProps,
-  FieldStyle,
-  FilterChipProps,
-  IconButtonProps,
-  InlineProps,
-  LinearProgressProps,
-  PageHeaderProps,
-  PageProps,
-  SelectFieldOption,
-  SelectFieldProps,
-  StackProps,
-  StatusBadgeProps,
-  StatusTone,
-  SwitchProps,
-  TextAreaFieldProps,
-  TextFieldProps,
-} from './ui/primitives';
-export type { OhsM3DialogProps } from './ui/m3/OhsM3Dialog';
+  OhsDialog,
+  OhsDropdownMenu,
+  OhsTabs,
+  OhsToast,
+  OhsTooltip,
+} from './ui/radix';
+export type { OhsDialogProps } from './ui/radix';
+
+export { StatusBarProvider, useStatusBar } from './ui/primitives/StatusBar';
+export type { StatusTone } from './ui/primitives/StatusBar';
 
 export { writeAuditEvent } from './audit/writeAudit';
 
@@ -145,6 +89,7 @@ export type {
   QuestionnaireResponse,
   QuestionnaireResponseItem,
   BuildQuestionnaireResponseOptions,
+  SelectFieldOption,
 } from './sdc';
 export {
   buildQuestionnaireResponse,

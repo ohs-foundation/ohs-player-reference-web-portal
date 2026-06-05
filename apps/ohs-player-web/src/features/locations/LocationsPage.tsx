@@ -1,28 +1,20 @@
 import { useMemo, useState, type FormEvent, type ReactElement } from 'react';
 import type { Questionnaire } from 'ohs-player-web-core';
 import {
-  Button,
-  Card,
-  ErrorState,
-  Inline,
-  LinearProgress,
-  OhsM3Dialog,
-  Page,
-  PageHeader,
+  buildQuestionnaireResponse,
+  OhsDialog,
   PermissionGuard,
-  Spinner,
-  Stack,
+  QuestionnaireFields,
   useCreateResource,
   useFhirClient,
+  useQuestionnaireFormState,
   useResource,
   useSearch,
   useTranslation,
   useUpdateResource,
   writeAuditEvent,
-  QuestionnaireFields,
-  useQuestionnaireFormState,
-  buildQuestionnaireResponse,
 } from 'ohs-player-web-core';
+import { Button, Card, ErrorState, Inline, LinearProgress, Page, PageHeader, Spinner, Stack } from '../../components/ui';
 import { Link, useNavigate } from 'react-router-dom';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import {
@@ -270,7 +262,7 @@ export function LocationsPage() {
         }
       />
       <Stack gap={4}>
-        <OhsM3Dialog
+        <OhsDialog
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           headline={t('dialogCreateLocation')}
@@ -283,7 +275,7 @@ export function LocationsPage() {
             onCancel={() => setModalOpen(false)}
             onSuccess={() => setModalOpen(false)}
           />
-        </OhsM3Dialog>
+        </OhsDialog>
 
         {search.isLoading ? <LinearProgress /> : null}
         {err ? <ErrorState description={err} /> : null}

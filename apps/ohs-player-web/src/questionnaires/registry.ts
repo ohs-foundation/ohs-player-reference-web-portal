@@ -2,6 +2,7 @@ import locationQuestionnaire from './location.questionnaire.json';
 import organizationQuestionnaire from './organization.questionnaire.json';
 import careTeamQuestionnaire from './careteam.questionnaire.json';
 import userQuestionnaire from './user.questionnaire.json';
+import userEditQuestionnaire from './user-edit.questionnaire.json';
 import { env } from '../config/env';
 
 /** Canonical URLs — keep in sync with bundled JSON `url` fields. */
@@ -13,6 +14,8 @@ export const CARETEAM_QUESTIONNAIRE_CANONICAL =
   'https://ohs-player.reference.portal/fhir/Questionnaire/careteam';
 export const USER_QUESTIONNAIRE_CANONICAL =
   'https://ohs-player.reference.portal/fhir/Questionnaire/user';
+export const USER_EDIT_QUESTIONNAIRE_CANONICAL =
+  'https://ohs-player.reference.portal/fhir/Questionnaire/user-edit';
 
 const variants = {
   default: {
@@ -20,6 +23,7 @@ const variants = {
     location: locationQuestionnaire,
     careteam: careTeamQuestionnaire,
     user: userQuestionnaire,
+    userEdit: userEditQuestionnaire,
   },
 } as const;
 

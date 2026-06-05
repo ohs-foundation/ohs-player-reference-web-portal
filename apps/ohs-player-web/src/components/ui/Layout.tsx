@@ -6,8 +6,7 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
   gap?: StackGap;
 }
 
-/** Vertical flex container. `gap` maps to spacing tokens 1..6. */
-export function Stack({ gap = 3, className, ...rest }: StackProps): React.ReactElement {
+export function Stack({ gap = 3, className, ...rest }: Readonly<StackProps>): React.ReactElement {
   return (
     <div
       className={['ohs-stack', className].filter(Boolean).join(' ')}
@@ -21,8 +20,7 @@ export interface InlineProps extends HTMLAttributes<HTMLDivElement> {
   justify?: 'start' | 'between' | 'end';
 }
 
-/** Horizontal flex container with sensible defaults. */
-export function Inline({ justify = 'start', className, ...rest }: InlineProps): React.ReactElement {
+export function Inline({ justify = 'start', className, ...rest }: Readonly<InlineProps>): React.ReactElement {
   return (
     <div
       className={['ohs-inline', className].filter(Boolean).join(' ')}
@@ -36,7 +34,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
-export function Page({ children, className, ...rest }: PageProps): React.ReactElement {
+export function Page({ children, className, ...rest }: Readonly<PageProps>): React.ReactElement {
   return (
     <div className={['ohs-page', className].filter(Boolean).join(' ')} {...rest}>
       {children}
@@ -51,12 +49,7 @@ export interface PageHeaderProps {
   lastUpdated?: ReactNode;
 }
 
-export function PageHeader({
-  title,
-  description,
-  actions,
-  lastUpdated,
-}: PageHeaderProps): React.ReactElement {
+export function PageHeader({ title, description, actions, lastUpdated }: Readonly<PageHeaderProps>): React.ReactElement {
   return (
     <header className="ohs-page-header">
       <div>

@@ -1,4 +1,5 @@
-import { Button, Page, PageHeader, Stack, useTranslation } from 'ohs-player-web-core';
+import { useTranslation } from 'ohs-player-web-core';
+import { Button, Page, PageHeader, Stack } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
 
 export function UnauthorizedPage() {

@@ -1,25 +1,27 @@
 import { type ReactNode } from 'react';
-import { useTranslation } from '../../i18n/I18nProvider';
+import * as Progress from '@radix-ui/react-progress';
+import { useTranslation } from 'ohs-player-web-core';
 
 export interface EmptyStateProps {
   title?: ReactNode;
   description?: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
+  /** Larger artwork rendered in place of the small icon circle (e.g. the empty-state illustration). */
+  illustration?: ReactNode;
 }
 
-export function EmptyState({
-  title,
-  description,
-  action,
-  icon,
-}: EmptyStateProps): React.ReactElement {
+export function EmptyState({ title, description, action, icon, illustration }: Readonly<EmptyStateProps>): React.ReactElement {
   const { t } = useTranslation();
   return (
     <div className="ohs-empty" role="status">
-      <span className="ohs-empty__icon" aria-hidden="true">
-        {icon ?? <DefaultEmptyIcon />}
-      </span>
+      {illustration ? (
+        <span className="ohs-empty__illustration" aria-hidden="true">{illustration}</span>
+      ) : (
+        <span className="ohs-empty__icon" aria-hidden="true">
+          {icon ?? <DefaultEmptyIcon />}
+        </span>
+      )}
       <h3 className="ohs-empty__title">{title ?? t('emptyTitle')}</h3>
       <p className="ohs-empty__description">{description ?? t('emptyDescription')}</p>
       {action}
@@ -34,12 +36,7 @@ export interface ErrorStateProps {
   icon?: ReactNode;
 }
 
-export function ErrorState({
-  title,
-  description,
-  action,
-  icon,
-}: ErrorStateProps): React.ReactElement {
+export function ErrorState({ title, description, action, icon }: Readonly<ErrorStateProps>): React.ReactElement {
   const { t } = useTranslation();
   return (
     <div className="ohs-error-state" role="alert">
@@ -61,11 +58,7 @@ export interface StatusBadgeProps {
   icon?: ReactNode;
 }
 
-export function StatusBadge({
-  tone = 'neutral',
-  icon,
-  children,
-}: StatusBadgeProps): React.ReactElement {
+export function StatusBadge({ tone = 'neutral', icon, children }: Readonly<StatusBadgeProps>): React.ReactElement {
   return (
     <span className="ohs-badge" data-tone={tone}>
       {icon}
@@ -74,12 +67,11 @@ export function StatusBadge({
   );
 }
 
-export function Spinner({ label }: { label?: string }): React.ReactElement {
+export function Spinner({ label }: Readonly<{ label?: string }>): React.ReactElement {
   const { t } = useTranslation();
   return (
-    <md-circular-progress
-      indeterminate
-      style={{ width: '20px', height: '20px', display: 'inline-block' }}
+    <span
+      className="ohs-spinner"
       role="status"
       aria-label={label ?? t('loading')}
     />
@@ -90,45 +82,31 @@ export interface LinearProgressProps {
   indeterminate?: boolean;
   value?: number;
   max?: number;
-  buffer?: number;
   label?: string;
   style?: React.CSSProperties;
 }
 
-export function LinearProgress({
-  indeterminate = true,
-  value,
-  max,
-  buffer,
-  label,
-  style,
-}: LinearProgressProps): React.ReactElement {
+export function LinearProgress({ indeterminate = true, value, max = 100, label, style }: Readonly<LinearProgressProps>): React.ReactElement {
   const { t } = useTranslation();
+  const pct = indeterminate ? undefined : Math.round(((value ?? 0) / max) * 100);
   return (
-    <md-linear-progress
-      indeterminate={indeterminate || undefined}
-      value={value}
-      max={max}
-      buffer={buffer}
-      role="progressbar"
+    <Progress.Root
+      className="ohs-linear-progress"
+      value={pct}
       aria-label={label ?? t('loading')}
       style={{ width: '100%', ...style }}
-    />
+    >
+      <Progress.Indicator
+        className={['ohs-linear-progress__bar', indeterminate ? 'ohs-linear-progress__bar--indeterminate' : ''].filter(Boolean).join(' ')}
+        style={pct !== undefined ? { transform: `translateX(-${100 - pct}%)` } : undefined}
+      />
+    </Progress.Root>
   );
 }
 
 function DefaultEmptyIcon(): React.ReactElement {
   return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <line x1="8" y1="12" x2="16" y2="12" />
     </svg>
@@ -137,16 +115,7 @@ function DefaultEmptyIcon(): React.ReactElement {
 
 function DefaultErrorIcon(): React.ReactElement {
   return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />

@@ -1,7 +1,8 @@
 import * as Toast from '@radix-ui/react-toast';
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n/I18nProvider';
-import type { StatusTone } from './States';
+
+export type StatusTone = 'success' | 'warning' | 'error' | 'info' | 'neutral';
 
 interface StatusEvent {
   id: number;

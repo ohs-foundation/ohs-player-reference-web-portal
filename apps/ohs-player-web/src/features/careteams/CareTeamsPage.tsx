@@ -1,20 +1,9 @@
 import { type FormEvent, useMemo, useState } from 'react';
 import {
-  Button,
   buildQuestionnaireResponse,
-  Card,
-  EmptyState,
-  ErrorState,
-  Inline,
-  LinearProgress,
-  OhsM3Dialog,
-  Page,
-  PageHeader,
+  OhsDialog,
   PermissionGuard,
   QuestionnaireFields,
-  SelectField,
-  Stack,
-  StatusBadge,
   useCreateResource,
   useFhirClient,
   useQuestionnaireFormState,
@@ -23,6 +12,7 @@ import {
   useUpdateResource,
   writeAuditEvent,
 } from 'ohs-player-web-core';
+import { Button, Card, EmptyState, ErrorState, Inline, LinearProgress, Page, PageHeader, SelectField, Stack, StatusBadge } from '../../components/ui';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { CARETEAM_LINK_IDS, careTeamBodyFromAnswers } from '../sdc/resourceFromAnswers';
 
@@ -237,7 +227,7 @@ export function CareTeamsPage() {
         }
       />
 
-      <OhsM3Dialog
+      <OhsDialog
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         headline={t('dialogCreateCareTeam')}
@@ -253,7 +243,7 @@ export function CareTeamsPage() {
             globalThis.location.reload();
           }}
         />
-      </OhsM3Dialog>
+      </OhsDialog>
 
       <Stack gap={4}>
         <section aria-labelledby="care-teams-list-heading">
