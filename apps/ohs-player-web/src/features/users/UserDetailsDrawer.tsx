@@ -177,7 +177,7 @@ export function UserDetailsDrawer({
   const footer = (
     <div className="ohs-user-drawer__foot">
       <Button variant="outlined" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)}>
-        {t('deleteUser')}
+        {t('deactivateUser')}
       </Button>
       <Button type="button" onClick={onEdit}>
         {t('editDetails')}

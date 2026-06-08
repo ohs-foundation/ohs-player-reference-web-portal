@@ -97,9 +97,12 @@ export function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
-  const [detailsId, setDetailsId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  // One drawer at a time: details OR edit, never both (avoids the two-drawer overlay).
+  const [viewer, setViewer] = useState<{ mode: 'details' | 'edit'; id: string } | null>(null);
+  const openDetails = (id: string) => setViewer({ mode: 'details', id });
+  const openEdit = (id: string) => setViewer({ mode: 'edit', id });
+  const closeViewer = () => setViewer(null);
 
   const activeFilterCount = (statusFilter === 'all' ? 0 : 1) + (roleFilter ? 1 : 0);
 
@@ -309,7 +312,7 @@ export function UsersPage() {
                       className="ohs-rowlink"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (p.id) setDetailsId(p.id);
+                        if (p.id) openDetails(p.id);
                       }}
                     >
                       {name}
@@ -370,7 +373,7 @@ export function UsersPage() {
                     <OhsDropdownMenu.Item
                       className="ohs-dropdown-item"
                       onSelect={() => {
-                        if (p.id) setDetailsId(p.id);
+                        if (p.id) openDetails(p.id);
                       }}
                     >
                       {t('viewDetails')}
@@ -379,7 +382,7 @@ export function UsersPage() {
                       <OhsDropdownMenu.Item
                         className="ohs-dropdown-item"
                         onSelect={() => {
-                          if (p.id) setEditId(p.id);
+                          if (p.id) openEdit(p.id);
                         }}
                       >
                         {t('edit')}
@@ -398,7 +401,10 @@ export function UsersPage() {
         selectedKeys={selectedIds}
         onSelectionChange={setSelectedIds}
         onRowClick={(p) => {
-          if (p.id) setDetailsId(p.id);
+          // Functional update (reads latest state) so the stray click fired as a kebab menu closes
+          // can't override the edit/details the menu item just set — only opens when nothing is open.
+          const id = p.id;
+          if (id) setViewer((cur) => cur ?? { mode: 'details', id });
         }}
         pagination
         initialPageSize={10}
@@ -412,16 +418,13 @@ export function UsersPage() {
       />
       )}
 
-      {detailsId ? (
+      {viewer?.mode === 'details' ? (
         <UserDetailsDrawer
-          id={detailsId}
-          onClose={() => setDetailsId(null)}
-          onEdit={() => {
-            setEditId(detailsId);
-            setDetailsId(null);
-          }}
+          id={viewer.id}
+          onClose={closeViewer}
+          onEdit={() => openEdit(viewer.id)}
           onDeleted={() => {
-            setDetailsId(null);
+            closeViewer();
             status.notify({ tone: 'success', title: t('userDeactivated') });
             void search.refetch();
             void roleSearch.refetch();
@@ -429,12 +432,12 @@ export function UsersPage() {
         />
       ) : null}
 
-      {editId ? (
+      {viewer?.mode === 'edit' ? (
         <UserEditDrawer
-          id={editId}
-          onClose={() => setEditId(null)}
+          id={viewer.id}
+          onClose={closeViewer}
           onSuccess={() => {
-            setEditId(null);
+            closeViewer();
             status.notify({ tone: 'success', title: t('saved') });
             void search.refetch();
             void roleSearch.refetch();
