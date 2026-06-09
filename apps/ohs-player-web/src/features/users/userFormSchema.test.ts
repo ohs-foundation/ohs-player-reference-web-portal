@@ -48,4 +48,13 @@ describe('validateUserForm', () => {
       validateUserForm(values({ identifierMode: 'manual', identifierValue: 'PRAC-012' }), t).identifierValue,
     ).toBeUndefined();
   });
+
+  it('rejects an email whose username (local-part) is under 3 chars only when enforceUsername is set', () => {
+    // nh@mail.com → username "nh" (2 chars) — Keycloak rejects < 3.
+    expect(validateUserForm(values({ email: 'nh@mail.com' }), t, { enforceUsername: true }).email).toBe(
+      'validationEmailUsernameLength',
+    );
+    expect(validateUserForm(values({ email: 'nh@mail.com' }), t).email).toBeUndefined();
+    expect(validateUserForm(values({ email: 'nhx@mail.com' }), t, { enforceUsername: true }).email).toBeUndefined();
+  });
 });

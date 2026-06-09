@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import {
   RiBriefcaseLine,
   RiBuildingLine,
@@ -106,6 +106,11 @@ export function UserCreateDrawer({
   const manualIdentifier =
     idValue.trim().length > 0 ? { system: PRACTITIONER_IDENTIFIER_SYSTEM, value: idValue.trim() } : null;
 
+  const onFormSubmit = (e: FormEvent): void => {
+    e.preventDefault();
+    submit();
+  };
+
   const submit = (): void => {
     setError(null);
     const errors = validateUserForm(
@@ -120,6 +125,7 @@ export function UserCreateDrawer({
         identifierValue: idValue,
       },
       t,
+      { enforceUsername: true },
     );
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
@@ -193,7 +199,8 @@ export function UserCreateDrawer({
 
   return (
     <Drawer open onClose={onClose} title={t('addUser')} header={header} footer={footer}>
-      <div className="ohs-detail-body">
+      <form className="ohs-detail-body" onSubmit={onFormSubmit}>
+        <button type="submit" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
         {error ? <ErrorState description={error} /> : null}
 
         <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
@@ -202,6 +209,7 @@ export function UserCreateDrawer({
             <div className="ohs-detail-grid">
               <StackedInput
                 label={t('givenName')}
+                required
                 value={given}
                 error={fieldErrors.givenName}
                 onChange={(v) => {
@@ -211,6 +219,7 @@ export function UserCreateDrawer({
               />
               <StackedInput
                 label={t('familyName')}
+                required
                 value={family}
                 error={fieldErrors.familyName}
                 onChange={(v) => {
@@ -221,6 +230,7 @@ export function UserCreateDrawer({
               <StackedInput
                 label={t('emailAddress')}
                 type="email"
+                required
                 value={email}
                 error={fieldErrors.email}
                 onChange={(v) => {
@@ -259,6 +269,7 @@ export function UserCreateDrawer({
             {idMode === 'manual' ? (
               <StackedInput
                 full
+                required
                 label={t('columnIdentifier')}
                 value={idValue}
                 error={fieldErrors.identifierValue}
@@ -326,7 +337,7 @@ export function UserCreateDrawer({
             placeholder={careTeamOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
           />
         </Section>
-      </div>
+      </form>
     </Drawer>
   );
 }

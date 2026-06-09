@@ -116,9 +116,9 @@ describe('UserCreateDrawer', () => {
   });
 
   function fillDemographics() {
-    fireEvent.change(screen.getByLabelText('givenName'), { target: { value: 'Jane' } });
-    fireEvent.change(screen.getByLabelText('familyName'), { target: { value: 'Smith' } });
-    fireEvent.change(screen.getByLabelText('emailAddress'), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), { target: { value: 'jane@example.com' } });
   }
 
   it('blocks submit when required fields are missing', async () => {

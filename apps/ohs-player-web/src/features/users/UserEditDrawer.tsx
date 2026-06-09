@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   RiBriefcaseLine,
   RiBuildingLine,
@@ -140,6 +140,11 @@ export function UserEditDrawer({
   const clearError = (key: keyof UserFormErrors) =>
     setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
 
+  const onFormSubmit = (e: FormEvent): void => {
+    e.preventDefault();
+    submit();
+  };
+
   const relationsLoading = roleSearch.isLoading || membershipSearch.isLoading;
 
   // Populate the form once the practitioner and its relations have loaded.
@@ -265,7 +270,8 @@ export function UserEditDrawer({
           {read.error ? <ErrorState description={toErrorMessage(read.error)} /> : <Spinner label={t('loading')} />}
         </div>
       ) : (
-        <div className="ohs-detail-body">
+        <form className="ohs-detail-body" onSubmit={onFormSubmit}>
+          <button type="submit" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
           {error ? <ErrorState description={error} /> : null}
 
           <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
@@ -274,6 +280,7 @@ export function UserEditDrawer({
               <div className="ohs-detail-grid">
                 <StackedInput
                   label={t('givenName')}
+                  required
                   value={given}
                   error={fieldErrors.givenName}
                   onChange={(v) => {
@@ -283,6 +290,7 @@ export function UserEditDrawer({
                 />
                 <StackedInput
                   label={t('familyName')}
+                  required
                   value={family}
                   error={fieldErrors.familyName}
                   onChange={(v) => {
@@ -293,6 +301,7 @@ export function UserEditDrawer({
                 <StackedInput
                   label={t('emailAddress')}
                   type="email"
+                  required
                   value={email}
                   error={fieldErrors.email}
                   onChange={(v) => {
@@ -331,6 +340,7 @@ export function UserEditDrawer({
               {idMode === 'manual' ? (
                 <StackedInput
                   full
+                  required
                   label={t('columnIdentifier')}
                   value={idValue}
                   error={fieldErrors.identifierValue}
@@ -401,7 +411,7 @@ export function UserEditDrawer({
               placeholder={careTeamOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
             />
           </Section>
-        </div>
+        </form>
       )}
     </Drawer>
   );

@@ -31,6 +31,15 @@ function fieldClass(full?: boolean, error?: string): string {
     .join(' ');
 }
 
+function RequiredMark(): React.ReactElement {
+  return (
+    <span className="ohs-formfield__required" aria-hidden="true">
+      {' '}
+      *
+    </span>
+  );
+}
+
 export function StackedInput({
   label,
   value,
@@ -39,6 +48,7 @@ export function StackedInput({
   placeholder,
   full,
   error,
+  required,
 }: Readonly<{
   label: string;
   value: string;
@@ -47,12 +57,14 @@ export function StackedInput({
   placeholder?: string;
   full?: boolean;
   error?: string;
+  required?: boolean;
 }>): React.ReactElement {
   const id = useId();
   return (
     <div className={fieldClass(full, error)}>
       <label className="ohs-formfield__label" htmlFor={id}>
         {label}
+        {required ? <RequiredMark /> : null}
       </label>
       <input
         id={id}
@@ -61,6 +73,7 @@ export function StackedInput({
         value={value}
         placeholder={placeholder}
         aria-invalid={error ? true : undefined}
+        aria-required={required ? true : undefined}
         onChange={(e) => onChange(e.target.value)}
       />
       {error ? (
