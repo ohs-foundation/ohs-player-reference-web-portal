@@ -11,6 +11,7 @@ import {
 } from '@remixicon/react';
 import {
   OhsDialog,
+  PermissionGuard,
   useFhirClient,
   useResource,
   useSearch,
@@ -183,10 +184,14 @@ export function UserDetailsDrawer({
 
   const footer = (
     <div className="ohs-user-drawer__foot">
-      <Button variant="outlined" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)}>
-        {t('deactivateUser')}
-      </Button>
-      <Button type="button" onClick={onEdit}>
+      {details.active ? (
+        <PermissionGuard permission="users.deactivate">
+          <Button variant="outlined" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)}>
+            {t('deactivateUser')}
+          </Button>
+        </PermissionGuard>
+      ) : null}
+      <Button type="button" onClick={onEdit} style={{ marginLeft: 'auto' }}>
         {t('editDetails')}
       </Button>
     </div>
