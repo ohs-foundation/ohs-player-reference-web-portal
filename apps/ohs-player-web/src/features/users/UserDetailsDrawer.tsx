@@ -19,6 +19,7 @@ import {
   writeAuditEvent,
 } from 'ohs-player-web-core';
 import { Avatar, Button, Drawer, IconButton, Spinner, StatusBadge } from '../../components/ui';
+import { buildDeactivateBundle } from '../sdc/resourceFromAnswers';
 
 interface SearchBundle {
   entry?: { resource?: Record<string, unknown> }[];
@@ -148,21 +149,27 @@ export function UserDetailsDrawer({
 
   const onConfirmDeactivate = (): void => {
     if (!pract) return;
+    const roles = ((roleSearch.data as SearchBundle | undefined)?.entry ?? [])
+      .map((e) => e.resource)
+      .filter((r): r is Record<string, unknown> => Boolean(r));
+    const careTeams = ((careTeamSearch.data as SearchBundle | undefined)?.entry ?? [])
+      .map((e) => e.resource)
+      .filter((r): r is Record<string, unknown> => Boolean(r));
     void (async () => {
       setDeactivating(true);
       try {
-        await client.transaction({
-          resourceType: 'Bundle',
-          type: 'transaction',
-          entry: [
-            { resource: { ...pract, active: false }, request: { method: 'PUT', url: `Practitioner/${id}` } },
-          ],
-        });
+        const { bundle, endedRoleCount, removedCareTeamCount } = buildDeactivateBundle(
+          pract,
+          roles,
+          careTeams,
+          new Date().toISOString(),
+        );
+        await client.transaction(bundle);
         await writeAuditEvent(client, {
           action: 'update',
           resourceType: 'Practitioner',
           resourceId: id,
-          description: 'Deactivated',
+          description: `Deactivated (active:false; ${endedRoleCount} role(s) end-dated; ${removedCareTeamCount} care-team membership(s) removed)`,
         });
         setConfirmOpen(false);
         onDeleted();

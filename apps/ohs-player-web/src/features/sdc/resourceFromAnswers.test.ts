@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyUserAnswersToPractitioner,
+  buildDeactivateBundle,
   buildNewUserBundle,
   buildNewUserPayload,
   buildUserEditBundle,
@@ -160,6 +161,53 @@ describe('buildUserEditBundle', () => {
 
     const rem = bundle.entry.find((e) => e.request.url === 'CareTeam/ctR');
     expect((rem?.resource as { participant?: unknown[] }).participant).toHaveLength(0);
+  });
+});
+
+describe('buildDeactivateBundle', () => {
+  const pract = { resourceType: 'Practitioner', id: 'p1', active: true };
+  const END = '2026-06-09T00:00:00.000Z';
+
+  it('PUTs active:false, end-dates active roles, removes the practitioner from care teams', () => {
+    const roles = [
+      { resourceType: 'PractitionerRole', id: 'r1', active: true },
+      { resourceType: 'PractitionerRole', id: 'r2', active: true, period: { start: '2026-01-01' } },
+    ];
+    const careTeams = [
+      {
+        resourceType: 'CareTeam',
+        id: 'ct1',
+        participant: [{ member: { reference: 'Practitioner/p1' } }, { member: { reference: 'Practitioner/p9' } }],
+      },
+    ];
+    const { bundle, endedRoleCount, removedCareTeamCount } = buildDeactivateBundle(pract, roles, careTeams, END);
+
+    expect(endedRoleCount).toBe(2);
+    expect(removedCareTeamCount).toBe(1);
+
+    const practEntry = bundle.entry.find((e) => e.request.url === 'Practitioner/p1');
+    expect((practEntry?.resource as { active?: boolean }).active).toBe(false);
+
+    const r1 = bundle.entry.find((e) => e.request.url === 'PractitionerRole/r1');
+    expect((r1?.resource as { period?: { end?: string }; active?: boolean }).period?.end).toBe(END);
+    expect((r1?.resource as { active?: boolean }).active).toBe(false);
+
+    const ct = bundle.entry.find((e) => e.request.url === 'CareTeam/ct1');
+    const members = (ct?.resource as { participant?: { member?: { reference?: string } }[] }).participant;
+    expect(members?.map((m) => m.member?.reference)).toEqual(['Practitioner/p9']);
+  });
+
+  it('leaves already-ended roles untouched and skips care teams the user is not in', () => {
+    const roles = [{ resourceType: 'PractitionerRole', id: 'r1', period: { end: '2025-01-01' } }];
+    const careTeams = [
+      { resourceType: 'CareTeam', id: 'ct1', participant: [{ member: { reference: 'Practitioner/other' } }] },
+    ];
+    const { bundle, endedRoleCount, removedCareTeamCount } = buildDeactivateBundle(pract, roles, careTeams, END);
+    expect(endedRoleCount).toBe(0);
+    expect(removedCareTeamCount).toBe(0);
+    // only the Practitioner PUT remains
+    expect(bundle.entry).toHaveLength(1);
+    expect(bundle.entry[0].request.url).toBe('Practitioner/p1');
   });
 });
 

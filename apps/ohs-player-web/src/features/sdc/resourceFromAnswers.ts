@@ -226,6 +226,56 @@ export function buildUserEditBundle(
   };
 }
 
+/**
+ * Deactivation transaction: PUT the Practitioner `active:false`, end-date every still-active
+ * PractitionerRole (`period.end` = the deactivation timestamp + `active:false`), and remove the
+ * practitioner from each CareTeam's participants — all in one atomic Bundle. Roles that already carry
+ * a `period.end` are left untouched (no double end-dating). Returns counts for the AuditEvent note.
+ */
+export function buildDeactivateBundle(
+  practitioner: Record<string, unknown>,
+  roles: Record<string, unknown>[],
+  careTeams: Record<string, unknown>[],
+  endIso: string,
+): {
+  bundle: { resourceType: 'Bundle'; type: 'transaction'; entry: TransactionEntry[] };
+  endedRoleCount: number;
+  removedCareTeamCount: number;
+} {
+  const id = typeof practitioner.id === 'string' ? practitioner.id : '';
+  const ref = `Practitioner/${id}`;
+  const entry: TransactionEntry[] = [
+    { resource: { ...practitioner, active: false }, request: { method: 'PUT', url: ref } },
+  ];
+
+  let endedRoleCount = 0;
+  for (const role of roles) {
+    const rid = typeof role.id === 'string' ? role.id : '';
+    const period = (role.period as { start?: string; end?: string } | undefined) ?? {};
+    if (!rid || period.end) continue; // already ended → leave untouched
+    entry.push({
+      resource: { ...role, active: false, period: { ...period, end: endIso } },
+      request: { method: 'PUT', url: `PractitionerRole/${rid}` },
+    });
+    endedRoleCount += 1;
+  }
+
+  let removedCareTeamCount = 0;
+  for (const ct of careTeams) {
+    const ctId = typeof ct.id === 'string' ? ct.id : '';
+    if (!ctId) continue;
+    const participant = Array.isArray(ct.participant)
+      ? (ct.participant as { member?: { reference?: string } }[])
+      : [];
+    const next = participant.filter((p) => p.member?.reference !== ref);
+    if (next.length === participant.length) continue; // practitioner not a member here
+    entry.push({ resource: { ...ct, participant: next }, request: { method: 'PUT', url: `CareTeam/${ctId}` } });
+    removedCareTeamCount += 1;
+  }
+
+  return { bundle: { resourceType: 'Bundle', type: 'transaction', entry }, endedRoleCount, removedCareTeamCount };
+}
+
 type PractitionerName = { family?: string; given?: string[] };
 type ContactPoint = { system?: string; value?: string };
 type Identifier = { system?: string; value?: string };
