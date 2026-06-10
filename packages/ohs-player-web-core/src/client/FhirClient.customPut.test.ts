@@ -2,14 +2,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FhirClient } from './FhirClient';
 
 function makeClient(): FhirClient {
-  return new FhirClient('http://localhost:5173/fhir', { users: '/api/users' }, async () => 'tok');
+  return new FhirClient('http://localhost:5173/fhir', { users: '/api/users' }, () =>
+    Promise.resolve('tok'),
+  );
 }
 
 describe('FhirClient.customPut', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('PUTs JSON to the gateway path with the id segment and auth header', async () => {
-    const fetchMock = vi.fn(async () => new Response('{"id":"p1"}', { status: 200 }));
+    const fetchMock = vi.fn(() => Promise.resolve(new Response('{"id":"p1"}', { status: 200 })));
     vi.stubGlobal('fetch', fetchMock);
 
     const res = await makeClient().customPut('users', { firstName: 'Jane' }, 'p1');
@@ -25,7 +27,7 @@ describe('FhirClient.customPut', () => {
   });
 
   it('omits the id segment when none is given', async () => {
-    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }));
+    const fetchMock = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 })));
     vi.stubGlobal('fetch', fetchMock);
 
     await makeClient().customPut('users', {});
