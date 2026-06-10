@@ -18,11 +18,7 @@ import {
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
-import {
-  buildUserEditBundle,
-  type NewUserFields,
-  PRACTITIONER_IDENTIFIER_SYSTEM,
-} from '../sdc/resourceFromAnswers';
+import { buildUserEditBundle, type NewUserFields } from '../sdc/resourceFromAnswers';
 import {
   ImageUpload,
   MultiSelect,
@@ -111,21 +107,11 @@ export function UserEditDrawer({
     [membershipSearch.data],
   );
 
-  const existingDisplayId = useMemo(
-    () =>
-      (pract?.identifier as { system?: string; value?: string }[] | undefined)?.find(
-        (i) => i.system === PRACTITIONER_IDENTIFIER_SYSTEM,
-      ) ?? null,
-    [pract],
-  );
-
   const [given, setGiven] = useState('');
   const [family, setFamily] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('');
-  const [idMode, setIdMode] = useState<'auto' | 'manual'>('auto');
-  const [idValue, setIdValue] = useState('');
   const [role, setRole] = useState('');
   const [qualification, setQualification] = useState('');
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>('active');
@@ -161,8 +147,6 @@ export function UserEditDrawer({
       (pract.qualification as { code?: { text?: string } }[] | undefined)?.[0]?.code?.text ?? '',
     );
     setStatusActive((pract.active as boolean | undefined) === false ? 'inactive' : 'active');
-    setIdValue(existingDisplayId?.value ?? '');
-    setIdMode(existingDisplayId?.value ? 'manual' : 'auto');
     setRole(existingRoles[0]?.code?.[0]?.coding?.[0]?.code ?? '');
     setOrgs(unique(existingRoles.map((r) => r.organization?.reference ?? '').filter(Boolean)));
     setLocations(
@@ -170,7 +154,7 @@ export function UserEditDrawer({
     );
     setCareTeamIds(originalCareTeamIds);
     setHydrated(true);
-  }, [hydrated, pract, relationsLoading, existingDisplayId, existingRoles, originalCareTeamIds]);
+  }, [hydrated, pract, relationsLoading, existingRoles, originalCareTeamIds]);
 
   const submit = (): void => {
     setError(null);
@@ -183,25 +167,12 @@ export function UserEditDrawer({
         phone,
         gender,
         qualification,
-        identifierMode: idMode,
-        identifierValue: idValue,
       },
       t,
     );
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
-    let identifier: { system: string; value: string } | null = null;
-    if (idMode === 'manual') {
-      identifier = idValue.trim()
-        ? { system: PRACTITIONER_IDENTIFIER_SYSTEM, value: idValue.trim() }
-        : null;
-    } else if (existingDisplayId?.value) {
-      identifier = {
-        system: existingDisplayId.system ?? PRACTITIONER_IDENTIFIER_SYSTEM,
-        value: existingDisplayId.value,
-      };
-    }
     const fields: NewUserFields = {
       givenName: given,
       familyName: family,
@@ -209,7 +180,6 @@ export function UserEditDrawer({
       phone,
       gender,
       qualification,
-      identifier,
       active: statusActive === 'active',
       role: role ? { system: PRACTITIONER_ROLE_SYSTEM, code: role } : null,
       organizations: orgs,
@@ -327,29 +297,6 @@ export function UserEditDrawer({
                   placeholder={t('selectPlaceholder')}
                 />
               </div>
-              <RadioRow
-                label={t('columnIdentifier')}
-                name="identifier-mode"
-                value={idMode}
-                onChange={(v) => setIdMode(v === 'manual' ? 'manual' : 'auto')}
-                options={[
-                  { value: 'auto', label: t('identifierKeep') },
-                  { value: 'manual', label: t('identifierManual') },
-                ]}
-              />
-              {idMode === 'manual' ? (
-                <StackedInput
-                  full
-                  required
-                  label={t('columnIdentifier')}
-                  value={idValue}
-                  error={fieldErrors.identifierValue}
-                  onChange={(v) => {
-                    setIdValue(v);
-                    clearError('identifierValue');
-                  }}
-                />
-              ) : null}
             </Stack>
           </Section>
 

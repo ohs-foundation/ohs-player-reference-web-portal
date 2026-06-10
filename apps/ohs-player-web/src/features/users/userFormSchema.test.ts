@@ -11,8 +11,6 @@ function values(overrides: Partial<UserFormValues> = {}): UserFormValues {
     phone: '',
     gender: '',
     qualification: '',
-    identifierMode: 'auto',
-    identifierValue: '',
     ...overrides,
   };
 }
@@ -37,16 +35,6 @@ describe('validateUserForm', () => {
     expect(validateUserForm(values({ phone: '' }), t).phone).toBeUndefined();
     expect(validateUserForm(values({ phone: 'abc' }), t).phone).toBe('validationInvalidPhone');
     expect(validateUserForm(values({ phone: '+254 700 000 000' }), t).phone).toBeUndefined();
-  });
-
-  it('requires an identifier value only in manual mode', () => {
-    expect(validateUserForm(values({ identifierMode: 'auto', identifierValue: '' }), t).identifierValue).toBeUndefined();
-    expect(validateUserForm(values({ identifierMode: 'manual', identifierValue: '' }), t).identifierValue).toBe(
-      'validationRequiredIdentifier',
-    );
-    expect(
-      validateUserForm(values({ identifierMode: 'manual', identifierValue: 'PRAC-012' }), t).identifierValue,
-    ).toBeUndefined();
   });
 
   it('rejects an email whose username (local-part) is under 3 chars only when enforceUsername is set', () => {

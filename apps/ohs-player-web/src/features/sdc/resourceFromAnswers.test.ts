@@ -20,7 +20,6 @@ function fields(overrides: Partial<NewUserFields> = {}): NewUserFields {
     phone: '',
     gender: '',
     qualification: '',
-    identifier: null,
     active: true,
     role: null,
     organizations: [],
@@ -53,7 +52,7 @@ describe('buildNewUserBundle', () => {
     identifier: [{ system: 'http://ohs.dev/identifiers/keycloak-user-id', value: 'kc-1' }],
   };
 
-  it('PUTs the enriched Practitioner (telecom, gender, qualification, identifier preserved)', () => {
+  it('PUTs the enriched Practitioner (telecom, gender, qualification; Keycloak id preserved)', () => {
     const bundle = buildNewUserBundle(
       created,
       fields({
@@ -61,7 +60,6 @@ describe('buildNewUserBundle', () => {
         phone: '0700000000',
         gender: 'female',
         qualification: 'MBChB',
-        identifier: { system: 'urn:ohs:reference:practitioner-identifier', value: 'PRAC-012' },
       }),
       [],
     );
@@ -81,8 +79,8 @@ describe('buildNewUserBundle', () => {
     ]);
     expect(r.gender).toBe('female');
     expect(r.qualification?.[0].code?.text).toBe('MBChB');
-    // Keycloak id preserved, display identifier appended.
-    expect(r.identifier?.map((i) => i.value)).toEqual(['kc-1', 'PRAC-012']);
+    // The Keycloak-id identifier is preserved untouched; no client-minted identifier is added.
+    expect(r.identifier?.map((i) => i.value)).toEqual(['kc-1']);
   });
 
   it('POSTs one PractitionerRole per organisation carrying role + locations', () => {

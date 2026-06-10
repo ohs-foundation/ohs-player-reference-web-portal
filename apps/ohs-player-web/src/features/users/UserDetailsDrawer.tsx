@@ -109,8 +109,7 @@ export function UserDetailsDrawer({
       email: telecom.find((tc) => tc.system === 'email')?.value ?? '',
       phone: telecom.find((tc) => tc.system === 'phone')?.value ?? '',
       gender: typeof pract?.gender === 'string' ? pract.gender : '',
-      identifier:
-        (pract?.identifier as { value?: string }[] | undefined)?.[0]?.value ?? id,
+      identifier: id,
       qualification:
         (pract?.qualification as { code?: { text?: string } }[] | undefined)?.[0]?.code?.text ?? '',
       active: (pract?.active as boolean | undefined) !== false,

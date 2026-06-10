@@ -66,8 +66,6 @@ export interface NewUserFields {
   /** FHIR administrative-gender code (`male` | `female` | `other` | `unknown`) or ''. */
   gender: string;
   qualification: string;
-  /** Human-facing identifier (auto-generated `PRAC-###` or manual); null = none. */
-  identifier: { system: string; value: string } | null;
   active: boolean;
   /** PractitionerRole.code coding; null = no clinical role. */
   role: { system: string; code: string } | null;
@@ -111,10 +109,6 @@ function enrichPractitioner(
   if (fields.email.trim()) telecom.push({ system: 'email', value: fields.email.trim() });
   if (fields.phone.trim()) telecom.push({ system: 'phone', value: fields.phone.trim() });
 
-  const keycloakIds = Array.isArray(created.identifier)
-    ? (created.identifier as Identifier[]).filter((i) => i.system !== PRACTITIONER_IDENTIFIER_SYSTEM)
-    : [];
-  const identifier = fields.identifier ? [...keycloakIds, fields.identifier] : keycloakIds;
   const gender = genderToFhir(fields.gender);
 
   const practitioner: Record<string, unknown> = {
@@ -124,8 +118,6 @@ function enrichPractitioner(
   };
   if (telecom.length > 0) practitioner.telecom = telecom;
   else delete practitioner.telecom;
-  if (identifier.length > 0) practitioner.identifier = identifier;
-  else delete practitioner.identifier;
   if (gender) practitioner.gender = gender;
   else delete practitioner.gender;
   if (fields.qualification.trim())

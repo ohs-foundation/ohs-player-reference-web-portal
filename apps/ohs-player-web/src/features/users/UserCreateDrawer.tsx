@@ -18,12 +18,7 @@ import {
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
-import {
-  buildNewUserBundle,
-  buildNewUserPayload,
-  type NewUserFields,
-  PRACTITIONER_IDENTIFIER_SYSTEM,
-} from '../sdc/resourceFromAnswers';
+import { buildNewUserBundle, buildNewUserPayload, type NewUserFields } from '../sdc/resourceFromAnswers';
 import {
   ImageUpload,
   MultiSelect,
@@ -57,7 +52,6 @@ export function UserCreateDrawer({
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
   const locSearch = useSearch('Location', { _count: '500' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
-  const practCount = useSearch('Practitioner', { _summary: 'count' });
 
   const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
   const locOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
@@ -80,16 +74,11 @@ export function UserCreateDrawer({
     return map;
   }, [careTeamSearch.data]);
 
-  const total = (practCount.data as SearchBundle | undefined)?.total ?? 0;
-  const autoIdentifier = `PRAC-${String(total + 1).padStart(3, '0')}`;
-
   const [given, setGiven] = useState('');
   const [family, setFamily] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('');
-  const [idMode, setIdMode] = useState<'auto' | 'manual'>('auto');
-  const [idValue, setIdValue] = useState('');
   const [role, setRole] = useState('');
   const [qualification, setQualification] = useState('');
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>('active');
@@ -102,9 +91,6 @@ export function UserCreateDrawer({
 
   const clearError = (key: keyof UserFormErrors) =>
     setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
-
-  const manualIdentifier =
-    idValue.trim().length > 0 ? { system: PRACTITIONER_IDENTIFIER_SYSTEM, value: idValue.trim() } : null;
 
   const onFormSubmit = (e: FormEvent): void => {
     e.preventDefault();
@@ -121,8 +107,6 @@ export function UserCreateDrawer({
         phone,
         gender,
         qualification,
-        identifierMode: idMode,
-        identifierValue: idValue,
       },
       t,
       { enforceUsername: true },
@@ -137,10 +121,6 @@ export function UserCreateDrawer({
       phone,
       gender,
       qualification,
-      identifier:
-        idMode === 'manual'
-          ? manualIdentifier
-          : { system: PRACTITIONER_IDENTIFIER_SYSTEM, value: autoIdentifier },
       active: statusActive === 'active',
       role: role ? { system: PRACTITIONER_ROLE_SYSTEM, code: role } : null,
       organizations: orgs,
@@ -256,30 +236,6 @@ export function UserCreateDrawer({
                 placeholder={t('selectPlaceholder')}
               />
             </div>
-            <RadioRow
-              label={t('columnIdentifier')}
-              name="identifier-mode"
-              value={idMode}
-              onChange={(v) => setIdMode(v === 'manual' ? 'manual' : 'auto')}
-              options={[
-                { value: 'auto', label: t('identifierAuto') },
-                { value: 'manual', label: t('identifierManual') },
-              ]}
-            />
-            {idMode === 'manual' ? (
-              <StackedInput
-                full
-                required
-                label={t('columnIdentifier')}
-                value={idValue}
-                error={fieldErrors.identifierValue}
-                placeholder={autoIdentifier}
-                onChange={(v) => {
-                  setIdValue(v);
-                  clearError('identifierValue');
-                }}
-              />
-            ) : null}
           </Stack>
         </Section>
 

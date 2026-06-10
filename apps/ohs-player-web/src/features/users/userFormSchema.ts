@@ -9,8 +9,6 @@ export interface UserFormValues {
   phone: string;
   gender: string;
   qualification: string;
-  identifierMode: 'auto' | 'manual';
-  identifierValue: string;
 }
 
 export type UserFormErrors = Partial<Record<keyof UserFormValues, string>>;
@@ -28,9 +26,8 @@ const USERNAME_MIN = 3;
 
 /**
  * Zod schema for the user form. Required: given/family/email; email must be well-formed; phone is
- * optional but format-checked when present; a manual identifier must have a value. With
- * `enforceUsername`, the email local-part must yield a Keycloak-valid username (≥ 3 chars). Messages
- * are translated up-front so callers get display-ready text.
+ * optional but format-checked when present. With `enforceUsername`, the email local-part must yield a
+ * Keycloak-valid username (≥ 3 chars). Messages are translated up-front so callers get display-ready text.
  */
 function userFormSchema(t: Translate, opts: ValidateUserOptions) {
   return z
@@ -41,8 +38,6 @@ function userFormSchema(t: Translate, opts: ValidateUserOptions) {
       phone: z.string(),
       gender: z.string(),
       qualification: z.string(),
-      identifierMode: z.enum(['auto', 'manual']),
-      identifierValue: z.string(),
     })
     .superRefine((val, ctx) => {
       const email = val.email.trim();
@@ -53,13 +48,6 @@ function userFormSchema(t: Translate, opts: ValidateUserOptions) {
       }
       if (val.phone.trim() && !PHONE_RE.test(val.phone.trim())) {
         ctx.addIssue({ code: 'custom', path: ['phone'], message: t('validationInvalidPhone') });
-      }
-      if (val.identifierMode === 'manual' && !val.identifierValue.trim()) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['identifierValue'],
-          message: t('validationRequiredIdentifier'),
-        });
       }
     });
 }
