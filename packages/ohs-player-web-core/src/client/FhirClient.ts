@@ -184,26 +184,40 @@ export class FhirClient {
 
   /** POST JSON to a host-defined custom path (`customEndpoints[alias]`). Uses `application/json`. */
   async customPost(alias: string, body: unknown): Promise<unknown> {
+    return this.customWrite('POST', alias, body);
+  }
+
+  /**
+   * PUT JSON to a host-defined custom path (`customEndpoints[alias]`), optionally appending a path
+   * segment such as a resource id (`PUT {root}{path}/{idSegment}`). Uses `application/json`.
+   */
+  async customPut(alias: string, body: unknown, idSegment?: string): Promise<unknown> {
+    return this.customWrite('PUT', alias, body, idSegment);
+  }
+
+  private async customWrite(
+    method: 'POST' | 'PUT',
+    alias: string,
+    body: unknown,
+    idSegment?: string,
+  ): Promise<unknown> {
     const path = this.customEndpoints[alias];
     if (!path) throw new Error(`Unknown custom endpoint alias: ${alias}`);
     const root = gatewayRootFromFhirBase(this.fhirBaseUrl);
-    const url = `${root}${path.startsWith('/') ? path : `/${path}`}`;
+    const base = `${root}${path.startsWith('/') ? path : `/${path}`}`;
+    const url = idSegment ? `${base}/${encodeURIComponent(idSegment)}` : base;
     const headers = new Headers();
     headers.set('Accept', 'application/json');
     headers.set('Content-Type', 'application/json');
     const token = await this.getAccessToken();
     if (token) headers.set('Authorization', `Bearer ${token}`);
-    const first = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+    const first = await fetch(url, { method, headers, body: JSON.stringify(body) });
     if (first.status === 401) {
       await this.getAccessToken();
       const t2 = await this.getAccessToken();
       const h2 = new Headers(headers);
       if (t2) h2.set('Authorization', `Bearer ${t2}`);
-      const second = await fetch(url, {
-        method: 'POST',
-        headers: h2,
-        body: JSON.stringify(body),
-      });
+      const second = await fetch(url, { method, headers: h2, body: JSON.stringify(body) });
       if (!second.ok) throw await this.toError(second);
       return readBody(second);
     }

@@ -10,7 +10,8 @@ function values(overrides: Partial<UserFormValues> = {}): UserFormValues {
     email: 'jane@example.com',
     phone: '',
     gender: '',
-    qualification: '',
+    dob: '',
+    nationalId: '',
     ...overrides,
   };
 }
@@ -35,6 +36,12 @@ describe('validateUserForm', () => {
     expect(validateUserForm(values({ phone: '' }), t).phone).toBeUndefined();
     expect(validateUserForm(values({ phone: 'abc' }), t).phone).toBe('validationInvalidPhone');
     expect(validateUserForm(values({ phone: '+254 700 000 000' }), t).phone).toBeUndefined();
+  });
+
+  it('accepts an empty dob but rejects a malformed one', () => {
+    expect(validateUserForm(values({ dob: '' }), t).dob).toBeUndefined();
+    expect(validateUserForm(values({ dob: '01/05/1990' }), t).dob).toBe('validationInvalidDob');
+    expect(validateUserForm(values({ dob: '1990-05-01' }), t).dob).toBeUndefined();
   });
 
   it('rejects an email whose username (local-part) is under 3 chars only when enforceUsername is set', () => {

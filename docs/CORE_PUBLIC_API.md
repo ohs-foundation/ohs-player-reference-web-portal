@@ -54,7 +54,7 @@ Primitive props (subset): `ButtonProps`, `ButtonSize`, `ButtonVariant`, `CardHea
 | `useFhirCapabilities()` | TanStack Query: `GET …/metadata`. |
 | `useCreateResource(resourceType)` | Mutation: `client.create`; invalidates search for `resourceType`. |
 | `useUpdateResource(resourceType)` | Mutation: `client.update`; invalidates read + search. |
-| `useCustomEndpoint(alias)` | `{ get, post }` mutations wrapping `customGet` / `customPost` for that alias. |
+| `useCustomEndpoint(alias)` | `{ get, post, put }` mutations wrapping `customGet` / `customPost` / `customPut` for that alias (`put` takes `{ id?, body }`). |
 | `useQuestionnaireFormState(questionnaire, initialAnswers?)` | SDC form state: `{ answers, setAnswer, setAnswers, buildQuestionnaireResponse, validateRequired }`. |
 | `useStatusBar()` | Status bar context consumer (primitives). |
 
@@ -114,6 +114,7 @@ Methods:
 | `postOperation(relativePath, body?)` | `POST …/{relativePath}` — FHIR **$operations** (e.g. `Questionnaire/$extract`). Path must not start with `/`. |
 | `customGet(alias, params?)` | GET non-FHIR path from `customEndpoints[alias]` relative to gateway root derived from FHIR base |
 | `customPost(alias, body)` | POST JSON to `customEndpoints[alias]` (Accept `application/json`) |
+| `customPut(alias, body, idSegment?)` | PUT JSON to `customEndpoints[alias]`, optionally appending `/{idSegment}` (e.g. a resource id) |
 
 ---
 

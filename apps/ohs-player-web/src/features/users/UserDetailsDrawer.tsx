@@ -20,7 +20,7 @@ import {
   writeAuditEvent,
 } from 'ohs-player-web-core';
 import { Avatar, Button, Drawer, IconButton, Spinner, StatusBadge } from '../../components/ui';
-import { buildDeactivateBundle } from '../sdc/resourceFromAnswers';
+import { buildDeactivateBundle, NATIONAL_ID_IDENTIFIER_SYSTEM } from '../sdc/resourceFromAnswers';
 
 interface SearchBundle {
   entry?: { resource?: Record<string, unknown> }[];
@@ -110,8 +110,11 @@ export function UserDetailsDrawer({
       phone: telecom.find((tc) => tc.system === 'phone')?.value ?? '',
       gender: typeof pract?.gender === 'string' ? pract.gender : '',
       identifier: id,
-      qualification:
-        (pract?.qualification as { code?: { text?: string } }[] | undefined)?.[0]?.code?.text ?? '',
+      dob: typeof pract?.birthDate === 'string' ? pract.birthDate : '',
+      nationalId:
+        (pract?.identifier as { system?: string; value?: string }[] | undefined)?.find(
+          (i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM,
+        )?.value ?? '',
       active: (pract?.active as boolean | undefined) !== false,
       role: roleCode?.display ?? roleCode?.code ?? '',
       orgName: refName(role?.organization?.reference, orgNames),
@@ -133,11 +136,7 @@ export function UserDetailsDrawer({
               {details.active ? t('statusActive') : t('statusInactive')}
             </StatusBadge>
           </div>
-          {details.role || details.qualification ? (
-            <p className="ohs-user-drawer__subtitle">
-              {[details.role, details.qualification].filter(Boolean).join(' • ')}
-            </p>
-          ) : null}
+          {details.role ? <p className="ohs-user-drawer__subtitle">{details.role}</p> : null}
           <span className="ohs-user-drawer__id-chip">{details.identifier}</span>
         </div>
       </div>
@@ -212,6 +211,8 @@ export function UserDetailsDrawer({
               <Field label={t('emailAddress')} value={details.email} />
               <Field label={t('phoneNumber')} value={details.phone} />
               <Field label={t('gender')} value={details.gender} />
+              <Field label={t('dateOfBirth')} value={details.dob} />
+              <Field label={t('nationalId')} value={details.nationalId} />
               <Field label={t('columnIdentifier')} value={details.identifier} />
             </div>
           </Section>
@@ -219,7 +220,6 @@ export function UserDetailsDrawer({
           <Section icon={RiBriefcaseLine} title={t('sectionRoleStatus')}>
             <div className="ohs-detail-grid">
               <Field label={t('columnRole')} value={details.role} />
-              <Field label={t('qualification')} value={details.qualification} />
               <Field label={t('columnStatus')} value={details.active ? t('statusActive') : t('statusInactive')} />
             </div>
           </Section>

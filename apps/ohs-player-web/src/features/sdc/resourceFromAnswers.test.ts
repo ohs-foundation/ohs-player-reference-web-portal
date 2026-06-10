@@ -19,7 +19,8 @@ function fields(overrides: Partial<NewUserFields> = {}): NewUserFields {
     email: 'Jane@Example.com',
     phone: '',
     gender: '',
-    qualification: '',
+    dob: '',
+    nationalId: '',
     active: true,
     role: null,
     organizations: [],
@@ -42,6 +43,27 @@ describe('buildNewUserPayload', () => {
   it('reflects the active flag in enabled', () => {
     expect(buildNewUserPayload(fields({ active: false })).enabled).toBe(false);
   });
+
+  it('includes demographics the backend owns (gender/dob/national_id/phone) when present, omits blanks', () => {
+    const payload = buildNewUserPayload(
+      fields({ gender: 'female', dob: '1990-05-01', nationalId: 'NID-9', phone: '0700000000' }),
+    );
+    expect(payload.gender).toBe('female');
+    expect(payload.dob).toBe('1990-05-01');
+    expect(payload.national_id).toBe('NID-9');
+    expect(payload.phone).toBe('0700000000');
+    // blanks are omitted, not sent as empty strings
+    expect(buildNewUserPayload(fields())).not.toHaveProperty('phone');
+    expect(buildNewUserPayload(fields({ gender: 'nonsense' }))).not.toHaveProperty('gender');
+  });
+
+  it('includes non-empty groupIds, omits empty/undefined, and honours a username override', () => {
+    expect(buildNewUserPayload(fields({ groupIds: ['g1', 'g2'] })).groupIds).toEqual(['g1', 'g2']);
+    expect(buildNewUserPayload(fields({ groupIds: [] }))).not.toHaveProperty('groupIds');
+    expect(buildNewUserPayload(fields())).not.toHaveProperty('groupIds');
+    // edit passes the existing username so an email change doesn't rename the Keycloak account
+    expect(buildNewUserPayload(fields({ email: 'new@example.com' }), 'jane').username).toBe('jane');
+  });
 });
 
 describe('buildNewUserBundle', () => {
@@ -52,35 +74,13 @@ describe('buildNewUserBundle', () => {
     identifier: [{ system: 'http://ohs.dev/identifiers/keycloak-user-id', value: 'kc-1' }],
   };
 
-  it('PUTs the enriched Practitioner (telecom, gender, qualification; Keycloak id preserved)', () => {
+  it('does not PUT the Practitioner — the backend owns demographics now', () => {
     const bundle = buildNewUserBundle(
       created,
-      fields({
-        email: 'jane@example.com',
-        phone: '0700000000',
-        gender: 'female',
-        qualification: 'MBChB',
-      }),
+      fields({ phone: '0700000000', gender: 'female', role: { system: ROLE_SYSTEM, code: 'doctor' }, organizations: ['Organization/o1'] }),
       [],
     );
-
-    expect(bundle.entry).toHaveLength(1);
-    const put = bundle.entry[0];
-    expect(put.request).toEqual({ method: 'PUT', url: 'Practitioner/1000' });
-    const r = put.resource as {
-      telecom?: { system?: string; value?: string }[];
-      gender?: string;
-      qualification?: { code?: { text?: string } }[];
-      identifier?: { value?: string }[];
-    };
-    expect(r.telecom).toEqual([
-      { system: 'email', value: 'jane@example.com' },
-      { system: 'phone', value: '0700000000' },
-    ]);
-    expect(r.gender).toBe('female');
-    expect(r.qualification?.[0].code?.text).toBe('MBChB');
-    // The Keycloak-id identifier is preserved untouched; no client-minted identifier is added.
-    expect(r.identifier?.map((i) => i.value)).toEqual(['kc-1']);
+    expect(bundle.entry.some((e) => e.request.url.startsWith('Practitioner/'))).toBe(false);
   });
 
   it('POSTs one PractitionerRole per organisation carrying role + locations', () => {
@@ -118,10 +118,9 @@ describe('buildNewUserBundle', () => {
     expect(participants?.[0].member?.reference).toBe('Practitioner/1000');
   });
 
-  it('PUTs only the Practitioner when no role/org/location/careteam is chosen', () => {
+  it('is empty when no role/org/location/careteam is chosen (caller skips the transaction)', () => {
     const bundle = buildNewUserBundle(created, fields(), []);
-    expect(bundle.entry).toHaveLength(1);
-    expect(bundle.entry[0].request.method).toBe('PUT');
+    expect(bundle.entry).toHaveLength(0);
   });
 });
 
@@ -133,9 +132,9 @@ describe('buildUserEditBundle', () => {
     identifier: [{ system: 'http://ohs.dev/identifiers/keycloak-user-id', value: 'kc-1' }],
   };
 
-  it('PUTs the practitioner, replaces roles (DELETE old + POST new), and reconciles care teams', () => {
+  it('replaces roles (DELETE old + POST new) and reconciles care teams; never PUTs the Practitioner', () => {
     const bundle = buildUserEditBundle(
-      pract,
+      pract.id,
       fields({ role: { system: ROLE_SYSTEM, code: 'nurse' }, organizations: ['Organization/o1'] }),
       {
         existingRoleIds: ['r1', 'r2'],
@@ -147,7 +146,8 @@ describe('buildUserEditBundle', () => {
     );
 
     const methods = bundle.entry.map((e) => `${e.request.method} ${e.request.url}`);
-    expect(methods).toContain('PUT Practitioner/p1');
+    // The gateway PUT /api/users/{id} owns the Practitioner — this bundle must not touch it.
+    expect(methods.some((m) => m.startsWith('PUT Practitioner/'))).toBe(false);
     expect(methods).toContain('DELETE PractitionerRole/r1');
     expect(methods).toContain('DELETE PractitionerRole/r2');
     expect(methods.filter((m) => m === 'POST PractitionerRole')).toHaveLength(1);

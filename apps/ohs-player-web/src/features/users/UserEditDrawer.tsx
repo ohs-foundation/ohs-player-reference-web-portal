@@ -10,6 +10,7 @@ import {
 import {
   FhirError,
   formatOperationOutcomeMessage,
+  useCustomEndpoint,
   useFhirClient,
   useResource,
   useSearch,
@@ -18,7 +19,13 @@ import {
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
-import { buildUserEditBundle, type NewUserFields } from '../sdc/resourceFromAnswers';
+import {
+  buildNewUserPayload,
+  buildUserEditBundle,
+  NATIONAL_ID_IDENTIFIER_SYSTEM,
+  type NewUserFields,
+  usernameFromEmail,
+} from '../sdc/resourceFromAnswers';
 import {
   ImageUpload,
   MultiSelect,
@@ -63,6 +70,7 @@ export function UserEditDrawer({
 }: Readonly<{ id: string; onClose: () => void; onSuccess: () => void }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const { put } = useCustomEndpoint('users');
 
   const read = useResource('Practitioner', id);
   const roleSearch = useSearch('PractitionerRole', { practitioner: `Practitioner/${id}`, _count: '50' });
@@ -112,9 +120,13 @@ export function UserEditDrawer({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('');
+  const [dob, setDob] = useState('');
+  const [nationalId, setNationalId] = useState('');
   const [role, setRole] = useState('');
-  const [qualification, setQualification] = useState('');
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>('active');
+  // Keycloak username can't be read back from FHIR; reproduce create-time derivation from the stored
+  // email so an email edit doesn't rename the account.
+  const [originalUsername, setOriginalUsername] = useState('');
   const [orgs, setOrgs] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [careTeamIds, setCareTeamIds] = useState<string[]>([]);
@@ -138,14 +150,16 @@ export function UserEditDrawer({
     if (hydrated || !pract || relationsLoading) return;
     const name = (pract.name as { family?: string; given?: string[] }[] | undefined)?.[0];
     const telecom = (pract.telecom as { system?: string; value?: string }[] | undefined) ?? [];
+    const email = telecom.find((c) => c.system === 'email')?.value ?? '';
+    const identifiers = (pract.identifier as { system?: string; value?: string }[] | undefined) ?? [];
     setGiven(name?.given?.join(' ') ?? '');
     setFamily(name?.family ?? '');
-    setEmail(telecom.find((c) => c.system === 'email')?.value ?? '');
+    setEmail(email);
+    setOriginalUsername(usernameFromEmail(email));
     setPhone(telecom.find((c) => c.system === 'phone')?.value ?? '');
     setGender(typeof pract.gender === 'string' ? pract.gender : '');
-    setQualification(
-      (pract.qualification as { code?: { text?: string } }[] | undefined)?.[0]?.code?.text ?? '',
-    );
+    setDob(typeof pract.birthDate === 'string' ? pract.birthDate : '');
+    setNationalId(identifiers.find((i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM)?.value ?? '');
     setStatusActive((pract.active as boolean | undefined) === false ? 'inactive' : 'active');
     setRole(existingRoles[0]?.code?.[0]?.coding?.[0]?.code ?? '');
     setOrgs(unique(existingRoles.map((r) => r.organization?.reference ?? '').filter(Boolean)));
@@ -166,7 +180,8 @@ export function UserEditDrawer({
         email,
         phone,
         gender,
-        qualification,
+        dob,
+        nationalId,
       },
       t,
     );
@@ -179,7 +194,8 @@ export function UserEditDrawer({
       email,
       phone,
       gender,
-      qualification,
+      dob,
+      nationalId,
       active: statusActive === 'active',
       role: role ? { system: PRACTITIONER_ROLE_SYSTEM, code: role } : null,
       organizations: orgs,
@@ -197,9 +213,11 @@ export function UserEditDrawer({
     void (async () => {
       setSubmitting(true);
       try {
-        await client.transaction(
-          buildUserEditBundle(pract, fields, { existingRoleIds, careTeamAdds, careTeamRemoves }),
-        );
+        // Gateway owns the Keycloak user + Practitioner demographics; preserve the username.
+        await put.mutateAsync({ id, body: buildNewUserPayload(fields, originalUsername) });
+        // FHIR handles only what the gateway doesn't: PractitionerRoles + CareTeam membership.
+        const bundle = buildUserEditBundle(id, fields, { existingRoleIds, careTeamAdds, careTeamRemoves });
+        if (bundle.entry.length > 0) await client.transaction(bundle);
         await writeAuditEvent(client, { action: 'update', resourceType: 'Practitioner', resourceId: id });
         onSuccess();
       } catch (err) {
@@ -288,6 +306,17 @@ export function UserEditDrawer({
                     clearError('phone');
                   }}
                 />
+                <StackedInput
+                  label={t('dateOfBirth')}
+                  type="date"
+                  value={dob}
+                  error={fieldErrors.dob}
+                  onChange={(v) => {
+                    setDob(v);
+                    clearError('dob');
+                  }}
+                />
+                <StackedInput label={t('nationalId')} value={nationalId} onChange={setNationalId} />
                 <StackedSelect
                   full
                   label={t('gender')}
@@ -304,16 +333,12 @@ export function UserEditDrawer({
             <Stack gap={5}>
               <div className="ohs-detail-grid">
                 <StackedSelect
+                  full
                   label={t('columnRole')}
                   value={role}
                   onChange={setRole}
                   options={PRACTITIONER_ROLE_CODES}
                   placeholder={t('selectPlaceholder')}
-                />
-                <StackedInput
-                  label={t('qualification')}
-                  value={qualification}
-                  onChange={setQualification}
                 />
               </div>
               <RadioRow

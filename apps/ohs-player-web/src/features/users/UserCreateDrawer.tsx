@@ -1,8 +1,9 @@
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   RiBriefcaseLine,
   RiBuildingLine,
   RiCloseLine,
+  RiGroupLine,
   RiMapPinLine,
   RiTeamLine,
   RiUserLine,
@@ -39,6 +40,13 @@ function toErrorMessage(error: unknown): string {
   if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
   if (error instanceof Error) return error.message;
   return String(error);
+}
+
+/** Map the gateway `GET /api/groups` payload (IamGroupRepresentation[]) to multiselect options. */
+function toGroupOptions(data: unknown): Option[] {
+  return (Array.isArray(data) ? (data as { id?: string; name?: string; path?: string }[]) : [])
+    .filter((g) => typeof g.id === 'string')
+    .map((g) => ({ value: g.id as string, label: g.name ?? g.path ?? (g.id as string) }));
 }
 
 export function UserCreateDrawer({
@@ -79,15 +87,30 @@ export function UserCreateDrawer({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('');
+  const [dob, setDob] = useState('');
+  const [nationalId, setNationalId] = useState('');
   const [role, setRole] = useState('');
-  const [qualification, setQualification] = useState('');
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>('active');
   const [orgs, setOrgs] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [careTeamIds, setCareTeamIds] = useState<string[]>([]);
+  const [groupIds, setGroupIds] = useState<string[]>([]);
+  const [groupOptions, setGroupOptions] = useState<Option[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<UserFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // IAM groups come from the gateway (not FHIR); load once. Failure is non-fatal — groups stay empty.
+  useEffect(() => {
+    let active = true;
+    void client
+      .customGet('groups')
+      .then((data) => active && setGroupOptions(toGroupOptions(data)))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [client]);
 
   const clearError = (key: keyof UserFormErrors) =>
     setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
@@ -106,7 +129,8 @@ export function UserCreateDrawer({
         email,
         phone,
         gender,
-        qualification,
+        dob,
+        nationalId,
       },
       t,
       { enforceUsername: true },
@@ -120,11 +144,13 @@ export function UserCreateDrawer({
       email,
       phone,
       gender,
-      qualification,
+      dob,
+      nationalId,
       active: statusActive === 'active',
       role: role ? { system: PRACTITIONER_ROLE_SYSTEM, code: role } : null,
       organizations: orgs,
       locations,
+      groupIds,
     };
 
     void (async () => {
@@ -136,7 +162,8 @@ export function UserCreateDrawer({
           const selectedCareTeams = careTeamIds
             .map((cid) => careTeamById.get(cid))
             .filter((r): r is Record<string, unknown> => Boolean(r));
-          await client.transaction(buildNewUserBundle(created, fields, selectedCareTeams));
+          const bundle = buildNewUserBundle(created, fields, selectedCareTeams);
+          if (bundle.entry.length > 0) await client.transaction(bundle);
         }
         const kcId = (created.identifier as { value?: string }[] | undefined)?.find((i) => i.value)?.value;
         await writeAuditEvent(client, {
@@ -227,6 +254,21 @@ export function UserCreateDrawer({
                   clearError('phone');
                 }}
               />
+              <StackedInput
+                label={t('dateOfBirth')}
+                type="date"
+                value={dob}
+                error={fieldErrors.dob}
+                onChange={(v) => {
+                  setDob(v);
+                  clearError('dob');
+                }}
+              />
+              <StackedInput
+                label={t('nationalId')}
+                value={nationalId}
+                onChange={setNationalId}
+              />
               <StackedSelect
                 full
                 label={t('gender')}
@@ -243,13 +285,13 @@ export function UserCreateDrawer({
           <Stack gap={5}>
             <div className="ohs-detail-grid">
               <StackedSelect
+                full
                 label={t('columnRole')}
                 value={role}
                 onChange={setRole}
                 options={PRACTITIONER_ROLE_CODES}
                 placeholder={t('selectPlaceholder')}
               />
-              <StackedInput label={t('qualification')} value={qualification} onChange={setQualification} />
             </div>
             <RadioRow
               label={t('columnStatus')}
@@ -291,6 +333,16 @@ export function UserCreateDrawer({
             value={careTeamIds}
             onChange={setCareTeamIds}
             placeholder={careTeamOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
+          />
+        </Section>
+
+        <Section icon={RiGroupLine} title={t('sectionGroups')}>
+          <MultiSelect
+            label={t('groupsLabel')}
+            options={groupOptions}
+            value={groupIds}
+            onChange={setGroupIds}
+            placeholder={groupOptions.length > 0 ? t('selectPlaceholder') : t('groupsEmpty')}
           />
         </Section>
       </form>

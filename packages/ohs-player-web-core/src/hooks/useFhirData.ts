@@ -66,5 +66,9 @@ export function useCustomEndpoint(alias: string) {
   const post = useMutation({
     mutationFn: async (body: unknown) => client.customPost(alias, body),
   });
-  return { get, post };
+  const put = useMutation({
+    mutationFn: async (vars: { id?: string; body: unknown }) =>
+      client.customPut(alias, vars.body, vars.id),
+  });
+  return { get, post, put };
 }

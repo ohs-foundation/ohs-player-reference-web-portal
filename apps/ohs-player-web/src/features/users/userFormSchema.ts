@@ -8,7 +8,8 @@ export interface UserFormValues {
   email: string;
   phone: string;
   gender: string;
-  qualification: string;
+  dob: string;
+  nationalId: string;
 }
 
 export type UserFormErrors = Partial<Record<keyof UserFormValues, string>>;
@@ -22,6 +23,7 @@ type Translate = (key: string) => string;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+]?[\d\s()-]{7,}$/;
+const DOB_RE = /^\d{4}-\d{2}-\d{2}$/;
 const USERNAME_MIN = 3;
 
 /**
@@ -37,7 +39,8 @@ function userFormSchema(t: Translate, opts: ValidateUserOptions) {
       email: z.string().trim().min(1, t('validationRequiredEmail')),
       phone: z.string(),
       gender: z.string(),
-      qualification: z.string(),
+      dob: z.string(),
+      nationalId: z.string(),
     })
     .superRefine((val, ctx) => {
       const email = val.email.trim();
@@ -48,6 +51,9 @@ function userFormSchema(t: Translate, opts: ValidateUserOptions) {
       }
       if (val.phone.trim() && !PHONE_RE.test(val.phone.trim())) {
         ctx.addIssue({ code: 'custom', path: ['phone'], message: t('validationInvalidPhone') });
+      }
+      if (val.dob.trim() && !DOB_RE.test(val.dob.trim())) {
+        ctx.addIssue({ code: 'custom', path: ['dob'], message: t('validationInvalidDob') });
       }
     });
 }
