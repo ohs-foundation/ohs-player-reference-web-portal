@@ -184,7 +184,13 @@ export function UserDetailsDrawer({
     <div className="ohs-user-drawer__foot">
       {details.active ? (
         <PermissionGuard permission="users.deactivate">
-          <Button variant="outlined" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)}>
+          <Button
+            variant="outlined"
+            className="ohs-btn-danger"
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            disabled={deactivating || read.isLoading || roleSearch.isLoading || careTeamSearch.isLoading}
+          >
             {t('deactivateUser')}
           </Button>
         </PermissionGuard>
