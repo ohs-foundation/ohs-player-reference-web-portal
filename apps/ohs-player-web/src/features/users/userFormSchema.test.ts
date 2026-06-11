@@ -10,9 +10,8 @@ function values(overrides: Partial<UserFormValues> = {}): UserFormValues {
     email: 'jane@example.com',
     phone: '',
     gender: '',
-    qualification: '',
-    identifierMode: 'auto',
-    identifierValue: '',
+    dob: '',
+    nationalId: '',
     ...overrides,
   };
 }
@@ -39,13 +38,18 @@ describe('validateUserForm', () => {
     expect(validateUserForm(values({ phone: '+254 700 000 000' }), t).phone).toBeUndefined();
   });
 
-  it('requires an identifier value only in manual mode', () => {
-    expect(validateUserForm(values({ identifierMode: 'auto', identifierValue: '' }), t).identifierValue).toBeUndefined();
-    expect(validateUserForm(values({ identifierMode: 'manual', identifierValue: '' }), t).identifierValue).toBe(
-      'validationRequiredIdentifier',
+  it('accepts an empty dob but rejects a malformed one', () => {
+    expect(validateUserForm(values({ dob: '' }), t).dob).toBeUndefined();
+    expect(validateUserForm(values({ dob: '01/05/1990' }), t).dob).toBe('validationInvalidDob');
+    expect(validateUserForm(values({ dob: '1990-05-01' }), t).dob).toBeUndefined();
+  });
+
+  it('rejects an email whose username (local-part) is under 3 chars only when enforceUsername is set', () => {
+    // nh@mail.com → username "nh" (2 chars) — Keycloak rejects < 3.
+    expect(validateUserForm(values({ email: 'nh@mail.com' }), t, { enforceUsername: true }).email).toBe(
+      'validationEmailUsernameLength',
     );
-    expect(
-      validateUserForm(values({ identifierMode: 'manual', identifierValue: 'PRAC-012' }), t).identifierValue,
-    ).toBeUndefined();
+    expect(validateUserForm(values({ email: 'nh@mail.com' }), t).email).toBeUndefined();
+    expect(validateUserForm(values({ email: 'nhx@mail.com' }), t, { enforceUsername: true }).email).toBeUndefined();
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   RiBriefcaseLine,
   RiBuildingLine,
@@ -10,6 +10,7 @@ import {
 import {
   FhirError,
   formatOperationOutcomeMessage,
+  useCustomEndpoint,
   useFhirClient,
   useResource,
   useSearch,
@@ -19,9 +20,11 @@ import {
 import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import {
+  buildNewUserPayload,
   buildUserEditBundle,
+  NATIONAL_ID_IDENTIFIER_SYSTEM,
   type NewUserFields,
-  PRACTITIONER_IDENTIFIER_SYSTEM,
+  usernameFromEmail,
 } from '../sdc/resourceFromAnswers';
 import {
   ImageUpload,
@@ -67,6 +70,7 @@ export function UserEditDrawer({
 }: Readonly<{ id: string; onClose: () => void; onSuccess: () => void }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const { put } = useCustomEndpoint('users');
 
   const read = useResource('Practitioner', id);
   const roleSearch = useSearch('PractitionerRole', { practitioner: `Practitioner/${id}`, _count: '50' });
@@ -111,24 +115,18 @@ export function UserEditDrawer({
     [membershipSearch.data],
   );
 
-  const existingDisplayId = useMemo(
-    () =>
-      (pract?.identifier as { system?: string; value?: string }[] | undefined)?.find(
-        (i) => i.system === PRACTITIONER_IDENTIFIER_SYSTEM,
-      ) ?? null,
-    [pract],
-  );
-
   const [given, setGiven] = useState('');
   const [family, setFamily] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('');
-  const [idMode, setIdMode] = useState<'auto' | 'manual'>('auto');
-  const [idValue, setIdValue] = useState('');
+  const [dob, setDob] = useState('');
+  const [nationalId, setNationalId] = useState('');
   const [role, setRole] = useState('');
-  const [qualification, setQualification] = useState('');
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>('active');
+  // Keycloak username can't be read back from FHIR; reproduce create-time derivation from the stored
+  // email so an email edit doesn't rename the account.
+  const [originalUsername, setOriginalUsername] = useState('');
   const [orgs, setOrgs] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [careTeamIds, setCareTeamIds] = useState<string[]>([]);
@@ -140,6 +138,11 @@ export function UserEditDrawer({
   const clearError = (key: keyof UserFormErrors) =>
     setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
 
+  const onFormSubmit = (e: FormEvent): void => {
+    e.preventDefault();
+    submit();
+  };
+
   const relationsLoading = roleSearch.isLoading || membershipSearch.isLoading;
 
   // Populate the form once the practitioner and its relations have loaded.
@@ -147,17 +150,17 @@ export function UserEditDrawer({
     if (hydrated || !pract || relationsLoading) return;
     const name = (pract.name as { family?: string; given?: string[] }[] | undefined)?.[0];
     const telecom = (pract.telecom as { system?: string; value?: string }[] | undefined) ?? [];
+    const email = telecom.find((c) => c.system === 'email')?.value ?? '';
+    const identifiers = (pract.identifier as { system?: string; value?: string }[] | undefined) ?? [];
     setGiven(name?.given?.join(' ') ?? '');
     setFamily(name?.family ?? '');
-    setEmail(telecom.find((c) => c.system === 'email')?.value ?? '');
+    setEmail(email);
+    setOriginalUsername(usernameFromEmail(email));
     setPhone(telecom.find((c) => c.system === 'phone')?.value ?? '');
     setGender(typeof pract.gender === 'string' ? pract.gender : '');
-    setQualification(
-      (pract.qualification as { code?: { text?: string } }[] | undefined)?.[0]?.code?.text ?? '',
-    );
+    setDob(typeof pract.birthDate === 'string' ? pract.birthDate : '');
+    setNationalId(identifiers.find((i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM)?.value ?? '');
     setStatusActive((pract.active as boolean | undefined) === false ? 'inactive' : 'active');
-    setIdValue(existingDisplayId?.value ?? '');
-    setIdMode(existingDisplayId?.value ? 'manual' : 'auto');
     setRole(existingRoles[0]?.code?.[0]?.coding?.[0]?.code ?? '');
     setOrgs(unique(existingRoles.map((r) => r.organization?.reference ?? '').filter(Boolean)));
     setLocations(
@@ -165,7 +168,7 @@ export function UserEditDrawer({
     );
     setCareTeamIds(originalCareTeamIds);
     setHydrated(true);
-  }, [hydrated, pract, relationsLoading, existingDisplayId, existingRoles, originalCareTeamIds]);
+  }, [hydrated, pract, relationsLoading, existingRoles, originalCareTeamIds]);
 
   const submit = (): void => {
     setError(null);
@@ -177,34 +180,22 @@ export function UserEditDrawer({
         email,
         phone,
         gender,
-        qualification,
-        identifierMode: idMode,
-        identifierValue: idValue,
+        dob,
+        nationalId,
       },
       t,
     );
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
-    let identifier: { system: string; value: string } | null = null;
-    if (idMode === 'manual') {
-      identifier = idValue.trim()
-        ? { system: PRACTITIONER_IDENTIFIER_SYSTEM, value: idValue.trim() }
-        : null;
-    } else if (existingDisplayId?.value) {
-      identifier = {
-        system: existingDisplayId.system ?? PRACTITIONER_IDENTIFIER_SYSTEM,
-        value: existingDisplayId.value,
-      };
-    }
     const fields: NewUserFields = {
       givenName: given,
       familyName: family,
       email,
       phone,
       gender,
-      qualification,
-      identifier,
+      dob,
+      nationalId,
       active: statusActive === 'active',
       role: role ? { system: PRACTITIONER_ROLE_SYSTEM, code: role } : null,
       organizations: orgs,
@@ -222,9 +213,11 @@ export function UserEditDrawer({
     void (async () => {
       setSubmitting(true);
       try {
-        await client.transaction(
-          buildUserEditBundle(pract, fields, { existingRoleIds, careTeamAdds, careTeamRemoves }),
-        );
+        // Gateway owns the Keycloak user + Practitioner demographics; preserve the username.
+        await put.mutateAsync({ id, body: buildNewUserPayload(fields, originalUsername) });
+        // FHIR handles only what the gateway doesn't: PractitionerRoles + CareTeam membership.
+        const bundle = buildUserEditBundle(id, fields, { existingRoleIds, careTeamAdds, careTeamRemoves });
+        if (bundle.entry.length > 0) await client.transaction(bundle);
         await writeAuditEvent(client, { action: 'update', resourceType: 'Practitioner', resourceId: id });
         onSuccess();
       } catch (err) {
@@ -265,7 +258,8 @@ export function UserEditDrawer({
           {read.error ? <ErrorState description={toErrorMessage(read.error)} /> : <Spinner label={t('loading')} />}
         </div>
       ) : (
-        <div className="ohs-detail-body">
+        <form className="ohs-detail-body" onSubmit={onFormSubmit}>
+          <button type="submit" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
           {error ? <ErrorState description={error} /> : null}
 
           <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
@@ -274,6 +268,7 @@ export function UserEditDrawer({
               <div className="ohs-detail-grid">
                 <StackedInput
                   label={t('givenName')}
+                  required
                   value={given}
                   error={fieldErrors.givenName}
                   onChange={(v) => {
@@ -283,6 +278,7 @@ export function UserEditDrawer({
                 />
                 <StackedInput
                   label={t('familyName')}
+                  required
                   value={family}
                   error={fieldErrors.familyName}
                   onChange={(v) => {
@@ -293,6 +289,7 @@ export function UserEditDrawer({
                 <StackedInput
                   label={t('emailAddress')}
                   type="email"
+                  required
                   value={email}
                   error={fieldErrors.email}
                   onChange={(v) => {
@@ -309,6 +306,17 @@ export function UserEditDrawer({
                     clearError('phone');
                   }}
                 />
+                <StackedInput
+                  label={t('dateOfBirth')}
+                  type="date"
+                  value={dob}
+                  error={fieldErrors.dob}
+                  onChange={(v) => {
+                    setDob(v);
+                    clearError('dob');
+                  }}
+                />
+                <StackedInput label={t('nationalId')} value={nationalId} onChange={setNationalId} />
                 <StackedSelect
                   full
                   label={t('gender')}
@@ -318,28 +326,6 @@ export function UserEditDrawer({
                   placeholder={t('selectPlaceholder')}
                 />
               </div>
-              <RadioRow
-                label={t('columnIdentifier')}
-                name="identifier-mode"
-                value={idMode}
-                onChange={(v) => setIdMode(v === 'manual' ? 'manual' : 'auto')}
-                options={[
-                  { value: 'auto', label: t('identifierKeep') },
-                  { value: 'manual', label: t('identifierManual') },
-                ]}
-              />
-              {idMode === 'manual' ? (
-                <StackedInput
-                  full
-                  label={t('columnIdentifier')}
-                  value={idValue}
-                  error={fieldErrors.identifierValue}
-                  onChange={(v) => {
-                    setIdValue(v);
-                    clearError('identifierValue');
-                  }}
-                />
-              ) : null}
             </Stack>
           </Section>
 
@@ -347,16 +333,12 @@ export function UserEditDrawer({
             <Stack gap={5}>
               <div className="ohs-detail-grid">
                 <StackedSelect
+                  full
                   label={t('columnRole')}
                   value={role}
                   onChange={setRole}
                   options={PRACTITIONER_ROLE_CODES}
                   placeholder={t('selectPlaceholder')}
-                />
-                <StackedInput
-                  label={t('qualification')}
-                  value={qualification}
-                  onChange={setQualification}
                 />
               </div>
               <RadioRow
@@ -401,7 +383,7 @@ export function UserEditDrawer({
               placeholder={careTeamOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
             />
           </Section>
-        </div>
+        </form>
       )}
     </Drawer>
   );

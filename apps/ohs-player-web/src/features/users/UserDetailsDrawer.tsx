@@ -11,6 +11,7 @@ import {
 } from '@remixicon/react';
 import {
   OhsDialog,
+  PermissionGuard,
   useFhirClient,
   useResource,
   useSearch,
@@ -19,6 +20,7 @@ import {
   writeAuditEvent,
 } from 'ohs-player-web-core';
 import { Avatar, Button, Drawer, IconButton, Spinner, StatusBadge } from '../../components/ui';
+import { buildDeactivateBundle, NATIONAL_ID_IDENTIFIER_SYSTEM } from '../sdc/resourceFromAnswers';
 
 interface SearchBundle {
   entry?: { resource?: Record<string, unknown> }[];
@@ -107,10 +109,12 @@ export function UserDetailsDrawer({
       email: telecom.find((tc) => tc.system === 'email')?.value ?? '',
       phone: telecom.find((tc) => tc.system === 'phone')?.value ?? '',
       gender: typeof pract?.gender === 'string' ? pract.gender : '',
-      identifier:
-        (pract?.identifier as { value?: string }[] | undefined)?.[0]?.value ?? id,
-      qualification:
-        (pract?.qualification as { code?: { text?: string } }[] | undefined)?.[0]?.code?.text ?? '',
+      identifier: id,
+      dob: typeof pract?.birthDate === 'string' ? pract.birthDate : '',
+      nationalId:
+        (pract?.identifier as { system?: string; value?: string }[] | undefined)?.find(
+          (i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM,
+        )?.value ?? '',
       active: (pract?.active as boolean | undefined) !== false,
       role: roleCode?.display ?? roleCode?.code ?? '',
       orgName: refName(role?.organization?.reference, orgNames),
@@ -132,11 +136,7 @@ export function UserDetailsDrawer({
               {details.active ? t('statusActive') : t('statusInactive')}
             </StatusBadge>
           </div>
-          {details.role || details.qualification ? (
-            <p className="ohs-user-drawer__subtitle">
-              {[details.role, details.qualification].filter(Boolean).join(' • ')}
-            </p>
-          ) : null}
+          {details.role ? <p className="ohs-user-drawer__subtitle">{details.role}</p> : null}
           <span className="ohs-user-drawer__id-chip">{details.identifier}</span>
         </div>
       </div>
@@ -148,21 +148,27 @@ export function UserDetailsDrawer({
 
   const onConfirmDeactivate = (): void => {
     if (!pract) return;
+    const roles = ((roleSearch.data as SearchBundle | undefined)?.entry ?? [])
+      .map((e) => e.resource)
+      .filter((r): r is Record<string, unknown> => Boolean(r));
+    const careTeams = ((careTeamSearch.data as SearchBundle | undefined)?.entry ?? [])
+      .map((e) => e.resource)
+      .filter((r): r is Record<string, unknown> => Boolean(r));
     void (async () => {
       setDeactivating(true);
       try {
-        await client.transaction({
-          resourceType: 'Bundle',
-          type: 'transaction',
-          entry: [
-            { resource: { ...pract, active: false }, request: { method: 'PUT', url: `Practitioner/${id}` } },
-          ],
-        });
+        const { bundle, endedRoleCount, removedCareTeamCount } = buildDeactivateBundle(
+          pract,
+          roles,
+          careTeams,
+          new Date().toISOString(),
+        );
+        await client.transaction(bundle);
         await writeAuditEvent(client, {
           action: 'update',
           resourceType: 'Practitioner',
           resourceId: id,
-          description: 'Deactivated',
+          description: `Deactivated (active:false; ${endedRoleCount} role(s) end-dated; ${removedCareTeamCount} care-team membership(s) removed)`,
         });
         setConfirmOpen(false);
         onDeleted();
@@ -176,10 +182,20 @@ export function UserDetailsDrawer({
 
   const footer = (
     <div className="ohs-user-drawer__foot">
-      <Button variant="outlined" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)}>
-        {t('deactivateUser')}
-      </Button>
-      <Button type="button" onClick={onEdit}>
+      {details.active ? (
+        <PermissionGuard permission="users.deactivate">
+          <Button
+            variant="outlined"
+            className="ohs-btn-danger"
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            disabled={deactivating || read.isLoading || roleSearch.isLoading || careTeamSearch.isLoading}
+          >
+            {t('deactivateUser')}
+          </Button>
+        </PermissionGuard>
+      ) : null}
+      <Button type="button" onClick={onEdit} style={{ marginLeft: 'auto' }}>
         {t('editDetails')}
       </Button>
     </div>
@@ -201,6 +217,8 @@ export function UserDetailsDrawer({
               <Field label={t('emailAddress')} value={details.email} />
               <Field label={t('phoneNumber')} value={details.phone} />
               <Field label={t('gender')} value={details.gender} />
+              <Field label={t('dateOfBirth')} value={details.dob} />
+              <Field label={t('nationalId')} value={details.nationalId} />
               <Field label={t('columnIdentifier')} value={details.identifier} />
             </div>
           </Section>
@@ -208,7 +226,6 @@ export function UserDetailsDrawer({
           <Section icon={RiBriefcaseLine} title={t('sectionRoleStatus')}>
             <div className="ohs-detail-grid">
               <Field label={t('columnRole')} value={details.role} />
-              <Field label={t('qualification')} value={details.qualification} />
               <Field label={t('columnStatus')} value={details.active ? t('statusActive') : t('statusInactive')} />
             </div>
           </Section>

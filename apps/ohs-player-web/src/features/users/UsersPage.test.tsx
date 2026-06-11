@@ -6,7 +6,11 @@ const mockTransaction = vi.fn();
 const mockWriteAuditEvent = vi.fn();
 const mockNavigate = vi.fn();
 const mockPost = vi.fn();
+const mockPut = vi.fn();
+const mockCustomGet = vi.fn();
 const mockCreateResource = vi.fn();
+// Stable client reference (the real useFhirClient is useMemo'd) so effects with a [client] dep run once.
+const mockFhirClient = { transaction: mockTransaction, baseUrl: '', customGet: mockCustomGet };
 
 const searchBundles: Record<string, { entry: { resource: Record<string, unknown> }[] }> = {
   Organization: { entry: [{ resource: { resourceType: 'Organization', id: 'o1', name: 'Org One' } }] },
@@ -24,11 +28,12 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
       formatDate: (v: unknown) => String(v),
       formatNumber: (v: unknown) => String(v),
     }),
-    useFhirClient: () => ({ transaction: mockTransaction, baseUrl: '' }),
+    useFhirClient: () => mockFhirClient,
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     useCustomEndpoint: () => ({
       post: { mutateAsync: mockPost, isPending: false },
       get: { mutateAsync: vi.fn() },
+      put: { mutateAsync: mockPut, isPending: false },
     }),
     useCreateResource: () => ({ mutateAsync: mockCreateResource, isPending: false }),
     useResource: () => ({ data: mockPractitioner, isLoading: false, error: null }),
@@ -64,6 +69,7 @@ const mockPractitioner = {
 describe('UserEditDrawer', () => {
   beforeEach(() => {
     mockTransaction.mockReset().mockResolvedValue({});
+    mockPut.mockReset().mockResolvedValue({});
     mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
   });
 
@@ -78,7 +84,7 @@ describe('UserEditDrawer', () => {
     expect(screen.getByDisplayValue('jane@example.com')).toBeInTheDocument();
   });
 
-  it('saves edits via a transaction PUT and writes an audit event', async () => {
+  it('saves demographics via PUT /api/users/{id} (preserving username) and writes an audit event', async () => {
     const onSuccess = vi.fn();
     render(
       <MemoryRouter>
@@ -90,14 +96,19 @@ describe('UserEditDrawer', () => {
     fireEvent.change(familyInput, { target: { value: 'Jones' } });
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
-    await waitFor(() => expect(mockTransaction).toHaveBeenCalledTimes(1));
-    const bundle = mockTransaction.mock.calls[0][0] as {
-      type?: string;
-      entry?: { resource?: { name?: { family?: string }[] }; request?: { method?: string; url?: string } }[];
-    };
-    expect(bundle.type).toBe('transaction');
-    expect(bundle.entry?.[0].request).toEqual({ method: 'PUT', url: 'Practitioner/p1' });
-    expect(bundle.entry?.[0].resource?.name?.[0].family).toBe('Jones');
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1));
+    expect(mockPut.mock.calls[0][0]).toEqual({
+      id: 'p1',
+      body: {
+        username: 'jane', // preserved from the loaded email, not re-derived
+        firstName: 'Jane',
+        lastName: 'Jones',
+        email: 'jane@example.com',
+        enabled: true,
+      },
+    });
+    // No role/careteam change → no FHIR transaction.
+    expect(mockTransaction).not.toHaveBeenCalled();
 
     await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
@@ -112,13 +123,14 @@ describe('UserCreateDrawer', () => {
       identifier: [{ system: 'http://ohs.dev/identifiers/keycloak-user-id', value: 'kc-123' }],
     });
     mockTransaction.mockReset().mockResolvedValue({});
+    mockCustomGet.mockReset().mockResolvedValue([]);
     mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
   });
 
   function fillDemographics() {
-    fireEvent.change(screen.getByLabelText('givenName'), { target: { value: 'Jane' } });
-    fireEvent.change(screen.getByLabelText('familyName'), { target: { value: 'Smith' } });
-    fireEvent.change(screen.getByLabelText('emailAddress'), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), { target: { value: 'jane@example.com' } });
   }
 
   it('blocks submit when required fields are missing', async () => {
@@ -134,7 +146,7 @@ describe('UserCreateDrawer', () => {
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('POSTs the backend payload then PUTs the enriched Practitioner', async () => {
+  it('POSTs the full backend payload and skips the FHIR transaction when no assignment is chosen', async () => {
     const onSuccess = vi.fn();
     render(
       <MemoryRouter>
@@ -143,28 +155,50 @@ describe('UserCreateDrawer', () => {
     );
 
     fillDemographics();
+    fireEvent.change(screen.getByLabelText(/phoneNumber/), { target: { value: '0712345678' } });
+    fireEvent.change(screen.getByLabelText(/dateOfBirth/), { target: { value: '1990-05-01' } });
+    fireEvent.change(screen.getByLabelText(/nationalId/), { target: { value: 'NID-9' } });
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
     await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+    // The backend now owns the Practitioner — demographics go in the POST body.
     expect(mockPost.mock.calls[0][0]).toEqual({
       username: 'jane',
       firstName: 'Jane',
       lastName: 'Smith',
       email: 'jane@example.com',
       enabled: true,
+      phone: '0712345678',
+      dob: '1990-05-01',
+      national_id: 'NID-9',
     });
+
+    // No role/org/careteam → nothing left for the client to write.
+    expect(mockTransaction).not.toHaveBeenCalled();
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
+  });
+
+  it('writes only PractitionerRole(s) in the follow-up transaction (never a Practitioner PUT)', async () => {
+    render(
+      <MemoryRouter>
+        <UserCreateDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    fillDemographics();
+    fireEvent.change(screen.getByLabelText(/contextOrganization/), {
+      target: { value: 'Organization/o1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
     await waitFor(() => expect(mockTransaction).toHaveBeenCalledTimes(1));
     const bundle = mockTransaction.mock.calls[0][0] as {
-      entry?: { resource?: { telecom?: { system?: string; value?: string }[] }; request?: { method?: string; url?: string } }[];
+      entry?: { resource?: { organization?: { reference?: string } }; request?: { method?: string; url?: string } }[];
     };
-    expect(bundle.entry?.[0].request).toEqual({ method: 'PUT', url: 'Practitioner/new' });
-    expect(bundle.entry?.[0].resource?.telecom?.[0]).toEqual({
-      system: 'email',
-      value: 'jane@example.com',
-    });
-
-    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
+    const urls = (bundle.entry ?? []).map((e) => `${e.request?.method} ${e.request?.url}`);
+    expect(urls).toContain('POST PractitionerRole');
+    expect(urls.some((u) => u.startsWith('PUT Practitioner/'))).toBe(false);
+    expect(bundle.entry?.[0].resource?.organization?.reference).toBe('Organization/o1');
   });
 });

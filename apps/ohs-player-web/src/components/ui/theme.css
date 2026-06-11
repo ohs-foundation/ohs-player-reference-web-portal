@@ -1094,6 +1094,9 @@
   line-height: var(--ohs-font-text-s-line, 16px);
   color: var(--ohs-color-text-quaternary, #9e9e9e);
 }
+.ohs-formfield__required {
+  color: var(--ohs-color-error, #b3261e);
+}
 .ohs-formfield__input {
   border: none;
   background: transparent;

@@ -49,5 +49,7 @@ export const platformConfig: CorePlatformConfig = {
   theme: env.themeAlt ? alternateTheme : lightTheme,
   customEndpoints: {
     users: '/api/users',
+    groups: '/api/groups',
+    roles: '/api/roles',
   },
 };

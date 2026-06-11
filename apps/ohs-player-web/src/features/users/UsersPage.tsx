@@ -20,7 +20,6 @@ type PractitionerRow = {
   id?: string;
   active?: boolean;
   name?: { family?: string; given?: string[] }[];
-  identifier?: { system?: string; value?: string }[];
   telecom?: { system?: string; value?: string }[];
 };
 
@@ -32,7 +31,7 @@ function emailOf(p: PractitionerRow): string {
   return p.telecom?.find((tc) => tc.system === 'email')?.value ?? '';
 }
 function identifierOf(p: PractitionerRow): string {
-  return p.identifier?.[0]?.value ?? p.id ?? '—';
+  return p.id ?? '—';
 }
 
 function practitionerIdFromReference(ref: string | undefined): string | undefined {
