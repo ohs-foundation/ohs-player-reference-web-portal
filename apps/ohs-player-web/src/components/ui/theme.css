@@ -870,6 +870,20 @@
   height: 64px;
   font-size: var(--ohs-font-text-xl-size, 20px);
 }
+.ohs-avatar--sm {
+  width: 28px;
+  height: 28px;
+  font-size: var(--ohs-font-text-s-size, 12px);
+}
+.ohs-avatar-stack {
+  display: inline-flex;
+}
+.ohs-avatar-stack .ohs-avatar:not(:first-child) {
+  margin-left: -8px;
+}
+.ohs-avatar-stack .ohs-avatar {
+  box-shadow: 0 0 0 2px var(--ohs-color-surface, #fff);
+}
 
 /* User details drawer */
 .ohs-user-drawer__head {

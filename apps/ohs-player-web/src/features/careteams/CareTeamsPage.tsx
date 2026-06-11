@@ -1,27 +1,53 @@
 import { type FormEvent, useMemo, useState } from 'react';
+import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
 import {
   buildQuestionnaireResponse,
   OhsDialog,
+  OhsDropdownMenu,
   PermissionGuard,
   QuestionnaireFields,
   useCreateResource,
   useFhirClient,
   useQuestionnaireFormState,
   useSearch,
+  useStatusBar,
   useTranslation,
-  useUpdateResource,
   writeAuditEvent,
 } from 'ohs-player-web-core';
-import { Button, Card, EmptyState, ErrorState, Inline, LinearProgress, Page, PageHeader, SelectField, Stack, StatusBadge } from '../../components/ui';
+import {
+  Avatar,
+  Button,
+  ChipSet,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  FilterChip,
+  IconButton,
+  Inline,
+  LinearProgress,
+  Page,
+  PageHeader,
+  SearchField,
+  Stack,
+  StatusBadge,
+} from '../../components/ui';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { CARETEAM_LINK_IDS, careTeamBodyFromAnswers } from '../sdc/resourceFromAnswers';
+import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 
-type CareTeamRow = {
-  id?: string;
-  name?: string;
-  participant?: { member?: { reference?: string } }[];
-  managingOrganization?: { reference?: string }[];
-};
+type RefItem = { id?: string; name?: string };
+type PractRow = { id?: string; active?: boolean; name?: { family?: string; given?: string[] }[] };
+
+function practName(p: PractRow): string {
+  const n = p.name?.[0];
+  return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim() || (p.id ?? '');
+}
+
+function memberIds(team: CareTeamRow): string[] {
+  return (team.participant ?? [])
+    .map((p) => p.member?.reference?.replace(/^Practitioner\//, ''))
+    .filter((x): x is string => Boolean(x));
+}
 
 function CareTeamCreateForm({
   questionnaire,
@@ -51,18 +77,20 @@ function CareTeamCreateForm({
     e.preventDefault();
     setValidationError(null);
     setSubmitError(null);
-    const missing = validateRequired();
-    if (missing.length > 0) {
+    if (validateRequired().length > 0) {
       setValidationError(t('questionnaireRequiredFields'));
       return;
     }
     void (async () => {
       try {
-        const body = careTeamBodyFromAnswers(answers);
-        await create.mutateAsync(body);
+        const created = (await create.mutateAsync(careTeamBodyFromAnswers(answers))) as { id?: string };
         const qr = buildQuestionnaireResponse({ questionnaire, answers, status: 'completed' });
         await createQr.mutateAsync(qr);
-        await writeAuditEvent(client, { action: 'create', resourceType: 'CareTeam' });
+        await writeAuditEvent(client, {
+          action: 'create',
+          resourceType: 'CareTeam',
+          resourceId: created.id,
+        });
         onSuccess();
       } catch (error_) {
         setSubmitError(error_ instanceof Error ? error_.message : String(error_));
@@ -98,114 +126,84 @@ function CareTeamCreateForm({
 
 export function CareTeamsPage() {
   const { t } = useTranslation();
-  const orgs = useSearch('Organization', { _count: '100' });
+  const status = useStatusBar();
   const teams = useSearch('CareTeam', { _count: '200' });
-  const pract = useSearch('Practitioner', { active: 'true', _count: '200' });
-  const update = useUpdateResource('CareTeam');
-  const client = useFhirClient();
+  const orgs = useSearch('Organization', { _count: '500' });
+  const pract = useSearch('Practitioner', { _count: '500' });
 
   const questionnaire = getBundledQuestionnaires().careteam;
 
-  const [modalOpen, setModalOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [createOpen, setCreateOpen] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [viewId, setViewId] = useState<string | null>(null);
 
-  const orgList = useMemo(() => {
-    const b = orgs.data as { entry?: { resource?: { id?: string; name?: string } }[] };
-    return (
-      b?.entry
-        ?.map((e) => e.resource)
-        .filter((r): r is { id?: string; name?: string } => r !== undefined && r !== null) ?? []
-    );
-  }, [orgs.data]);
+  const resourcesOf = <T,>(data: unknown): T[] =>
+    ((data as { entry?: { resource?: T }[] } | undefined)?.entry ?? [])
+      .map((e) => e.resource)
+      .filter((r): r is T => Boolean(r));
 
+  const orgList = useMemo(() => resourcesOf<RefItem>(orgs.data), [orgs.data]);
   const orgNameById = useMemo(() => {
     const m = new Map<string, string>();
-    for (const o of orgList) {
-      if (o.id) m.set(o.id, o.name ?? o.id);
-    }
+    for (const o of orgList) if (o.id) m.set(o.id, o.name ?? o.id);
     return m;
   }, [orgList]);
-
   const orgOptions = useMemo(
-    () =>
-      orgList
-        .filter((o) => o.id)
-        .map((o) => ({ value: o.id as string, label: o.name ?? o.id })),
+    () => orgList.filter((o) => o.id).map((o) => ({ value: o.id as string, label: o.name ?? o.id })),
     [orgList],
   );
 
-  const teamList = useMemo(() => {
-    const b = teams.data as { entry?: { resource?: CareTeamRow }[] };
-    return (
-      b?.entry
-        ?.map((e) => e.resource)
-        .filter((r): r is CareTeamRow => r !== undefined && r !== null) ?? []
-    );
-  }, [teams.data]);
-
-  const practList = useMemo(() => {
-    const b = pract.data as {
-      entry?: { resource?: { id?: string; name?: { family?: string; given?: string[] }[] } }[];
-    };
-    return (
-      b?.entry
-        ?.map((e) => e.resource)
-        .filter((r): r is { id?: string; name?: { family?: string; given?: string[] }[] } =>
-          Boolean(r),
-        ) ?? []
-    );
-  }, [pract.data]);
-
+  const practList = useMemo(() => resourcesOf<PractRow>(pract.data), [pract.data]);
+  const practNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of practList) if (p.id) m.set(p.id, practName(p));
+    return m;
+  }, [practList]);
   const practOptions = useMemo(
     () =>
-      practList.map((p) => {
-        const fam = p.name?.[0]?.family ?? '';
-        const given = p.name?.[0]?.given?.join(' ') ?? '';
-        const label = `${given} ${fam}`.trim() || (p.id ?? '');
-        return { value: p.id ?? '', label };
-      }),
+      practList
+        .filter((p) => p.id && p.active !== false)
+        .map((p) => ({ value: p.id as string, label: practName(p) })),
     [practList],
   );
 
-  const addParticipant = (teamId: string, practId: string) => {
-    const team = teamList.find((x) => x.id === teamId);
-    if (!team?.id) return;
-    const next = {
-      ...team,
-      participant: [
-        ...(team.participant ?? []),
-        {
-          member: { reference: `Practitioner/${practId}` },
-          role: [
-            {
-              coding: [
-                {
-                  system: 'http://terminology.hl7.org/CodeSystem/care-team-roles',
-                  code: 'clinical',
-                  display: 'Clinical',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-    void update.mutateAsync({ id: team.id, body: next }).then(async () => {
-      await writeAuditEvent(client, {
-        action: 'update',
-        resourceType: 'CareTeam',
-        resourceId: team.id,
-        description: 'Participant added',
-      });
-      globalThis.location.reload();
-    });
-  };
+  const teamList = useMemo(() => resourcesOf<CareTeamRow>(teams.data), [teams.data]);
 
-  const teamsError = teams.error
-    ? teams.error instanceof Error
-      ? teams.error.message
-      : String(teams.error)
-    : null;
+  const orgNameOf = (team: CareTeamRow): string => {
+    const ref = team.managingOrganization?.[0]?.reference?.replace(/^Organization\//, '');
+    return ref ? orgNameById.get(ref) ?? ref : '—';
+  };
+  const isActive = (team: CareTeamRow): boolean => (team.status ?? 'active') === 'active';
+
+  const filteredRows = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return teamList.filter((team) => {
+      if (!team.id) return false;
+      if (term && !`${team.name ?? ''} ${team.id}`.toLowerCase().includes(term)) return false;
+      if (statusFilter === 'active' && !isActive(team)) return false;
+      if (statusFilter === 'inactive' && isActive(team)) return false;
+      return true;
+    });
+    // orgNameById/isActive are pure derivations of stable inputs
+  }, [teamList, q, statusFilter]);
+
+  let teamsError: string | null = null;
+  if (teams.error) {
+    teamsError = teams.error instanceof Error ? teams.error.message : String(teams.error);
+  }
+
+  const isFiltering = q.trim() !== '' || statusFilter !== 'all';
+  const noTeams = !teams.isLoading && !teamsError && teamList.length === 0 && !isFiltering;
+  const viewTeam = teamList.find((tm) => tm.id === viewId) ?? null;
+
+  const openCreate = (): void => {
+    setResetKey((k) => k + 1);
+    setCreateOpen(true);
+  };
 
   return (
     <Page>
@@ -213,23 +211,31 @@ export function CareTeamsPage() {
         title={t('pageCareTeams')}
         description={t('pageCareTeamsDescription')}
         actions={
-          <PermissionGuard permission="careteams.manage">
-            <Button
-              type="button"
-              onClick={() => {
-                setResetKey((k) => k + 1);
-                setModalOpen(true);
-              }}
-            >
-              {t('createCareTeam')}
-            </Button>
-          </PermissionGuard>
+          <>
+            {teamList.length > 0 ? (
+              <Button
+                variant="secondary"
+                type="button"
+                iconRight={<RiArrowDownSLine size={20} />}
+                onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
+              >
+                {t('exportLabel')}
+              </Button>
+            ) : null}
+            <PermissionGuard permission="careteams.manage">
+              <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                {t('addCareTeam')}
+              </Button>
+            </PermissionGuard>
+          </>
         }
       />
 
+      {teams.isLoading ? <LinearProgress /> : null}
+
       <OhsDialog
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
         headline={t('dialogCreateCareTeam')}
         minWidth="min(96vw, 520px)"
       >
@@ -237,83 +243,185 @@ export function CareTeamsPage() {
           key={resetKey}
           questionnaire={questionnaire}
           orgOptions={orgOptions}
-          onCancel={() => setModalOpen(false)}
+          onCancel={() => setCreateOpen(false)}
           onSuccess={() => {
-            setModalOpen(false);
-            globalThis.location.reload();
+            setCreateOpen(false);
+            status.notify({ tone: 'success', title: t('careTeamCreated') });
+            void teams.refetch();
           }}
         />
       </OhsDialog>
 
-      <Stack gap={4}>
-        <section aria-labelledby="care-teams-list-heading">
-          <h3
-            id="care-teams-list-heading"
-            className="ohs-page-header__title"
-            style={{ fontSize: 'var(--ohs-text-title, 18px)', marginBottom: 'var(--ohs-spacing-3, 12px)' }}
-          >
-            {t('teamsHeading')}
-          </h3>
-          {teams.isLoading ? <LinearProgress style={{ marginBottom: 'var(--ohs-spacing-4, 16px)' }} /> : null}
-          {teamsError ? <ErrorState description={teamsError} /> : null}
-          {!teamsError && !teams.isLoading && teamList.length === 0 ? (
-            <EmptyState title={t('emptyTitle')} description={t('emptyDescription')} />
-          ) : null}
-          {!teamsError && !teams.isLoading && teamList.length > 0 ? (
+      {noTeams ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <EmptyState
+            title={t('emptyTitle')}
+            description={t('emptyDescription')}
+            action={
+              <PermissionGuard permission="careteams.manage">
+                <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                  {t('addCareTeam')}
+                </Button>
+              </PermissionGuard>
+            }
+          />
+        </div>
+      ) : (
+        <DataTable<CareTeamRow>
+          toolbar={
             <Stack gap={3}>
-              {teamList.map((tm) => {
-                const orgRef = tm.managingOrganization?.[0]?.reference?.replace('Organization/', '');
-                const orgLabel = orgRef ? orgNameById.get(orgRef) ?? orgRef : '—';
-                const participantCount = tm.participant?.length ?? 0;
-                return (
-                  <Card key={tm.id}>
-                    <Stack gap={3}>
-                      <Inline justify="between">
-                        <div>
-                          <strong style={{ fontSize: 'var(--ohs-text-title, 18px)' }}>{tm.name}</strong>
-                          <span style={{ color: 'var(--ohs-color-text-muted)', fontSize: 'var(--ohs-text-label, 14px)', marginLeft: '0.5rem' }}>
-                            {tm.id}
-                          </span>
-                        </div>
-                        <StatusBadge tone="info">{orgLabel}</StatusBadge>
-                      </Inline>
-
-                      <Inline justify="start" style={{ gap: 'var(--ohs-spacing-2, 8px)' }}>
-                        <StatusBadge tone={participantCount > 0 ? 'success' : 'neutral'}>
-                          {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
-                        </StatusBadge>
-                        {(tm.participant ?? [])
-                          .map((p) => p.member?.reference?.replace('Practitioner/', ''))
-                          .filter(Boolean)
-                          .map((ref) => (
-                            <StatusBadge key={ref} tone="neutral">
-                              {ref}
-                            </StatusBadge>
-                          ))}
-                      </Inline>
-
-                      <PermissionGuard permission="careteams.manage">
-                        <SelectField
-                          label={t('addPractitioner')}
-                          name={`add-${tm.id}`}
-                          options={practOptions}
-                          value=""
-                          placeholder={t('selectPlaceholder')}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            if (v && tm.id) addParticipant(tm.id, v);
-                          }}
-                        />
-                      </PermissionGuard>
-                    </Stack>
-                  </Card>
-                );
-              })}
+              <Inline
+                justify="between"
+                style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}
+              >
+                <SearchField
+                  label={t('search')}
+                  name="careTeamSearch"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={t('searchByNameOrId')}
+                />
+                <Button
+                  variant="secondary"
+                  type="button"
+                  iconLeft={<RiFilter3Line size={20} />}
+                  aria-expanded={filtersOpen}
+                  onClick={() => setFiltersOpen((v) => !v)}
+                >
+                  {statusFilter !== 'all' ? `${t('filterLabel')} (1)` : t('filterLabel')}
+                </Button>
+              </Inline>
+              {filtersOpen ? (
+                <div className="ohs-users-filters">
+                  <div className="ohs-formfield ohs-users-filters__field">
+                    <span className="ohs-formfield__label">{t('filterStatus')}</span>
+                    <ChipSet>
+                      <FilterChip label={t('filterStatusAll')} selected={statusFilter === 'all'} onChange={() => setStatusFilter('all')} />
+                      <FilterChip label={t('filterStatusActive')} selected={statusFilter === 'active'} onChange={() => setStatusFilter('active')} />
+                      <FilterChip label={t('filterStatusInactive')} selected={statusFilter === 'inactive'} onChange={() => setStatusFilter('inactive')} />
+                    </ChipSet>
+                  </div>
+                  {statusFilter !== 'all' ? (
+                    <button type="button" className="ohs-users-filters__clear" onClick={() => setStatusFilter('all')}>
+                      {t('clearFilters')}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </Stack>
-          ) : null}
-        </section>
+          }
+          columns={[
+            { key: 'identifier', header: t('columnIdentifier'), render: (tm) => tm.id ?? '—' },
+            {
+              key: 'name',
+              header: t('columnName'),
+              sortable: true,
+              sortValue: (tm) => (tm.name ?? '').toLowerCase(),
+              render: (tm) => {
+                const members = memberIds(tm);
+                return (
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ohs-spacing-1, 4px)', minWidth: 0 }}>
+                    <button
+                      type="button"
+                      className="ohs-rowlink"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (tm.id) setViewId(tm.id);
+                      }}
+                    >
+                      {tm.name ?? tm.id}
+                    </button>
+                    <Inline justify="start" style={{ gap: 'var(--ohs-spacing-2, 8px)', alignItems: 'center' }}>
+                      {members.length > 0 ? (
+                        <span className="ohs-avatar-stack">
+                          {members.slice(0, 3).map((mid) => (
+                            <Avatar key={mid} name={practNameById.get(mid) ?? mid} className="ohs-avatar--sm" />
+                          ))}
+                        </span>
+                      ) : null}
+                      <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                        {t('membersCount', { count: members.length })}
+                      </span>
+                    </Inline>
+                  </span>
+                );
+              },
+            },
+            { key: 'organisation', header: t('columnOrganisation'), render: (tm) => orgNameOf(tm) },
+            {
+              key: 'status',
+              header: t('columnStatus'),
+              sortable: true,
+              sortValue: (tm) => (isActive(tm) ? 1 : 0),
+              render: (tm) =>
+                isActive(tm) ? (
+                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>{t('statusActive')}</StatusBadge>
+                ) : (
+                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>{t('statusInactive')}</StatusBadge>
+                ),
+            },
+            {
+              key: 'actions',
+              header: '',
+              align: 'right',
+              render: (tm) => (
+                <OhsDropdownMenu.Root>
+                  <OhsDropdownMenu.Trigger asChild>
+                    <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
+                      <RiMore2Fill size={20} />
+                    </IconButton>
+                  </OhsDropdownMenu.Trigger>
+                  <OhsDropdownMenu.Portal>
+                    <OhsDropdownMenu.Content className="ohs-dropdown-content" align="end" sideOffset={4}>
+                      <OhsDropdownMenu.Item
+                        className="ohs-dropdown-item"
+                        onSelect={() => {
+                          if (tm.id) setViewId(tm.id);
+                        }}
+                      >
+                        {t('viewDetails')}
+                      </OhsDropdownMenu.Item>
+                    </OhsDropdownMenu.Content>
+                  </OhsDropdownMenu.Portal>
+                </OhsDropdownMenu.Root>
+              ),
+            },
+          ]}
+          rows={filteredRows}
+          rowKey={(tm) => tm.id ?? ''}
+          loading={teams.isLoading}
+          selectable
+          selectedKeys={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onRowClick={(tm) => {
+            const id = tm.id;
+            if (id) setViewId((cur) => cur ?? id);
+          }}
+          pagination
+          initialPageSize={10}
+          errorState={teamsError ? <ErrorState description={teamsError} /> : undefined}
+          emptyState={
+            <EmptyState
+              title={t('emptyTitle')}
+              description={isFiltering ? t('filterEmpty') : t('emptyDescription')}
+            />
+          }
+        />
+      )}
 
-      </Stack>
+      {viewTeam ? (
+        <CareTeamDetailsDrawer
+          team={viewTeam}
+          orgName={orgNameOf(viewTeam)}
+          active={isActive(viewTeam)}
+          practOptions={practOptions}
+          practNameById={practNameById}
+          onClose={() => setViewId(null)}
+          onChanged={() => {
+            void teams.refetch();
+          }}
+        />
+      ) : null}
     </Page>
   );
 }

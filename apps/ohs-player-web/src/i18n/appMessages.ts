@@ -123,11 +123,13 @@ export const appMessageOverrides = {
   organizationName: 'Name',
 
   pageCareTeams: 'Care Teams',
-  pageCareTeamsDescription: 'Create teams and manage participants.',
+  pageCareTeamsDescription: 'Manage care teams available in your environment',
+  addCareTeam: 'Add Care Team',
+  careTeamCreated: 'Care team created',
+  removeParticipant: 'Remove participant',
   organizationForTeam: 'Organisation',
   teamName: 'Team name',
   organizationRequired: 'Select an organisation for this care team.',
-  teamsHeading: 'Teams',
   participantsLabel: 'Participants',
   addPractitioner: 'Add practitioner',
 
