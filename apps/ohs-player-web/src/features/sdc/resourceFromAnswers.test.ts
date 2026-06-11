@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyUserAnswersToPractitioner,
   buildDeactivateBundle,
+  careTeamFromForm,
   buildNewUserBundle,
   buildNewUserPayload,
   buildUserEditBundle,
@@ -159,6 +160,35 @@ describe('buildUserEditBundle', () => {
 
     const rem = bundle.entry.find((e) => e.request.url === 'CareTeam/ctR');
     expect((rem?.resource as { participant?: unknown[] }).participant).toHaveLength(0);
+  });
+});
+
+describe('careTeamFromForm', () => {
+  const base = { name: 'Ebola Response', description: '', status: 'active' as const, organization: '', memberIds: [] };
+
+  it('maps name + status, and omits blank description/org/members', () => {
+    const ct = careTeamFromForm(base);
+    expect(ct).toEqual({ resourceType: 'CareTeam', status: 'active', name: 'Ebola Response' });
+  });
+
+  it('maps description→note, organization→managingOrganization, members→participant (Practitioner refs + clinical role)', () => {
+    const ct = careTeamFromForm({
+      ...base,
+      description: 'Outbreak team',
+      status: 'inactive',
+      organization: 'Organization/o1',
+      memberIds: ['p1', 'p2'],
+    }) as {
+      status?: string;
+      note?: { text?: string }[];
+      managingOrganization?: { reference?: string }[];
+      participant?: { member?: { reference?: string }; role?: { coding?: { code?: string }[] }[] }[];
+    };
+    expect(ct.status).toBe('inactive');
+    expect(ct.note?.[0].text).toBe('Outbreak team');
+    expect(ct.managingOrganization?.[0].reference).toBe('Organization/o1');
+    expect(ct.participant?.map((p) => p.member?.reference)).toEqual(['Practitioner/p1', 'Practitioner/p2']);
+    expect(ct.participant?.[0].role?.[0].coding?.[0].code).toBe('clinical');
   });
 });
 

@@ -1123,6 +1123,10 @@
   color: var(--ohs-color-text, #0d0d0d);
   outline: none;
 }
+.ohs-formfield__textarea {
+  resize: vertical;
+  min-height: 64px;
+}
 .ohs-formfield__input::placeholder {
   color: var(--ohs-color-text-quaternary, #9e9e9e);
 }

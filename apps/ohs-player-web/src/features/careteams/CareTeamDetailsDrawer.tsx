@@ -9,6 +9,7 @@ import {
   writeAuditEvent,
 } from 'ohs-player-web-core';
 import { Avatar, Drawer, IconButton, SelectField, Stack, StatusBadge } from '../../components/ui';
+import { CARE_TEAM_ROLE_CODING } from '../sdc/resourceFromAnswers';
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
   return (
@@ -25,13 +26,6 @@ export type CareTeamRow = {
   status?: string;
   participant?: { member?: { reference?: string }; role?: unknown[] }[];
   managingOrganization?: { reference?: string }[];
-};
-
-/** FHIR CareTeam participants reference `Practitioner/{id}` (portal convention; see the participant-model follow-up). */
-const CARE_TEAM_ROLE_CODING = {
-  system: 'http://terminology.hl7.org/CodeSystem/care-team-roles',
-  code: 'clinical',
-  display: 'Clinical',
 };
 
 function memberId(ref: string | undefined): string {

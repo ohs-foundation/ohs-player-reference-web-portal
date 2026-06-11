@@ -29,6 +29,42 @@ export function careTeamBodyFromAnswers(answers: Record<string, string>): {
   };
 }
 
+/** Default CareTeam participant role coding. Participants reference `Practitioner/{id}` (portal convention). */
+export const CARE_TEAM_ROLE_CODING = {
+  system: 'http://terminology.hl7.org/CodeSystem/care-team-roles',
+  code: 'clinical',
+  display: 'Clinical',
+};
+
+/** Fields the bespoke Add/Edit Care Team drawer collects. */
+export interface CareTeamFormFields {
+  name: string;
+  description: string;
+  status: 'active' | 'inactive';
+  /** `Organization/{id}` reference, or '' for none. */
+  organization: string;
+  /** Practitioner ids to add as participants. */
+  memberIds: string[];
+}
+
+/** Map the Care Team form to a FHIR CareTeam resource (plain FHIR; the server assigns the id). */
+export function careTeamFromForm(fields: CareTeamFormFields): Record<string, unknown> {
+  const careTeam: Record<string, unknown> = {
+    resourceType: 'CareTeam',
+    status: fields.status,
+    name: fields.name.trim(),
+  };
+  if (fields.description.trim()) careTeam.note = [{ text: fields.description.trim() }];
+  if (fields.organization) careTeam.managingOrganization = [{ reference: fields.organization }];
+  if (fields.memberIds.length > 0) {
+    careTeam.participant = fields.memberIds.map((id) => ({
+      member: { reference: `Practitioner/${id}` },
+      role: [{ coding: [CARE_TEAM_ROLE_CODING] }],
+    }));
+  }
+  return careTeam;
+}
+
 // ---------------------------------------------------------------------------
 // User (Practitioner via custom gateway)
 // ---------------------------------------------------------------------------

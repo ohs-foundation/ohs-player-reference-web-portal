@@ -1,18 +1,11 @@
-import { type FormEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
 import {
-  buildQuestionnaireResponse,
-  OhsDialog,
   OhsDropdownMenu,
   PermissionGuard,
-  QuestionnaireFields,
-  useCreateResource,
-  useFhirClient,
-  useQuestionnaireFormState,
   useSearch,
   useStatusBar,
   useTranslation,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
 import {
   Avatar,
@@ -31,8 +24,7 @@ import {
   Stack,
   StatusBadge,
 } from '../../components/ui';
-import { getBundledQuestionnaires } from '../../questionnaires/registry';
-import { CARETEAM_LINK_IDS, careTeamBodyFromAnswers } from '../sdc/resourceFromAnswers';
+import { CareTeamCreateDrawer } from './CareTeamCreateDrawer';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 
 type RefItem = { id?: string; name?: string };
@@ -49,81 +41,6 @@ function memberIds(team: CareTeamRow): string[] {
     .filter((x): x is string => Boolean(x));
 }
 
-function CareTeamCreateForm({
-  questionnaire,
-  orgOptions,
-  onSuccess,
-  onCancel,
-}: Readonly<{
-  questionnaire: ReturnType<typeof getBundledQuestionnaires>['careteam'];
-  orgOptions: { value: string; label: string | undefined }[];
-  onSuccess: () => void;
-  onCancel: () => void;
-}>) {
-  const { t } = useTranslation();
-  const create = useCreateResource('CareTeam');
-  const createQr = useCreateResource('QuestionnaireResponse');
-  const client = useFhirClient();
-
-  const { answers, setAnswer, validateRequired } = useQuestionnaireFormState(questionnaire, {
-    [CARETEAM_LINK_IDS.name]: '',
-    [CARETEAM_LINK_IDS.org]: '',
-  });
-
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setValidationError(null);
-    setSubmitError(null);
-    if (validateRequired().length > 0) {
-      setValidationError(t('questionnaireRequiredFields'));
-      return;
-    }
-    void (async () => {
-      try {
-        const created = (await create.mutateAsync(careTeamBodyFromAnswers(answers))) as { id?: string };
-        const qr = buildQuestionnaireResponse({ questionnaire, answers, status: 'completed' });
-        await createQr.mutateAsync(qr);
-        await writeAuditEvent(client, {
-          action: 'create',
-          resourceType: 'CareTeam',
-          resourceId: created.id,
-        });
-        onSuccess();
-      } catch (error_) {
-        setSubmitError(error_ instanceof Error ? error_.message : String(error_));
-      }
-    })();
-  };
-
-  const isPending = create.isPending || createQr.isPending;
-
-  return (
-    <form id="careteam-create-form" onSubmit={onSubmit}>
-      <Stack gap={3}>
-        {validationError ? <ErrorState description={validationError} /> : null}
-        {submitError ? <ErrorState description={submitError} /> : null}
-        <QuestionnaireFields
-          questionnaire={questionnaire}
-          answers={answers}
-          setAnswer={setAnswer}
-          referenceOptionsByLinkId={{ [CARETEAM_LINK_IDS.org]: orgOptions }}
-        />
-        <Inline justify="end" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="outlined" type="button" onClick={onCancel} disabled={isPending}>
-            {t('cancel')}
-          </Button>
-          <Button type="submit" disabled={isPending} loading={isPending}>
-            {t('saveAndClose')}
-          </Button>
-        </Inline>
-      </Stack>
-    </form>
-  );
-}
-
 export function CareTeamsPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
@@ -131,14 +48,11 @@ export function CareTeamsPage() {
   const orgs = useSearch('Organization', { _count: '500' });
   const pract = useSearch('Practitioner', { _count: '500' });
 
-  const questionnaire = getBundledQuestionnaires().careteam;
-
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
   const [viewId, setViewId] = useState<string | null>(null);
 
   const resourcesOf = <T,>(data: unknown): T[] =>
@@ -153,7 +67,7 @@ export function CareTeamsPage() {
     return m;
   }, [orgList]);
   const orgOptions = useMemo(
-    () => orgList.filter((o) => o.id).map((o) => ({ value: o.id as string, label: o.name ?? o.id })),
+    () => orgList.filter((o) => o.id).map((o) => ({ value: o.id as string, label: o.name ?? (o.id as string) })),
     [orgList],
   );
 
@@ -201,7 +115,6 @@ export function CareTeamsPage() {
   const viewTeam = teamList.find((tm) => tm.id === viewId) ?? null;
 
   const openCreate = (): void => {
-    setResetKey((k) => k + 1);
     setCreateOpen(true);
   };
 
@@ -233,24 +146,18 @@ export function CareTeamsPage() {
 
       {teams.isLoading ? <LinearProgress /> : null}
 
-      <OhsDialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        headline={t('dialogCreateCareTeam')}
-        minWidth="min(96vw, 520px)"
-      >
-        <CareTeamCreateForm
-          key={resetKey}
-          questionnaire={questionnaire}
+      {createOpen ? (
+        <CareTeamCreateDrawer
           orgOptions={orgOptions}
-          onCancel={() => setCreateOpen(false)}
+          practOptions={practOptions}
+          onClose={() => setCreateOpen(false)}
           onSuccess={() => {
             setCreateOpen(false);
             status.notify({ tone: 'success', title: t('careTeamCreated') });
             void teams.refetch();
           }}
         />
-      </OhsDialog>
+      ) : null}
 
       {noTeams ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
