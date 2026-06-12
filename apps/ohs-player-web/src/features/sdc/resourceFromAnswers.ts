@@ -48,19 +48,30 @@ export interface CareTeamFormFields {
   memberIds: string[];
 }
 
-/** Map the Care Team form to a FHIR CareTeam resource (plain FHIR; the server assigns the id). */
-export function careTeamFromForm(fields: CareTeamFormFields): Record<string, unknown> {
+/**
+ * Map the Care Team form to a FHIR CareTeam resource. On create, omit `existing` (server assigns the
+ * id). On edit, pass the existing resource so unmanaged fields (id, meta, identifier, …) are preserved
+ * while the form-managed fields are overwritten — including removals (cleared description / no members).
+ */
+export function careTeamFromForm(
+  fields: CareTeamFormFields,
+  existing?: Record<string, unknown>,
+): Record<string, unknown> {
   const careTeam: Record<string, unknown> = {
+    ...(existing ?? {}),
     resourceType: 'CareTeam',
     status: fields.status,
     name: fields.name.trim(),
   };
   if (fields.description.trim()) careTeam.note = [{ text: fields.description.trim() }];
+  else delete careTeam.note;
   if (fields.memberIds.length > 0) {
     careTeam.participant = fields.memberIds.map((id) => ({
       member: { reference: `Practitioner/${id}` },
       role: [{ coding: [CARE_TEAM_ROLE_CODING] }],
     }));
+  } else {
+    delete careTeam.participant;
   }
   return careTeam;
 }

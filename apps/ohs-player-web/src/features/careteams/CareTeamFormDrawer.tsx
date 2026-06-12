@@ -6,12 +6,14 @@ import {
   useCreateResource,
   useFhirClient,
   useTranslation,
+  useUpdateResource,
   writeAuditEvent,
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { careTeamFromForm } from '../sdc/resourceFromAnswers';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedTextArea } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
+import type { CareTeamRow } from './CareTeamDetailsDrawer';
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
@@ -19,11 +21,20 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
-export function CareTeamCreateDrawer({
+function memberIdsOf(team: CareTeamRow | undefined): string[] {
+  return (team?.participant ?? [])
+    .map((p) => p.member?.reference?.replace(/^Practitioner\//, '') ?? '')
+    .filter(Boolean);
+}
+
+/** Add or Edit a Care Team. Pass `team` to edit (prefills + PUTs); omit it to create (POSTs). */
+export function CareTeamFormDrawer({
+  team,
   practOptions,
   onClose,
   onSuccess,
 }: Readonly<{
+  team?: CareTeamRow;
   practOptions: Option[];
   onClose: () => void;
   onSuccess: () => void;
@@ -31,11 +42,15 @@ export function CareTeamCreateDrawer({
   const { t } = useTranslation();
   const client = useFhirClient();
   const create = useCreateResource('CareTeam');
+  const update = useUpdateResource('CareTeam');
+  const editing = Boolean(team?.id);
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [statusActive, setStatusActive] = useState<'active' | 'inactive'>('active');
-  const [memberIds, setMemberIds] = useState<string[]>([]);
+  const [name, setName] = useState(team?.name ?? '');
+  const [description, setDescription] = useState(team?.note?.[0]?.text ?? '');
+  const [statusActive, setStatusActive] = useState<'active' | 'inactive'>(
+    (team?.status ?? 'active') === 'active' ? 'active' : 'inactive',
+  );
+  const [memberIds, setMemberIds] = useState<string[]>(memberIdsOf(team));
   const [nameError, setNameError] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -46,20 +61,20 @@ export function CareTeamCreateDrawer({
       setNameError(t('careTeamNameRequired'));
       return;
     }
-    const body = careTeamFromForm({
-      name,
-      description,
-      status: statusActive,
-      memberIds,
-    });
+    const body = careTeamFromForm({ name, description, status: statusActive, memberIds }, team);
     void (async () => {
       setSubmitting(true);
       try {
-        const created = (await create.mutateAsync(body)) as { id?: string };
+        let resourceId = team?.id;
+        if (editing && team?.id) {
+          await update.mutateAsync({ id: team.id, body });
+        } else {
+          resourceId = ((await create.mutateAsync(body)) as { id?: string }).id;
+        }
         await writeAuditEvent(client, {
-          action: 'create',
+          action: editing ? 'update' : 'create',
           resourceType: 'CareTeam',
-          resourceId: created.id,
+          resourceId,
         });
         onSuccess();
       } catch (err) {
@@ -78,8 +93,10 @@ export function CareTeamCreateDrawer({
   const header = (
     <div className="ohs-form-drawer__head">
       <div>
-        <h2 className="ohs-form-drawer__title">{t('addCareTeam')}</h2>
-        <p className="ohs-form-drawer__subtitle">{t('addCareTeamSubtitle')}</p>
+        <h2 className="ohs-form-drawer__title">{editing ? t('editCareTeam') : t('addCareTeam')}</h2>
+        <p className="ohs-form-drawer__subtitle">
+          {editing ? t('editCareTeamSubtitle') : t('addCareTeamSubtitle')}
+        </p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
         <RiCloseLine size={24} />
@@ -99,7 +116,13 @@ export function CareTeamCreateDrawer({
   );
 
   return (
-    <Drawer open onClose={onClose} title={t('addCareTeam')} header={header} footer={footer}>
+    <Drawer
+      open
+      onClose={onClose}
+      title={editing ? t('editCareTeam') : t('addCareTeam')}
+      header={header}
+      footer={footer}
+    >
       <form className="ohs-detail-body" onSubmit={onFormSubmit}>
         <button type="submit" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
         {error ? <ErrorState description={error} /> : null}

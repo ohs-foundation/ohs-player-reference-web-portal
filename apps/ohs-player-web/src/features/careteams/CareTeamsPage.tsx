@@ -25,8 +25,8 @@ import {
   Stack,
   StatusBadge,
 } from '../../components/ui';
-import { CareTeamCreateDrawer } from './CareTeamCreateDrawer';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
+import { CareTeamFormDrawer } from './CareTeamFormDrawer';
 
 type PractRow = { id?: string; active?: boolean; name?: { family?: string; given?: string[] }[] };
 
@@ -54,6 +54,7 @@ export function CareTeamsPage() {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const resourcesOf = <T,>(data: unknown): T[] =>
     ((data as { entry?: { resource?: T }[] } | undefined)?.entry ?? [])
@@ -98,6 +99,7 @@ export function CareTeamsPage() {
   const isFiltering = q.trim() !== '' || statusFilter !== 'all';
   const noTeams = !teams.isLoading && !teamsError && teamList.length === 0 && !isFiltering;
   const viewTeam = teamList.find((tm) => tm.id === viewId) ?? null;
+  const editTeam = teamList.find((tm) => tm.id === editId) ?? null;
 
   const openCreate = (): void => {
     setCreateOpen(true);
@@ -132,12 +134,25 @@ export function CareTeamsPage() {
       {teams.isLoading ? <LinearProgress /> : null}
 
       {createOpen ? (
-        <CareTeamCreateDrawer
+        <CareTeamFormDrawer
           practOptions={practOptions}
           onClose={() => setCreateOpen(false)}
           onSuccess={() => {
             setCreateOpen(false);
             status.notify({ tone: 'success', title: t('careTeamCreated') });
+            void refresh('CareTeam');
+          }}
+        />
+      ) : null}
+
+      {editTeam ? (
+        <CareTeamFormDrawer
+          team={editTeam}
+          practOptions={practOptions}
+          onClose={() => setEditId(null)}
+          onSuccess={() => {
+            setEditId(null);
+            status.notify({ tone: 'success', title: t('careTeamUpdated') });
             void refresh('CareTeam');
           }}
         />
@@ -305,7 +320,11 @@ export function CareTeamsPage() {
           active={isActive(viewTeam)}
           practNameById={practNameById}
           onClose={() => setViewId(null)}
-          onEdit={() => status.notify({ tone: 'info', title: t('editCareTeamSoon') })}
+          onEdit={() => {
+            const id = viewTeam.id;
+            setViewId(null);
+            if (id) setEditId(id);
+          }}
           onChanged={() => {
             void refresh('CareTeam');
           }}
