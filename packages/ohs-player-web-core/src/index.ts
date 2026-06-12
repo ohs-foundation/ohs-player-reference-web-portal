@@ -60,6 +60,7 @@ export {
   useCreateResource,
   useCustomEndpoint,
   useFhirCapabilities,
+  useRefreshResources,
   useResource,
   useSearch,
   useUpdateResource,

@@ -3,6 +3,7 @@ import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixi
 import {
   OhsDropdownMenu,
   PermissionGuard,
+  useRefreshResources,
   useSearch,
   useStatusBar,
   useTranslation,
@@ -44,6 +45,7 @@ function memberIds(team: CareTeamRow): string[] {
 export function CareTeamsPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
+  const refresh = useRefreshResources();
   const teams = useSearch('CareTeam', { _count: '200' });
   const orgs = useSearch('Organization', { _count: '500' });
   const pract = useSearch('Practitioner', { _count: '500' });
@@ -154,7 +156,7 @@ export function CareTeamsPage() {
           onSuccess={() => {
             setCreateOpen(false);
             status.notify({ tone: 'success', title: t('careTeamCreated') });
-            void teams.refetch();
+            void refresh('CareTeam');
           }}
         />
       ) : null}
@@ -325,7 +327,7 @@ export function CareTeamsPage() {
           practNameById={practNameById}
           onClose={() => setViewId(null)}
           onChanged={() => {
-            void teams.refetch();
+            void refresh('CareTeam');
           }}
         />
       ) : null}
