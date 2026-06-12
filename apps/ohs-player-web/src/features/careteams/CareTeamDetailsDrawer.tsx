@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { RiCloseLine, RiDeleteBinLine } from '@remixicon/react';
+import { RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
 import {
+  OhsDialog,
   PermissionGuard,
   useFhirClient,
   useStatusBar,
@@ -8,8 +9,20 @@ import {
   useUpdateResource,
   writeAuditEvent,
 } from 'ohs-player-web-core';
-import { Avatar, Drawer, IconButton, SelectField, Stack, StatusBadge } from '../../components/ui';
-import { CARE_TEAM_ROLE_CODING } from '../sdc/resourceFromAnswers';
+import { Avatar, Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
+import { Section } from '../users/userFormControls';
+
+export type CareTeamRow = {
+  id?: string;
+  name?: string;
+  status?: string;
+  note?: { text?: string }[];
+  participant?: {
+    member?: { reference?: string };
+    role?: { coding?: { code?: string; display?: string }[] }[];
+  }[];
+  managingOrganization?: { reference?: string }[];
+};
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
   return (
@@ -20,14 +33,6 @@ function Field({ label, value }: Readonly<{ label: string; value?: string }>): R
   );
 }
 
-export type CareTeamRow = {
-  id?: string;
-  name?: string;
-  status?: string;
-  participant?: { member?: { reference?: string }; role?: unknown[] }[];
-  managingOrganization?: { reference?: string }[];
-};
-
 function memberId(ref: string | undefined): string {
   return ref?.replace(/^Practitioner\//, '') ?? '';
 }
@@ -36,43 +41,53 @@ export function CareTeamDetailsDrawer({
   team,
   orgName,
   active,
-  practOptions,
   practNameById,
   onClose,
+  onEdit,
   onChanged,
 }: Readonly<{
   team: CareTeamRow;
   orgName: string;
   active: boolean;
-  practOptions: { value: string; label: string }[];
   practNameById: Map<string, string>;
   onClose: () => void;
+  onEdit: () => void;
   onChanged: () => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
   const status = useStatusBar();
   const update = useUpdateResource('CareTeam');
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const participants = team.participant ?? [];
-  const memberRefs = participants.map((p) => memberId(p.member?.reference)).filter(Boolean);
-  const available = practOptions.filter((o) => !memberRefs.includes(o.value));
+  const members = (team.participant ?? [])
+    .map((p) => {
+      const id = memberId(p.member?.reference);
+      const coding = p.role?.[0]?.coding?.[0];
+      return { id, name: practNameById.get(id) ?? id, role: coding?.display ?? coding?.code ?? '' };
+    })
+    .filter((m) => m.id);
 
-  const save = (next: CareTeamRow, description: string): void => {
+  const description = team.note?.[0]?.text ?? '';
+
+  const onConfirmRetire = (): void => {
     const id = team.id;
     if (!id) return;
     void (async () => {
       setSaving(true);
       try {
-        await update.mutateAsync({ id, body: next });
+        await update.mutateAsync({ id, body: { ...team, resourceType: 'CareTeam', status: 'inactive' } });
         await writeAuditEvent(client, {
           action: 'update',
           resourceType: 'CareTeam',
           resourceId: id,
-          description,
+          description: 'Retired (status:inactive)',
         });
+        setConfirmOpen(false);
+        status.notify({ tone: 'success', title: t('careTeamRetired') });
         onChanged();
+        onClose();
       } catch (err) {
         status.notify({ tone: 'error', title: err instanceof Error ? err.message : t('saveFailed') });
       } finally {
@@ -81,106 +96,102 @@ export function CareTeamDetailsDrawer({
     })();
   };
 
-  const addParticipant = (practId: string): void => {
-    save(
-      {
-        ...team,
-        participant: [
-          ...participants,
-          { member: { reference: `Practitioner/${practId}` }, role: [{ coding: [CARE_TEAM_ROLE_CODING] }] },
-        ],
-      },
-      'Participant added',
-    );
-  };
-
-  const removeParticipant = (practId: string): void => {
-    save(
-      { ...team, participant: participants.filter((p) => memberId(p.member?.reference) !== practId) },
-      'Participant removed',
-    );
-  };
-
   const header = (
-    <div className="ohs-user-drawer__head">
-      <div className="ohs-user-drawer__identity">
-        <Avatar name={team.name ?? team.id ?? ''} className="ohs-avatar--lg" />
-        <div>
-          <div className="ohs-user-drawer__name-row">
-            <h2 className="ohs-user-drawer__name">{team.name ?? team.id}</h2>
-            <StatusBadge tone={active ? 'success' : 'neutral'} icon={<span className="ohs-badge__dot" />}>
-              {active ? t('statusActive') : t('statusInactive')}
-            </StatusBadge>
-          </div>
-          <span className="ohs-user-drawer__id-chip">{team.id}</span>
+    <div className="ohs-form-drawer__head">
+      <div>
+        <div className="ohs-user-drawer__name-row">
+          <h2 className="ohs-form-drawer__title">{team.name ?? team.id}</h2>
+          <StatusBadge tone={active ? 'success' : 'neutral'} icon={<span className="ohs-badge__dot" />}>
+            {active ? t('statusActive') : t('statusInactive')}
+          </StatusBadge>
         </div>
+        <span className="ohs-user-drawer__id-chip">{team.id}</span>
       </div>
-      <IconButton label={t('close')} className="ohs-user-drawer__close" onClick={onClose}>
+      <IconButton label={t('close')} onClick={onClose}>
         <RiCloseLine size={24} />
       </IconButton>
     </div>
   );
 
-  return (
-    <Drawer open onClose={onClose} title={team.name ?? team.id ?? ''} header={header}>
-      <div className="ohs-detail-body">
-        <Stack gap={4}>
-          <div className="ohs-detail-grid">
-            <Field label={t('columnOrganisation')} value={orgName} />
-            <Field label={t('columnStatus')} value={active ? t('statusActive') : t('statusInactive')} />
-          </div>
+  const footer = (
+    <div className="ohs-user-drawer__foot">
+      <PermissionGuard permission="careteams.manage">
+        <Button variant="ghost" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)} disabled={saving}>
+          {t('deleteCareTeam')}
+        </Button>
+      </PermissionGuard>
+      <Button type="button" onClick={onEdit} style={{ marginLeft: 'auto' }}>
+        {t('editDetails')}
+      </Button>
+    </div>
+  );
 
-          <div>
-            <span className="ohs-formfield__label">
-              {t('participantsLabel')} · {t('membersCount', { count: memberRefs.length })}
-            </span>
-            <Stack gap={2} style={{ marginTop: 'var(--ohs-spacing-2, 8px)' }}>
-              {memberRefs.length === 0 ? (
-                <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
-              ) : (
-                memberRefs.map((mid) => (
+  return (
+    <>
+      <Drawer open onClose={onClose} title={team.name ?? team.id ?? ''} header={header} footer={footer}>
+        <div className="ohs-detail-body">
+          <Section icon={RiTeamLine} title={t('sectionBasicInfo')}>
+            <Stack gap={4}>
+              <Field label={t('contextOrganization')} value={orgName} />
+              <Field label={t('descriptionLabel')} value={description} />
+              <div className="ohs-detail-grid">
+                <Field label={t('columnIdentifier')} value={team.id} />
+                <Field label={t('columnStatus')} value={active ? t('statusActive') : t('statusInactive')} />
+              </div>
+            </Stack>
+          </Section>
+
+          <Section icon={RiGroupLine} title={t('sectionMembers')}>
+            {members.length === 0 ? (
+              <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
+            ) : (
+              <div>
+                {members.map((m, i) => (
                   <div
-                    key={mid}
+                    key={m.id}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 'var(--ohs-spacing-3, 12px)',
-                      padding: 'var(--ohs-spacing-2, 8px) 0',
-                      borderBottom: '1px solid var(--ohs-color-border, #ededed)',
+                      padding: 'var(--ohs-spacing-3, 12px) 0',
+                      borderBottom: i < members.length - 1 ? '1px solid var(--ohs-color-border, #ededed)' : 'none',
                     }}
                   >
-                    <Avatar name={practNameById.get(mid) ?? mid} className="ohs-avatar--sm" />
-                    <span style={{ flex: 1, minWidth: 0 }}>{practNameById.get(mid) ?? mid}</span>
-                    <PermissionGuard permission="careteams.manage">
-                      <IconButton
-                        label={t('removeParticipant')}
-                        onClick={() => removeParticipant(mid)}
-                        disabled={saving}
-                      >
-                        <RiDeleteBinLine size={20} />
-                      </IconButton>
-                    </PermissionGuard>
+                    <Avatar name={m.name} className="ohs-avatar--sm" />
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      <span>{m.name}</span>
+                      {m.role ? (
+                        <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                          {m.role}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                ))
-              )}
-            </Stack>
-          </div>
+                ))}
+              </div>
+            )}
+          </Section>
+        </div>
+      </Drawer>
 
-          <PermissionGuard permission="careteams.manage">
-            <SelectField
-              label={t('addPractitioner')}
-              name={`add-participant-${team.id}`}
-              options={available}
-              value=""
-              placeholder={t('selectPlaceholder')}
-              disabled={saving || available.length === 0}
-              onChange={(e) => {
-                if (e.target.value) addParticipant(e.target.value);
-              }}
-            />
-          </PermissionGuard>
+      <OhsDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        headline={t('confirmRetireTitle')}
+        minWidth="min(96vw, 420px)"
+      >
+        <Stack gap={4}>
+          <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmRetireBody')}</p>
+          <Inline justify="end" style={{ gap: 'var(--ohs-spacing-3, 12px)' }}>
+            <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
+              {t('cancel')}
+            </Button>
+            <Button variant="danger" type="button" onClick={onConfirmRetire} loading={saving} disabled={saving}>
+              {t('retire')}
+            </Button>
+          </Inline>
         </Stack>
-      </div>
-    </Drawer>
+      </OhsDialog>
+    </>
   );
 }

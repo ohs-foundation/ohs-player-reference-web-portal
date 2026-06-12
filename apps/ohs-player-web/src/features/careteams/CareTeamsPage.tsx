@@ -323,9 +323,9 @@ export function CareTeamsPage() {
           team={viewTeam}
           orgName={orgNameOf(viewTeam)}
           active={isActive(viewTeam)}
-          practOptions={practOptions}
           practNameById={practNameById}
           onClose={() => setViewId(null)}
+          onEdit={() => status.notify({ tone: 'info', title: t('editCareTeamSoon') })}
           onChanged={() => {
             void refresh('CareTeam');
           }}
