@@ -10,7 +10,7 @@ import {
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { careTeamFromForm } from '../sdc/resourceFromAnswers';
-import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect, StackedTextArea } from '../users/userFormControls';
+import { MultiSelect, RadioRow, Section, StackedInput, StackedTextArea } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
 
 function toErrorMessage(error: unknown): string {
@@ -20,12 +20,10 @@ function toErrorMessage(error: unknown): string {
 }
 
 export function CareTeamCreateDrawer({
-  orgOptions,
   practOptions,
   onClose,
   onSuccess,
 }: Readonly<{
-  orgOptions: Option[];
   practOptions: Option[];
   onClose: () => void;
   onSuccess: () => void;
@@ -37,7 +35,6 @@ export function CareTeamCreateDrawer({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>('active');
-  const [org, setOrg] = useState('');
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [nameError, setNameError] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +50,6 @@ export function CareTeamCreateDrawer({
       name,
       description,
       status: statusActive,
-      organization: org ? `Organization/${org}` : '',
       memberIds,
     });
     void (async () => {
@@ -126,14 +122,6 @@ export function CareTeamCreateDrawer({
               label={t('careTeamDescription')}
               value={description}
               onChange={setDescription}
-            />
-            <StackedSelect
-              full
-              label={t('contextOrganization')}
-              value={org}
-              onChange={setOrg}
-              options={orgOptions}
-              placeholder={orgOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedData')}
             />
             <RadioRow
               label={t('columnStatus')}

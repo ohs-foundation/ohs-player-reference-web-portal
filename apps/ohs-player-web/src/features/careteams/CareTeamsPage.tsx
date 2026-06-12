@@ -28,7 +28,6 @@ import {
 import { CareTeamCreateDrawer } from './CareTeamCreateDrawer';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 
-type RefItem = { id?: string; name?: string };
 type PractRow = { id?: string; active?: boolean; name?: { family?: string; given?: string[] }[] };
 
 function practName(p: PractRow): string {
@@ -47,7 +46,6 @@ export function CareTeamsPage() {
   const status = useStatusBar();
   const refresh = useRefreshResources();
   const teams = useSearch('CareTeam', { _count: '200' });
-  const orgs = useSearch('Organization', { _count: '500' });
   const pract = useSearch('Practitioner', { _count: '500' });
 
   const [q, setQ] = useState('');
@@ -61,17 +59,6 @@ export function CareTeamsPage() {
     ((data as { entry?: { resource?: T }[] } | undefined)?.entry ?? [])
       .map((e) => e.resource)
       .filter((r): r is T => Boolean(r));
-
-  const orgList = useMemo(() => resourcesOf<RefItem>(orgs.data), [orgs.data]);
-  const orgNameById = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const o of orgList) if (o.id) m.set(o.id, o.name ?? o.id);
-    return m;
-  }, [orgList]);
-  const orgOptions = useMemo(
-    () => orgList.filter((o) => o.id).map((o) => ({ value: o.id as string, label: o.name ?? (o.id as string) })),
-    [orgList],
-  );
 
   const practList = useMemo(() => resourcesOf<PractRow>(pract.data), [pract.data]);
   const practNameById = useMemo(() => {
@@ -89,10 +76,6 @@ export function CareTeamsPage() {
 
   const teamList = useMemo(() => resourcesOf<CareTeamRow>(teams.data), [teams.data]);
 
-  const orgNameOf = (team: CareTeamRow): string => {
-    const ref = team.managingOrganization?.[0]?.reference?.replace(/^Organization\//, '');
-    return ref ? orgNameById.get(ref) ?? ref : '—';
-  };
   const isActive = (team: CareTeamRow): boolean => (team.status ?? 'active') === 'active';
 
   const filteredRows = useMemo(() => {
@@ -150,7 +133,6 @@ export function CareTeamsPage() {
 
       {createOpen ? (
         <CareTeamCreateDrawer
-          orgOptions={orgOptions}
           practOptions={practOptions}
           onClose={() => setCreateOpen(false)}
           onSuccess={() => {
@@ -256,7 +238,6 @@ export function CareTeamsPage() {
                 );
               },
             },
-            { key: 'organisation', header: t('columnOrganisation'), render: (tm) => orgNameOf(tm) },
             {
               key: 'status',
               header: t('columnStatus'),
@@ -321,7 +302,6 @@ export function CareTeamsPage() {
       {viewTeam ? (
         <CareTeamDetailsDrawer
           team={viewTeam}
-          orgName={orgNameOf(viewTeam)}
           active={isActive(viewTeam)}
           practNameById={practNameById}
           onClose={() => setViewId(null)}

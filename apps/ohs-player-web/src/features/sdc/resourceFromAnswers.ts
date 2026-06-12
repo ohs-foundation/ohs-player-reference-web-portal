@@ -36,13 +36,14 @@ export const CARE_TEAM_ROLE_CODING = {
   display: 'Clinical',
 };
 
-/** Fields the bespoke Add/Edit Care Team drawer collects. */
+/**
+ * Fields the bespoke Add/Edit Care Team drawer collects. Note: a CareTeam→Location association is not
+ * modelled here — FHIR R4 CareTeam has no `location` element, pending a backend-defined mechanism.
+ */
 export interface CareTeamFormFields {
   name: string;
   description: string;
   status: 'active' | 'inactive';
-  /** `Organization/{id}` reference, or '' for none. */
-  organization: string;
   /** Practitioner ids to add as participants. */
   memberIds: string[];
 }
@@ -55,7 +56,6 @@ export function careTeamFromForm(fields: CareTeamFormFields): Record<string, unk
     name: fields.name.trim(),
   };
   if (fields.description.trim()) careTeam.note = [{ text: fields.description.trim() }];
-  if (fields.organization) careTeam.managingOrganization = [{ reference: fields.organization }];
   if (fields.memberIds.length > 0) {
     careTeam.participant = fields.memberIds.map((id) => ({
       member: { reference: `Practitioner/${id}` },

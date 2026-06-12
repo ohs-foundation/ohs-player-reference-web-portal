@@ -21,7 +21,6 @@ export type CareTeamRow = {
     member?: { reference?: string };
     role?: { coding?: { code?: string; display?: string }[] }[];
   }[];
-  managingOrganization?: { reference?: string }[];
 };
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
@@ -39,7 +38,6 @@ function memberId(ref: string | undefined): string {
 
 export function CareTeamDetailsDrawer({
   team,
-  orgName,
   active,
   practNameById,
   onClose,
@@ -47,7 +45,6 @@ export function CareTeamDetailsDrawer({
   onChanged,
 }: Readonly<{
   team: CareTeamRow;
-  orgName: string;
   active: boolean;
   practNameById: Map<string, string>;
   onClose: () => void;
@@ -132,7 +129,6 @@ export function CareTeamDetailsDrawer({
         <div className="ohs-detail-body">
           <Section icon={RiTeamLine} title={t('sectionBasicInfo')}>
             <Stack gap={4}>
-              <Field label={t('contextOrganization')} value={orgName} />
               <Field label={t('descriptionLabel')} value={description} />
               <div className="ohs-detail-grid">
                 <Field label={t('columnIdentifier')} value={team.id} />
