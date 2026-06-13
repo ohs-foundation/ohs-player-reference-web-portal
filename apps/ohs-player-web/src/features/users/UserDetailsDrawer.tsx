@@ -82,22 +82,9 @@ export function UserDetailsDrawer({
   const [deactivating, setDeactivating] = useState(false);
   const read = useResource('Practitioner', id);
   const roleSearch = useSearch('PractitionerRole', { practitioner: `Practitioner/${id}`, _count: '50' });
+  const careTeamSearch = useSearch('CareTeam', { participant: `Practitioner/${id}`, _count: '100' });
   const orgSearch = useSearch('Organization', { _count: '500' });
   const locSearch = useSearch('Location', { _count: '500' });
-
-  // CareTeam membership references the user's PractitionerRole; query by those once roles load. The
-  // legacy bare-Practitioner ref is kept so pre-migration memberships are still found.
-  const roleRefsForSearch = useMemo(
-    () =>
-      ((roleSearch.data as SearchBundle | undefined)?.entry ?? [])
-        .map((e) => (typeof e.resource?.id === 'string' ? `PractitionerRole/${e.resource.id}` : ''))
-        .filter(Boolean),
-    [roleSearch.data],
-  );
-  const careTeamSearch = useSearch(roleSearch.isLoading ? undefined : 'CareTeam', {
-    participant: [`Practitioner/${id}`, ...roleRefsForSearch].join(','),
-    _count: '100',
-  });
 
   const pract = read.data as Record<string, unknown> | undefined;
   const orgNames = useMemo(() => nameMap(orgSearch.data as SearchBundle | undefined), [orgSearch.data]);

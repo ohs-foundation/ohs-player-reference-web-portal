@@ -29,7 +29,6 @@ import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer
 import { CareTeamFormDrawer } from './CareTeamFormDrawer';
 
 type PractRow = { id?: string; active?: boolean; name?: { family?: string; given?: string[] }[] };
-type RoleRow = { id?: string; active?: boolean; practitioner?: { reference?: string } };
 type OrgRow = { id?: string; name?: string };
 
 function practName(p: PractRow): string {
@@ -37,9 +36,9 @@ function practName(p: PractRow): string {
   return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim() || (p.id ?? '');
 }
 
-function memberRoleIds(team: CareTeamRow): string[] {
+function memberIds(team: CareTeamRow): string[] {
   return (team.participant ?? [])
-    .map((p) => p.member?.reference?.replace(/^PractitionerRole\//, ''))
+    .map((p) => p.member?.reference?.replace(/^Practitioner\//, ''))
     .filter((x): x is string => Boolean(x));
 }
 
@@ -49,7 +48,6 @@ export function CareTeamsPage() {
   const refresh = useRefreshResources();
   const teams = useSearch('CareTeam', { _count: '200' });
   const pract = useSearch('Practitioner', { _count: '500' });
-  const roles = useSearch('PractitionerRole', { _count: '1000' });
   const orgs = useSearch('Organization', { _count: '500' });
 
   const [q, setQ] = useState('');
@@ -71,28 +69,12 @@ export function CareTeamsPage() {
     for (const p of practList) if (p.id) m.set(p.id, practName(p));
     return m;
   }, [practList]);
-
-  const roleList = useMemo(() => resourcesOf<RoleRow>(roles.data), [roles.data]);
-  const roleLabel = useMemo(
-    () => (r: RoleRow): string => {
-      const practId = r.practitioner?.reference?.replace(/^Practitioner\//, '') ?? '';
-      return practNameById.get(practId) ?? r.id ?? '';
-    },
-    [practNameById],
-  );
-  /** PractitionerRole id → practitioner name, for resolving member display. */
-  const practNameByRoleId = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const r of roleList) if (r.id) m.set(r.id, roleLabel(r));
-    return m;
-  }, [roleList, roleLabel]);
-  /** Member picker options: store `PractitionerRole/{id}`, label by practitioner name. */
-  const roleOptions = useMemo(
+  const practOptions = useMemo(
     () =>
-      roleList
-        .filter((r) => r.id && r.active !== false)
-        .map((r) => ({ value: `PractitionerRole/${r.id}`, label: roleLabel(r) })),
-    [roleList, roleLabel],
+      practList
+        .filter((p) => p.id && p.active !== false)
+        .map((p) => ({ value: p.id as string, label: practName(p) })),
+    [practList],
   );
 
   const orgList = useMemo(() => resourcesOf<OrgRow>(orgs.data), [orgs.data]);
@@ -170,7 +152,7 @@ export function CareTeamsPage() {
 
       {createOpen ? (
         <CareTeamFormDrawer
-          roleOptions={roleOptions}
+          practOptions={practOptions}
           orgOptions={orgOptions}
           onClose={() => setCreateOpen(false)}
           onSuccess={() => {
@@ -184,7 +166,7 @@ export function CareTeamsPage() {
       {editTeam ? (
         <CareTeamFormDrawer
           team={editTeam}
-          roleOptions={roleOptions}
+          practOptions={practOptions}
           orgOptions={orgOptions}
           onClose={() => setEditId(null)}
           onSuccess={() => {
@@ -261,7 +243,7 @@ export function CareTeamsPage() {
               sortable: true,
               sortValue: (tm) => (tm.name ?? '').toLowerCase(),
               render: (tm) => {
-                const members = memberRoleIds(tm);
+                const members = memberIds(tm);
                 return (
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ohs-spacing-1, 4px)', minWidth: 0 }}>
                     <button
@@ -278,7 +260,7 @@ export function CareTeamsPage() {
                       {members.length > 0 ? (
                         <span className="ohs-avatar-stack">
                           {members.slice(0, 3).map((mid) => (
-                            <Avatar key={mid} name={practNameByRoleId.get(mid) ?? mid} className="ohs-avatar--sm" />
+                            <Avatar key={mid} name={practNameById.get(mid) ?? mid} className="ohs-avatar--sm" />
                           ))}
                         </span>
                       ) : null}
@@ -362,7 +344,7 @@ export function CareTeamsPage() {
         <CareTeamDetailsDrawer
           team={viewTeam}
           active={isActive(viewTeam)}
-          practNameByRoleId={practNameByRoleId}
+          practNameById={practNameById}
           orgName={orgNameOf(viewTeam)}
           onClose={() => setViewId(null)}
           onEdit={() => {

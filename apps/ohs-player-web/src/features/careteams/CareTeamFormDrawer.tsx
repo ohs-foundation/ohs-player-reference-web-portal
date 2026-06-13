@@ -21,23 +21,22 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
-function memberRoleIdsOf(team: CareTeamRow | undefined): string[] {
+function memberIdsOf(team: CareTeamRow | undefined): string[] {
   return (team?.participant ?? [])
-    .map((p) => p.member?.reference ?? '')
-    .filter((ref) => ref.startsWith('PractitionerRole/'));
+    .map((p) => p.member?.reference?.replace(/^Practitioner\//, '') ?? '')
+    .filter(Boolean);
 }
 
 /** Add or Edit a Care Team. Pass `team` to edit (prefills + PUTs); omit it to create (POSTs). */
 export function CareTeamFormDrawer({
   team,
-  roleOptions,
+  practOptions,
   orgOptions,
   onClose,
   onSuccess,
 }: Readonly<{
   team?: CareTeamRow;
-  /** PractitionerRole options (`value: "PractitionerRole/{id}"`, labelled by practitioner name). */
-  roleOptions: Option[];
+  practOptions: Option[];
   orgOptions: Option[];
   onClose: () => void;
   onSuccess: () => void;
@@ -53,7 +52,7 @@ export function CareTeamFormDrawer({
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>(
     (team?.status ?? 'active') === 'active' ? 'active' : 'inactive',
   );
-  const [memberIds, setMemberIds] = useState<string[]>(memberRoleIdsOf(team));
+  const [memberIds, setMemberIds] = useState<string[]>(memberIdsOf(team));
   const [organizationId, setOrganizationId] = useState(team?.managingOrganization?.reference ?? '');
   const [nameError, setNameError] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -180,10 +179,10 @@ export function CareTeamFormDrawer({
         <Section icon={RiGroupLine} title={t('sectionMembers')}>
           <MultiSelect
             label={t('usersLabel')}
-            options={roleOptions}
+            options={practOptions}
             value={memberIds}
             onChange={setMemberIds}
-            placeholder={roleOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
+            placeholder={practOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
           />
         </Section>
       </form>

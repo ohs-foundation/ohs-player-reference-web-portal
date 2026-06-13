@@ -33,14 +33,14 @@ function Field({ label, value }: Readonly<{ label: string; value?: string }>): R
   );
 }
 
-function memberRoleId(ref: string | undefined): string {
-  return ref?.replace(/^PractitionerRole\//, '') ?? '';
+function memberId(ref: string | undefined): string {
+  return ref?.replace(/^Practitioner\//, '') ?? '';
 }
 
 export function CareTeamDetailsDrawer({
   team,
   active,
-  practNameByRoleId,
+  practNameById,
   orgName,
   onClose,
   onEdit,
@@ -48,7 +48,7 @@ export function CareTeamDetailsDrawer({
 }: Readonly<{
   team: CareTeamRow;
   active: boolean;
-  practNameByRoleId: Map<string, string>;
+  practNameById: Map<string, string>;
   orgName?: string;
   onClose: () => void;
   onEdit: () => void;
@@ -63,9 +63,9 @@ export function CareTeamDetailsDrawer({
 
   const members = (team.participant ?? [])
     .map((p) => {
-      const id = memberRoleId(p.member?.reference);
+      const id = memberId(p.member?.reference);
       const coding = p.role?.[0]?.coding?.[0];
-      return { id, name: practNameByRoleId.get(id) ?? id, role: coding?.display ?? coding?.code ?? '' };
+      return { id, name: practNameById.get(id) ?? id, role: coding?.display ?? coding?.code ?? '' };
     })
     .filter((m) => m.id);
 
