@@ -17,6 +17,7 @@ export type CareTeamRow = {
   name?: string;
   status?: string;
   note?: { text?: string }[];
+  managingOrganization?: { reference?: string };
   participant?: {
     member?: { reference?: string };
     role?: { coding?: { code?: string; display?: string }[] }[];
@@ -32,21 +33,23 @@ function Field({ label, value }: Readonly<{ label: string; value?: string }>): R
   );
 }
 
-function memberId(ref: string | undefined): string {
-  return ref?.replace(/^Practitioner\//, '') ?? '';
+function memberRoleId(ref: string | undefined): string {
+  return ref?.replace(/^PractitionerRole\//, '') ?? '';
 }
 
 export function CareTeamDetailsDrawer({
   team,
   active,
-  practNameById,
+  practNameByRoleId,
+  orgName,
   onClose,
   onEdit,
   onChanged,
 }: Readonly<{
   team: CareTeamRow;
   active: boolean;
-  practNameById: Map<string, string>;
+  practNameByRoleId: Map<string, string>;
+  orgName?: string;
   onClose: () => void;
   onEdit: () => void;
   onChanged: () => void;
@@ -60,9 +63,9 @@ export function CareTeamDetailsDrawer({
 
   const members = (team.participant ?? [])
     .map((p) => {
-      const id = memberId(p.member?.reference);
+      const id = memberRoleId(p.member?.reference);
       const coding = p.role?.[0]?.coding?.[0];
-      return { id, name: practNameById.get(id) ?? id, role: coding?.display ?? coding?.code ?? '' };
+      return { id, name: practNameByRoleId.get(id) ?? id, role: coding?.display ?? coding?.code ?? '' };
     })
     .filter((m) => m.id);
 
@@ -130,6 +133,7 @@ export function CareTeamDetailsDrawer({
           <Section icon={RiTeamLine} title={t('sectionBasicInfo')}>
             <Stack gap={4}>
               <Field label={t('descriptionLabel')} value={description} />
+              <Field label={t('organizationForTeam')} value={orgName} />
               <div className="ohs-detail-grid">
                 <Field label={t('columnIdentifier')} value={team.id} />
                 <Field label={t('columnStatus')} value={active ? t('statusActive') : t('statusInactive')} />

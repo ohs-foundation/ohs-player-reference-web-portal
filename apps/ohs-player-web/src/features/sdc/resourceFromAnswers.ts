@@ -29,7 +29,8 @@ export function careTeamBodyFromAnswers(answers: Record<string, string>): {
   };
 }
 
-/** Default CareTeam participant role coding. Participants reference `Practitioner/{id}` (portal convention). */
+/** Default CareTeam participant role coding. Members reference `PractitionerRole/{id}` (the assignment
+ * resource binding practitioner ↔ org ↔ location ↔ role), per the backend sync model. */
 export const CARE_TEAM_ROLE_CODING = {
   system: 'http://terminology.hl7.org/CodeSystem/care-team-roles',
   code: 'clinical',
@@ -37,21 +38,25 @@ export const CARE_TEAM_ROLE_CODING = {
 };
 
 /**
- * Fields the bespoke Add/Edit Care Team drawer collects. Note: a CareTeam→Location association is not
- * modelled here — FHIR R4 CareTeam has no `location` element, pending a backend-defined mechanism.
+ * Fields the bespoke Add/Edit Care Team drawer collects. `memberIds` are PractitionerRole ids. A
+ * CareTeam→Location association is not modelled (R4 CareTeam has no `location`); the org link is the
+ * optional `managingOrganization`.
  */
 export interface CareTeamFormFields {
   name: string;
   description: string;
   status: 'active' | 'inactive';
-  /** Practitioner ids to add as participants. */
+  /** PractitionerRole ids to add as participants. */
   memberIds: string[];
+  /** Managing Organization id (or `Organization/{id}` ref), or '' for none. */
+  organizationId: string;
 }
 
 /**
  * Map the Care Team form to a FHIR CareTeam resource. On create, omit `existing` (server assigns the
  * id). On edit, pass the existing resource so unmanaged fields (id, meta, identifier, …) are preserved
- * while the form-managed fields are overwritten — including removals (cleared description / no members).
+ * while the form-managed fields are overwritten — including removals (cleared description / no members /
+ * no organisation).
  */
 export function careTeamFromForm(
   fields: CareTeamFormFields,
@@ -67,12 +72,15 @@ export function careTeamFromForm(
   else delete careTeam.note;
   if (fields.memberIds.length > 0) {
     careTeam.participant = fields.memberIds.map((id) => ({
-      member: { reference: `Practitioner/${id}` },
+      member: { reference: id.includes('/') ? id : `PractitionerRole/${id}` },
       role: [{ coding: [CARE_TEAM_ROLE_CODING] }],
     }));
   } else {
     delete careTeam.participant;
   }
+  const orgId = fields.organizationId.trim();
+  if (orgId) careTeam.managingOrganization = { reference: orgId.includes('/') ? orgId : `Organization/${orgId}` };
+  else delete careTeam.managingOrganization;
   return careTeam;
 }
 
@@ -168,18 +176,38 @@ export function buildNewUserPayload(fields: NewUserFields, usernameOverride?: st
 }
 
 interface TransactionEntry {
+  /** Bundle-local URN for intra-transaction cross-references (set on POSTed PractitionerRoles). */
+  fullUrl?: string;
   /** Omitted for DELETE entries. */
   resource?: Record<string, unknown>;
   request: { method: 'POST' | 'PUT' | 'DELETE'; url: string };
 }
 
-/** One PractitionerRole per organisation (or a single role-only entry when no org is chosen). */
-function roleEntries(ref: string, fields: NewUserFields): TransactionEntry[] {
+/** Bundle-local URN for the i-th PractitionerRole created in a user transaction. */
+function roleUrn(i: number): string {
+  return `urn:uuid:role-${i}`;
+}
+
+/**
+ * CareTeam membership references the user's PractitionerRole (the assignment resource), per the backend
+ * sync model. This matcher recognises a participant as "this user" if it points at any of the user's
+ * roles — or, for resources written before the convention changed, at the bare Practitioner.
+ */
+function memberIsUser(ref: string | undefined, practitionerRef: string, roleRefs: string[]): boolean {
+  return ref === practitionerRef || roleRefs.includes(ref ?? '');
+}
+
+/**
+ * One PractitionerRole per organisation (or a single role-only entry when no org is chosen). When
+ * `withUrns` is set, each entry carries a `fullUrl` URN so CareTeam membership in the same transaction
+ * can reference the not-yet-persisted role.
+ */
+function roleEntries(ref: string, fields: NewUserFields, withUrns = false): TransactionEntry[] {
   const hasAssignment =
     Boolean(fields.role) || fields.organizations.length > 0 || fields.locations.length > 0;
   if (!hasAssignment) return [];
   const orgs = fields.organizations.length > 0 ? fields.organizations : [''];
-  return orgs.map((org) => {
+  return orgs.map((org, i) => {
     const role: Record<string, unknown> = {
       resourceType: 'PractitionerRole',
       active: true,
@@ -188,31 +216,54 @@ function roleEntries(ref: string, fields: NewUserFields): TransactionEntry[] {
     if (org) role.organization = { reference: org };
     if (fields.locations.length > 0) role.location = fields.locations.map((l) => ({ reference: l }));
     if (fields.role) role.code = [{ coding: [{ system: fields.role.system, code: fields.role.code }] }];
-    return { resource: role, request: { method: 'POST' as const, url: 'PractitionerRole' } };
+    const entry: TransactionEntry = {
+      resource: role,
+      request: { method: 'POST' as const, url: 'PractitionerRole' },
+    };
+    if (withUrns) entry.fullUrl = roleUrn(i);
+    return entry;
   });
 }
 
-function addParticipant(ct: Record<string, unknown>, ref: string): TransactionEntry {
+/**
+ * PUT the CareTeam with the user present exactly once as `memberRef`, dropping any prior entry for the
+ * same user (old role ref or legacy Practitioner ref) so an edit re-points membership to the new role
+ * rather than leaving a dangling reference to a deleted role.
+ */
+function addParticipant(
+  ct: Record<string, unknown>,
+  memberRef: string,
+  practitionerRef: string,
+  roleRefs: string[],
+): TransactionEntry {
   const ctId = typeof ct.id === 'string' ? ct.id : '';
-  const participant = Array.isArray(ct.participant) ? [...(ct.participant as unknown[])] : [];
-  participant.push({ member: { reference: ref } });
+  const existing = Array.isArray(ct.participant)
+    ? (ct.participant as { member?: { reference?: string } }[])
+    : [];
+  const others = existing.filter((p) => !memberIsUser(p.member?.reference, practitionerRef, roleRefs));
+  const participant = [...others, { member: { reference: memberRef } }];
   return { resource: { ...ct, participant }, request: { method: 'PUT', url: `CareTeam/${ctId}` } };
 }
 
-function removeParticipant(ct: Record<string, unknown>, ref: string): TransactionEntry {
+function removeParticipant(
+  ct: Record<string, unknown>,
+  practitionerRef: string,
+  roleRefs: string[],
+): TransactionEntry {
   const ctId = typeof ct.id === 'string' ? ct.id : '';
   const participant = (
     Array.isArray(ct.participant) ? (ct.participant as { member?: { reference?: string } }[]) : []
-  ).filter((p) => p.member?.reference !== ref);
+  ).filter((p) => !memberIsUser(p.member?.reference, practitionerRef, roleRefs));
   return { resource: { ...ct, participant }, request: { method: 'PUT', url: `CareTeam/${ctId}` } };
 }
 
 /**
  * Post-create FHIR transaction for what the backend does NOT manage: POST one PractitionerRole per
- * organisation, and PUT each selected CareTeam with the practitioner added as a participant. The
- * backend's `POST /api/users` already wrote the full Practitioner (demographics + identifiers), so the
- * client no longer PUTs it. May be empty when no role/careteam is chosen — callers should skip the
- * transaction in that case.
+ * organisation, and PUT each selected CareTeam with the user added as a participant. The backend's
+ * `POST /api/users` already wrote the full Practitioner (demographics + identifiers), so the client no
+ * longer PUTs it. CareTeam membership references the user's first PractitionerRole (via its bundle URN);
+ * with no role chosen there is no assignment to reference, so care-team adds are skipped. May be empty
+ * when no role/careteam is chosen — callers should skip the transaction in that case.
  */
 export function buildNewUserBundle(
   created: Record<string, unknown>,
@@ -221,12 +272,18 @@ export function buildNewUserBundle(
 ): { resourceType: 'Bundle'; type: 'transaction'; entry: TransactionEntry[] } {
   const id = typeof created.id === 'string' ? created.id : '';
   const ref = `Practitioner/${id}`;
+  const roles = roleEntries(ref, fields, true);
+  const memberRef = roles[0]?.fullUrl;
   return {
     resourceType: 'Bundle',
     type: 'transaction',
     entry: [
-      ...roleEntries(ref, fields),
-      ...careTeams.filter((ct) => typeof ct.id === 'string').map((ct) => addParticipant(ct, ref)),
+      ...roles,
+      ...(memberRef
+        ? careTeams
+            .filter((ct) => typeof ct.id === 'string')
+            .map((ct) => addParticipant(ct, memberRef, ref, []))
+        : []),
     ],
   };
 }
@@ -235,19 +292,27 @@ export function buildNewUserBundle(
  * Edit-save FHIR transaction for what the backend does NOT manage: replace the PractitionerRoles
  * (DELETE the existing ones, POST fresh ones from the form) and reconcile CareTeam membership. The
  * Practitioner demographics are written by `PUT /api/users/{id}` (gateway), so this bundle never PUTs
- * the Practitioner. FHIR processes DELETE before POST, so the role replace is conflict-free. May be
- * empty when nothing changed — callers should skip the transaction in that case.
+ * the Practitioner. FHIR processes DELETE before POST, so the role replace is conflict-free.
+ *
+ * `careTeamTargets` is the full desired membership set: each is re-pointed to the user's new first
+ * PractitionerRole (by URN), dropping any prior entry under an old role ref or legacy Practitioner ref —
+ * so kept memberships don't dangle against a just-deleted role. `careTeamRemoves` strips the user
+ * entirely. With no role chosen there is no assignment to reference, so adds are skipped (removes still
+ * apply). May be empty when nothing changed — callers should skip the transaction in that case.
  */
 export function buildUserEditBundle(
   practitionerId: string,
   fields: NewUserFields,
   opts: {
     existingRoleIds: string[];
-    careTeamAdds: Record<string, unknown>[];
+    careTeamTargets: Record<string, unknown>[];
     careTeamRemoves: Record<string, unknown>[];
   },
 ): { resourceType: 'Bundle'; type: 'transaction'; entry: TransactionEntry[] } {
   const ref = `Practitioner/${practitionerId}`;
+  const oldRoleRefs = opts.existingRoleIds.map((rid) => `PractitionerRole/${rid}`);
+  const roles = roleEntries(ref, fields, true);
+  const memberRef = roles[0]?.fullUrl;
   return {
     resourceType: 'Bundle',
     type: 'transaction',
@@ -255,20 +320,26 @@ export function buildUserEditBundle(
       ...opts.existingRoleIds.map((rid) => ({
         request: { method: 'DELETE' as const, url: `PractitionerRole/${rid}` },
       })),
-      ...roleEntries(ref, fields),
-      ...opts.careTeamAdds.filter((ct) => typeof ct.id === 'string').map((ct) => addParticipant(ct, ref)),
+      ...roles,
+      ...(memberRef
+        ? opts.careTeamTargets
+            .filter((ct) => typeof ct.id === 'string')
+            .map((ct) => addParticipant(ct, memberRef, ref, oldRoleRefs))
+        : []),
       ...opts.careTeamRemoves
         .filter((ct) => typeof ct.id === 'string')
-        .map((ct) => removeParticipant(ct, ref)),
+        .map((ct) => removeParticipant(ct, ref, oldRoleRefs)),
     ],
   };
 }
 
 /**
  * Deactivation transaction: PUT the Practitioner `active:false`, end-date every still-active
- * PractitionerRole (`period.end` = the deactivation timestamp + `active:false`), and remove the
- * practitioner from each CareTeam's participants — all in one atomic Bundle. Roles that already carry
- * a `period.end` are left untouched (no double end-dating). Returns counts for the AuditEvent note.
+ * PractitionerRole (`period.end` = the deactivation timestamp + `active:false`), and remove the user
+ * from each CareTeam's participants — all in one atomic Bundle. Membership is matched by any of the
+ * user's PractitionerRole refs (the current model) or a legacy bare Practitioner ref. Roles that
+ * already carry a `period.end` are left untouched (no double end-dating). Returns counts for the
+ * AuditEvent note.
  */
 export function buildDeactivateBundle(
   practitioner: Record<string, unknown>,
@@ -282,6 +353,9 @@ export function buildDeactivateBundle(
 } {
   const id = typeof practitioner.id === 'string' ? practitioner.id : '';
   const ref = `Practitioner/${id}`;
+  const roleRefs = roles
+    .map((r) => (typeof r.id === 'string' ? `PractitionerRole/${r.id}` : ''))
+    .filter(Boolean);
   const entry: TransactionEntry[] = [
     { resource: { ...practitioner, active: false }, request: { method: 'PUT', url: ref } },
   ];
@@ -305,8 +379,8 @@ export function buildDeactivateBundle(
     const participant = Array.isArray(ct.participant)
       ? (ct.participant as { member?: { reference?: string } }[])
       : [];
-    const next = participant.filter((p) => p.member?.reference !== ref);
-    if (next.length === participant.length) continue; // practitioner not a member here
+    const next = participant.filter((p) => !memberIsUser(p.member?.reference, ref, roleRefs));
+    if (next.length === participant.length) continue; // user not a member here
     entry.push({ resource: { ...ct, participant: next }, request: { method: 'PUT', url: `CareTeam/${ctId}` } });
     removedCareTeamCount += 1;
   }

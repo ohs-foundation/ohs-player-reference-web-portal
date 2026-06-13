@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react';
-import { RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
+import { RiBuildingLine, RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
 import {
   FhirError,
   formatOperationOutcomeMessage,
@@ -11,7 +11,7 @@ import {
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { careTeamFromForm } from '../sdc/resourceFromAnswers';
-import { MultiSelect, RadioRow, Section, StackedInput, StackedTextArea } from '../users/userFormControls';
+import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect, StackedTextArea } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
 import type { CareTeamRow } from './CareTeamDetailsDrawer';
 
@@ -21,21 +21,24 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
-function memberIdsOf(team: CareTeamRow | undefined): string[] {
+function memberRoleIdsOf(team: CareTeamRow | undefined): string[] {
   return (team?.participant ?? [])
-    .map((p) => p.member?.reference?.replace(/^Practitioner\//, '') ?? '')
-    .filter(Boolean);
+    .map((p) => p.member?.reference ?? '')
+    .filter((ref) => ref.startsWith('PractitionerRole/'));
 }
 
 /** Add or Edit a Care Team. Pass `team` to edit (prefills + PUTs); omit it to create (POSTs). */
 export function CareTeamFormDrawer({
   team,
-  practOptions,
+  roleOptions,
+  orgOptions,
   onClose,
   onSuccess,
 }: Readonly<{
   team?: CareTeamRow;
-  practOptions: Option[];
+  /** PractitionerRole options (`value: "PractitionerRole/{id}"`, labelled by practitioner name). */
+  roleOptions: Option[];
+  orgOptions: Option[];
   onClose: () => void;
   onSuccess: () => void;
 }>): React.ReactElement {
@@ -50,7 +53,8 @@ export function CareTeamFormDrawer({
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>(
     (team?.status ?? 'active') === 'active' ? 'active' : 'inactive',
   );
-  const [memberIds, setMemberIds] = useState<string[]>(memberIdsOf(team));
+  const [memberIds, setMemberIds] = useState<string[]>(memberRoleIdsOf(team));
+  const [organizationId, setOrganizationId] = useState(team?.managingOrganization?.reference ?? '');
   const [nameError, setNameError] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -61,7 +65,10 @@ export function CareTeamFormDrawer({
       setNameError(t('careTeamNameRequired'));
       return;
     }
-    const body = careTeamFromForm({ name, description, status: statusActive, memberIds }, team);
+    const body = careTeamFromForm(
+      { name, description, status: statusActive, memberIds, organizationId },
+      team,
+    );
     void (async () => {
       setSubmitting(true);
       try {
@@ -159,13 +166,24 @@ export function CareTeamFormDrawer({
           </Stack>
         </Section>
 
+        <Section icon={RiBuildingLine} title={t('organizationForTeam')}>
+          <StackedSelect
+            full
+            label={t('organizationForTeam')}
+            value={organizationId}
+            onChange={setOrganizationId}
+            options={orgOptions}
+            placeholder={orgOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
+          />
+        </Section>
+
         <Section icon={RiGroupLine} title={t('sectionMembers')}>
           <MultiSelect
             label={t('usersLabel')}
-            options={practOptions}
+            options={roleOptions}
             value={memberIds}
             onChange={setMemberIds}
-            placeholder={practOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
+            placeholder={roleOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
           />
         </Section>
       </form>

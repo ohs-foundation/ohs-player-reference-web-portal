@@ -109,14 +109,26 @@ describe('buildNewUserBundle', () => {
     expect(role.code?.[0].coding?.[0].code).toBe('doctor');
   });
 
-  it('PUTs each selected CareTeam with the practitioner added as a participant', () => {
+  it('PUTs each selected CareTeam with the user added via the first role URN (not a Practitioner ref)', () => {
     const careTeam = { resourceType: 'CareTeam', id: 'ct1', name: 'Ebola', participant: [] };
-    const bundle = buildNewUserBundle(created, fields(), [careTeam]);
+    const bundle = buildNewUserBundle(
+      created,
+      fields({ role: { system: ROLE_SYSTEM, code: 'doctor' }, organizations: ['Organization/o1'] }),
+      [careTeam],
+    );
+    const roleUrn = bundle.entry.find((e) => e.request.url === 'PractitionerRole')?.fullUrl;
+    expect(roleUrn).toMatch(/^urn:uuid:/);
     const ct = bundle.entry.find((e) => e.request.url === 'CareTeam/ct1');
     expect(ct).toBeDefined();
     const participants = (ct?.resource as { participant?: { member?: { reference?: string } }[] })
       .participant;
-    expect(participants?.[0].member?.reference).toBe('Practitioner/1000');
+    expect(participants?.[0].member?.reference).toBe(roleUrn);
+  });
+
+  it('skips the CareTeam add when no role is chosen (no assignment to reference)', () => {
+    const careTeam = { resourceType: 'CareTeam', id: 'ct1', name: 'Ebola', participant: [] };
+    const bundle = buildNewUserBundle(created, fields(), [careTeam]);
+    expect(bundle.entry.some((e) => e.request.url === 'CareTeam/ct1')).toBe(false);
   });
 
   it('is empty when no role/org/location/careteam is chosen (caller skips the transaction)', () => {
@@ -139,7 +151,10 @@ describe('buildUserEditBundle', () => {
       fields({ role: { system: ROLE_SYSTEM, code: 'nurse' }, organizations: ['Organization/o1'] }),
       {
         existingRoleIds: ['r1', 'r2'],
-        careTeamAdds: [{ resourceType: 'CareTeam', id: 'ctA', participant: [] }],
+        // A kept membership still pointing at the old role r1, plus its bare-Practitioner legacy form.
+        careTeamTargets: [
+          { resourceType: 'CareTeam', id: 'ctA', participant: [{ member: { reference: 'PractitionerRole/r1' } }] },
+        ],
         careTeamRemoves: [
           { resourceType: 'CareTeam', id: 'ctR', participant: [{ member: { reference: 'Practitioner/p1' } }] },
         ],
@@ -153,10 +168,14 @@ describe('buildUserEditBundle', () => {
     expect(methods).toContain('DELETE PractitionerRole/r2');
     expect(methods.filter((m) => m === 'POST PractitionerRole')).toHaveLength(1);
 
+    const roleUrn = bundle.entry.find((e) => e.request.url === 'PractitionerRole')?.fullUrl;
     const add = bundle.entry.find((e) => e.request.url === 'CareTeam/ctA');
     const addParticipants = (add?.resource as { participant?: { member?: { reference?: string } }[] })
       .participant;
-    expect(addParticipants?.some((p) => p.member?.reference === 'Practitioner/p1')).toBe(true);
+    // Re-pointed to the new role URN exactly once; the dangling old-role ref is gone.
+    expect(addParticipants).toHaveLength(1);
+    expect(addParticipants?.[0].member?.reference).toBe(roleUrn);
+    expect(addParticipants?.some((p) => p.member?.reference === 'PractitionerRole/r1')).toBe(false);
 
     const rem = bundle.entry.find((e) => e.request.url === 'CareTeam/ctR');
     expect((rem?.resource as { participant?: unknown[] }).participant).toHaveLength(0);
@@ -164,29 +183,56 @@ describe('buildUserEditBundle', () => {
 });
 
 describe('careTeamFromForm', () => {
-  const base = { name: 'Ebola Response', description: '', status: 'active' as const, memberIds: [] };
+  const base = {
+    name: 'Ebola Response',
+    description: '',
+    status: 'active' as const,
+    memberIds: [],
+    organizationId: '',
+  };
 
-  it('maps name + status, and omits blank description/members (no org/location — not modelled in R4)', () => {
+  it('maps name + status, and omits blank description/members/organisation (no location — not in R4)', () => {
     const ct = careTeamFromForm(base);
     expect(ct).toEqual({ resourceType: 'CareTeam', status: 'active', name: 'Ebola Response' });
+    expect(ct).not.toHaveProperty('participant');
     expect(ct).not.toHaveProperty('managingOrganization');
   });
 
-  it('maps description→note and members→participant (Practitioner refs + clinical role)', () => {
+  it('maps description→note, members→participant (PractitionerRole refs + clinical role), and managingOrganization', () => {
     const ct = careTeamFromForm({
       ...base,
       description: 'Outbreak team',
       status: 'inactive',
-      memberIds: ['p1', 'p2'],
+      memberIds: ['r1', 'PractitionerRole/r2'],
+      organizationId: 'o1',
     }) as {
       status?: string;
       note?: { text?: string }[];
+      managingOrganization?: { reference?: string };
       participant?: { member?: { reference?: string }; role?: { coding?: { code?: string }[] }[] }[];
     };
     expect(ct.status).toBe('inactive');
     expect(ct.note?.[0].text).toBe('Outbreak team');
-    expect(ct.participant?.map((p) => p.member?.reference)).toEqual(['Practitioner/p1', 'Practitioner/p2']);
+    expect(ct.participant?.map((p) => p.member?.reference)).toEqual([
+      'PractitionerRole/r1',
+      'PractitionerRole/r2',
+    ]);
     expect(ct.participant?.[0].role?.[0].coding?.[0].code).toBe('clinical');
+    expect(ct.managingOrganization?.reference).toBe('Organization/o1');
+  });
+
+  it('preserves a passed Organization/ ref and clears managingOrganization on edit when blank', () => {
+    const created = careTeamFromForm({ ...base, organizationId: 'Organization/o9' }) as {
+      managingOrganization?: { reference?: string };
+    };
+    expect(created.managingOrganization?.reference).toBe('Organization/o9');
+
+    const cleared = careTeamFromForm(base, {
+      id: 'ct1',
+      managingOrganization: { reference: 'Organization/o9' },
+    });
+    expect(cleared).not.toHaveProperty('managingOrganization');
+    expect(cleared.id).toBe('ct1');
   });
 });
 
@@ -194,7 +240,7 @@ describe('buildDeactivateBundle', () => {
   const pract = { resourceType: 'Practitioner', id: 'p1', active: true };
   const END = '2026-06-09T00:00:00.000Z';
 
-  it('PUTs active:false, end-dates active roles, removes the practitioner from care teams', () => {
+  it('PUTs active:false, end-dates active roles, removes the user from care teams (role + legacy refs)', () => {
     const roles = [
       { resourceType: 'PractitionerRole', id: 'r1', active: true },
       { resourceType: 'PractitionerRole', id: 'r2', active: true, period: { start: '2026-01-01' } },
@@ -203,13 +249,20 @@ describe('buildDeactivateBundle', () => {
       {
         resourceType: 'CareTeam',
         id: 'ct1',
-        participant: [{ member: { reference: 'Practitioner/p1' } }, { member: { reference: 'Practitioner/p9' } }],
+        // membership by the user's role ref, alongside another member who must survive
+        participant: [{ member: { reference: 'PractitionerRole/r1' } }, { member: { reference: 'PractitionerRole/r9' } }],
+      },
+      {
+        resourceType: 'CareTeam',
+        id: 'ct2',
+        // legacy bare-Practitioner membership is still removed
+        participant: [{ member: { reference: 'Practitioner/p1' } }],
       },
     ];
     const { bundle, endedRoleCount, removedCareTeamCount } = buildDeactivateBundle(pract, roles, careTeams, END);
 
     expect(endedRoleCount).toBe(2);
-    expect(removedCareTeamCount).toBe(1);
+    expect(removedCareTeamCount).toBe(2);
 
     const practEntry = bundle.entry.find((e) => e.request.url === 'Practitioner/p1');
     expect((practEntry?.resource as { active?: boolean }).active).toBe(false);
@@ -218,9 +271,12 @@ describe('buildDeactivateBundle', () => {
     expect((r1?.resource as { period?: { end?: string }; active?: boolean }).period?.end).toBe(END);
     expect((r1?.resource as { active?: boolean }).active).toBe(false);
 
-    const ct = bundle.entry.find((e) => e.request.url === 'CareTeam/ct1');
-    const members = (ct?.resource as { participant?: { member?: { reference?: string } }[] }).participant;
-    expect(members?.map((m) => m.member?.reference)).toEqual(['Practitioner/p9']);
+    const ct1 = bundle.entry.find((e) => e.request.url === 'CareTeam/ct1');
+    const members = (ct1?.resource as { participant?: { member?: { reference?: string } }[] }).participant;
+    expect(members?.map((m) => m.member?.reference)).toEqual(['PractitionerRole/r9']);
+
+    const ct2 = bundle.entry.find((e) => e.request.url === 'CareTeam/ct2');
+    expect((ct2?.resource as { participant?: unknown[] }).participant).toHaveLength(0);
   });
 
   it('leaves already-ended roles untouched and skips care teams the user is not in', () => {

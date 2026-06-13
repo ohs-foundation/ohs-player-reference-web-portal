@@ -29,15 +29,17 @@ import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer
 import { CareTeamFormDrawer } from './CareTeamFormDrawer';
 
 type PractRow = { id?: string; active?: boolean; name?: { family?: string; given?: string[] }[] };
+type RoleRow = { id?: string; active?: boolean; practitioner?: { reference?: string } };
+type OrgRow = { id?: string; name?: string };
 
 function practName(p: PractRow): string {
   const n = p.name?.[0];
   return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim() || (p.id ?? '');
 }
 
-function memberIds(team: CareTeamRow): string[] {
+function memberRoleIds(team: CareTeamRow): string[] {
   return (team.participant ?? [])
-    .map((p) => p.member?.reference?.replace(/^Practitioner\//, ''))
+    .map((p) => p.member?.reference?.replace(/^PractitionerRole\//, ''))
     .filter((x): x is string => Boolean(x));
 }
 
@@ -47,6 +49,8 @@ export function CareTeamsPage() {
   const refresh = useRefreshResources();
   const teams = useSearch('CareTeam', { _count: '200' });
   const pract = useSearch('Practitioner', { _count: '500' });
+  const roles = useSearch('PractitionerRole', { _count: '1000' });
+  const orgs = useSearch('Organization', { _count: '500' });
 
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -67,13 +71,44 @@ export function CareTeamsPage() {
     for (const p of practList) if (p.id) m.set(p.id, practName(p));
     return m;
   }, [practList]);
-  const practOptions = useMemo(
-    () =>
-      practList
-        .filter((p) => p.id && p.active !== false)
-        .map((p) => ({ value: p.id as string, label: practName(p) })),
-    [practList],
+
+  const roleList = useMemo(() => resourcesOf<RoleRow>(roles.data), [roles.data]);
+  const roleLabel = useMemo(
+    () => (r: RoleRow): string => {
+      const practId = r.practitioner?.reference?.replace(/^Practitioner\//, '') ?? '';
+      return practNameById.get(practId) ?? r.id ?? '';
+    },
+    [practNameById],
   );
+  /** PractitionerRole id → practitioner name, for resolving member display. */
+  const practNameByRoleId = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of roleList) if (r.id) m.set(r.id, roleLabel(r));
+    return m;
+  }, [roleList, roleLabel]);
+  /** Member picker options: store `PractitionerRole/{id}`, label by practitioner name. */
+  const roleOptions = useMemo(
+    () =>
+      roleList
+        .filter((r) => r.id && r.active !== false)
+        .map((r) => ({ value: `PractitionerRole/${r.id}`, label: roleLabel(r) })),
+    [roleList, roleLabel],
+  );
+
+  const orgList = useMemo(() => resourcesOf<OrgRow>(orgs.data), [orgs.data]);
+  const orgNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const o of orgList) if (o.id) m.set(o.id, o.name ?? o.id);
+    return m;
+  }, [orgList]);
+  const orgOptions = useMemo(
+    () => orgList.filter((o) => o.id).map((o) => ({ value: `Organization/${o.id}`, label: o.name ?? (o.id as string) })),
+    [orgList],
+  );
+  const orgNameOf = (team: CareTeamRow): string | undefined => {
+    const id = team.managingOrganization?.reference?.replace(/^Organization\//, '');
+    return id ? orgNameById.get(id) ?? id : undefined;
+  };
 
   const teamList = useMemo(() => resourcesOf<CareTeamRow>(teams.data), [teams.data]);
 
@@ -88,7 +123,7 @@ export function CareTeamsPage() {
       if (statusFilter === 'inactive' && isActive(team)) return false;
       return true;
     });
-    // orgNameById/isActive are pure derivations of stable inputs
+    // isActive is a pure derivation of stable inputs
   }, [teamList, q, statusFilter]);
 
   let teamsError: string | null = null;
@@ -135,7 +170,8 @@ export function CareTeamsPage() {
 
       {createOpen ? (
         <CareTeamFormDrawer
-          practOptions={practOptions}
+          roleOptions={roleOptions}
+          orgOptions={orgOptions}
           onClose={() => setCreateOpen(false)}
           onSuccess={() => {
             setCreateOpen(false);
@@ -148,7 +184,8 @@ export function CareTeamsPage() {
       {editTeam ? (
         <CareTeamFormDrawer
           team={editTeam}
-          practOptions={practOptions}
+          roleOptions={roleOptions}
+          orgOptions={orgOptions}
           onClose={() => setEditId(null)}
           onSuccess={() => {
             setEditId(null);
@@ -224,7 +261,7 @@ export function CareTeamsPage() {
               sortable: true,
               sortValue: (tm) => (tm.name ?? '').toLowerCase(),
               render: (tm) => {
-                const members = memberIds(tm);
+                const members = memberRoleIds(tm);
                 return (
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ohs-spacing-1, 4px)', minWidth: 0 }}>
                     <button
@@ -241,7 +278,7 @@ export function CareTeamsPage() {
                       {members.length > 0 ? (
                         <span className="ohs-avatar-stack">
                           {members.slice(0, 3).map((mid) => (
-                            <Avatar key={mid} name={practNameById.get(mid) ?? mid} className="ohs-avatar--sm" />
+                            <Avatar key={mid} name={practNameByRoleId.get(mid) ?? mid} className="ohs-avatar--sm" />
                           ))}
                         </span>
                       ) : null}
@@ -252,6 +289,13 @@ export function CareTeamsPage() {
                   </span>
                 );
               },
+            },
+            {
+              key: 'organisation',
+              header: t('columnOrganisation'),
+              sortable: true,
+              sortValue: (tm) => (orgNameOf(tm) ?? '').toLowerCase(),
+              render: (tm) => orgNameOf(tm) ?? '—',
             },
             {
               key: 'status',
@@ -318,7 +362,8 @@ export function CareTeamsPage() {
         <CareTeamDetailsDrawer
           team={viewTeam}
           active={isActive(viewTeam)}
-          practNameById={practNameById}
+          practNameByRoleId={practNameByRoleId}
+          orgName={orgNameOf(viewTeam)}
           onClose={() => setViewId(null)}
           onEdit={() => {
             const id = viewTeam.id;

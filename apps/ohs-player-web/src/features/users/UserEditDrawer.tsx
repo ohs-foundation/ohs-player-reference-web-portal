@@ -74,12 +74,26 @@ export function UserEditDrawer({
 
   const read = useResource('Practitioner', id);
   const roleSearch = useSearch('PractitionerRole', { practitioner: `Practitioner/${id}`, _count: '50' });
-  const membershipSearch = useSearch('CareTeam', { participant: `Practitioner/${id}`, _count: '100' });
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
   const locSearch = useSearch('Location', { _count: '500' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
 
   const pract = read.data as Record<string, unknown> | undefined;
+
+  // CareTeam membership references the user's PractitionerRole; find it once roles load. The legacy
+  // bare-Practitioner ref is included so pre-migration memberships are still discovered.
+  const roleIdsForSearch = useMemo(
+    () =>
+      resourcesOf(roleSearch.data)
+        .map((r) => (typeof r.id === 'string' ? `PractitionerRole/${r.id}` : ''))
+        .filter(Boolean),
+    [roleSearch.data],
+  );
+  const membershipParticipant = [`Practitioner/${id}`, ...roleIdsForSearch].join(',');
+  const membershipSearch = useSearch(roleSearch.isLoading ? undefined : 'CareTeam', {
+    participant: membershipParticipant,
+    _count: '100',
+  });
 
   const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
   const locOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
@@ -201,8 +215,9 @@ export function UserEditDrawer({
       organizations: orgs,
       locations,
     };
-    const careTeamAdds = careTeamIds
-      .filter((cid) => !originalCareTeamIds.includes(cid))
+    // Targets = full desired membership; each is re-pointed to the new role so kept memberships don't
+    // dangle against the role this edit deletes. Removes strip the user from teams left behind.
+    const careTeamTargets = careTeamIds
       .map((cid) => careTeamById.get(cid))
       .filter((r): r is Record<string, unknown> => Boolean(r));
     const careTeamRemoves = originalCareTeamIds
@@ -216,7 +231,7 @@ export function UserEditDrawer({
         // Gateway owns the Keycloak user + Practitioner demographics; preserve the username.
         await put.mutateAsync({ id, body: buildNewUserPayload(fields, originalUsername) });
         // FHIR handles only what the gateway doesn't: PractitionerRoles + CareTeam membership.
-        const bundle = buildUserEditBundle(id, fields, { existingRoleIds, careTeamAdds, careTeamRemoves });
+        const bundle = buildUserEditBundle(id, fields, { existingRoleIds, careTeamTargets, careTeamRemoves });
         if (bundle.entry.length > 0) await client.transaction(bundle);
         await writeAuditEvent(client, { action: 'update', resourceType: 'Practitioner', resourceId: id });
         onSuccess();
