@@ -189,7 +189,7 @@ describe('careTeamFromForm', () => {
     }) as {
       status?: string;
       note?: { text?: string }[];
-      managingOrganization?: { reference?: string };
+      managingOrganization?: { reference?: string }[];
       participant?: { member?: { reference?: string }; role?: { coding?: { code?: string }[] }[] }[];
     };
     expect(ct.status).toBe('inactive');
@@ -199,18 +199,20 @@ describe('careTeamFromForm', () => {
       'Practitioner/p2',
     ]);
     expect(ct.participant?.[0].role?.[0].coding?.[0].code).toBe('clinical');
-    expect(ct.managingOrganization?.reference).toBe('Organization/o1');
+    // R4 managingOrganization is 0..* — must be an array, not a scalar object
+    expect(Array.isArray(ct.managingOrganization)).toBe(true);
+    expect(ct.managingOrganization?.[0].reference).toBe('Organization/o1');
   });
 
   it('preserves a passed Organization/ ref and clears managingOrganization on edit when blank', () => {
     const created = careTeamFromForm({ ...base, organizationId: 'Organization/o9' }) as {
-      managingOrganization?: { reference?: string };
+      managingOrganization?: { reference?: string }[];
     };
-    expect(created.managingOrganization?.reference).toBe('Organization/o9');
+    expect(created.managingOrganization?.[0].reference).toBe('Organization/o9');
 
     const cleared = careTeamFromForm(base, {
       id: 'ct1',
-      managingOrganization: { reference: 'Organization/o9' },
+      managingOrganization: [{ reference: 'Organization/o9' }],
     });
     expect(cleared).not.toHaveProperty('managingOrganization');
     expect(cleared.id).toBe('ct1');

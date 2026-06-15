@@ -21,6 +21,8 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
+const FORM_ID = 'careteam-form';
+
 function memberIdsOf(team: CareTeamRow | undefined): string[] {
   return (team?.participant ?? [])
     .map((p) => p.member?.reference?.replace(/^Practitioner\//, '') ?? '')
@@ -53,7 +55,7 @@ export function CareTeamFormDrawer({
     (team?.status ?? 'active') === 'active' ? 'active' : 'inactive',
   );
   const [memberIds, setMemberIds] = useState<string[]>(memberIdsOf(team));
-  const [organizationId, setOrganizationId] = useState(team?.managingOrganization?.reference ?? '');
+  const [organizationId, setOrganizationId] = useState(team?.managingOrganization?.[0]?.reference ?? '');
   const [nameError, setNameError] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -76,6 +78,7 @@ export function CareTeamFormDrawer({
           await update.mutateAsync({ id: team.id, body });
         } else {
           resourceId = ((await create.mutateAsync(body)) as { id?: string }).id;
+          if (!resourceId) throw new Error('Create did not return an id');
         }
         await writeAuditEvent(client, {
           action: editing ? 'update' : 'create',
@@ -115,7 +118,7 @@ export function CareTeamFormDrawer({
       <Button variant="outlined" type="button" onClick={onClose} disabled={submitting} style={{ flex: 1 }}>
         {t('cancel')}
       </Button>
-      <Button type="button" onClick={submit} loading={submitting} disabled={submitting} style={{ flex: 1 }}>
+      <Button type="submit" form={FORM_ID} loading={submitting} disabled={submitting} style={{ flex: 1 }}>
         {t('save')}
       </Button>
     </div>
@@ -129,8 +132,7 @@ export function CareTeamFormDrawer({
       header={header}
       footer={footer}
     >
-      <form className="ohs-detail-body" onSubmit={onFormSubmit}>
-        <button type="submit" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
+      <form id={FORM_ID} className="ohs-detail-body" onSubmit={onFormSubmit}>
         {error ? <ErrorState description={error} /> : null}
 
         <Section icon={RiTeamLine} title={t('sectionBasicInfo')}>

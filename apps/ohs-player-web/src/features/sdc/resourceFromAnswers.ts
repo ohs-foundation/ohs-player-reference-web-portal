@@ -79,7 +79,8 @@ export function careTeamFromForm(
     delete careTeam.participant;
   }
   const orgId = fields.organizationId.trim();
-  if (orgId) careTeam.managingOrganization = { reference: orgId.includes('/') ? orgId : `Organization/${orgId}` };
+  // R4 CareTeam.managingOrganization is 0..* — always an array.
+  if (orgId) careTeam.managingOrganization = [{ reference: orgId.includes('/') ? orgId : `Organization/${orgId}` }];
   else delete careTeam.managingOrganization;
   return careTeam;
 }

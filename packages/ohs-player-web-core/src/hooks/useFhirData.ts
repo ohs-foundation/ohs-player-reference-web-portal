@@ -63,7 +63,9 @@ export function useUpdateResource(resourceType: string) {
  * resource type(s), so view tables re-render after a mutation. Use it after writes the standard
  * mutation hooks don't cover — custom-endpoint creates/updates, transaction Bundles, or any flow
  * where a list elsewhere must reflect the change. Targets queries by cache key (not a component-local
- * `refetch` handle) and resolves once the active refetches complete.
+ * `refetch` handle) and resolves once the active refetches complete. Relies on React Query v5's default
+ * `refetchType: 'active'` — mounted (subscribed) queries refetch immediately; inactive ones are only
+ * marked stale and refetch on their next mount/focus.
  *
  * @example
  * const refresh = useRefreshResources();

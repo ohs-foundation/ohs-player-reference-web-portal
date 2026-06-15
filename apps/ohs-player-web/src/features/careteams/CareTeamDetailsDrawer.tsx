@@ -17,7 +17,7 @@ export type CareTeamRow = {
   name?: string;
   status?: string;
   note?: { text?: string }[];
-  managingOrganization?: { reference?: string };
+  managingOrganization?: { reference?: string }[];
   participant?: {
     member?: { reference?: string };
     role?: { coding?: { code?: string; display?: string }[] }[];

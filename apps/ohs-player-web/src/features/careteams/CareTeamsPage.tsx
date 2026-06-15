@@ -88,7 +88,7 @@ export function CareTeamsPage() {
     [orgList],
   );
   const orgNameOf = (team: CareTeamRow): string | undefined => {
-    const id = team.managingOrganization?.reference?.replace(/^Organization\//, '');
+    const id = team.managingOrganization?.[0]?.reference?.replace(/^Organization\//, '');
     return id ? orgNameById.get(id) ?? id : undefined;
   };
 
