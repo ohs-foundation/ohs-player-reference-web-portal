@@ -7,6 +7,8 @@ import {
   buildNewUserPayload,
   buildUserEditBundle,
   type NewUserFields,
+  organizationAffiliationFromForm,
+  organizationFromForm,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
 } from './resourceFromAnswers';
@@ -263,6 +265,90 @@ describe('buildDeactivateBundle', () => {
     // only the Practitioner PUT remains
     expect(bundle.entry).toHaveLength(1);
     expect(bundle.entry[0].request.url).toBe('Practitioner/p1');
+  });
+});
+
+describe('organizationFromForm', () => {
+  const base = { name: 'Ministry of Health', typeCode: '', identifierValue: '', email: '', active: true };
+
+  it('maps name + active, omits blank type/identifier/email', () => {
+    const org = organizationFromForm(base);
+    expect(org).toEqual({ resourceType: 'Organization', name: 'Ministry of Health', active: true });
+    expect(org).not.toHaveProperty('type');
+    expect(org).not.toHaveProperty('identifier');
+    expect(org).not.toHaveProperty('telecom');
+  });
+
+  it('maps type→coding, identifier, email→telecom, and the inactive flag', () => {
+    const org = organizationFromForm({
+      ...base,
+      typeCode: 'govt',
+      identifierValue: 'MOH-KEN',
+      email: 'info@moh.go.ke',
+      active: false,
+    }) as {
+      active?: boolean;
+      type?: { coding?: { system?: string; code?: string }[] }[];
+      identifier?: { system?: string; value?: string }[];
+      telecom?: { system?: string; value?: string }[];
+    };
+    expect(org.active).toBe(false);
+    expect(org.type?.[0].coding?.[0]).toEqual({
+      system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+      code: 'govt',
+    });
+    expect(org.identifier?.[0].value).toBe('MOH-KEN');
+    expect(org.telecom?.[0]).toEqual({ system: 'email', value: 'info@moh.go.ke' });
+  });
+
+  it('on edit, preserves unmanaged fields and other identifiers/telecom, and clears emptied ones', () => {
+    const existing = {
+      id: 'o1',
+      partOf: { reference: 'Organization/parent' },
+      identifier: [
+        { system: 'http://other', value: 'keep' },
+        { system: 'urn:ohs:reference:organization-identifier', value: 'old' },
+      ],
+      telecom: [
+        { system: 'phone', value: '0700' },
+        { system: 'email', value: 'old@x.com' },
+      ],
+    };
+    const org = organizationFromForm(base, existing) as {
+      id?: string;
+      partOf?: { reference?: string };
+      identifier?: { system?: string; value?: string }[];
+      telecom?: { system?: string; value?: string }[];
+    };
+    expect(org.id).toBe('o1');
+    expect(org.partOf?.reference).toBe('Organization/parent');
+    // the reference identifier + email were cleared (blank in base); foreign ones survive
+    expect(org.identifier).toEqual([{ system: 'http://other', value: 'keep' }]);
+    expect(org.telecom).toEqual([{ system: 'phone', value: '0700' }]);
+  });
+});
+
+describe('organizationAffiliationFromForm', () => {
+  it('returns null when no locations are selected', () => {
+    expect(organizationAffiliationFromForm('Organization/o1', [])).toBeNull();
+  });
+
+  it('builds an affiliation with normalized location refs and the org reference', () => {
+    const aff = organizationAffiliationFromForm('urn:uuid:org-1', ['l1', 'Location/l2']) as {
+      resourceType?: string;
+      active?: boolean;
+      organization?: { reference?: string };
+      location?: { reference?: string }[];
+    };
+    expect(aff.resourceType).toBe('OrganizationAffiliation');
+    expect(aff.active).toBe(true);
+    expect(aff.organization?.reference).toBe('urn:uuid:org-1');
+    expect(aff.location?.map((l) => l.reference)).toEqual(['Location/l1', 'Location/l2']);
+  });
+
+  it('preserves an existing affiliation id on edit', () => {
+    const aff = organizationAffiliationFromForm('Organization/o1', ['l1'], { id: 'aff1' });
+    expect((aff as { id?: string }).id).toBe('aff1');
   });
 });
 
