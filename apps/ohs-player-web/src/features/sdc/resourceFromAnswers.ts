@@ -450,21 +450,25 @@ export function organizationFromForm(
 }
 
 /**
- * Build an `OrganizationAffiliation` linking an Organization to one or more Locations (the design's
- * "Organisation Affiliation"). Returns null when no locations are selected. On edit, pass `existing` so
- * its id/meta are preserved. `orgRef` is the Organization reference (a `urn:uuid:` on create, or
- * `Organization/{id}` on edit).
+ * Build the `OrganizationAffiliation` body for an org's location links. `orgRef` is the Organization
+ * reference (a `urn:uuid:` on create, or `Organization/{id}` on edit); pass `existing` on edit to
+ * preserve its id/meta. Returns:
+ * - `null` when there are no locations and nothing existing to clean up (caller writes nothing);
+ * - an **active** affiliation listing the locations when any are selected;
+ * - a **deactivated** body (`active:false`, `location: []`) when locations are cleared but an existing
+ *   affiliation must be retired — `organization`/`location` are set explicitly so the body is always a
+ *   valid resource regardless of what `existing` carried.
  */
 export function organizationAffiliationFromForm(
   orgRef: string,
   locationIds: string[],
   existing?: Record<string, unknown>,
 ): Record<string, unknown> | null {
-  if (locationIds.length === 0) return null;
+  if (locationIds.length === 0 && !existing) return null;
   return {
     ...(existing ?? {}),
     resourceType: 'OrganizationAffiliation',
-    active: true,
+    active: locationIds.length > 0,
     organization: { reference: orgRef },
     location: locationIds.map((id) => ({ reference: id.includes('/') ? id : `Location/${id}` })),
   };

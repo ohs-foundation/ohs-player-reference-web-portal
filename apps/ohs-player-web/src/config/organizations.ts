@@ -3,8 +3,6 @@ export interface OrgTypeOption {
   label: string;
 }
 
-export { ORGANIZATION_TYPE_SYSTEM } from '../features/sdc/resourceFromAnswers';
-
 export const ORGANIZATION_TYPE_OPTIONS: readonly OrgTypeOption[] = [
   { value: 'prov', label: 'Healthcare provider' },
   { value: 'dept', label: 'Hospital department' },

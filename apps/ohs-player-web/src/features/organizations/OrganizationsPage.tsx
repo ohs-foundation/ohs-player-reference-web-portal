@@ -26,10 +26,9 @@ import {
 } from '../../components/ui';
 import orgEmptyIllustration from '../../assets/illustrations/org-empty.svg';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
-import { OrganizationDetailsDrawer, type OrgRow } from './OrganizationDetailsDrawer';
+import { OrganizationDetailsDrawer, type OrgAffiliation, type OrgRow } from './OrganizationDetailsDrawer';
 import { OrganizationFormDrawer } from './OrganizationFormDrawer';
 
-type AffiliationRow = { id?: string; organization?: { reference?: string }; location?: { reference?: string }[] };
 type LocRow = { id?: string; name?: string };
 
 const TYPE_LABEL_BY_CODE = new Map(ORGANIZATION_TYPE_OPTIONS.map((o) => [o.value, o.label]));
@@ -74,8 +73,9 @@ export function OrganizationsPage() {
       .filter((r): r is T => Boolean(r));
 
   const affiliationByOrgId = useMemo(() => {
-    const m = new Map<string, AffiliationRow>();
-    for (const a of resourcesOf<AffiliationRow>(affiliations.data)) {
+    const m = new Map<string, OrgAffiliation>();
+    for (const a of resourcesOf<OrgAffiliation>(affiliations.data)) {
+      if (a.active === false) continue; // skip deactivated (cleared) affiliations
       const orgId = a.organization?.reference?.replace(/^Organization\//, '');
       if (orgId) m.set(orgId, a);
     }

@@ -76,13 +76,12 @@ export function OrganizationFormDrawer({
 
   const saveEdit = async (fields: OrgFormFields, id: string): Promise<string> => {
     await client.update('Organization', id, organizationFromForm(fields, org));
+    // Clearing all locations returns a deactivated body (active:false, location:[]) so the stale link
+    // is retired; null only when there were no locations and no existing affiliation to clean up.
     const affBody = organizationAffiliationFromForm(`Organization/${id}`, locationIds, affiliation ?? undefined);
     if (affBody) {
       if (affiliation?.id) await client.update('OrganizationAffiliation', affiliation.id, affBody);
       else await client.create(affBody);
-    } else if (affiliation?.id) {
-      // All locations cleared — deactivate the existing affiliation so the stale link doesn't linger.
-      await client.update('OrganizationAffiliation', affiliation.id, { ...affiliation, resourceType: 'OrganizationAffiliation', active: false });
     }
     return id;
   };

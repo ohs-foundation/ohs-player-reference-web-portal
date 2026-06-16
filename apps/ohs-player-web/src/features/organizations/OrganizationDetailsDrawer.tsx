@@ -12,6 +12,14 @@ import {
 import { Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 
+/** An `OrganizationAffiliation` resource (org → location links). */
+export type OrgAffiliation = {
+  id?: string;
+  active?: boolean;
+  organization?: { reference?: string };
+  location?: { reference?: string }[];
+};
+
 export type OrgRow = {
   id?: string;
   name?: string;
@@ -19,11 +27,8 @@ export type OrgRow = {
   type?: { coding?: { code?: string; display?: string }[] }[];
   identifier?: { system?: string; value?: string }[];
   telecom?: { system?: string; value?: string }[];
-  /** Resolved OrganizationAffiliation for this org (location links), attached by the page. */
-  affiliation?: {
-    id?: string;
-    location?: { reference?: string }[];
-  };
+  /** Resolved OrganizationAffiliation for this org, attached by the page. */
+  affiliation?: OrgAffiliation;
 };
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {

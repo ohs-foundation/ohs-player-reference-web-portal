@@ -324,11 +324,11 @@ describe('organizationFromForm', () => {
 });
 
 describe('organizationAffiliationFromForm', () => {
-  it('returns null when no locations are selected', () => {
+  it('returns null when no locations and no existing affiliation (nothing to write)', () => {
     expect(organizationAffiliationFromForm('Organization/o1', [])).toBeNull();
   });
 
-  it('builds an affiliation with normalized location refs and the org reference', () => {
+  it('builds an active affiliation with normalized location refs and the org reference', () => {
     const aff = organizationAffiliationFromForm('urn:uuid:org-1', ['l1', 'Location/l2']) as {
       resourceType?: string;
       active?: boolean;
@@ -344,6 +344,22 @@ describe('organizationAffiliationFromForm', () => {
   it('preserves an existing affiliation id on edit', () => {
     const aff = organizationAffiliationFromForm('Organization/o1', ['l1'], { id: 'aff1' });
     expect((aff as { id?: string }).id).toBe('aff1');
+  });
+
+  it('deactivates and clears locations when cleared on an existing affiliation', () => {
+    const aff = organizationAffiliationFromForm('Organization/o1', [], {
+      id: 'aff1',
+      active: true,
+      location: [{ reference: 'Location/old' }],
+    }) as {
+      active?: boolean;
+      organization?: { reference?: string };
+      location?: { reference?: string }[];
+    };
+    // explicit organization + empty location regardless of what `existing` carried — not just active:false
+    expect(aff.active).toBe(false);
+    expect(aff.location).toEqual([]);
+    expect(aff.organization?.reference).toBe('Organization/o1');
   });
 });
 
