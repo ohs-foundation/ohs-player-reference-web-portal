@@ -80,7 +80,10 @@ export function OrganizationDetailsDrawer({
     void (async () => {
       setSaving(true);
       try {
-        await update.mutateAsync({ id, body: { ...org, resourceType: 'Organization', active: false } });
+        // `affiliation` is a UI-only field the page attaches to the row; never send it to the server.
+        const body: Record<string, unknown> = { ...org, resourceType: 'Organization', active: false };
+        delete body.affiliation;
+        await update.mutateAsync({ id, body });
         await writeAuditEvent(client, {
           action: 'update',
           resourceType: 'Organization',

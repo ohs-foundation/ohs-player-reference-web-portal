@@ -431,6 +431,8 @@ export function organizationFromForm(
     name: fields.name.trim(),
     active: fields.active,
   };
+  // `affiliation` is a UI-only field the page attaches to the row; never send it to the server.
+  delete org.affiliation;
 
   const typeCode = fields.typeCode.trim();
   if (typeCode) org.type = [{ coding: [{ system: ORGANIZATION_TYPE_SYSTEM, code: typeCode }] }];

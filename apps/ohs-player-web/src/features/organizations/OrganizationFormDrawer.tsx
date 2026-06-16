@@ -80,6 +80,9 @@ export function OrganizationFormDrawer({
     if (affBody) {
       if (affiliation?.id) await client.update('OrganizationAffiliation', affiliation.id, affBody);
       else await client.create(affBody);
+    } else if (affiliation?.id) {
+      // All locations cleared — deactivate the existing affiliation so the stale link doesn't linger.
+      await client.update('OrganizationAffiliation', affiliation.id, { ...affiliation, resourceType: 'OrganizationAffiliation', active: false });
     }
     return id;
   };
@@ -101,7 +104,9 @@ export function OrganizationFormDrawer({
       ],
     };
     const result = (await client.transaction(bundle)) as { entry?: { response?: { location?: string } }[] };
-    return result.entry?.[0]?.response?.location?.split('/')[1];
+    // `location` may be relative (`Organization/1000/_history/1`) or absolute — match the id either way.
+    const location = result.entry?.[0]?.response?.location ?? '';
+    return /Organization\/([^/]+)/.exec(location)?.[1];
   };
 
   const submit = (): void => {
