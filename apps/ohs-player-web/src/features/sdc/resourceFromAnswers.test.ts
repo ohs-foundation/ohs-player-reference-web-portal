@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyUserAnswersToPractitioner,
   buildDeactivateBundle,
+  careTeamFromForm,
   buildNewUserBundle,
   buildNewUserPayload,
   buildUserEditBundle,
@@ -159,6 +160,62 @@ describe('buildUserEditBundle', () => {
 
     const rem = bundle.entry.find((e) => e.request.url === 'CareTeam/ctR');
     expect((rem?.resource as { participant?: unknown[] }).participant).toHaveLength(0);
+  });
+});
+
+describe('careTeamFromForm', () => {
+  const base = {
+    name: 'Ebola Response',
+    description: '',
+    status: 'active' as const,
+    memberIds: [],
+    organizationId: '',
+  };
+
+  it('maps name + status, and omits blank description/members/organisation (no location — not in R4)', () => {
+    const ct = careTeamFromForm(base);
+    expect(ct).toEqual({ resourceType: 'CareTeam', status: 'active', name: 'Ebola Response' });
+    expect(ct).not.toHaveProperty('participant');
+    expect(ct).not.toHaveProperty('managingOrganization');
+  });
+
+  it('maps description→note, members→participant (Practitioner refs + clinical role), and managingOrganization', () => {
+    const ct = careTeamFromForm({
+      ...base,
+      description: 'Outbreak team',
+      status: 'inactive',
+      memberIds: ['p1', 'Practitioner/p2'],
+      organizationId: 'o1',
+    }) as {
+      status?: string;
+      note?: { text?: string }[];
+      managingOrganization?: { reference?: string }[];
+      participant?: { member?: { reference?: string }; role?: { coding?: { code?: string }[] }[] }[];
+    };
+    expect(ct.status).toBe('inactive');
+    expect(ct.note?.[0].text).toBe('Outbreak team');
+    expect(ct.participant?.map((p) => p.member?.reference)).toEqual([
+      'Practitioner/p1',
+      'Practitioner/p2',
+    ]);
+    expect(ct.participant?.[0].role?.[0].coding?.[0].code).toBe('clinical');
+    // R4 managingOrganization is 0..* — must be an array, not a scalar object
+    expect(Array.isArray(ct.managingOrganization)).toBe(true);
+    expect(ct.managingOrganization?.[0].reference).toBe('Organization/o1');
+  });
+
+  it('preserves a passed Organization/ ref and clears managingOrganization on edit when blank', () => {
+    const created = careTeamFromForm({ ...base, organizationId: 'Organization/o9' }) as {
+      managingOrganization?: { reference?: string }[];
+    };
+    expect(created.managingOrganization?.[0].reference).toBe('Organization/o9');
+
+    const cleared = careTeamFromForm(base, {
+      id: 'ct1',
+      managingOrganization: [{ reference: 'Organization/o9' }],
+    });
+    expect(cleared).not.toHaveProperty('managingOrganization');
+    expect(cleared.id).toBe('ct1');
   });
 });
 

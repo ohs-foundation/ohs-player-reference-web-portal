@@ -85,6 +85,51 @@ export function StackedInput({
   );
 }
 
+export function StackedTextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  full,
+  error,
+  required,
+  rows = 3,
+}: Readonly<{
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  full?: boolean;
+  error?: string;
+  required?: boolean;
+  rows?: number;
+}>): React.ReactElement {
+  const id = useId();
+  return (
+    <div className={fieldClass(full, error)}>
+      <label className="ohs-formfield__label" htmlFor={id}>
+        {label}
+        {required ? <RequiredMark /> : null}
+      </label>
+      <textarea
+        id={id}
+        className="ohs-formfield__input ohs-formfield__textarea"
+        rows={rows}
+        value={value}
+        placeholder={placeholder}
+        aria-invalid={error ? true : undefined}
+        aria-required={required ? true : undefined}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {error ? (
+        <span className="ohs-formfield__error" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export function StackedSelect({
   label,
   value,

@@ -55,6 +55,7 @@ Primitive props (subset): `ButtonProps`, `ButtonSize`, `ButtonVariant`, `CardHea
 | `useCreateResource(resourceType)` | Mutation: `client.create`; invalidates search for `resourceType`. |
 | `useUpdateResource(resourceType)` | Mutation: `client.update`; invalidates read + search. |
 | `useCustomEndpoint(alias)` | `{ get, post, put }` mutations wrapping `customGet` / `customPost` / `customPut` for that alias (`put` takes `{ id?, body }`). |
+| `useRefreshResources()` | Returns `(resourceType \| resourceType[]) => Promise<void>` that invalidates + refetches the cached `search` list(s) so view tables re-render after a mutation. |
 | `useQuestionnaireFormState(questionnaire, initialAnswers?)` | SDC form state: `{ answers, setAnswer, setAnswers, buildQuestionnaireResponse, validateRequired }`. |
 | `useStatusBar()` | Status bar context consumer (primitives). |
 

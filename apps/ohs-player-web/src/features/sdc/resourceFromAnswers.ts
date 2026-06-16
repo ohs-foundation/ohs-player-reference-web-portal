@@ -29,6 +29,62 @@ export function careTeamBodyFromAnswers(answers: Record<string, string>): {
   };
 }
 
+/** Default CareTeam participant role coding. Members reference `Practitioner/{id}`, per the sync-doc
+ * model where CareTeam.participant.member resolves to a Practitioner. */
+export const CARE_TEAM_ROLE_CODING = {
+  system: 'http://terminology.hl7.org/CodeSystem/care-team-roles',
+  code: 'clinical',
+  display: 'Clinical',
+};
+
+/**
+ * Fields the bespoke Add/Edit Care Team drawer collects. `memberIds` are Practitioner ids. A
+ * CareTeam→Location association is not modelled (R4 CareTeam has no `location`); the org link is the
+ * optional `managingOrganization`.
+ */
+export interface CareTeamFormFields {
+  name: string;
+  description: string;
+  status: 'active' | 'inactive';
+  /** Practitioner ids to add as participants. */
+  memberIds: string[];
+  /** Managing Organization id (or `Organization/{id}` ref), or '' for none. */
+  organizationId: string;
+}
+
+/**
+ * Map the Care Team form to a FHIR CareTeam resource. On create, omit `existing` (server assigns the
+ * id). On edit, pass the existing resource so unmanaged fields (id, meta, identifier, …) are preserved
+ * while the form-managed fields are overwritten — including removals (cleared description / no members /
+ * no organisation).
+ */
+export function careTeamFromForm(
+  fields: CareTeamFormFields,
+  existing?: Record<string, unknown>,
+): Record<string, unknown> {
+  const careTeam: Record<string, unknown> = {
+    ...(existing ?? {}),
+    resourceType: 'CareTeam',
+    status: fields.status,
+    name: fields.name.trim(),
+  };
+  if (fields.description.trim()) careTeam.note = [{ text: fields.description.trim() }];
+  else delete careTeam.note;
+  if (fields.memberIds.length > 0) {
+    careTeam.participant = fields.memberIds.map((id) => ({
+      member: { reference: id.includes('/') ? id : `Practitioner/${id}` },
+      role: [{ coding: [CARE_TEAM_ROLE_CODING] }],
+    }));
+  } else {
+    delete careTeam.participant;
+  }
+  const orgId = fields.organizationId.trim();
+  // R4 CareTeam.managingOrganization is 0..* — always an array.
+  if (orgId) careTeam.managingOrganization = [{ reference: orgId.includes('/') ? orgId : `Organization/${orgId}` }];
+  else delete careTeam.managingOrganization;
+  return careTeam;
+}
+
 // ---------------------------------------------------------------------------
 // User (Practitioner via custom gateway)
 // ---------------------------------------------------------------------------
