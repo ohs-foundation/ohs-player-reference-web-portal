@@ -269,9 +269,9 @@ describe('buildDeactivateBundle', () => {
 });
 
 describe('organizationFromForm', () => {
-  const base = { name: 'Ministry of Health', typeCode: '', identifierValue: '', email: '', active: true };
+  const base = { name: 'Ministry of Health', typeCode: '', email: '', active: true };
 
-  it('maps name + active, omits blank type/identifier/email', () => {
+  it('maps name + active, omits blank type/email, and never sets identifier (server-assigned)', () => {
     const org = organizationFromForm(base);
     expect(org).toEqual({ resourceType: 'Organization', name: 'Ministry of Health', active: true });
     expect(org).not.toHaveProperty('type');
@@ -279,17 +279,15 @@ describe('organizationFromForm', () => {
     expect(org).not.toHaveProperty('telecom');
   });
 
-  it('maps type→coding, identifier, email→telecom, and the inactive flag', () => {
+  it('maps type→coding, email→telecom, and the inactive flag', () => {
     const org = organizationFromForm({
       ...base,
       typeCode: 'govt',
-      identifierValue: 'MOH-KEN',
       email: 'info@moh.go.ke',
       active: false,
     }) as {
       active?: boolean;
       type?: { coding?: { system?: string; code?: string }[] }[];
-      identifier?: { system?: string; value?: string }[];
       telecom?: { system?: string; value?: string }[];
     };
     expect(org.active).toBe(false);
@@ -297,18 +295,14 @@ describe('organizationFromForm', () => {
       system: 'http://terminology.hl7.org/CodeSystem/organization-type',
       code: 'govt',
     });
-    expect(org.identifier?.[0].value).toBe('MOH-KEN');
     expect(org.telecom?.[0]).toEqual({ system: 'email', value: 'info@moh.go.ke' });
   });
 
-  it('on edit, preserves unmanaged fields and other identifiers/telecom, and clears emptied ones', () => {
+  it('on edit, preserves unmanaged fields incl. server identifier, drops the cleared email', () => {
     const existing = {
       id: 'o1',
       partOf: { reference: 'Organization/parent' },
-      identifier: [
-        { system: 'http://other', value: 'keep' },
-        { system: 'urn:ohs:reference:organization-identifier', value: 'old' },
-      ],
+      identifier: [{ system: 'http://other', value: 'keep' }],
       telecom: [
         { system: 'phone', value: '0700' },
         { system: 'email', value: 'old@x.com' },
@@ -322,8 +316,9 @@ describe('organizationFromForm', () => {
     };
     expect(org.id).toBe('o1');
     expect(org.partOf?.reference).toBe('Organization/parent');
-    // the reference identifier + email were cleared (blank in base); foreign ones survive
+    // identifier is not form-managed — it passes through untouched
     expect(org.identifier).toEqual([{ system: 'http://other', value: 'keep' }]);
+    // email was blank in base → cleared; the non-email telecom survives
     expect(org.telecom).toEqual([{ system: 'phone', value: '0700' }]);
   });
 });

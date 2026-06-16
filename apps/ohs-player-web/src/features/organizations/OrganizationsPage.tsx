@@ -32,15 +32,11 @@ import { OrganizationFormDrawer } from './OrganizationFormDrawer';
 type AffiliationRow = { id?: string; organization?: { reference?: string }; location?: { reference?: string }[] };
 type LocRow = { id?: string; name?: string };
 
-const ORG_IDENTIFIER_SYSTEM = 'urn:ohs:reference:organization-identifier';
 const TYPE_LABEL_BY_CODE = new Map(ORGANIZATION_TYPE_OPTIONS.map((o) => [o.value, o.label]));
 
+/** The resource id is the identifier (server-assigned), consistent with Users and Care Teams. */
 function identifierOf(org: OrgRow): string {
-  return (
-    org.identifier?.find((i) => i.system === ORG_IDENTIFIER_SYSTEM)?.value ??
-    org.identifier?.[0]?.value ??
-    ''
-  );
+  return org.id ?? '';
 }
 
 function typeCodeOf(org: OrgRow): string {
@@ -108,7 +104,7 @@ export function OrganizationsPage() {
     const term = q.trim().toLowerCase();
     return orgList.filter((org) => {
       if (!org.id) return false;
-      if (term && !`${org.name ?? ''} ${identifierOf(org)} ${org.id}`.toLowerCase().includes(term)) return false;
+      if (term && !`${org.name ?? ''} ${org.id}`.toLowerCase().includes(term)) return false;
       if (statusFilter === 'active' && !isActive(org)) return false;
       if (statusFilter === 'inactive' && isActive(org)) return false;
       return true;

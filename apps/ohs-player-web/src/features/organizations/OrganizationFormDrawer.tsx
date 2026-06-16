@@ -3,6 +3,7 @@ import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
 import {
   FhirError,
   formatOperationOutcomeMessage,
+  useCreateResource,
   useFhirClient,
   useRefreshResources,
   useTranslation,
@@ -10,6 +11,7 @@ import {
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import {
+  type OrgFormFields,
   organizationAffiliationFromForm,
   organizationFromForm,
 } from '../sdc/resourceFromAnswers';
@@ -24,15 +26,7 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
-const ORG_IDENTIFIER_SYSTEM = 'urn:ohs:reference:organization-identifier';
-
-function identifierValueOf(org: OrgRow | undefined): string {
-  return (
-    org?.identifier?.find((i) => i.system === ORG_IDENTIFIER_SYSTEM)?.value ??
-    org?.identifier?.[0]?.value ??
-    ''
-  );
-}
+const FORM_ID = 'organization-form';
 
 function emailOf(org: OrgRow | undefined): string {
   return org?.telecom?.find((tc) => tc.system === 'email')?.value ?? '';
@@ -65,13 +59,12 @@ export function OrganizationFormDrawer({
 }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const createOrg = useCreateResource('Organization');
   const refresh = useRefreshResources();
   const editing = Boolean(org?.id);
 
   const [name, setName] = useState(org?.name ?? '');
   const [typeCode, setTypeCode] = useState(typeCodeOf(org));
-  const [idMode, setIdMode] = useState<'auto' | 'manual'>(identifierValueOf(org) ? 'manual' : 'auto');
-  const [identifierValue, setIdentifierValue] = useState(identifierValueOf(org));
   const [email, setEmail] = useState(emailOf(org));
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>(
     org?.active === false ? 'inactive' : 'active',
@@ -81,57 +74,48 @@ export function OrganizationFormDrawer({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const saveEdit = async (fields: OrgFormFields, id: string): Promise<string> => {
+    await client.update('Organization', id, organizationFromForm(fields, org));
+    const affBody = organizationAffiliationFromForm(`Organization/${id}`, locationIds, affiliation ?? undefined);
+    if (affBody) {
+      if (affiliation?.id) await client.update('OrganizationAffiliation', affiliation.id, affBody);
+      else await client.create(affBody);
+    }
+    return id;
+  };
+
+  // No affiliation → a plain create returns the org directly; with locations, the affiliation
+  // references the org by URN, so both must commit in one transaction.
+  const createNew = async (fields: OrgFormFields): Promise<string | undefined> => {
+    if (locationIds.length === 0) {
+      return ((await createOrg.mutateAsync(organizationFromForm(fields))) as { id?: string }).id;
+    }
+    const orgRef = 'urn:uuid:org-1';
+    const affBody = organizationAffiliationFromForm(orgRef, locationIds);
+    const bundle = {
+      resourceType: 'Bundle',
+      type: 'transaction',
+      entry: [
+        { fullUrl: orgRef, resource: organizationFromForm(fields), request: { method: 'POST', url: 'Organization' } },
+        ...(affBody ? [{ resource: affBody, request: { method: 'POST', url: 'OrganizationAffiliation' } }] : []),
+      ],
+    };
+    const result = (await client.transaction(bundle)) as { entry?: { response?: { location?: string } }[] };
+    return result.entry?.[0]?.response?.location?.split('/')[1];
+  };
+
   const submit = (): void => {
     setError(null);
     if (!name.trim()) {
       setNameError(t('organizationNameRequired'));
       return;
     }
-    const fields = {
-      name,
-      typeCode,
-      identifierValue: idMode === 'manual' ? identifierValue : '',
-      email,
-      active: statusActive === 'active',
-    };
+    const fields: OrgFormFields = { name, typeCode, email, active: statusActive === 'active' };
     void (async () => {
       setSubmitting(true);
       try {
-        let resourceId = org?.id;
-        if (editing && org?.id) {
-          const body = organizationFromForm(fields, org);
-          await client.update('Organization', org.id, body);
-          const affBody = organizationAffiliationFromForm(
-            `Organization/${org.id}`,
-            locationIds,
-            affiliation ?? undefined,
-          );
-          if (affBody) {
-            if (affiliation?.id) await client.update('OrganizationAffiliation', affiliation.id, affBody);
-            else await client.create(affBody);
-          }
-        } else {
-          const orgRef = 'urn:uuid:org-1';
-          const affBody = organizationAffiliationFromForm(orgRef, locationIds);
-          const bundle = {
-            resourceType: 'Bundle',
-            type: 'transaction',
-            entry: [
-              {
-                fullUrl: orgRef,
-                resource: organizationFromForm(fields),
-                request: { method: 'POST', url: 'Organization' },
-              },
-              ...(affBody
-                ? [{ resource: affBody, request: { method: 'POST', url: 'OrganizationAffiliation' } }]
-                : []),
-            ],
-          };
-          const result = (await client.transaction(bundle)) as {
-            entry?: { response?: { location?: string } }[];
-          };
-          resourceId = result.entry?.[0]?.response?.location?.split('/')[1];
-        }
+        const resourceId = editing && org?.id ? await saveEdit(fields, org.id) : await createNew(fields);
+        if (!resourceId) throw new Error('Save did not return an id');
         await writeAuditEvent(client, {
           action: editing ? 'update' : 'create',
           resourceType: 'Organization',
@@ -171,7 +155,7 @@ export function OrganizationFormDrawer({
       <Button variant="outlined" type="button" onClick={onClose} disabled={submitting} style={{ flex: 1 }}>
         {t('cancel')}
       </Button>
-      <Button type="button" onClick={submit} loading={submitting} disabled={submitting} style={{ flex: 1 }}>
+      <Button type="submit" form={FORM_ID} loading={submitting} disabled={submitting} style={{ flex: 1 }}>
         {t('save')}
       </Button>
     </div>
@@ -185,8 +169,7 @@ export function OrganizationFormDrawer({
       header={header}
       footer={footer}
     >
-      <form className="ohs-detail-body" onSubmit={onFormSubmit}>
-        <button type="submit" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
+      <form id={FORM_ID} className="ohs-detail-body" onSubmit={onFormSubmit}>
         {error ? <ErrorState description={error} /> : null}
 
         <Section icon={RiBuildingLine} title={t('sectionBasicInfo')}>
@@ -217,24 +200,6 @@ export function OrganizationFormDrawer({
               value={email}
               onChange={setEmail}
             />
-            <RadioRow
-              label={t('identifierLabel')}
-              name="org-id-mode"
-              value={idMode}
-              onChange={(v) => setIdMode(v === 'manual' ? 'manual' : 'auto')}
-              options={[
-                { value: 'auto', label: t('identifierAutogenerated') },
-                { value: 'manual', label: t('identifierManual') },
-              ]}
-            />
-            {idMode === 'manual' ? (
-              <StackedInput
-                full
-                label={t('columnIdentifier')}
-                value={identifierValue}
-                onChange={setIdentifierValue}
-              />
-            ) : null}
             <RadioRow
               label={t('columnStatus')}
               name="org-status"
