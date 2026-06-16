@@ -127,9 +127,11 @@ export function OrganizationDetailsDrawer({
           {t('deleteOrganization')}
         </Button>
       </PermissionGuard>
-      <Button type="button" onClick={onEdit} style={{ marginLeft: 'auto' }}>
-        {t('editDetails')}
-      </Button>
+      <PermissionGuard permission="orgs.create">
+        <Button type="button" onClick={onEdit} style={{ marginLeft: 'auto' }}>
+          {t('editDetails')}
+        </Button>
+      </PermissionGuard>
     </div>
   );
 

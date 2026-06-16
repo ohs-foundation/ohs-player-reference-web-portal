@@ -60,6 +60,7 @@ export const appMessageOverrides = {
   yes: 'Yes',
   no: 'No',
   filterEmpty: 'No practitioners match the current filters.',
+  filterEmptyGeneric: 'No results match the current filters.',
 
   pageUserCreate: 'Create user',
   pageUserEdit: 'Edit user',

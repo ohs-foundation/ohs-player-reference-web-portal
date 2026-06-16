@@ -319,7 +319,7 @@ export function OrganizationsPage() {
           emptyState={
             <EmptyState
               title={t('emptyTitle')}
-              description={isFiltering ? t('filterEmpty') : t('organizationsEmptyDescription')}
+              description={isFiltering ? t('filterEmptyGeneric') : t('organizationsEmptyDescription')}
             />
           }
         />
