@@ -160,7 +160,6 @@ export function OrganizationsPage() {
           onSuccess={() => {
             setCreateOpen(false);
             status.notify({ tone: 'success', title: t('organizationCreated') });
-            void refresh(['Organization', 'OrganizationAffiliation']);
           }}
         />
       ) : null}
@@ -174,7 +173,6 @@ export function OrganizationsPage() {
           onSuccess={() => {
             setEditId(null);
             status.notify({ tone: 'success', title: t('organizationUpdated') });
-            void refresh(['Organization', 'OrganizationAffiliation']);
           }}
         />
       ) : null}
