@@ -26,10 +26,11 @@ import {
 } from '../../components/ui';
 import orgEmptyIllustration from '../../assets/illustrations/org-empty.svg';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
-import { OrganizationDetailsDrawer, type OrgAffiliation, type OrgRow } from './OrganizationDetailsDrawer';
+import { OrganizationDetailsDrawer, type ManagedLocation, type OrgRow } from './OrganizationDetailsDrawer';
 import { OrganizationFormDrawer } from './OrganizationFormDrawer';
+import type { Option } from '../users/userFormOptions';
 
-type LocRow = { id?: string; name?: string };
+type LocRow = { id?: string; name?: string; managingOrganization?: { reference?: string } };
 
 const TYPE_LABEL_BY_CODE = new Map(ORGANIZATION_TYPE_OPTIONS.map((o) => [o.value, o.label]));
 
@@ -56,7 +57,6 @@ export function OrganizationsPage() {
   const status = useStatusBar();
   const refresh = useRefreshResources();
   const orgs = useSearch('Organization', { _count: '200' });
-  const affiliations = useSearch('OrganizationAffiliation', { _count: '500' });
   const locs = useSearch('Location', { _count: '500' });
 
   const [q, setQ] = useState('');
@@ -72,31 +72,36 @@ export function OrganizationsPage() {
       .map((e) => e.resource)
       .filter((r): r is T => Boolean(r));
 
-  const affiliationByOrgId = useMemo(() => {
-    const m = new Map<string, OrgAffiliation>();
-    for (const a of resourcesOf<OrgAffiliation>(affiliations.data)) {
-      if (a.active === false) continue; // skip deactivated (cleared) affiliations
-      const orgId = a.organization?.reference?.replace(/^Organization\//, '');
-      if (orgId) m.set(orgId, a);
+  const locList = useMemo(() => resourcesOf<LocRow>(locs.data), [locs.data]);
+
+  /** Locations grouped by the org they're managed by (`Location.managingOrganization`). */
+  const locationsByOrgId = useMemo(() => {
+    const m = new Map<string, ManagedLocation[]>();
+    for (const l of locList) {
+      const orgId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
+      if (!orgId || !l.id) continue;
+      const list = m.get(orgId) ?? [];
+      list.push({ id: l.id, name: l.name ?? l.id });
+      m.set(orgId, list);
     }
     return m;
-  }, [affiliations.data]);
+  }, [locList]);
 
-  const locNameById = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const l of resourcesOf<LocRow>(locs.data)) if (l.id) m.set(l.id, l.name ?? l.id);
-    return m;
-  }, [locs.data]);
-
-  const locationOptions = useMemo(
-    () => resourcesOf<LocRow>(locs.data).filter((l) => l.id).map((l) => ({ value: `Location/${l.id}`, label: l.name ?? (l.id as string) })),
-    [locs.data],
-  );
+  // Options for an org's location picker: unmanaged Locations plus the ones this org already manages —
+  // excludes Locations managed by another org so we don't silently steal them (managingOrganization is 0..1).
+  const locationOptionsFor = (orgId?: string): Option[] =>
+    locList
+      .filter((l) => {
+        if (!l.id) return false;
+        const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
+        return !managerId || managerId === orgId;
+      })
+      .map((l) => ({ value: `Location/${l.id}`, label: l.name ?? (l.id as string) }));
 
   const orgList = useMemo(() => {
     const list = resourcesOf<OrgRow>(orgs.data);
-    return list.map((o) => ({ ...o, affiliation: o.id ? affiliationByOrgId.get(o.id) : undefined }));
-  }, [orgs.data, affiliationByOrgId]);
+    return list.map((o) => ({ ...o, managedLocations: o.id ? locationsByOrgId.get(o.id) : undefined }));
+  }, [orgs.data, locationsByOrgId]);
 
   const isActive = (org: OrgRow): boolean => org.active !== false;
 
@@ -155,7 +160,7 @@ export function OrganizationsPage() {
 
       {createOpen ? (
         <OrganizationFormDrawer
-          locationOptions={locationOptions}
+          locationOptions={locationOptionsFor()}
           onClose={() => setCreateOpen(false)}
           onSuccess={() => {
             setCreateOpen(false);
@@ -167,8 +172,8 @@ export function OrganizationsPage() {
       {editOrg ? (
         <OrganizationFormDrawer
           org={editOrg}
-          affiliation={editOrg.affiliation}
-          locationOptions={locationOptions}
+          managedLocations={editOrg.managedLocations}
+          locationOptions={locationOptionsFor(editOrg.id)}
           onClose={() => setEditId(null)}
           onSuccess={() => {
             setEditId(null);
@@ -332,7 +337,6 @@ export function OrganizationsPage() {
           typeLabel={typeLabelOf(viewOrg)}
           identifierValue={identifierOf(viewOrg)}
           email={emailOf(viewOrg)}
-          locNameById={locNameById}
           onClose={() => setViewId(null)}
           onEdit={() => {
             const id = viewOrg.id;
@@ -340,7 +344,7 @@ export function OrganizationsPage() {
             if (id) setEditId(id);
           }}
           onChanged={() => {
-            void refresh(['Organization', 'OrganizationAffiliation']);
+            void refresh(['Organization', 'Location']);
           }}
         />
       ) : null}

@@ -15,5 +15,4 @@ export const ORGANIZATION_TYPE_OPTIONS: readonly OrgTypeOption[] = [
   { value: 'crs', label: 'Clinical research sponsor' },
   { value: 'cg', label: 'Community group' },
   { value: 'bus', label: 'Non-healthcare business' },
-  { value: 'other', label: 'Other' },
 ];

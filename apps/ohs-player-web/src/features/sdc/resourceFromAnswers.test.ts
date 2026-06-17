@@ -7,7 +7,7 @@ import {
   buildNewUserPayload,
   buildUserEditBundle,
   type NewUserFields,
-  organizationAffiliationFromForm,
+  locationWithManagingOrg,
   organizationFromForm,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
@@ -323,43 +323,30 @@ describe('organizationFromForm', () => {
   });
 });
 
-describe('organizationAffiliationFromForm', () => {
-  it('returns null when no locations and no existing affiliation (nothing to write)', () => {
-    expect(organizationAffiliationFromForm('Organization/o1', [])).toBeNull();
-  });
+describe('locationWithManagingOrg', () => {
+  const loc = {
+    resourceType: 'Location',
+    id: 'l1',
+    name: 'Nairobi Hospital — Main',
+    status: 'active',
+  };
 
-  it('builds an active affiliation with normalized location refs and the org reference', () => {
-    const aff = organizationAffiliationFromForm('urn:uuid:org-1', ['l1', 'Location/l2']) as {
-      resourceType?: string;
-      active?: boolean;
-      organization?: { reference?: string };
-      location?: { reference?: string }[];
+  it('sets managingOrganization to the org while preserving the location’s other fields', () => {
+    const next = locationWithManagingOrg(loc, 'Organization/o1') as {
+      name?: string;
+      status?: string;
+      managingOrganization?: { reference?: string };
     };
-    expect(aff.resourceType).toBe('OrganizationAffiliation');
-    expect(aff.active).toBe(true);
-    expect(aff.organization?.reference).toBe('urn:uuid:org-1');
-    expect(aff.location?.map((l) => l.reference)).toEqual(['Location/l1', 'Location/l2']);
+    expect(next.managingOrganization?.reference).toBe('Organization/o1');
+    expect(next.name).toBe('Nairobi Hospital — Main');
+    expect(next.status).toBe('active');
   });
 
-  it('preserves an existing affiliation id on edit', () => {
-    const aff = organizationAffiliationFromForm('Organization/o1', ['l1'], { id: 'aff1' });
-    expect((aff as { id?: string }).id).toBe('aff1');
-  });
-
-  it('deactivates and clears locations when cleared on an existing affiliation', () => {
-    const aff = organizationAffiliationFromForm('Organization/o1', [], {
-      id: 'aff1',
-      active: true,
-      location: [{ reference: 'Location/old' }],
-    }) as {
-      active?: boolean;
-      organization?: { reference?: string };
-      location?: { reference?: string }[];
-    };
-    // explicit organization + empty location regardless of what `existing` carried — not just active:false
-    expect(aff.active).toBe(false);
-    expect(aff.location).toEqual([]);
-    expect(aff.organization?.reference).toBe('Organization/o1');
+  it('clears managingOrganization when unlinking (orgRef null)', () => {
+    const linked = { ...loc, managingOrganization: { reference: 'Organization/o1' } };
+    const next = locationWithManagingOrg(linked, null);
+    expect(next).not.toHaveProperty('managingOrganization');
+    expect((next as { id?: string }).id).toBe('l1');
   });
 });
 

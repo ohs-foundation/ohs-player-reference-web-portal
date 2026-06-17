@@ -135,7 +135,7 @@ export const appMessageOverrides = {
   deleteOrganization: 'Delete Organisation',
   confirmRetireOrgTitle: 'Delete organisation',
   confirmRetireOrgBody: 'This will set the organisation to inactive (it can be reactivated later). Continue?',
-  sectionOrgAffiliation: 'Organisation Affiliation',
+  sectionManagedLocations: 'Managed Locations',
 
   pageCareTeams: 'Care Teams',
   pageCareTeamsDescription: 'Manage care teams available in your environment',

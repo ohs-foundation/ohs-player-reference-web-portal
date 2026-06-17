@@ -403,8 +403,8 @@ export const ORGANIZATION_TYPE_SYSTEM = 'http://terminology.hl7.org/CodeSystem/o
 
 /**
  * Fields the bespoke Add/Edit Organisation drawer collects. R4 `Organization` has no `description`, so
- * the design's Description is omitted. Location affiliation is written separately as an
- * `OrganizationAffiliation` (see {@link organizationAffiliationFromForm}).
+ * the design's Description is omitted. The org↔location link lives on the Location side
+ * (`Location.managingOrganization`), written via {@link locationWithManagingOrg}, not on the Organization.
  */
 export interface OrgFormFields {
   name: string;
@@ -431,8 +431,8 @@ export function organizationFromForm(
     name: fields.name.trim(),
     active: fields.active,
   };
-  // `affiliation` is a UI-only field the page attaches to the row; never send it to the server.
-  delete org.affiliation;
+  // `managedLocations` is a UI-only field the page attaches to the row; never send it to the server.
+  delete org.managedLocations;
 
   const typeCode = fields.typeCode.trim();
   if (typeCode) org.type = [{ coding: [{ system: ORGANIZATION_TYPE_SYSTEM, code: typeCode }] }];
@@ -450,28 +450,18 @@ export function organizationFromForm(
 }
 
 /**
- * Build the `OrganizationAffiliation` body for an org's location links. `orgRef` is the Organization
- * reference (a `urn:uuid:` on create, or `Organization/{id}` on edit); pass `existing` on edit to
- * preserve its id/meta. Returns:
- * - `null` when there are no locations and nothing existing to clean up (caller writes nothing);
- * - an **active** affiliation listing the locations when any are selected;
- * - a **deactivated** body (`active:false`, `location: []`) when locations are cleared but an existing
- *   affiliation must be retired — `organization`/`location` are set explicitly so the body is always a
- *   valid resource regardless of what `existing` carried.
+ * Set or clear a Location's `managingOrganization` (R4 `0..1`) — the link between an Organization (the
+ * "who") and a Location (the "where"). Pass `orgRef` (`Organization/{id}`) to link the location to that
+ * org, or `null` to unlink. Spreads `existing` so the Location's other fields survive the PUT.
  */
-export function organizationAffiliationFromForm(
-  orgRef: string,
-  locationIds: string[],
-  existing?: Record<string, unknown>,
-): Record<string, unknown> | null {
-  if (locationIds.length === 0 && !existing) return null;
-  return {
-    ...(existing ?? {}),
-    resourceType: 'OrganizationAffiliation',
-    active: locationIds.length > 0,
-    organization: { reference: orgRef },
-    location: locationIds.map((id) => ({ reference: id.includes('/') ? id : `Location/${id}` })),
-  };
+export function locationWithManagingOrg(
+  location: Record<string, unknown>,
+  orgRef: string | null,
+): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...location, resourceType: 'Location' };
+  if (orgRef) next.managingOrganization = { reference: orgRef };
+  else delete next.managingOrganization;
+  return next;
 }
 
 type LocationStatus = 'active' | 'suspended' | 'inactive';

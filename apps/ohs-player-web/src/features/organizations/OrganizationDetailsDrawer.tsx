@@ -12,13 +12,8 @@ import {
 import { Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 
-/** An `OrganizationAffiliation` resource (org → location links). */
-export type OrgAffiliation = {
-  id?: string;
-  active?: boolean;
-  organization?: { reference?: string };
-  location?: { reference?: string }[];
-};
+/** A managed Location (id + display name), resolved by the page from `Location.managingOrganization`. */
+export type ManagedLocation = { id: string; name: string };
 
 export type OrgRow = {
   id?: string;
@@ -27,8 +22,8 @@ export type OrgRow = {
   type?: { coding?: { code?: string; display?: string }[] }[];
   identifier?: { system?: string; value?: string }[];
   telecom?: { system?: string; value?: string }[];
-  /** Resolved OrganizationAffiliation for this org, attached by the page. */
-  affiliation?: OrgAffiliation;
+  /** Locations this org manages (`Location.managingOrganization` → this org), attached by the page. */
+  managedLocations?: ManagedLocation[];
 };
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
@@ -40,17 +35,12 @@ function Field({ label, value }: Readonly<{ label: string; value?: string }>): R
   );
 }
 
-function locationId(ref: string | undefined): string {
-  return ref?.replace(/^Location\//, '') ?? '';
-}
-
 export function OrganizationDetailsDrawer({
   org,
   active,
   typeLabel,
   identifierValue,
   email,
-  locNameById,
   onClose,
   onEdit,
   onChanged,
@@ -60,7 +50,6 @@ export function OrganizationDetailsDrawer({
   typeLabel?: string;
   identifierValue?: string;
   email?: string;
-  locNameById: Map<string, string>;
   onClose: () => void;
   onEdit: () => void;
   onChanged: () => void;
@@ -72,12 +61,7 @@ export function OrganizationDetailsDrawer({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const locations = (org.affiliation?.location ?? [])
-    .map((l) => {
-      const id = locationId(l.reference);
-      return { id, name: locNameById.get(id) ?? id };
-    })
-    .filter((l) => l.id);
+  const locations = org.managedLocations ?? [];
 
   const onConfirmRetire = (): void => {
     const id = org.id;
@@ -85,9 +69,9 @@ export function OrganizationDetailsDrawer({
     void (async () => {
       setSaving(true);
       try {
-        // `affiliation` is a UI-only field the page attaches to the row; never send it to the server.
+        // `managedLocations` is a UI-only field the page attaches to the row; never send it to the server.
         const body: Record<string, unknown> = { ...org, resourceType: 'Organization', active: false };
-        delete body.affiliation;
+        delete body.managedLocations;
         await update.mutateAsync({ id, body });
         await writeAuditEvent(client, {
           action: 'update',
@@ -155,7 +139,7 @@ export function OrganizationDetailsDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiMapPinLine} title={t('sectionOrgAffiliation')}>
+          <Section icon={RiMapPinLine} title={t('sectionManagedLocations')}>
             {locations.length === 0 ? (
               <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
             ) : (

@@ -12,13 +12,13 @@ import {
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import {
   type OrgFormFields,
-  organizationAffiliationFromForm,
+  locationWithManagingOrg,
   organizationFromForm,
 } from '../sdc/resourceFromAnswers';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
-import type { OrgRow } from './OrganizationDetailsDrawer';
+import type { ManagedLocation, OrgRow } from './OrganizationDetailsDrawer';
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
@@ -36,23 +36,17 @@ function typeCodeOf(org: OrgRow | undefined): string {
   return org?.type?.[0]?.coding?.[0]?.code ?? '';
 }
 
-function locationIdsOf(affiliation: OrgRow['affiliation']): string[] {
-  return (affiliation?.location ?? [])
-    .map((l) => l.reference ?? '')
-    .filter(Boolean);
-}
-
 /** Add or Edit an Organisation. Pass `org` to edit (prefills + updates); omit it to create. */
 export function OrganizationFormDrawer({
   org,
-  affiliation,
+  managedLocations,
   locationOptions,
   onClose,
   onSuccess,
 }: Readonly<{
   org?: OrgRow;
-  /** Existing OrganizationAffiliation for this org (edit), to prefill + preserve its id. */
-  affiliation?: OrgRow['affiliation'];
+  /** Locations this org currently manages (edit), to prefill + diff on save. */
+  managedLocations?: ManagedLocation[];
   locationOptions: Option[];
   onClose: () => void;
   onSuccess: () => void;
@@ -63,49 +57,52 @@ export function OrganizationFormDrawer({
   const refresh = useRefreshResources();
   const editing = Boolean(org?.id);
 
+  // The MultiSelect stores `Location/{id}` refs; the org's currently-managed locations seed the edit form.
+  const originalLocationRefs = (managedLocations ?? []).map((l) => `Location/${l.id}`);
   const [name, setName] = useState(org?.name ?? '');
   const [typeCode, setTypeCode] = useState(typeCodeOf(org));
   const [email, setEmail] = useState(emailOf(org));
   const [statusActive, setStatusActive] = useState<'active' | 'inactive'>(
     org?.active === false ? 'inactive' : 'active',
   );
-  const [locationIds, setLocationIds] = useState<string[]>(locationIdsOf(affiliation));
+  const [locationIds, setLocationIds] = useState<string[]>(originalLocationRefs);
   const [nameError, setNameError] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const locId = (ref: string): string => ref.replace(/^Location\//, '');
+
+  // Reconcile Location.managingOrganization: link newly-selected Locations to this org and unlink
+  // de-selected ones. Each Location is read first so the PUT preserves its other fields.
+  const reconcileLocations = async (orgId: string): Promise<void> => {
+    const orgRef = `Organization/${orgId}`;
+    const toLink = locationIds.filter((ref) => !originalLocationRefs.includes(ref));
+    const toUnlink = originalLocationRefs.filter((ref) => !locationIds.includes(ref));
+    for (const ref of [...toLink, ...toUnlink]) {
+      const linking = toLink.includes(ref);
+      const id = locId(ref);
+      const loc = (await client.read('Location', id)) as Record<string, unknown>;
+      await client.update('Location', id, locationWithManagingOrg(loc, linking ? orgRef : null));
+      await writeAuditEvent(client, {
+        action: 'update',
+        resourceType: 'Location',
+        resourceId: id,
+        description: linking ? `Linked to ${orgRef}` : `Unlinked from ${orgRef}`,
+      });
+    }
+  };
+
   const saveEdit = async (fields: OrgFormFields, id: string): Promise<string> => {
     await client.update('Organization', id, organizationFromForm(fields, org));
-    // Clearing all locations returns a deactivated body (active:false, location:[]) so the stale link
-    // is retired; null only when there were no locations and no existing affiliation to clean up.
-    const affBody = organizationAffiliationFromForm(`Organization/${id}`, locationIds, affiliation ?? undefined);
-    if (affBody) {
-      if (affiliation?.id) await client.update('OrganizationAffiliation', affiliation.id, affBody);
-      else await client.create(affBody);
-    }
+    await reconcileLocations(id);
     return id;
   };
 
-  // No affiliation → a plain create returns the org directly; with locations, the affiliation
-  // references the org by URN, so both must commit in one transaction.
-  const createNew = async (fields: OrgFormFields): Promise<string | undefined> => {
-    if (locationIds.length === 0) {
-      return ((await createOrg.mutateAsync(organizationFromForm(fields))) as { id?: string }).id;
-    }
-    const orgRef = 'urn:uuid:org-1';
-    const affBody = organizationAffiliationFromForm(orgRef, locationIds);
-    const bundle = {
-      resourceType: 'Bundle',
-      type: 'transaction',
-      entry: [
-        { fullUrl: orgRef, resource: organizationFromForm(fields), request: { method: 'POST', url: 'Organization' } },
-        ...(affBody ? [{ resource: affBody, request: { method: 'POST', url: 'OrganizationAffiliation' } }] : []),
-      ],
-    };
-    const result = (await client.transaction(bundle)) as { entry?: { response?: { location?: string } }[] };
-    // `location` may be relative (`Organization/1000/_history/1`) or absolute — match the id either way.
-    const location = result.entry?.[0]?.response?.location ?? '';
-    return /Organization\/([^/]+)/.exec(location)?.[1];
+  const createNew = async (fields: OrgFormFields): Promise<string> => {
+    const id = ((await createOrg.mutateAsync(organizationFromForm(fields))) as { id?: string }).id;
+    if (!id) throw new Error('Create did not return an id');
+    await reconcileLocations(id);
+    return id;
   };
 
   const submit = (): void => {
@@ -125,7 +122,7 @@ export function OrganizationFormDrawer({
           resourceType: 'Organization',
           resourceId,
         });
-        await refresh(['Organization', 'OrganizationAffiliation']);
+        await refresh(['Organization', 'Location']);
         onSuccess();
       } catch (err) {
         setError(toErrorMessage(err));
@@ -217,7 +214,7 @@ export function OrganizationFormDrawer({
           </Stack>
         </Section>
 
-        <Section icon={RiMapPinLine} title={t('sectionOrgAffiliation')}>
+        <Section icon={RiMapPinLine} title={t('sectionManagedLocations')}>
           <MultiSelect
             label={t('contextLocation')}
             options={locationOptions}
