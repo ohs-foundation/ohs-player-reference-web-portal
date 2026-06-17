@@ -11,6 +11,7 @@ import {
 } from 'ohs-player-web-core';
 import { Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
+import { toErrorMessage } from '../sdc/toErrorMessage';
 
 /** A managed Location (id + display name), resolved by the page from `Location.managingOrganization`. */
 export type ManagedLocation = { id: string; name: string };
@@ -84,7 +85,7 @@ export function OrganizationDetailsDrawer({
         onChanged();
         onClose();
       } catch (err) {
-        status.notify({ tone: 'error', title: err instanceof Error ? err.message : t('saveFailed') });
+        status.notify({ tone: 'error', title: toErrorMessage(err) });
       } finally {
         setSaving(false);
       }

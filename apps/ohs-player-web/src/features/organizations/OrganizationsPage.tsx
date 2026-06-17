@@ -185,7 +185,7 @@ export function OrganizationsPage() {
       {noOrgs ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <EmptyState
-            illustration={<img src={orgEmptyIllustration} alt="" width={112} height={130} />}
+            illustration={<img src={orgEmptyIllustration} alt="" width={112} height={105} />}
             title={t('emptyTitle')}
             description={t('organizationsEmptyDescription')}
             action={

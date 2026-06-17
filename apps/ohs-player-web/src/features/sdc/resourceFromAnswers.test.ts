@@ -325,24 +325,27 @@ describe('organizationFromForm', () => {
 
 describe('locationManagingOrgPatch', () => {
   type Op = { name: string; valueCode?: string; valueString?: string; valueReference?: { reference?: string } };
-  const opsOf = (patch: Record<string, unknown>): Op[] =>
-    ((patch.parameter as { part?: Op[] }[])[0].part ?? []);
+  const operations = (patch: Record<string, unknown>): Op[][] =>
+    (patch.parameter as { part?: Op[] }[]).map((op) => op.part ?? []);
+  const typeOf = (parts: Op[]): string | undefined => parts.find((p) => p.name === 'type')?.valueCode;
 
-  it('builds an `add` FHIRPath op linking managingOrganization (sets whether absent or present)', () => {
+  it('links via `delete` then `add` so it is conformant whether the element is absent or present', () => {
     const patch = locationManagingOrgPatch('Organization/o1');
     expect(patch.resourceType).toBe('Parameters');
-    const parts = opsOf(patch);
-    expect(parts.find((p) => p.name === 'type')?.valueCode).toBe('add');
-    expect(parts.find((p) => p.name === 'path')?.valueString).toBe('Location');
-    expect(parts.find((p) => p.name === 'name')?.valueString).toBe('managingOrganization');
-    expect(parts.find((p) => p.name === 'value')?.valueReference?.reference).toBe('Organization/o1');
+    const ops = operations(patch);
+    expect(ops.map(typeOf)).toEqual(['delete', 'add']);
+    // the `add` op carries path/name/value for managingOrganization
+    const add = ops[1];
+    expect(add.find((p) => p.name === 'path')?.valueString).toBe('Location');
+    expect(add.find((p) => p.name === 'name')?.valueString).toBe('managingOrganization');
+    expect(add.find((p) => p.name === 'value')?.valueReference?.reference).toBe('Organization/o1');
   });
 
-  it('builds a `delete` FHIRPath op unlinking managingOrganization (orgRef null)', () => {
-    const parts = opsOf(locationManagingOrgPatch(null));
-    expect(parts.find((p) => p.name === 'type')?.valueCode).toBe('delete');
-    expect(parts.find((p) => p.name === 'path')?.valueString).toBe('Location.managingOrganization');
-    expect(parts.some((p) => p.name === 'value')).toBe(false);
+  it('unlinks with a lone `delete` op (orgRef null)', () => {
+    const ops = operations(locationManagingOrgPatch(null));
+    expect(ops.map(typeOf)).toEqual(['delete']);
+    expect(ops[0].find((p) => p.name === 'path')?.valueString).toBe('Location.managingOrganization');
+    expect(ops[0].some((p) => p.name === 'value')).toBe(false);
   });
 });
 

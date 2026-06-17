@@ -454,23 +454,31 @@ export function organizationFromForm(
  * (R4 `0..1`) — the link between an Organization (the "who") and a Location (the "where"). Pass `orgRef`
  * (`Organization/{id}` or a transaction `urn:uuid:`) to link, or `null` to unlink. Used as the `resource`
  * of a `PATCH Location/{id}` transaction-Bundle entry, so no read-modify-write of the full resource.
- * Verified against HAPI: `add` sets the element whether absent or already present (idempotent for `0..1`);
- * `delete` removes it and is a no-op when already absent.
+ *
+ * Link is `delete` then `add`: the spec says `add` is only valid when the element is absent and `replace`
+ * only when present, so a single op is unsafe against a strict server when prior state is unknown (a
+ * TOCTOU race could see either). `delete` (a no-op when absent) followed by `add` onto the now-empty
+ * element is conformant regardless of prior state. Unlink is a lone `delete`.
  */
 export function locationManagingOrgPatch(orgRef: string | null): Record<string, unknown> {
-  const operation =
-    orgRef === null
-      ? [
-          { name: 'type', valueCode: 'delete' },
-          { name: 'path', valueString: 'Location.managingOrganization' },
-        ]
-      : [
-          { name: 'type', valueCode: 'add' },
-          { name: 'path', valueString: 'Location' },
-          { name: 'name', valueString: 'managingOrganization' },
-          { name: 'value', valueReference: { reference: orgRef } },
-        ];
-  return { resourceType: 'Parameters', parameter: [{ name: 'operation', part: operation }] };
+  const del = {
+    name: 'operation',
+    part: [
+      { name: 'type', valueCode: 'delete' },
+      { name: 'path', valueString: 'Location.managingOrganization' },
+    ],
+  };
+  if (orgRef === null) return { resourceType: 'Parameters', parameter: [del] };
+  const add = {
+    name: 'operation',
+    part: [
+      { name: 'type', valueCode: 'add' },
+      { name: 'path', valueString: 'Location' },
+      { name: 'name', valueString: 'managingOrganization' },
+      { name: 'value', valueReference: { reference: orgRef } },
+    ],
+  };
+  return { resourceType: 'Parameters', parameter: [del, add] };
 }
 
 type LocationStatus = 'active' | 'suspended' | 'inactive';

@@ -1,8 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
 import {
-  FhirError,
-  formatOperationOutcomeMessage,
   useFhirClient,
   useRefreshResources,
   useTranslation,
@@ -14,18 +12,14 @@ import {
   locationManagingOrgPatch,
   organizationFromForm,
 } from '../sdc/resourceFromAnswers';
+import { toErrorMessage } from '../sdc/toErrorMessage';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
 import type { ManagedLocation, OrgRow } from './OrganizationDetailsDrawer';
 
-function toErrorMessage(error: unknown): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
 const FORM_ID = 'organization-form';
+const ORG_FULL_URL = 'urn:uuid:org-1';
 
 function emailOf(org: OrgRow | undefined): string {
   return org?.telecom?.find((tc) => tc.system === 'email')?.value ?? '';
@@ -89,7 +83,7 @@ export function OrganizationFormDrawer({
   const commit = async (
     fields: OrgFormFields,
   ): Promise<{ id: string; linked: string[]; unlinked: string[] }> => {
-    const orgRef = editing && org?.id ? `Organization/${org.id}` : 'urn:uuid:org-1';
+    const orgRef = editing && org?.id ? `Organization/${org.id}` : ORG_FULL_URL;
     const orgEntry: Entry =
       editing && org?.id
         ? { resource: organizationFromForm(fields, org), request: { method: 'PUT', url: `Organization/${org.id}` } }
