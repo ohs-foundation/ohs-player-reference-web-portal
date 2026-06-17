@@ -7,7 +7,7 @@ import {
   buildNewUserPayload,
   buildUserEditBundle,
   type NewUserFields,
-  locationWithManagingOrg,
+  locationManagingOrgPatch,
   organizationFromForm,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
@@ -323,30 +323,26 @@ describe('organizationFromForm', () => {
   });
 });
 
-describe('locationWithManagingOrg', () => {
-  const loc = {
-    resourceType: 'Location',
-    id: 'l1',
-    name: 'Nairobi Hospital — Main',
-    status: 'active',
-  };
+describe('locationManagingOrgPatch', () => {
+  type Op = { name: string; valueCode?: string; valueString?: string; valueReference?: { reference?: string } };
+  const opsOf = (patch: Record<string, unknown>): Op[] =>
+    ((patch.parameter as { part?: Op[] }[])[0].part ?? []);
 
-  it('sets managingOrganization to the org while preserving the location’s other fields', () => {
-    const next = locationWithManagingOrg(loc, 'Organization/o1') as {
-      name?: string;
-      status?: string;
-      managingOrganization?: { reference?: string };
-    };
-    expect(next.managingOrganization?.reference).toBe('Organization/o1');
-    expect(next.name).toBe('Nairobi Hospital — Main');
-    expect(next.status).toBe('active');
+  it('builds an `add` FHIRPath op linking managingOrganization (sets whether absent or present)', () => {
+    const patch = locationManagingOrgPatch('Organization/o1');
+    expect(patch.resourceType).toBe('Parameters');
+    const parts = opsOf(patch);
+    expect(parts.find((p) => p.name === 'type')?.valueCode).toBe('add');
+    expect(parts.find((p) => p.name === 'path')?.valueString).toBe('Location');
+    expect(parts.find((p) => p.name === 'name')?.valueString).toBe('managingOrganization');
+    expect(parts.find((p) => p.name === 'value')?.valueReference?.reference).toBe('Organization/o1');
   });
 
-  it('clears managingOrganization when unlinking (orgRef null)', () => {
-    const linked = { ...loc, managingOrganization: { reference: 'Organization/o1' } };
-    const next = locationWithManagingOrg(linked, null);
-    expect(next).not.toHaveProperty('managingOrganization');
-    expect((next as { id?: string }).id).toBe('l1');
+  it('builds a `delete` FHIRPath op unlinking managingOrganization (orgRef null)', () => {
+    const parts = opsOf(locationManagingOrgPatch(null));
+    expect(parts.find((p) => p.name === 'type')?.valueCode).toBe('delete');
+    expect(parts.find((p) => p.name === 'path')?.valueString).toBe('Location.managingOrganization');
+    expect(parts.some((p) => p.name === 'value')).toBe(false);
   });
 });
 

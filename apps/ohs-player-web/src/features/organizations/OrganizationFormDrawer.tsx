@@ -3,7 +3,6 @@ import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
 import {
   FhirError,
   formatOperationOutcomeMessage,
-  useCreateResource,
   useFhirClient,
   useRefreshResources,
   useTranslation,
@@ -12,7 +11,7 @@ import {
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import {
   type OrgFormFields,
-  locationWithManagingOrg,
+  locationManagingOrgPatch,
   organizationFromForm,
 } from '../sdc/resourceFromAnswers';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
@@ -53,7 +52,6 @@ export function OrganizationFormDrawer({
 }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
-  const createOrg = useCreateResource('Organization');
   const refresh = useRefreshResources();
   const editing = Boolean(org?.id);
 
@@ -72,37 +70,40 @@ export function OrganizationFormDrawer({
 
   const locId = (ref: string): string => ref.replace(/^Location\//, '');
 
-  // Reconcile Location.managingOrganization: link newly-selected Locations to this org and unlink
-  // de-selected ones. Each Location is read first so the PUT preserves its other fields.
-  const reconcileLocations = async (orgId: string): Promise<void> => {
-    const orgRef = `Organization/${orgId}`;
-    const toLink = locationIds.filter((ref) => !originalLocationRefs.includes(ref));
-    const toUnlink = originalLocationRefs.filter((ref) => !locationIds.includes(ref));
-    for (const ref of [...toLink, ...toUnlink]) {
-      const linking = toLink.includes(ref);
-      const id = locId(ref);
-      const loc = (await client.read('Location', id)) as Record<string, unknown>;
-      await client.update('Location', id, locationWithManagingOrg(loc, linking ? orgRef : null));
-      await writeAuditEvent(client, {
-        action: 'update',
-        resourceType: 'Location',
-        resourceId: id,
-        description: linking ? `Linked to ${orgRef}` : `Unlinked from ${orgRef}`,
-      });
-    }
+  type Entry = { fullUrl?: string; resource: Record<string, unknown>; request: { method: string; url: string } };
+
+  // PATCH entries that set/clear each to-link/to-unlink Location's managingOrganization — no read of the
+  // full resource, so no clobber window. `orgRef` is `urn:uuid:` (create) or `Organization/{id}` (edit).
+  const locationEntries = (orgRef: string): { entries: Entry[]; linked: string[]; unlinked: string[] } => {
+    const linked = locationIds.filter((ref) => !originalLocationRefs.includes(ref));
+    const unlinked = originalLocationRefs.filter((ref) => !locationIds.includes(ref));
+    const entries = [...linked, ...unlinked].map((ref) => ({
+      resource: locationManagingOrgPatch(linked.includes(ref) ? orgRef : null),
+      request: { method: 'PATCH', url: `Location/${locId(ref)}` },
+    }));
+    return { entries, linked, unlinked };
   };
 
-  const saveEdit = async (fields: OrgFormFields, id: string): Promise<string> => {
-    await client.update('Organization', id, organizationFromForm(fields, org));
-    await reconcileLocations(id);
-    return id;
-  };
+  // Commit the Organization (POST on create / PUT on edit) and all Location link/unlink writes in ONE
+  // transaction Bundle — atomic, no partial state. Returns the org id + the Locations touched (for audit).
+  const commit = async (
+    fields: OrgFormFields,
+  ): Promise<{ id: string; linked: string[]; unlinked: string[] }> => {
+    const orgRef = editing && org?.id ? `Organization/${org.id}` : 'urn:uuid:org-1';
+    const orgEntry: Entry =
+      editing && org?.id
+        ? { resource: organizationFromForm(fields, org), request: { method: 'PUT', url: `Organization/${org.id}` } }
+        : { fullUrl: orgRef, resource: organizationFromForm(fields), request: { method: 'POST', url: 'Organization' } };
 
-  const createNew = async (fields: OrgFormFields): Promise<string> => {
-    const id = ((await createOrg.mutateAsync(organizationFromForm(fields))) as { id?: string }).id;
+    const { entries, linked, unlinked } = locationEntries(orgRef);
+    const bundle = { resourceType: 'Bundle', type: 'transaction', entry: [orgEntry, ...entries] };
+    const result = (await client.transaction(bundle)) as { entry?: { response?: { location?: string } }[] };
+
+    if (editing && org?.id) return { id: org.id, linked, unlinked };
+    const location = result.entry?.[0]?.response?.location ?? '';
+    const id = /Organization\/([^/]+)/.exec(location)?.[1];
     if (!id) throw new Error('Create did not return an id');
-    await reconcileLocations(id);
-    return id;
+    return { id, linked, unlinked };
   };
 
   const submit = (): void => {
@@ -115,13 +116,19 @@ export function OrganizationFormDrawer({
     void (async () => {
       setSubmitting(true);
       try {
-        const resourceId = editing && org?.id ? await saveEdit(fields, org.id) : await createNew(fields);
-        if (!resourceId) throw new Error('Save did not return an id');
+        const { id, linked, unlinked } = await commit(fields);
+        const orgRef = `Organization/${id}`;
         await writeAuditEvent(client, {
           action: editing ? 'update' : 'create',
           resourceType: 'Organization',
-          resourceId,
+          resourceId: id,
         });
+        for (const ref of linked) {
+          await writeAuditEvent(client, { action: 'update', resourceType: 'Location', resourceId: locId(ref), description: `Linked to ${orgRef}` });
+        }
+        for (const ref of unlinked) {
+          await writeAuditEvent(client, { action: 'update', resourceType: 'Location', resourceId: locId(ref), description: `Unlinked from ${orgRef}` });
+        }
         await refresh(['Organization', 'Location']);
         onSuccess();
       } catch (err) {

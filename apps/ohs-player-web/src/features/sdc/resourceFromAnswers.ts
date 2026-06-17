@@ -450,18 +450,27 @@ export function organizationFromForm(
 }
 
 /**
- * Set or clear a Location's `managingOrganization` (R4 `0..1`) — the link between an Organization (the
- * "who") and a Location (the "where"). Pass `orgRef` (`Organization/{id}`) to link the location to that
- * org, or `null` to unlink. Spreads `existing` so the Location's other fields survive the PUT.
+ * Build a FHIRPath Patch (`Parameters`) that sets or clears a Location's `managingOrganization`
+ * (R4 `0..1`) — the link between an Organization (the "who") and a Location (the "where"). Pass `orgRef`
+ * (`Organization/{id}` or a transaction `urn:uuid:`) to link, or `null` to unlink. Used as the `resource`
+ * of a `PATCH Location/{id}` transaction-Bundle entry, so no read-modify-write of the full resource.
+ * Verified against HAPI: `add` sets the element whether absent or already present (idempotent for `0..1`);
+ * `delete` removes it and is a no-op when already absent.
  */
-export function locationWithManagingOrg(
-  location: Record<string, unknown>,
-  orgRef: string | null,
-): Record<string, unknown> {
-  const next: Record<string, unknown> = { ...location, resourceType: 'Location' };
-  if (orgRef) next.managingOrganization = { reference: orgRef };
-  else delete next.managingOrganization;
-  return next;
+export function locationManagingOrgPatch(orgRef: string | null): Record<string, unknown> {
+  const operation =
+    orgRef === null
+      ? [
+          { name: 'type', valueCode: 'delete' },
+          { name: 'path', valueString: 'Location.managingOrganization' },
+        ]
+      : [
+          { name: 'type', valueCode: 'add' },
+          { name: 'path', valueString: 'Location' },
+          { name: 'name', valueString: 'managingOrganization' },
+          { name: 'value', valueReference: { reference: orgRef } },
+        ];
+  return { resourceType: 'Parameters', parameter: [{ name: 'operation', part: operation }] };
 }
 
 type LocationStatus = 'active' | 'suspended' | 'inactive';
