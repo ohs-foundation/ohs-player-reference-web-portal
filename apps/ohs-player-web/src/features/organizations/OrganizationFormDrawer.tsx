@@ -19,7 +19,8 @@ import type { Option } from '../users/userFormOptions';
 import type { ManagedLocation, OrgRow } from './OrganizationDetailsDrawer';
 
 const FORM_ID = 'organization-form';
-const ORG_FULL_URL = 'urn:uuid:org-1';
+// RFC 4122 UUID URN — the bundle-local ref for the org being created (one org per transaction).
+const ORG_FULL_URL = 'urn:uuid:7d9e9a5e-9a22-4d5e-8a9f-6a83f6b5f5d9';
 
 function emailOf(org: OrgRow | undefined): string {
   return org?.telecom?.find((tc) => tc.system === 'email')?.value ?? '';

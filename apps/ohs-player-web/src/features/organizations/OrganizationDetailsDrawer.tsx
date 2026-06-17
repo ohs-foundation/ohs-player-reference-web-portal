@@ -64,7 +64,7 @@ export function OrganizationDetailsDrawer({
 
   const locations = org.managedLocations ?? [];
 
-  const onConfirmRetire = (): void => {
+  const onConfirmDeactivate = (): void => {
     const id = org.id;
     if (!id) return;
     void (async () => {
@@ -78,10 +78,10 @@ export function OrganizationDetailsDrawer({
           action: 'update',
           resourceType: 'Organization',
           resourceId: id,
-          description: 'Retired (active:false)',
+          description: 'Deactivated (active:false)',
         });
         setConfirmOpen(false);
-        status.notify({ tone: 'success', title: t('organizationRetired') });
+        status.notify({ tone: 'success', title: t('organizationDeactivated') });
         onChanged();
         onClose();
       } catch (err) {
@@ -114,7 +114,7 @@ export function OrganizationDetailsDrawer({
     <div className="ohs-user-drawer__foot">
       <PermissionGuard permission="orgs.create">
         <Button variant="ghost" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)} disabled={saving}>
-          {t('deleteOrganization')}
+          {t('deactivateOrganization')}
         </Button>
       </PermissionGuard>
       <PermissionGuard permission="orgs.create">
@@ -160,17 +160,17 @@ export function OrganizationDetailsDrawer({
       <OhsDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        headline={t('confirmRetireOrgTitle')}
+        headline={t('confirmDeactivateOrgTitle')}
         minWidth="min(96vw, 420px)"
       >
         <Stack gap={4}>
-          <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmRetireOrgBody')}</p>
+          <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmDeactivateOrgBody')}</p>
           <Inline justify="end" style={{ gap: 'var(--ohs-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}
             </Button>
-            <Button variant="danger" type="button" onClick={onConfirmRetire} loading={saving} disabled={saving}>
-              {t('retire')}
+            <Button variant="danger" type="button" onClick={onConfirmDeactivate} loading={saving} disabled={saving}>
+              {t('deactivate')}
             </Button>
           </Inline>
         </Stack>
