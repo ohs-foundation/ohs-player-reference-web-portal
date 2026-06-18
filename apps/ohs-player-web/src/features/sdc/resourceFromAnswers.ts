@@ -390,12 +390,6 @@ export function applyUserAnswersToPractitioner(
 // Organization
 // ---------------------------------------------------------------------------
 
-export const ORGANIZATION_LINK_IDS = {
-  name: 'org-name',
-  active: 'org-active',
-  identifierValue: 'org-identifier-value',
-} as const;
-
 export const LOCATION_LINK_IDS = {
   name: 'loc-name',
   status: 'loc-status',
@@ -404,22 +398,87 @@ export const LOCATION_LINK_IDS = {
   parent: 'loc-parent',
 } as const;
 
-const ORG_IDENTIFIER_SYSTEM = 'urn:ohs:reference:organization-identifier';
+/** CodeSystem for `Organization.type`. A "Team" is an Organization of type `team` (per backend). */
+export const ORGANIZATION_TYPE_SYSTEM = 'http://terminology.hl7.org/CodeSystem/organization-type';
 
-export function organizationFromAnswers(answers: Record<string, string>): {
-  resourceType: 'Organization';
+/**
+ * Fields the bespoke Add/Edit Organisation drawer collects. R4 `Organization` has no `description`, so
+ * the design's Description is omitted. The org↔location link lives on the Location side
+ * (`Location.managingOrganization`), written via {@link locationWithManagingOrg}, not on the Organization.
+ */
+export interface OrgFormFields {
   name: string;
+  /** `Organization.type` code (HL7 organization-type), or '' for none. */
+  typeCode: string;
+  email: string;
   active: boolean;
-  identifier?: { system: string; value: string }[];
-} {
-  const name = answers[ORGANIZATION_LINK_IDS.name]?.trim() ?? '';
-  const active = answers[ORGANIZATION_LINK_IDS.active] !== 'false';
-  const idVal = answers[ORGANIZATION_LINK_IDS.identifierValue]?.trim();
-  const identifier =
-    idVal && idVal.length > 0
-      ? [{ system: ORG_IDENTIFIER_SYSTEM, value: idVal }]
-      : undefined;
-  return { resourceType: 'Organization', name, active, ...(identifier ? { identifier } : {}) };
+}
+
+/**
+ * Map the Organisation form to a FHIR Organization. On create, omit `existing` (server assigns the id).
+ * On edit, pass the existing resource so unmanaged fields (id, meta, identifier, partOf, …) survive
+ * while form-managed fields are overwritten — including removals (cleared type/email). The identifier
+ * is not form-managed: the resource id is the identifier (matching Users/Care Teams), so any
+ * server-assigned `identifier` on `existing` passes through untouched.
+ */
+export function organizationFromForm(
+  fields: OrgFormFields,
+  existing?: Record<string, unknown>,
+): Record<string, unknown> {
+  const org: Record<string, unknown> = {
+    ...(existing ?? {}),
+    resourceType: 'Organization',
+    name: fields.name.trim(),
+    active: fields.active,
+  };
+  // `managedLocations` is a UI-only field the page attaches to the row; never send it to the server.
+  delete org.managedLocations;
+
+  const typeCode = fields.typeCode.trim();
+  if (typeCode) org.type = [{ coding: [{ system: ORGANIZATION_TYPE_SYSTEM, code: typeCode }] }];
+  else delete org.type;
+
+  const email = fields.email.trim();
+  const otherTelecom = Array.isArray(existing?.telecom)
+    ? (existing.telecom as ContactPoint[]).filter((tc) => tc.system !== 'email')
+    : [];
+  const telecom = email ? [...otherTelecom, { system: 'email', value: email }] : otherTelecom;
+  if (telecom.length > 0) org.telecom = telecom;
+  else delete org.telecom;
+
+  return org;
+}
+
+/**
+ * Build a FHIRPath Patch (`Parameters`) that sets or clears a Location's `managingOrganization`
+ * (R4 `0..1`) — the link between an Organization (the "who") and a Location (the "where"). Pass `orgRef`
+ * (`Organization/{id}` or a transaction `urn:uuid:`) to link, or `null` to unlink. Used as the `resource`
+ * of a `PATCH Location/{id}` transaction-Bundle entry, so no read-modify-write of the full resource.
+ *
+ * Link is `delete` then `add`: the spec says `add` is only valid when the element is absent and `replace`
+ * only when present, so a single op is unsafe against a strict server when prior state is unknown (a
+ * TOCTOU race could see either). `delete` (a no-op when absent) followed by `add` onto the now-empty
+ * element is conformant regardless of prior state. Unlink is a lone `delete`.
+ */
+export function locationManagingOrgPatch(orgRef: string | null): Record<string, unknown> {
+  const del = {
+    name: 'operation',
+    part: [
+      { name: 'type', valueCode: 'delete' },
+      { name: 'path', valueString: 'Location.managingOrganization' },
+    ],
+  };
+  if (orgRef === null) return { resourceType: 'Parameters', parameter: [del] };
+  const add = {
+    name: 'operation',
+    part: [
+      { name: 'type', valueCode: 'add' },
+      { name: 'path', valueString: 'Location' },
+      { name: 'name', valueString: 'managingOrganization' },
+      { name: 'value', valueReference: { reference: orgRef } },
+    ],
+  };
+  return { resourceType: 'Parameters', parameter: [del, add] };
 }
 
 type LocationStatus = 'active' | 'suspended' | 'inactive';

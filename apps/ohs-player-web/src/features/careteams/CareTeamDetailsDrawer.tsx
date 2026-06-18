@@ -120,9 +120,11 @@ export function CareTeamDetailsDrawer({
           {t('deleteCareTeam')}
         </Button>
       </PermissionGuard>
-      <Button type="button" onClick={onEdit} style={{ marginLeft: 'auto' }}>
-        {t('editDetails')}
-      </Button>
+      <PermissionGuard permission="careteams.manage">
+        <Button type="button" onClick={onEdit} style={{ marginLeft: 'auto' }}>
+          {t('editDetails')}
+        </Button>
+      </PermissionGuard>
     </div>
   );
 

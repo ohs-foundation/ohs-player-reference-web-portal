@@ -334,7 +334,7 @@ export function CareTeamsPage() {
           emptyState={
             <EmptyState
               title={t('emptyTitle')}
-              description={isFiltering ? t('filterEmpty') : t('emptyDescription')}
+              description={isFiltering ? t('filterEmptyGeneric') : t('emptyDescription')}
             />
           }
         />

@@ -7,6 +7,8 @@ import {
   buildNewUserPayload,
   buildUserEditBundle,
   type NewUserFields,
+  locationManagingOrgPatch,
+  organizationFromForm,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
 } from './resourceFromAnswers';
@@ -263,6 +265,87 @@ describe('buildDeactivateBundle', () => {
     // only the Practitioner PUT remains
     expect(bundle.entry).toHaveLength(1);
     expect(bundle.entry[0].request.url).toBe('Practitioner/p1');
+  });
+});
+
+describe('organizationFromForm', () => {
+  const base = { name: 'Ministry of Health', typeCode: '', email: '', active: true };
+
+  it('maps name + active, omits blank type/email, and never sets identifier (server-assigned)', () => {
+    const org = organizationFromForm(base);
+    expect(org).toEqual({ resourceType: 'Organization', name: 'Ministry of Health', active: true });
+    expect(org).not.toHaveProperty('type');
+    expect(org).not.toHaveProperty('identifier');
+    expect(org).not.toHaveProperty('telecom');
+  });
+
+  it('maps type→coding, email→telecom, and the inactive flag', () => {
+    const org = organizationFromForm({
+      ...base,
+      typeCode: 'govt',
+      email: 'info@moh.go.ke',
+      active: false,
+    }) as {
+      active?: boolean;
+      type?: { coding?: { system?: string; code?: string }[] }[];
+      telecom?: { system?: string; value?: string }[];
+    };
+    expect(org.active).toBe(false);
+    expect(org.type?.[0].coding?.[0]).toEqual({
+      system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+      code: 'govt',
+    });
+    expect(org.telecom?.[0]).toEqual({ system: 'email', value: 'info@moh.go.ke' });
+  });
+
+  it('on edit, preserves unmanaged fields incl. server identifier, drops the cleared email', () => {
+    const existing = {
+      id: 'o1',
+      partOf: { reference: 'Organization/parent' },
+      identifier: [{ system: 'http://other', value: 'keep' }],
+      telecom: [
+        { system: 'phone', value: '0700' },
+        { system: 'email', value: 'old@x.com' },
+      ],
+    };
+    const org = organizationFromForm(base, existing) as {
+      id?: string;
+      partOf?: { reference?: string };
+      identifier?: { system?: string; value?: string }[];
+      telecom?: { system?: string; value?: string }[];
+    };
+    expect(org.id).toBe('o1');
+    expect(org.partOf?.reference).toBe('Organization/parent');
+    // identifier is not form-managed — it passes through untouched
+    expect(org.identifier).toEqual([{ system: 'http://other', value: 'keep' }]);
+    // email was blank in base → cleared; the non-email telecom survives
+    expect(org.telecom).toEqual([{ system: 'phone', value: '0700' }]);
+  });
+});
+
+describe('locationManagingOrgPatch', () => {
+  type Op = { name: string; valueCode?: string; valueString?: string; valueReference?: { reference?: string } };
+  const operations = (patch: Record<string, unknown>): Op[][] =>
+    (patch.parameter as { part?: Op[] }[]).map((op) => op.part ?? []);
+  const typeOf = (parts: Op[]): string | undefined => parts.find((p) => p.name === 'type')?.valueCode;
+
+  it('links via `delete` then `add` so it is conformant whether the element is absent or present', () => {
+    const patch = locationManagingOrgPatch('Organization/o1');
+    expect(patch.resourceType).toBe('Parameters');
+    const ops = operations(patch);
+    expect(ops.map(typeOf)).toEqual(['delete', 'add']);
+    // the `add` op carries path/name/value for managingOrganization
+    const add = ops[1];
+    expect(add.find((p) => p.name === 'path')?.valueString).toBe('Location');
+    expect(add.find((p) => p.name === 'name')?.valueString).toBe('managingOrganization');
+    expect(add.find((p) => p.name === 'value')?.valueReference?.reference).toBe('Organization/o1');
+  });
+
+  it('unlinks with a lone `delete` op (orgRef null)', () => {
+    const ops = operations(locationManagingOrgPatch(null));
+    expect(ops.map(typeOf)).toEqual(['delete']);
+    expect(ops[0].find((p) => p.name === 'path')?.valueString).toBe('Location.managingOrganization');
+    expect(ops[0].some((p) => p.name === 'value')).toBe(false);
   });
 });
 

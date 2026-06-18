@@ -60,6 +60,7 @@ export const appMessageOverrides = {
   yes: 'Yes',
   no: 'No',
   filterEmpty: 'No practitioners match the current filters.',
+  filterEmptyGeneric: 'No results match the current filters.',
 
   pageUserCreate: 'Create user',
   pageUserEdit: 'Edit user',
@@ -119,8 +120,22 @@ export const appMessageOverrides = {
   circularReferenceBlocked: 'That parent would create a circular reference',
 
   pageOrganizations: 'Organisations',
-  pageOrganizationsDescription: 'Organisations available in your environment.',
-  organizationName: 'Name',
+  pageOrganizationsDescription: 'Organisations available in your environment',
+  organizationName: 'Organisation name',
+  organizationNameRequired: 'Organisation name is required.',
+  organizationType: 'Organisation type',
+  organizationsEmptyDescription: 'Get started by adding your first organisation to this workspace.',
+  addOrganization: 'Add Organisation',
+  addOrganizationSubtitle: 'Create a new organisation',
+  editOrganization: 'Edit Organisation',
+  editOrganizationSubtitle: 'Update organisation details',
+  organizationCreated: 'Organisation created',
+  organizationUpdated: 'Organisation updated',
+  organizationDeactivated: 'Organisation deactivated',
+  deactivateOrganization: 'Deactivate Organisation',
+  confirmDeactivateOrgTitle: 'Deactivate organisation',
+  confirmDeactivateOrgBody: 'This will set the organisation to inactive (it can be reactivated later). Continue?',
+  sectionManagedLocations: 'Managed Locations',
 
   pageCareTeams: 'Care Teams',
   pageCareTeamsDescription: 'Manage care teams available in your environment',
@@ -154,8 +169,6 @@ export const appMessageOverrides = {
 
   pageLocationEditForbiddenTitle: 'Edit location',
   pageLocationEditForbiddenDescription: 'You need the location editor role to open this page. You can still view the location list.',
-  createOrganization: 'New organisation',
-  dialogCreateOrganization: 'Create organisation',
   dialogCreateLocation: 'New location',
   saveAndClose: 'Save',
 
