@@ -12,6 +12,7 @@ import {
 } from 'ohs-player-web-core';
 import { Avatar, Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
+import { toErrorMessage } from '../sdc/toErrorMessage';
 
 export type CareTeamRow = CareTeam;
 
@@ -80,7 +81,7 @@ export function CareTeamDetailsDrawer({
         onChanged();
         onClose();
       } catch (err) {
-        status.notify({ tone: 'error', title: err instanceof Error ? err.message : t('saveFailed') });
+        status.notify({ tone: 'error', title: toErrorMessage(err) });
       } finally {
         setSaving(false);
       }

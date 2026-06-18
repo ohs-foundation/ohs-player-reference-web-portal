@@ -1,8 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { RiBuildingLine, RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
 import {
-  FhirError,
-  formatOperationOutcomeMessage,
   useCreateResource,
   useFhirClient,
   useTranslation,
@@ -11,15 +9,10 @@ import {
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { careTeamFromForm } from '../sdc/resourceFromAnswers';
+import { toErrorMessage } from '../sdc/toErrorMessage';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect, StackedTextArea } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
 import type { CareTeamRow } from './CareTeamDetailsDrawer';
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
 
 const FORM_ID = 'careteam-form';
 
