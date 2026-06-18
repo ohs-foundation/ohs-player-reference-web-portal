@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
+import type { Location } from '@medplum/fhirtypes';
 import {
   OhsDropdownMenu,
   PermissionGuard,
@@ -29,8 +30,6 @@ import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
 import { OrganizationDetailsDrawer, type ManagedLocation, type OrgRow } from './OrganizationDetailsDrawer';
 import { OrganizationFormDrawer } from './OrganizationFormDrawer';
 import type { Option } from '../users/userFormOptions';
-
-type LocRow = { id?: string; name?: string; managingOrganization?: { reference?: string } };
 
 const TYPE_LABEL_BY_CODE = new Map(ORGANIZATION_TYPE_OPTIONS.map((o) => [o.value, o.label]));
 
@@ -72,7 +71,7 @@ export function OrganizationsPage() {
       .map((e) => e.resource)
       .filter((r): r is T => Boolean(r));
 
-  const locList = useMemo(() => resourcesOf<LocRow>(locs.data), [locs.data]);
+  const locList = useMemo(() => resourcesOf<Location>(locs.data), [locs.data]);
 
   /** Locations grouped by the org they're managed by (`Location.managingOrganization`). */
   const locationsByOrgId = useMemo(() => {

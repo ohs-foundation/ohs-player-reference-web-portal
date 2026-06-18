@@ -25,13 +25,11 @@ import {
   Stack,
   StatusBadge,
 } from '../../components/ui';
+import type { Organization, Practitioner } from '@medplum/fhirtypes';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 import { CareTeamFormDrawer } from './CareTeamFormDrawer';
 
-type PractRow = { id?: string; active?: boolean; name?: { family?: string; given?: string[] }[] };
-type OrgRow = { id?: string; name?: string };
-
-function practName(p: PractRow): string {
+function practName(p: Practitioner): string {
   const n = p.name?.[0];
   return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim() || (p.id ?? '');
 }
@@ -63,7 +61,7 @@ export function CareTeamsPage() {
       .map((e) => e.resource)
       .filter((r): r is T => Boolean(r));
 
-  const practList = useMemo(() => resourcesOf<PractRow>(pract.data), [pract.data]);
+  const practList = useMemo(() => resourcesOf<Practitioner>(pract.data), [pract.data]);
   const practNameById = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of practList) if (p.id) m.set(p.id, practName(p));
@@ -77,7 +75,7 @@ export function CareTeamsPage() {
     [practList],
   );
 
-  const orgList = useMemo(() => resourcesOf<OrgRow>(orgs.data), [orgs.data]);
+  const orgList = useMemo(() => resourcesOf<Organization>(orgs.data), [orgs.data]);
   const orgNameById = useMemo(() => {
     const m = new Map<string, string>();
     for (const o of orgList) if (o.id) m.set(o.id, o.name ?? o.id);

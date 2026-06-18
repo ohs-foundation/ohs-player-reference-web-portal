@@ -9,28 +9,20 @@ import {
   useTranslation,
 } from 'ohs-player-web-core';
 import { Avatar, Button, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, IconButton, Inline, LinearProgress, Page, PageHeader, SearchField, Stack, StatusBadge } from '../../components/ui';
+import type { Bundle, Practitioner } from '@medplum/fhirtypes';
 import { UserCreateDrawer } from './UserCreateDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
 import { StackedSelect } from './userFormControls';
 
-type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
-
-type PractitionerRow = {
-  id?: string;
-  active?: boolean;
-  name?: { family?: string; given?: string[] }[];
-  telecom?: { system?: string; value?: string }[];
-};
-
-function fullName(p: PractitionerRow): string {
+function fullName(p: Practitioner): string {
   const n = p.name?.[0];
   return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim();
 }
-function emailOf(p: PractitionerRow): string {
+function emailOf(p: Practitioner): string {
   return p.telecom?.find((tc) => tc.system === 'email')?.value ?? '';
 }
-function identifierOf(p: PractitionerRow): string {
+function identifierOf(p: Practitioner): string {
   return p.id ?? '—';
 }
 
@@ -115,10 +107,9 @@ export function UsersPage() {
   const roleSearch = useSearch('PractitionerRole', { _count: '500' });
   const orgSearch = useSearch('Organization', { _count: '500' });
 
-  const bundle = search.data as Bundle | undefined;
+  const bundle = search.data as Bundle<Practitioner> | undefined;
   const rawRows = useMemo(
-    () =>
-      (bundle?.entry?.map((e) => e.resource).filter(Boolean) ?? []) as PractitionerRow[],
+    () => (bundle?.entry?.map((e) => e.resource).filter((r): r is Practitioner => Boolean(r)) ?? []),
     [bundle?.entry],
   );
 
@@ -239,7 +230,7 @@ export function UsersPage() {
           />
         </div>
       ) : (
-      <DataTable<PractitionerRow>
+      <DataTable<Practitioner>
         toolbar={
           <Stack gap={3}>
             <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>

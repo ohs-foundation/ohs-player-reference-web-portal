@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
+import type { Bundle, BundleEntry } from '@medplum/fhirtypes';
 import {
   useFhirClient,
   useRefreshResources,
@@ -65,14 +66,14 @@ export function OrganizationFormDrawer({
 
   const locId = (ref: string): string => ref.replace(/^Location\//, '');
 
-  type Entry = { fullUrl?: string; resource: Record<string, unknown>; request: { method: string; url: string } };
-
   // PATCH entries that set/clear each to-link/to-unlink Location's managingOrganization — no read of the
   // full resource, so no clobber window. `orgRef` is `urn:uuid:` (create) or `Organization/{id}` (edit).
-  const locationEntries = (orgRef: string): { entries: Entry[]; linked: string[]; unlinked: string[] } => {
+  const locationEntries = (
+    orgRef: string,
+  ): { entries: BundleEntry[]; linked: string[]; unlinked: string[] } => {
     const linked = locationIds.filter((ref) => !originalLocationRefs.includes(ref));
     const unlinked = originalLocationRefs.filter((ref) => !locationIds.includes(ref));
-    const entries = [...linked, ...unlinked].map((ref) => ({
+    const entries: BundleEntry[] = [...linked, ...unlinked].map((ref) => ({
       resource: locationManagingOrgPatch(linked.includes(ref) ? orgRef : null),
       request: { method: 'PATCH', url: `Location/${locId(ref)}` },
     }));
@@ -85,14 +86,14 @@ export function OrganizationFormDrawer({
     fields: OrgFormFields,
   ): Promise<{ id: string; linked: string[]; unlinked: string[] }> => {
     const orgRef = editing && org?.id ? `Organization/${org.id}` : ORG_FULL_URL;
-    const orgEntry: Entry =
+    const orgEntry: BundleEntry =
       editing && org?.id
         ? { resource: organizationFromForm(fields, org), request: { method: 'PUT', url: `Organization/${org.id}` } }
         : { fullUrl: orgRef, resource: organizationFromForm(fields), request: { method: 'POST', url: 'Organization' } };
 
     const { entries, linked, unlinked } = locationEntries(orgRef);
-    const bundle = { resourceType: 'Bundle', type: 'transaction', entry: [orgEntry, ...entries] };
-    const result = (await client.transaction(bundle)) as { entry?: { response?: { location?: string } }[] };
+    const bundle: Bundle = { resourceType: 'Bundle', type: 'transaction', entry: [orgEntry, ...entries] };
+    const result = (await client.transaction(bundle)) as Bundle;
 
     if (editing && org?.id) return { id: org.id, linked, unlinked };
     const location = result.entry?.[0]?.response?.location ?? '';

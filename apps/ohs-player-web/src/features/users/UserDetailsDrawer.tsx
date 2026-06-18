@@ -19,12 +19,9 @@ import {
   useTranslation,
   writeAuditEvent,
 } from 'ohs-player-web-core';
+import type { Bundle } from '@medplum/fhirtypes';
 import { Avatar, Button, Drawer, IconButton, Spinner, StatusBadge } from '../../components/ui';
 import { buildDeactivateBundle, NATIONAL_ID_IDENTIFIER_SYSTEM } from '../sdc/resourceFromAnswers';
-
-interface SearchBundle {
-  entry?: { resource?: Record<string, unknown> }[];
-}
 
 function refName(reference: string | undefined, byId: Map<string, string>): string | undefined {
   if (!reference) return undefined;
@@ -32,7 +29,7 @@ function refName(reference: string | undefined, byId: Map<string, string>): stri
   return byId.get(id);
 }
 
-function nameMap(bundle: SearchBundle | undefined): Map<string, string> {
+function nameMap(bundle: Bundle | undefined): Map<string, string> {
   const map = new Map<string, string>();
   for (const ent of bundle?.entry ?? []) {
     const r = ent.resource as { id?: string; name?: string } | undefined;
@@ -87,19 +84,19 @@ export function UserDetailsDrawer({
   const locSearch = useSearch('Location', { _count: '500' });
 
   const pract = read.data as Record<string, unknown> | undefined;
-  const orgNames = useMemo(() => nameMap(orgSearch.data as SearchBundle | undefined), [orgSearch.data]);
-  const locNames = useMemo(() => nameMap(locSearch.data as SearchBundle | undefined), [locSearch.data]);
+  const orgNames = useMemo(() => nameMap(orgSearch.data as Bundle | undefined), [orgSearch.data]);
+  const locNames = useMemo(() => nameMap(locSearch.data as Bundle | undefined), [locSearch.data]);
 
   const details = useMemo(() => {
     const name = (pract?.name as { family?: string; given?: string[] }[] | undefined)?.[0];
     const given = name?.given?.join(' ') ?? '';
     const family = name?.family ?? '';
     const telecom = (pract?.telecom as { system?: string; value?: string }[] | undefined) ?? [];
-    const role = (roleSearch.data as SearchBundle | undefined)?.entry?.[0]?.resource as
+    const role = (roleSearch.data as Bundle | undefined)?.entry?.[0]?.resource as
       | { code?: { coding?: { display?: string; code?: string }[] }[]; organization?: { reference?: string }; location?: { reference?: string }[] }
       | undefined;
     const roleCode = role?.code?.[0]?.coding?.[0];
-    const careTeams = ((careTeamSearch.data as SearchBundle | undefined)?.entry ?? [])
+    const careTeams = ((careTeamSearch.data as Bundle | undefined)?.entry ?? [])
       .map((e) => e.resource as { id?: string; name?: string; participant?: unknown[] } | undefined)
       .filter((r): r is { id?: string; name?: string; participant?: unknown[] } => Boolean(r?.id));
     return {
@@ -148,11 +145,11 @@ export function UserDetailsDrawer({
 
   const onConfirmDeactivate = (): void => {
     if (!pract) return;
-    const roles = ((roleSearch.data as SearchBundle | undefined)?.entry ?? [])
-      .map((e) => e.resource)
+    const roles = ((roleSearch.data as Bundle | undefined)?.entry ?? [])
+      .map((e) => e.resource as Record<string, unknown> | undefined)
       .filter((r): r is Record<string, unknown> => Boolean(r));
-    const careTeams = ((careTeamSearch.data as SearchBundle | undefined)?.entry ?? [])
-      .map((e) => e.resource)
+    const careTeams = ((careTeamSearch.data as Bundle | undefined)?.entry ?? [])
+      .map((e) => e.resource as Record<string, unknown> | undefined)
       .filter((r): r is Record<string, unknown> => Boolean(r));
     void (async () => {
       setDeactivating(true);

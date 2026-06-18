@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
+import type { CareTeam } from '@medplum/fhirtypes';
 import {
   OhsDialog,
   PermissionGuard,
@@ -12,17 +13,7 @@ import {
 import { Avatar, Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 
-export type CareTeamRow = {
-  id?: string;
-  name?: string;
-  status?: string;
-  note?: { text?: string }[];
-  managingOrganization?: { reference?: string }[];
-  participant?: {
-    member?: { reference?: string };
-    role?: { coding?: { code?: string; display?: string }[] }[];
-  }[];
-};
+export type CareTeamRow = CareTeam;
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
   return (

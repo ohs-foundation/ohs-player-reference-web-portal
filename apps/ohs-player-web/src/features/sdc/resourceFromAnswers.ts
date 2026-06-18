@@ -2,6 +2,15 @@
  * Link IDs and extraction functions for questionnaire-driven FHIR resource creation.
  * Link IDs must match bundled Questionnaire JSON in `src/questionnaires/`.
  */
+import type {
+  CareTeam,
+  ContactPoint,
+  HumanName,
+  Identifier,
+  Organization,
+  Parameters,
+  ParametersParameter,
+} from '@medplum/fhirtypes';
 
 // ---------------------------------------------------------------------------
 // Care Team
@@ -60,9 +69,9 @@ export interface CareTeamFormFields {
  */
 export function careTeamFromForm(
   fields: CareTeamFormFields,
-  existing?: Record<string, unknown>,
-): Record<string, unknown> {
-  const careTeam: Record<string, unknown> = {
+  existing?: CareTeam,
+): CareTeam {
+  const careTeam: CareTeam = {
     ...(existing ?? {}),
     resourceType: 'CareTeam',
     status: fields.status,
@@ -323,15 +332,11 @@ export function buildDeactivateBundle(
   return { bundle: { resourceType: 'Bundle', type: 'transaction', entry }, endedRoleCount, removedCareTeamCount };
 }
 
-type PractitionerName = { family?: string; given?: string[] };
-type ContactPoint = { system?: string; value?: string };
-type Identifier = { system?: string; value?: string };
-
 /** Pre-populate edit-form answers from an existing Practitioner. */
 export function userAnswersFromPractitioner(
   pract: Record<string, unknown>,
 ): Record<string, string> {
-  const name = (pract.name as PractitionerName[] | undefined)?.[0];
+  const name = (pract.name as HumanName[] | undefined)?.[0];
   const telecom = pract.telecom as ContactPoint[] | undefined;
   const email = telecom?.find((tc) => tc.system === 'email')?.value ?? '';
   const identifiers = pract.identifier as Identifier[] | undefined;
@@ -423,26 +428,26 @@ export interface OrgFormFields {
  */
 export function organizationFromForm(
   fields: OrgFormFields,
-  existing?: Record<string, unknown>,
-): Record<string, unknown> {
-  const org: Record<string, unknown> = {
+  existing?: Organization,
+): Organization {
+  const org: Organization = {
     ...(existing ?? {}),
     resourceType: 'Organization',
     name: fields.name.trim(),
     active: fields.active,
   };
   // `managedLocations` is a UI-only field the page attaches to the row; never send it to the server.
-  delete org.managedLocations;
+  delete (org as { managedLocations?: unknown }).managedLocations;
 
   const typeCode = fields.typeCode.trim();
   if (typeCode) org.type = [{ coding: [{ system: ORGANIZATION_TYPE_SYSTEM, code: typeCode }] }];
   else delete org.type;
 
   const email = fields.email.trim();
-  const otherTelecom = Array.isArray(existing?.telecom)
-    ? (existing.telecom as ContactPoint[]).filter((tc) => tc.system !== 'email')
-    : [];
-  const telecom = email ? [...otherTelecom, { system: 'email', value: email }] : otherTelecom;
+  const otherTelecom = (existing?.telecom ?? []).filter((tc) => tc.system !== 'email');
+  const telecom: ContactPoint[] = email
+    ? [...otherTelecom, { system: 'email', value: email }]
+    : otherTelecom;
   if (telecom.length > 0) org.telecom = telecom;
   else delete org.telecom;
 
@@ -460,8 +465,8 @@ export function organizationFromForm(
  * TOCTOU race could see either). `delete` (a no-op when absent) followed by `add` onto the now-empty
  * element is conformant regardless of prior state. Unlink is a lone `delete`.
  */
-export function locationManagingOrgPatch(orgRef: string | null): Record<string, unknown> {
-  const del = {
+export function locationManagingOrgPatch(orgRef: string | null): Parameters {
+  const del: ParametersParameter = {
     name: 'operation',
     part: [
       { name: 'type', valueCode: 'delete' },
@@ -469,7 +474,7 @@ export function locationManagingOrgPatch(orgRef: string | null): Record<string, 
     ],
   };
   if (orgRef === null) return { resourceType: 'Parameters', parameter: [del] };
-  const add = {
+  const add: ParametersParameter = {
     name: 'operation',
     part: [
       { name: 'type', valueCode: 'add' },

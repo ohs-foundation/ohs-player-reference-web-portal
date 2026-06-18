@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
+import type { Organization } from '@medplum/fhirtypes';
 import {
   OhsDialog,
   PermissionGuard,
@@ -16,13 +17,8 @@ import { toErrorMessage } from '../sdc/toErrorMessage';
 /** A managed Location (id + display name), resolved by the page from `Location.managingOrganization`. */
 export type ManagedLocation = { id: string; name: string };
 
-export type OrgRow = {
-  id?: string;
-  name?: string;
-  active?: boolean;
-  type?: { coding?: { code?: string; display?: string }[] }[];
-  identifier?: { system?: string; value?: string }[];
-  telecom?: { system?: string; value?: string }[];
+/** A FHIR Organization plus the UI-only `managedLocations` the page attaches to each row. */
+export type OrgRow = Organization & {
   /** Locations this org manages (`Location.managingOrganization` → this org), attached by the page. */
   managedLocations?: ManagedLocation[];
 };
