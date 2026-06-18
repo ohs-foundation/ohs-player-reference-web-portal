@@ -31,6 +31,15 @@
   --ohs-color-positive: #009933; /* Content/Positive */
   --ohs-color-positive-surface: #e6f6ec; /* Active pill tint */
   --ohs-color-neutral-surface: #f0f0f0; /* Inactive pill tint */
+  /* Dashboard KPI accent tiles — decorative, one per stat card (tint bg + icon fg) */
+  --ohs-accent-1-surface: #ede9fe; /* violet */
+  --ohs-accent-1: #6d3bf5;
+  --ohs-accent-2-surface: #ffedd5; /* orange */
+  --ohs-accent-2: #c2520a;
+  --ohs-accent-3-surface: #dbeafe; /* blue */
+  --ohs-accent-3: #1f67fc;
+  --ohs-accent-4-surface: #fef3c7; /* amber */
+  --ohs-accent-4: #a15c07;
   /* Type scale (size / line-height); weights below. Applied per component. */
   --ohs-font-heading-xl-size: 40px;
   --ohs-font-heading-xl-line: 48px;
@@ -1486,6 +1495,149 @@
   animation: ohs-fade-in 140ms ease-out;
 }
 
+/* ---------- Dashboard ---------- */
+
+.ohs-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--ohs-spacing-3, 12px);
+}
+@media (max-width: 900px) {
+  .ohs-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 540px) {
+  .ohs-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ohs-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-spacing-5, 24px);
+}
+.ohs-kpi__tile {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ohs-radius-default, 8px);
+}
+.ohs-kpi__label {
+  font-size: var(--ohs-font-text-m-size, 14px);
+  line-height: var(--ohs-font-text-m-line, 20px);
+  color: var(--ohs-color-text-muted, #696969);
+  margin: 0 0 var(--ohs-spacing-2, 8px);
+}
+.ohs-kpi__value {
+  font-size: var(--ohs-text-display, 32px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: var(--ohs-color-text, #0d0d0d);
+  margin: 0;
+  min-height: 1.1em;
+  display: flex;
+  align-items: center;
+}
+
+/* Two-up rows: table card beside its distribution card; stacks on narrow screens. */
+.ohs-dash-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--ohs-spacing-4, 16px);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .ohs-dash-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ohs-dash-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--ohs-spacing-3, 12px);
+  margin-bottom: var(--ohs-spacing-4, 16px);
+}
+.ohs-dash-card__viewall {
+  flex-shrink: 0;
+  color: var(--ohs-color-primary, #1f67fc);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ohs-dash-card__viewall:hover {
+  text-decoration: underline;
+}
+
+/* Name cell: avatar beside a brand-blue name over a muted email. */
+.ohs-dash-person {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-spacing-2, 8px);
+  min-width: 0;
+}
+.ohs-dash-person__name {
+  color: var(--ohs-color-primary, #1f67fc);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  text-decoration: none;
+}
+.ohs-dash-person__name:hover {
+  text-decoration: underline;
+}
+.ohs-dash-person__sub {
+  display: block;
+  color: var(--ohs-color-text-muted, #696969);
+  font-size: var(--ohs-font-text-s-size, 12px);
+  line-height: var(--ohs-font-text-s-line, 16px);
+}
+
+/* Donut card */
+.ohs-donut {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--ohs-spacing-4, 16px) auto;
+}
+.ohs-donut__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.ohs-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-spacing-2, 8px);
+}
+.ohs-donut-legend__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-spacing-2, 8px);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.ohs-donut-legend__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.ohs-donut-legend__pct {
+  margin-left: auto;
+  color: var(--ohs-color-text-muted, #696969);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Dark theme ---------- */
 /* The managed colour tokens (primary/surface/background/text/border/error/success/…) flip via
    applyTheme(darkTheme). These are the tokens defined statically above (not part of the
@@ -1506,4 +1658,13 @@
   --ohs-color-positive: #00e04b; /* Content/Positive (Green/400) */
   --ohs-color-positive-surface: rgba(0, 224, 75, 0.16);
   --ohs-color-neutral-surface: rgba(255, 255, 255, 0.08);
+  /* Dashboard KPI accent tiles — translucent tint over dark surface, brighter icon fg */
+  --ohs-accent-1-surface: rgba(139, 92, 246, 0.18);
+  --ohs-accent-1: #b794ff;
+  --ohs-accent-2-surface: rgba(249, 115, 22, 0.18);
+  --ohs-accent-2: #fdba74;
+  --ohs-accent-3-surface: rgba(59, 130, 246, 0.18);
+  --ohs-accent-3: #93b4fd;
+  --ohs-accent-4-surface: rgba(245, 158, 11, 0.18);
+  --ohs-accent-4: #fcd34d;
 }

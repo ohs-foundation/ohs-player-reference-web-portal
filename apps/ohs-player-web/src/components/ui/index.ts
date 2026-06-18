@@ -22,6 +22,9 @@ export type { InlineProps, PageHeaderProps, PageProps, StackProps } from './Layo
 export { DataTable } from './DataTable';
 export type { DataTableColumn, DataTableProps } from './DataTable';
 
+export { DonutChart } from './DonutChart';
+export type { DonutChartProps, DonutSegment } from './DonutChart';
+
 export { EmptyState, ErrorState, LinearProgress, Spinner, StatusBadge } from './States';
 export type { EmptyStateProps, ErrorStateProps, LinearProgressProps, StatusBadgeProps, StatusTone } from './States';
 
