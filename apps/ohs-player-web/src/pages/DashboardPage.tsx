@@ -1,6 +1,9 @@
-import { RiBuilding2Line, RiGroupLine, RiMapPin2Line, RiTeamLine } from '@remixicon/react';
 import { PermissionGuard, useTranslation } from 'ohs-player-web-core';
 import { Link } from 'react-router-dom';
+import totalUsersIcon from '../assets/illustrations/total-users.svg';
+import totalLocationsIcon from '../assets/illustrations/total-locations.svg';
+import totalOrganisationsIcon from '../assets/illustrations/total-organisations.svg';
+import totalCareTeamsIcon from '../assets/illustrations/total-careteams.svg';
 import {
   Avatar,
   LinearProgress,
@@ -136,10 +139,10 @@ export function DashboardPage(): React.ReactElement {
       <PermissionGuard permission="dashboard.view">
         <Stack gap={5}>
           <section aria-label={t('pageDashboard')} className="ohs-kpi-grid">
-            <StatCard label={t('kpiTotalUsers')} value={users.total} loading={users.loading} accent={1} icon={<RiGroupLine size={24} />} />
-            <StatCard label={t('kpiTotalLocations')} value={locations.total} loading={locations.loading} accent={2} icon={<RiMapPin2Line size={24} />} />
-            <StatCard label={t('kpiTotalOrganizations')} value={orgs.total} loading={orgs.loading} accent={3} icon={<RiBuilding2Line size={24} />} />
-            <StatCard label={t('kpiTotalCareTeams')} value={careTeams.total} loading={careTeams.loading} accent={4} icon={<RiTeamLine size={24} />} />
+            <StatCard label={t('kpiTotalUsers')} value={users.total} loading={users.loading} iconSrc={totalUsersIcon} />
+            <StatCard label={t('kpiTotalLocations')} value={locations.total} loading={locations.loading} iconSrc={totalLocationsIcon} />
+            <StatCard label={t('kpiTotalOrganizations')} value={orgs.total} loading={orgs.loading} iconSrc={totalOrganisationsIcon} />
+            <StatCard label={t('kpiTotalCareTeams')} value={careTeams.total} loading={careTeams.loading} iconSrc={totalCareTeamsIcon} />
           </section>
 
           <div className="ohs-dash-row">

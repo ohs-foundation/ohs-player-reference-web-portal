@@ -31,15 +31,6 @@
   --ohs-color-positive: #009933; /* Content/Positive */
   --ohs-color-positive-surface: #e6f6ec; /* Active pill tint */
   --ohs-color-neutral-surface: #f0f0f0; /* Inactive pill tint */
-  /* Dashboard KPI accent tiles — decorative, one per stat card (tint bg + icon fg) */
-  --ohs-accent-1-surface: #ede9fe; /* violet */
-  --ohs-accent-1: #6d3bf5;
-  --ohs-accent-2-surface: #ffedd5; /* orange */
-  --ohs-accent-2: #c2520a;
-  --ohs-accent-3-surface: #dbeafe; /* blue */
-  --ohs-accent-3: #1f67fc;
-  --ohs-accent-4-surface: #fef3c7; /* amber */
-  --ohs-accent-4: #a15c07;
   /* Type scale (size / line-height); weights below. Applied per component. */
   --ohs-font-heading-xl-size: 40px;
   --ohs-font-heading-xl-line: 48px;
@@ -1519,12 +1510,10 @@
   gap: var(--ohs-spacing-5, 24px);
 }
 .ohs-kpi__tile {
-  width: 48px;
-  height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--ohs-radius-default, 8px);
+  width: 40px;
+  height: 40px;
+  display: block;
+  flex-shrink: 0;
 }
 .ohs-kpi__label {
   font-size: var(--ohs-font-text-m-size, 14px);
@@ -1544,16 +1533,24 @@
   align-items: center;
 }
 
-/* Two-up rows: table card beside its distribution card; stacks on narrow screens. */
+/* Two-up rows: table card beside its distribution card; stacks on narrow screens.
+   `stretch` makes both cards the height of the taller one so their bottoms align. */
 .ohs-dash-row {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: var(--ohs-spacing-4, 16px);
-  align-items: start;
+  align-items: stretch;
+}
+.ohs-dash-row > .ohs-card {
+  height: 100%;
 }
 @media (max-width: 900px) {
   .ohs-dash-row {
     grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .ohs-dash-row > .ohs-card {
+    height: auto;
   }
 }
 
@@ -1598,7 +1595,25 @@
   line-height: var(--ohs-font-text-s-line, 16px);
 }
 
-/* Donut card */
+/* Donut card: title pinned at top, donut + legend centred in the remaining height so the
+   card bottom aligns with the taller table card beside it. */
+.ohs-dist-card {
+  display: flex;
+  flex-direction: column;
+}
+.ohs-dist-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ohs-spacing-2, 8px);
+}
+.ohs-dist-card__body > .ohs-donut-legend {
+  width: 100%;
+}
+
+/* Donut chart */
 .ohs-donut {
   position: relative;
   display: inline-flex;
@@ -1658,13 +1673,4 @@
   --ohs-color-positive: #00e04b; /* Content/Positive (Green/400) */
   --ohs-color-positive-surface: rgba(0, 224, 75, 0.16);
   --ohs-color-neutral-surface: rgba(255, 255, 255, 0.08);
-  /* Dashboard KPI accent tiles — translucent tint over dark surface, brighter icon fg */
-  --ohs-accent-1-surface: rgba(139, 92, 246, 0.18);
-  --ohs-accent-1: #b794ff;
-  --ohs-accent-2-surface: rgba(249, 115, 22, 0.18);
-  --ohs-accent-2: #fdba74;
-  --ohs-accent-3-surface: rgba(59, 130, 246, 0.18);
-  --ohs-accent-3: #93b4fd;
-  --ohs-accent-4-surface: rgba(245, 158, 11, 0.18);
-  --ohs-accent-4: #fcd34d;
 }

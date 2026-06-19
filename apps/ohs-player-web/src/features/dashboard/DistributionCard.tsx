@@ -16,31 +16,34 @@ export function DistributionCard({ title, segments, loading }: Readonly<Distribu
   const { t } = useTranslation();
   const total = segments.reduce((sum, s) => sum + s.value, 0);
 
+  let body: React.ReactNode;
+  if (loading) {
+    body = <Spinner />;
+  } else if (total === 0) {
+    body = <EmptyState description={t('distributionEmpty')} />;
+  } else {
+    body = (
+      <>
+        <DonutChart segments={segments} ariaLabel={title} />
+        <div className="ohs-donut-legend">
+          {segments.map((s) => (
+            <div key={s.label} className="ohs-donut-legend__row">
+              <span className="ohs-donut-legend__swatch" style={{ background: s.color }} aria-hidden="true" />
+              <span>{s.label}</span>
+              <span className="ohs-donut-legend__pct">{pct(s.value, total)}</span>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
   return (
-    <Card>
+    <Card className="ohs-dist-card">
       <h3 className="ohs-card-header__title" style={{ marginBottom: 'var(--ohs-spacing-3, 12px)' }}>
         {title}
       </h3>
-      {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--ohs-spacing-6, 32px)' }}>
-          <Spinner />
-        </div>
-      ) : total === 0 ? (
-        <EmptyState description={t('distributionEmpty')} />
-      ) : (
-        <>
-          <DonutChart segments={segments} ariaLabel={title} />
-          <div className="ohs-donut-legend">
-            {segments.map((s) => (
-              <div key={s.label} className="ohs-donut-legend__row">
-                <span className="ohs-donut-legend__swatch" style={{ background: s.color }} aria-hidden="true" />
-                <span>{s.label}</span>
-                <span className="ohs-donut-legend__pct">{pct(s.value, total)}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      <div className="ohs-dist-card__body">{body}</div>
     </Card>
   );
 }
