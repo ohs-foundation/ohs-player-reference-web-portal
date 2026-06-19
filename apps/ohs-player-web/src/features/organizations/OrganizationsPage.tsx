@@ -29,6 +29,7 @@ import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
 import { OrganizationDetailsDrawer, type ManagedLocation, type OrgRow } from './OrganizationDetailsDrawer';
 import { OrganizationFormDrawer } from './OrganizationFormDrawer';
 import type { Option } from '../users/userFormOptions';
+import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
 
 type LocRow = { id?: string; name?: string; managingOrganization?: { reference?: string } };
 
@@ -59,7 +60,7 @@ export function OrganizationsPage() {
   const orgs = useSearch('Organization', { _count: '200' });
   const locs = useSearch('Location', { _count: '500' });
 
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());

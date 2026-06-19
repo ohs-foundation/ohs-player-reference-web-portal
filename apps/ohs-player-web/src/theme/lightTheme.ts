@@ -12,8 +12,8 @@ export const lightTheme: ThemeConfig = {
     primaryHover: '#073C75',
     primaryContrast: '#FAFAFA', // Content/Primary Inverse
     primaryContainer: '#E6EEF6',
-    surface: '#FFFFFF', // Background/Primary
-    background: '#FFFFFF', // no separate gray page fill
+    surface: '#FFFFFF', // Background/Secondary — cards, drawers
+    background: '#F1F2F4', // Background/Primary — grey page fill behind white cards (perceptibly off-white)
     text: '#0D0D0D', // Content/Primary (Neutral/950)
     textMuted: '#696969', // Content/Tertiary (Neutral/600)
     border: '#EDEDED', // Border/Primary (Neutral/100)

@@ -13,6 +13,7 @@ import { UserCreateDrawer } from './UserCreateDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
 import { StackedSelect } from './userFormControls';
+import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 
@@ -91,7 +92,7 @@ function buildOrgNameMap(
 export function UsersPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [filtersOpen, setFiltersOpen] = useState(false);

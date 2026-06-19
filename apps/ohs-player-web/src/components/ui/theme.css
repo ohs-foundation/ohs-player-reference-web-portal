@@ -136,7 +136,9 @@
   width: 100%;
   /* 40/80 are not on the spacing scale; literal per the page-container spec (token scale alignment is #18). */
   padding: 40px 80px;
-  background: var(--ohs-color-surface, #fff);
+  /* Transparent so the grey content surface (--ohs-color-background on .app-shell__main) shows through
+     and white cards read as raised; the page wrapper itself adds no fill. */
+  background: transparent;
   box-sizing: border-box;
 }
 @media (max-width: 900px) {
@@ -550,6 +552,28 @@
   background: var(--ohs-color-surface, #fff);
   overflow: hidden;
   box-shadow: var(--ohs-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
+}
+/* Flush: embedded edge-to-edge in a Card. Drops its own box (border/radius/shadow/fill) and the wide
+   min-width; a single top border forms the divider under the card header. Left/right/bottom borders are
+   the card's. Internal row/column dividers come from the cells. */
+.ohs-table-wrapper[data-flush='true'] {
+  border: none;
+  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.ohs-table-wrapper[data-flush='true'] .ohs-table {
+  min-width: 0;
+}
+/* Drop the cells' outer edges so only interior grid lines remain (card supplies the perimeter). */
+.ohs-table-wrapper[data-flush='true'] .ohs-table td:last-child,
+.ohs-table-wrapper[data-flush='true'] .ohs-table th:last-child {
+  border-right: none;
+}
+.ohs-table-wrapper[data-flush='true'] .ohs-table tbody tr:last-child td {
+  border-bottom: none;
 }
 /* Horizontal scroll for the table only — toolbar and pagination stay full-width. */
 .ohs-table__scroll {
@@ -1554,12 +1578,17 @@
   }
 }
 
+/* Card is flush (no padding) so the table spans edge-to-edge and shares the card's L/R/bottom borders.
+   The header carries its own padding; the table runs full-width directly beneath it. */
 .ohs-dash-card__head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--ohs-spacing-3, 12px);
-  margin-bottom: var(--ohs-spacing-4, 16px);
+  padding: var(--ohs-spacing-5, 24px);
+}
+.ohs-dash-card__body {
+  padding: 0 var(--ohs-spacing-5, 24px) var(--ohs-spacing-5, 24px);
 }
 .ohs-dash-card__viewall {
   flex-shrink: 0;

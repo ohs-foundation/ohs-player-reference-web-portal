@@ -33,8 +33,37 @@ export function RecentCard<Row>({
 }: Readonly<RecentCardProps<Row>>): React.ReactElement {
   const { t } = useTranslation();
 
+  let body: React.ReactNode;
+  if (error) {
+    body = (
+      <div className="ohs-dash-card__body">
+        <ErrorState description={error} />
+      </div>
+    );
+  } else if (loading) {
+    body = (
+      <div className="ohs-dash-card__body" style={{ display: 'flex', justifyContent: 'center' }}>
+        <Spinner />
+      </div>
+    );
+  } else {
+    body = (
+      <DataTable
+        flush
+        columns={columns}
+        rows={rows}
+        rowKey={rowKey}
+        emptyState={
+          <div className="ohs-dash-card__body">
+            <EmptyState description={t('recentEmpty')} />
+          </div>
+        }
+      />
+    );
+  }
+
   return (
-    <Card>
+    <Card flush className="ohs-dash-card">
       <div className="ohs-dash-card__head">
         <div>
           <h3 className="ohs-card-header__title">{title}</h3>
@@ -44,20 +73,7 @@ export function RecentCard<Row>({
           {t('viewAll')}
         </Link>
       </div>
-      {error ? (
-        <ErrorState description={error} />
-      ) : loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--ohs-spacing-6, 32px)' }}>
-          <Spinner />
-        </div>
-      ) : (
-        <DataTable
-          columns={columns}
-          rows={rows}
-          rowKey={rowKey}
-          emptyState={<EmptyState description={t('recentEmpty')} />}
-        />
-      )}
+      {body}
     </Card>
   );
 }
