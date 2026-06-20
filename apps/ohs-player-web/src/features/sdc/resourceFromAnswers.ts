@@ -2,6 +2,15 @@
  * Link IDs and extraction functions for questionnaire-driven FHIR resource creation.
  * Link IDs must match bundled Questionnaire JSON in `src/questionnaires/`.
  */
+import type {
+  CareTeam,
+  ContactPoint,
+  HumanName,
+  Identifier,
+  Organization,
+  Parameters,
+  ParametersParameter,
+} from '@medplum/fhirtypes';
 
 // ---------------------------------------------------------------------------
 // Care Team
@@ -27,6 +36,62 @@ export function careTeamBodyFromAnswers(answers: Record<string, string>): {
     status: 'active',
     managingOrganization: [{ reference: orgRef }],
   };
+}
+
+/** Default CareTeam participant role coding. Members reference `Practitioner/{id}`, per the sync-doc
+ * model where CareTeam.participant.member resolves to a Practitioner. */
+export const CARE_TEAM_ROLE_CODING = {
+  system: 'http://terminology.hl7.org/CodeSystem/care-team-roles',
+  code: 'clinical',
+  display: 'Clinical',
+};
+
+/**
+ * Fields the bespoke Add/Edit Care Team drawer collects. `memberIds` are Practitioner ids. A
+ * CareTeam→Location association is not modelled (R4 CareTeam has no `location`); the org link is the
+ * optional `managingOrganization`.
+ */
+export interface CareTeamFormFields {
+  name: string;
+  description: string;
+  status: 'active' | 'inactive';
+  /** Practitioner ids to add as participants. */
+  memberIds: string[];
+  /** Managing Organization id (or `Organization/{id}` ref), or '' for none. */
+  organizationId: string;
+}
+
+/**
+ * Map the Care Team form to a FHIR CareTeam resource. On create, omit `existing` (server assigns the
+ * id). On edit, pass the existing resource so unmanaged fields (id, meta, identifier, …) are preserved
+ * while the form-managed fields are overwritten — including removals (cleared description / no members /
+ * no organisation).
+ */
+export function careTeamFromForm(
+  fields: CareTeamFormFields,
+  existing?: CareTeam,
+): CareTeam {
+  const careTeam: CareTeam = {
+    ...(existing ?? {}),
+    resourceType: 'CareTeam',
+    status: fields.status,
+    name: fields.name.trim(),
+  };
+  if (fields.description.trim()) careTeam.note = [{ text: fields.description.trim() }];
+  else delete careTeam.note;
+  if (fields.memberIds.length > 0) {
+    careTeam.participant = fields.memberIds.map((id) => ({
+      member: { reference: id.includes('/') ? id : `Practitioner/${id}` },
+      role: [{ coding: [CARE_TEAM_ROLE_CODING] }],
+    }));
+  } else {
+    delete careTeam.participant;
+  }
+  const orgId = fields.organizationId.trim();
+  // R4 CareTeam.managingOrganization is 0..* — always an array.
+  if (orgId) careTeam.managingOrganization = [{ reference: orgId.includes('/') ? orgId : `Organization/${orgId}` }];
+  else delete careTeam.managingOrganization;
+  return careTeam;
 }
 
 // ---------------------------------------------------------------------------
@@ -267,15 +332,11 @@ export function buildDeactivateBundle(
   return { bundle: { resourceType: 'Bundle', type: 'transaction', entry }, endedRoleCount, removedCareTeamCount };
 }
 
-type PractitionerName = { family?: string; given?: string[] };
-type ContactPoint = { system?: string; value?: string };
-type Identifier = { system?: string; value?: string };
-
 /** Pre-populate edit-form answers from an existing Practitioner. */
 export function userAnswersFromPractitioner(
   pract: Record<string, unknown>,
 ): Record<string, string> {
-  const name = (pract.name as PractitionerName[] | undefined)?.[0];
+  const name = (pract.name as HumanName[] | undefined)?.[0];
   const telecom = pract.telecom as ContactPoint[] | undefined;
   const email = telecom?.find((tc) => tc.system === 'email')?.value ?? '';
   const identifiers = pract.identifier as Identifier[] | undefined;
@@ -334,12 +395,6 @@ export function applyUserAnswersToPractitioner(
 // Organization
 // ---------------------------------------------------------------------------
 
-export const ORGANIZATION_LINK_IDS = {
-  name: 'org-name',
-  active: 'org-active',
-  identifierValue: 'org-identifier-value',
-} as const;
-
 export const LOCATION_LINK_IDS = {
   name: 'loc-name',
   status: 'loc-status',
@@ -348,22 +403,87 @@ export const LOCATION_LINK_IDS = {
   parent: 'loc-parent',
 } as const;
 
-const ORG_IDENTIFIER_SYSTEM = 'urn:ohs:reference:organization-identifier';
+/** CodeSystem for `Organization.type`. A "Team" is an Organization of type `team` (per backend). */
+export const ORGANIZATION_TYPE_SYSTEM = 'http://terminology.hl7.org/CodeSystem/organization-type';
 
-export function organizationFromAnswers(answers: Record<string, string>): {
-  resourceType: 'Organization';
+/**
+ * Fields the bespoke Add/Edit Organisation drawer collects. R4 `Organization` has no `description`, so
+ * the design's Description is omitted. The org↔location link lives on the Location side
+ * (`Location.managingOrganization`), written via {@link locationWithManagingOrg}, not on the Organization.
+ */
+export interface OrgFormFields {
   name: string;
+  /** `Organization.type` code (HL7 organization-type), or '' for none. */
+  typeCode: string;
+  email: string;
   active: boolean;
-  identifier?: { system: string; value: string }[];
-} {
-  const name = answers[ORGANIZATION_LINK_IDS.name]?.trim() ?? '';
-  const active = answers[ORGANIZATION_LINK_IDS.active] !== 'false';
-  const idVal = answers[ORGANIZATION_LINK_IDS.identifierValue]?.trim();
-  const identifier =
-    idVal && idVal.length > 0
-      ? [{ system: ORG_IDENTIFIER_SYSTEM, value: idVal }]
-      : undefined;
-  return { resourceType: 'Organization', name, active, ...(identifier ? { identifier } : {}) };
+}
+
+/**
+ * Map the Organisation form to a FHIR Organization. On create, omit `existing` (server assigns the id).
+ * On edit, pass the existing resource so unmanaged fields (id, meta, identifier, partOf, …) survive
+ * while form-managed fields are overwritten — including removals (cleared type/email). The identifier
+ * is not form-managed: the resource id is the identifier (matching Users/Care Teams), so any
+ * server-assigned `identifier` on `existing` passes through untouched.
+ */
+export function organizationFromForm(
+  fields: OrgFormFields,
+  existing?: Organization,
+): Organization {
+  const org: Organization = {
+    ...(existing ?? {}),
+    resourceType: 'Organization',
+    name: fields.name.trim(),
+    active: fields.active,
+  };
+  // `managedLocations` is a UI-only field the page attaches to the row; never send it to the server.
+  delete (org as { managedLocations?: unknown }).managedLocations;
+
+  const typeCode = fields.typeCode.trim();
+  if (typeCode) org.type = [{ coding: [{ system: ORGANIZATION_TYPE_SYSTEM, code: typeCode }] }];
+  else delete org.type;
+
+  const email = fields.email.trim();
+  const otherTelecom = (existing?.telecom ?? []).filter((tc) => tc.system !== 'email');
+  const telecom: ContactPoint[] = email
+    ? [...otherTelecom, { system: 'email', value: email }]
+    : otherTelecom;
+  if (telecom.length > 0) org.telecom = telecom;
+  else delete org.telecom;
+
+  return org;
+}
+
+/**
+ * Build a FHIRPath Patch (`Parameters`) that sets or clears a Location's `managingOrganization`
+ * (R4 `0..1`) — the link between an Organization (the "who") and a Location (the "where"). Pass `orgRef`
+ * (`Organization/{id}` or a transaction `urn:uuid:`) to link, or `null` to unlink. Used as the `resource`
+ * of a `PATCH Location/{id}` transaction-Bundle entry, so no read-modify-write of the full resource.
+ *
+ * Link is `delete` then `add`: the spec says `add` is only valid when the element is absent and `replace`
+ * only when present, so a single op is unsafe against a strict server when prior state is unknown (a
+ * TOCTOU race could see either). `delete` (a no-op when absent) followed by `add` onto the now-empty
+ * element is conformant regardless of prior state. Unlink is a lone `delete`.
+ */
+export function locationManagingOrgPatch(orgRef: string | null): Parameters {
+  const del: ParametersParameter = {
+    name: 'operation',
+    part: [
+      { name: 'type', valueCode: 'delete' },
+      { name: 'path', valueString: 'Location.managingOrganization' },
+    ],
+  };
+  if (orgRef === null) return { resourceType: 'Parameters', parameter: [del] };
+  const add: ParametersParameter = {
+    name: 'operation',
+    part: [
+      { name: 'type', valueCode: 'add' },
+      { name: 'path', valueString: 'Location' },
+      { name: 'name', valueString: 'managingOrganization' },
+      { name: 'value', valueReference: { reference: orgRef } },
+    ],
+  };
+  return { resourceType: 'Parameters', parameter: [del, add] };
 }
 
 type LocationStatus = 'active' | 'suspended' | 'inactive';

@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent, type ReactElement } from 'react';
+import type { Location } from '@medplum/fhirtypes';
 import type { Questionnaire } from 'ohs-player-web-core';
 import {
   buildQuestionnaireResponse,
@@ -23,17 +24,8 @@ import {
   parentLocationIdFromAnswer,
 } from '../sdc/resourceFromAnswers';
 
-type Loc = {
-  id?: string;
-  name?: string;
-  partOf?: { reference?: string };
-  status?: string;
-  mode?: string;
-  address?: { text?: string };
-};
-
-function buildTree(locs: Loc[]): Map<string | undefined, Loc[]> {
-  const m = new Map<string | undefined, Loc[]>();
+function buildTree(locs: Location[]): Map<string | undefined, Location[]> {
+  const m = new Map<string | undefined, Location[]>();
   for (const l of locs) {
     const parent = l.partOf?.reference?.replace('Location/', '');
     const k = parent ?? undefined;
@@ -45,13 +37,13 @@ function buildTree(locs: Loc[]): Map<string | undefined, Loc[]> {
 }
 
 /** Root-first chain from root down to `leafId`. */
-function ancestorChain(locList: Loc[], leafId: string): Loc[] {
-  const byId = new Map<string, Loc>();
+function ancestorChain(locList: Location[], leafId: string): Location[] {
+  const byId = new Map<string, Location>();
   for (const l of locList) {
     if (l.id) byId.set(l.id, l);
   }
-  const chain: Loc[] = [];
-  let cur: Loc | undefined = byId.get(leafId);
+  const chain: Location[] = [];
+  let cur: Location | undefined = byId.get(leafId);
   while (cur) {
     chain.unshift(cur);
     const pid = cur.partOf?.reference?.replace('Location/', '');
@@ -60,7 +52,7 @@ function ancestorChain(locList: Loc[], leafId: string): Loc[] {
   return chain;
 }
 
-function LocationBreadcrumbs({ locList, leafId }: { locList: Loc[]; leafId: string }): ReactElement {
+function LocationBreadcrumbs({ locList, leafId }: { locList: Location[]; leafId: string }): ReactElement {
   const { t } = useTranslation();
   const chain = useMemo(() => ancestorChain(locList, leafId), [locList, leafId]);
 
@@ -106,7 +98,7 @@ function TreeBranch({
   depth,
 }: {
   parentId: string | undefined;
-  tree: Map<string | undefined, Loc[]>;
+  tree: Map<string | undefined, Location[]>;
   depth: number;
 }): ReactElement {
   const kids = tree.get(parentId) ?? [];
@@ -129,7 +121,7 @@ function LocationCreateForm({
   onCancel,
 }: {
   questionnaire: Questionnaire;
-  locList: Loc[];
+  locList: Location[];
   onSuccess: () => void;
   onCancel: () => void;
 }): ReactElement {
@@ -221,18 +213,18 @@ export function LocationsPage() {
   const { t } = useTranslation();
   const search = useSearch('Location', { _count: '500' });
   const tree = useMemo(() => {
-    const bundle = search.data as { entry?: { resource?: Loc }[] } | undefined;
+    const bundle = search.data as { entry?: { resource?: Location }[] } | undefined;
     const locs =
       bundle?.entry
         ?.map((e) => e.resource)
-        .filter((r): r is Loc => r !== undefined && r !== null) ?? [];
+        .filter((r): r is Location => r !== undefined && r !== null) ?? [];
     return buildTree(locs);
   }, [search.data]);
 
   const locList =
-    (search.data as { entry?: { resource?: Loc }[] } | undefined)?.entry
+    (search.data as { entry?: { resource?: Location }[] } | undefined)?.entry
       ?.map((e) => e.resource)
-      .filter((r): r is Loc => r !== undefined && r !== null) ?? [];
+      .filter((r): r is Location => r !== undefined && r !== null) ?? [];
 
   const questionnaire = getBundledQuestionnaires().location;
   const [modalOpen, setModalOpen] = useState(false);
@@ -302,7 +294,7 @@ export function LocationEditPage({ id }: { id: string }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const self = useResource('Location', id);
-  const current = self.data as Loc | undefined;
+  const current = self.data as Location | undefined;
 
   const questionnaire = getBundledQuestionnaires().location;
 
@@ -325,10 +317,10 @@ export function LocationEditPage({ id }: { id: string }) {
   } = useQuestionnaireFormState(questionnaire, initialAnswers);
 
   const locList = (
-    all.data as { entry?: { resource?: Loc }[] } | undefined
+    all.data as { entry?: { resource?: Location }[] } | undefined
   )?.entry
     ?.map((e) => e.resource)
-    .filter(Boolean) as Loc[] | undefined;
+    .filter(Boolean) as Location[] | undefined;
 
   const wouldCycle = (targetParentId: string | undefined): boolean => {
     if (!targetParentId) return false;

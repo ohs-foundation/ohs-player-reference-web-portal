@@ -7,9 +7,8 @@ import {
   RiTeamLine,
   RiUserLine,
 } from '@remixicon/react';
+import type { Bundle, PractitionerRole } from '@medplum/fhirtypes';
 import {
-  FhirError,
-  formatOperationOutcomeMessage,
   useCustomEndpoint,
   useFhirClient,
   useResource,
@@ -18,6 +17,7 @@ import {
   writeAuditEvent,
 } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
+import { toErrorMessage } from '../sdc/toErrorMessage';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import {
   buildNewUserPayload,
@@ -37,29 +37,13 @@ import {
 import { type Option, referenceOptions } from './userFormOptions';
 import { type UserFormErrors, validateUserForm } from './userFormSchema';
 
-interface SearchBundle {
-  entry?: { resource?: Record<string, unknown> }[];
-}
-type PractitionerRoleRes = {
-  id?: string;
-  organization?: { reference?: string };
-  location?: { reference?: string }[];
-  code?: { coding?: { code?: string }[] }[];
-};
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
 function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
 function resourcesOf(bundle: unknown): Record<string, unknown>[] {
-  return ((bundle as SearchBundle | undefined)?.entry ?? [])
-    .map((e) => e.resource)
+  return ((bundle as Bundle | undefined)?.entry ?? [])
+    .map((e) => e.resource as Record<string, unknown> | undefined)
     .filter((r): r is Record<string, unknown> => Boolean(r));
 }
 
@@ -100,7 +84,7 @@ export function UserEditDrawer({
   }, [careTeamSearch.data]);
 
   const existingRoles = useMemo(
-    () => resourcesOf(roleSearch.data) as PractitionerRoleRes[],
+    () => resourcesOf(roleSearch.data) as unknown as PractitionerRole[],
     [roleSearch.data],
   );
   const existingRoleIds = useMemo(

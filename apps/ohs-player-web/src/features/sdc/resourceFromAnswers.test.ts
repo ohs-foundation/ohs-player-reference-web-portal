@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import type { Organization, Parameters } from '@medplum/fhirtypes';
 import {
   applyUserAnswersToPractitioner,
   buildDeactivateBundle,
+  careTeamFromForm,
   buildNewUserBundle,
   buildNewUserPayload,
   buildUserEditBundle,
   type NewUserFields,
+  locationManagingOrgPatch,
+  organizationFromForm,
   USER_LINK_IDS,
   userAnswersFromPractitioner,
 } from './resourceFromAnswers';
@@ -162,6 +166,57 @@ describe('buildUserEditBundle', () => {
   });
 });
 
+describe('careTeamFromForm', () => {
+  const base = {
+    name: 'Ebola Response',
+    description: '',
+    status: 'active' as const,
+    memberIds: [],
+    organizationId: '',
+  };
+
+  it('maps name + status, and omits blank description/members/organisation (no location — not in R4)', () => {
+    const ct = careTeamFromForm(base);
+    expect(ct).toEqual({ resourceType: 'CareTeam', status: 'active', name: 'Ebola Response' });
+    expect(ct).not.toHaveProperty('participant');
+    expect(ct).not.toHaveProperty('managingOrganization');
+  });
+
+  it('maps description→note, members→participant (Practitioner refs + clinical role), and managingOrganization', () => {
+    const ct = careTeamFromForm({
+      ...base,
+      description: 'Outbreak team',
+      status: 'inactive',
+      memberIds: ['p1', 'Practitioner/p2'],
+      organizationId: 'o1',
+    });
+    expect(ct.status).toBe('inactive');
+    expect(ct.note?.[0].text).toBe('Outbreak team');
+    expect(ct.participant?.map((p) => p.member?.reference)).toEqual([
+      'Practitioner/p1',
+      'Practitioner/p2',
+    ]);
+    expect(ct.participant?.[0].role?.[0].coding?.[0].code).toBe('clinical');
+    // R4 managingOrganization is 0..* — must be an array, not a scalar object
+    expect(Array.isArray(ct.managingOrganization)).toBe(true);
+    expect(ct.managingOrganization?.[0].reference).toBe('Organization/o1');
+  });
+
+  it('preserves a passed Organization/ ref and clears managingOrganization on edit when blank', () => {
+    const created = careTeamFromForm({ ...base, organizationId: 'Organization/o9' });
+    expect(created.managingOrganization?.[0].reference).toBe('Organization/o9');
+
+    const cleared = careTeamFromForm(base, {
+      resourceType: 'CareTeam',
+      id: 'ct1',
+      status: 'active',
+      managingOrganization: [{ reference: 'Organization/o9' }],
+    });
+    expect(cleared).not.toHaveProperty('managingOrganization');
+    expect(cleared.id).toBe('ct1');
+  });
+});
+
 describe('buildDeactivateBundle', () => {
   const pract = { resourceType: 'Practitioner', id: 'p1', active: true };
   const END = '2026-06-09T00:00:00.000Z';
@@ -206,6 +261,83 @@ describe('buildDeactivateBundle', () => {
     // only the Practitioner PUT remains
     expect(bundle.entry).toHaveLength(1);
     expect(bundle.entry[0].request.url).toBe('Practitioner/p1');
+  });
+});
+
+describe('organizationFromForm', () => {
+  const base = { name: 'Ministry of Health', typeCode: '', email: '', active: true };
+
+  it('maps name + active, omits blank type/email, and never sets identifier (server-assigned)', () => {
+    const org = organizationFromForm(base);
+    expect(org).toEqual({ resourceType: 'Organization', name: 'Ministry of Health', active: true });
+    expect(org).not.toHaveProperty('type');
+    expect(org).not.toHaveProperty('identifier');
+    expect(org).not.toHaveProperty('telecom');
+  });
+
+  it('maps type→coding, email→telecom, and the inactive flag', () => {
+    const org = organizationFromForm({
+      ...base,
+      typeCode: 'govt',
+      email: 'info@moh.go.ke',
+      active: false,
+    }) as {
+      active?: boolean;
+      type?: { coding?: { system?: string; code?: string }[] }[];
+      telecom?: { system?: string; value?: string }[];
+    };
+    expect(org.active).toBe(false);
+    expect(org.type?.[0].coding?.[0]).toEqual({
+      system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+      code: 'govt',
+    });
+    expect(org.telecom?.[0]).toEqual({ system: 'email', value: 'info@moh.go.ke' });
+  });
+
+  it('on edit, preserves unmanaged fields incl. server identifier, drops the cleared email', () => {
+    const existing: Organization = {
+      resourceType: 'Organization',
+      id: 'o1',
+      partOf: { reference: 'Organization/parent' },
+      identifier: [{ system: 'http://other', value: 'keep' }],
+      telecom: [
+        { system: 'phone', value: '0700' },
+        { system: 'email', value: 'old@x.com' },
+      ],
+    };
+    const org = organizationFromForm(base, existing);
+    expect(org.id).toBe('o1');
+    expect(org.partOf?.reference).toBe('Organization/parent');
+    // identifier is not form-managed — it passes through untouched
+    expect(org.identifier).toEqual([{ system: 'http://other', value: 'keep' }]);
+    // email was blank in base → cleared; the non-email telecom survives
+    expect(org.telecom).toEqual([{ system: 'phone', value: '0700' }]);
+  });
+});
+
+describe('locationManagingOrgPatch', () => {
+  type Op = { name: string; valueCode?: string; valueString?: string; valueReference?: { reference?: string } };
+  const operations = (patch: Parameters): Op[][] =>
+    (patch.parameter ?? []).map((op) => (op.part ?? []) as Op[]);
+  const typeOf = (parts: Op[]): string | undefined => parts.find((p) => p.name === 'type')?.valueCode;
+
+  it('links via `delete` then `add` so it is conformant whether the element is absent or present', () => {
+    const patch = locationManagingOrgPatch('Organization/o1');
+    expect(patch.resourceType).toBe('Parameters');
+    const ops = operations(patch);
+    expect(ops.map(typeOf)).toEqual(['delete', 'add']);
+    // the `add` op carries path/name/value for managingOrganization
+    const add = ops[1];
+    expect(add.find((p) => p.name === 'path')?.valueString).toBe('Location');
+    expect(add.find((p) => p.name === 'name')?.valueString).toBe('managingOrganization');
+    expect(add.find((p) => p.name === 'value')?.valueReference?.reference).toBe('Organization/o1');
+  });
+
+  it('unlinks with a lone `delete` op (orgRef null)', () => {
+    const ops = operations(locationManagingOrgPatch(null));
+    expect(ops.map(typeOf)).toEqual(['delete']);
+    expect(ops[0].find((p) => p.name === 'path')?.valueString).toBe('Location.managingOrganization');
+    expect(ops[0].some((p) => p.name === 'value')).toBe(false);
   });
 });
 
