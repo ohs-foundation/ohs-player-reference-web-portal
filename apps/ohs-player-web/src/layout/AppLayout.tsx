@@ -17,7 +17,6 @@ import {
   RiMenuLine,
   RiMenuUnfoldLine,
   RiMoonLine,
-  RiNotificationLine,
   RiSunLine,
   RiTeamFill,
   RiTeamLine,
@@ -25,11 +24,13 @@ import {
   RiUserLine,
   type RemixiconComponentType,
 } from '@remixicon/react';
-import { Avatar, IconButton, SearchField } from '../components/ui';
+import { Avatar, IconButton } from '../components/ui';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useState } from 'react';
 import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
+import { GlobalSearch } from '../features/search/GlobalSearch';
+import { NotificationsBell } from '../features/activity/NotificationsBell';
 
 const ICON_SIZE = 20;
 
@@ -95,12 +96,7 @@ export function AppLayout() {
           </IconButton>
         </div>
         <div className="app-topbar__actions">
-          <SearchField
-            size="lg"
-            className="app-topbar__search"
-            label={t('globalSearch')}
-            placeholder={t('globalSearch')}
-          />
+          <GlobalSearch />
           <IconButton
             label={mode === 'dark' ? t('themeLight') : t('themeDark')}
             className="app-topbar__bell"
@@ -108,9 +104,7 @@ export function AppLayout() {
           >
             {mode === 'dark' ? <RiSunLine size={24} /> : <RiMoonLine size={24} />}
           </IconButton>
-          <IconButton label={t('notifications')} className="app-topbar__bell">
-            <RiNotificationLine size={24} />
-          </IconButton>
+          <NotificationsBell />
           <UserMenu
             name={auth.user?.preferred_username ?? auth.user?.name ?? auth.user?.sub ?? ''}
             email={auth.user?.email}

@@ -27,6 +27,7 @@ import {
 } from '../../components/ui';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 import { CareTeamFormDrawer } from './CareTeamFormDrawer';
+import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
 
 type PractRow = { id?: string; active?: boolean; name?: { family?: string; given?: string[] }[] };
 type OrgRow = { id?: string; name?: string };
@@ -50,7 +51,7 @@ export function CareTeamsPage() {
   const pract = useSearch('Practitioner', { _count: '500' });
   const orgs = useSearch('Organization', { _count: '500' });
 
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());

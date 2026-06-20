@@ -32,6 +32,8 @@ export interface DataTableProps<Row> {
   pagination?: boolean;
   initialPageSize?: number;
   pageSizeOptions?: readonly number[];
+  /** Drop the wrapper's border/shadow/background and the min-width — for embedding inside a Card. */
+  flush?: boolean;
 }
 
 type SortDir = 'asc' | 'desc';
@@ -77,6 +79,7 @@ export function DataTable<Row>({
   pagination,
   initialPageSize = 10,
   pageSizeOptions = [10, 25, 50],
+  flush,
 }: Readonly<DataTableProps<Row>>): React.ReactElement {
   const { t } = useTranslation();
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -142,7 +145,7 @@ export function DataTable<Row>({
   const end = Math.min(page * pageSize, total);
 
   return (
-    <div className="ohs-table-wrapper">
+    <div className="ohs-table-wrapper" data-flush={flush ? 'true' : undefined}>
       {toolbar ? <div className="ohs-table__toolbar">{toolbar}</div> : null}
 
       {errorState ? (

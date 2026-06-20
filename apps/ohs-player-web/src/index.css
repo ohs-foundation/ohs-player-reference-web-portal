@@ -108,6 +108,126 @@ body {
   flex-shrink: 0;
 }
 
+/* Global search: the wrapper carries the flex sizing; the panel drops below the input. */
+.app-search {
+  position: relative;
+  flex: 0 1 357px;
+  min-width: 0;
+}
+.app-search .app-topbar__search {
+  flex: 1 1 auto;
+  width: 100%;
+}
+.app-search__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 70;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  padding: var(--ohs-spacing-2, 8px);
+  background: var(--ohs-color-surface, #fff);
+  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-radius-default, 8px);
+  box-shadow: var(--ohs-shadow-md, 0 4px 12px rgba(15, 23, 42, 0.15));
+}
+.app-search__status {
+  padding: var(--ohs-spacing-3, 12px);
+  color: var(--ohs-color-text-muted, #696969);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  text-align: center;
+  margin: 0;
+}
+.app-search__group + .app-search__group {
+  margin-top: var(--ohs-spacing-2, 8px);
+  padding-top: var(--ohs-spacing-2, 8px);
+  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+}
+.app-search__group-title {
+  margin: 0 0 var(--ohs-spacing-1, 4px);
+  padding: 0 var(--ohs-spacing-2, 8px);
+  font-size: var(--ohs-font-text-s-size, 12px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  color: var(--ohs-color-text-muted, #696969);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.app-search__hit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ohs-spacing-3, 12px);
+  width: 100%;
+  padding: var(--ohs-spacing-2, 8px);
+  border: none;
+  background: none;
+  border-radius: var(--ohs-radius-sm, 6px);
+  text-align: left;
+  cursor: pointer;
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.app-search__hit:hover,
+.app-search__hit:focus-visible {
+  background: var(--ohs-color-surface-variant, #f5f5f5);
+}
+.app-search__hit-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-search__hit-id {
+  flex-shrink: 0;
+  color: var(--ohs-color-text-muted, #696969);
+  font-size: var(--ohs-font-text-s-size, 12px);
+}
+
+/* Notifications activity feed (rendered inside the shared dropdown content). */
+.app-activity {
+  width: min(92vw, 360px);
+  padding: var(--ohs-spacing-2, 8px);
+}
+.app-activity__title {
+  margin: 0;
+  padding: var(--ohs-spacing-2, 8px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.app-activity__list {
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+}
+.app-activity__status {
+  padding: var(--ohs-spacing-4, 16px);
+  text-align: center;
+  color: var(--ohs-color-text-muted, #696969);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  margin: 0;
+}
+.app-activity__item {
+  padding: var(--ohs-spacing-2, 8px);
+  border-radius: var(--ohs-radius-sm, 6px);
+}
+.app-activity__item + .app-activity__item {
+  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+}
+.app-activity__text {
+  margin: 0;
+  font-size: var(--ohs-font-text-m-size, 14px);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.app-activity__meta {
+  margin: 2px 0 0;
+  font-size: var(--ohs-font-text-s-size, 12px);
+  color: var(--ohs-color-text-muted, #696969);
+}
+.app-activity__desc {
+  margin: 2px 0 0;
+  font-size: var(--ohs-font-text-s-size, 12px);
+  color: var(--ohs-color-text-muted, #696969);
+}
+
 .app-topbar__user {
   display: inline-flex;
   align-items: center;
@@ -234,8 +354,8 @@ body {
   padding: 0;
   overflow: auto;
   min-height: 0;
-  /* White content surface per the page-container spec; depth comes from neutral borders, not a gray fill. */
-  background: var(--ohs-color-surface, #fff);
+  /* Grey content surface so white cards (KPIs, tables, drawers) read as raised against it. */
+  background: var(--ohs-color-background, #fafafa);
 }
 
 /* Full-width main when no chrome (login / callback) */
@@ -264,7 +384,7 @@ body {
     height: auto;
     padding: var(--ohs-spacing-4, 16px);
   }
-  .app-topbar__search,
+  .app-search,
   .app-topbar__collapse {
     display: none;
   }

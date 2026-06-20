@@ -136,7 +136,9 @@
   width: 100%;
   /* 40/80 are not on the spacing scale; literal per the page-container spec (token scale alignment is #18). */
   padding: 40px 80px;
-  background: var(--ohs-color-surface, #fff);
+  /* Transparent so the grey content surface (--ohs-color-background on .app-shell__main) shows through
+     and white cards read as raised; the page wrapper itself adds no fill. */
+  background: transparent;
   box-sizing: border-box;
 }
 @media (max-width: 900px) {
@@ -550,6 +552,28 @@
   background: var(--ohs-color-surface, #fff);
   overflow: hidden;
   box-shadow: var(--ohs-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
+}
+/* Flush: embedded edge-to-edge in a Card. Drops its own box (border/radius/shadow/fill) and the wide
+   min-width; a single top border forms the divider under the card header. Left/right/bottom borders are
+   the card's. Internal row/column dividers come from the cells. */
+.ohs-table-wrapper[data-flush='true'] {
+  border: none;
+  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.ohs-table-wrapper[data-flush='true'] .ohs-table {
+  min-width: 0;
+}
+/* Drop the cells' outer edges so only interior grid lines remain (card supplies the perimeter). */
+.ohs-table-wrapper[data-flush='true'] .ohs-table td:last-child,
+.ohs-table-wrapper[data-flush='true'] .ohs-table th:last-child {
+  border-right: none;
+}
+.ohs-table-wrapper[data-flush='true'] .ohs-table tbody tr:last-child td {
+  border-bottom: none;
 }
 /* Horizontal scroll for the table only — toolbar and pagination stay full-width. */
 .ohs-table__scroll {
@@ -1484,6 +1508,178 @@
 .ohs-tooltip-content,
 .ohs-toast-root {
   animation: ohs-fade-in 140ms ease-out;
+}
+
+/* ---------- Dashboard ---------- */
+
+.ohs-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--ohs-spacing-3, 12px);
+}
+@media (max-width: 900px) {
+  .ohs-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 540px) {
+  .ohs-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ohs-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-spacing-5, 24px);
+}
+.ohs-kpi__tile {
+  width: 40px;
+  height: 40px;
+  display: block;
+  flex-shrink: 0;
+}
+.ohs-kpi__label {
+  font-size: var(--ohs-font-text-m-size, 14px);
+  line-height: var(--ohs-font-text-m-line, 20px);
+  color: var(--ohs-color-text-muted, #696969);
+  margin: 0 0 var(--ohs-spacing-2, 8px);
+}
+.ohs-kpi__value {
+  font-size: var(--ohs-text-display, 32px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: var(--ohs-color-text, #0d0d0d);
+  margin: 0;
+  min-height: 1.1em;
+  display: flex;
+  align-items: center;
+}
+
+/* Two-up rows: table card beside its distribution card; stacks on narrow screens.
+   `stretch` makes both cards the height of the taller one so their bottoms align. */
+.ohs-dash-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--ohs-spacing-4, 16px);
+  align-items: stretch;
+}
+.ohs-dash-row > .ohs-card {
+  height: 100%;
+}
+@media (max-width: 900px) {
+  .ohs-dash-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .ohs-dash-row > .ohs-card {
+    height: auto;
+  }
+}
+
+/* Card is flush (no padding) so the table spans edge-to-edge and shares the card's L/R/bottom borders.
+   The header carries its own padding; the table runs full-width directly beneath it. */
+.ohs-dash-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--ohs-spacing-3, 12px);
+  padding: var(--ohs-spacing-5, 24px);
+}
+.ohs-dash-card__body {
+  padding: 0 var(--ohs-spacing-5, 24px) var(--ohs-spacing-5, 24px);
+}
+.ohs-dash-card__viewall {
+  flex-shrink: 0;
+  color: var(--ohs-color-primary, #1f67fc);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ohs-dash-card__viewall:hover {
+  text-decoration: underline;
+}
+
+/* Name cell: avatar beside a brand-blue name over a muted email. */
+.ohs-dash-person {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-spacing-2, 8px);
+  min-width: 0;
+}
+.ohs-dash-person__name {
+  color: var(--ohs-color-primary, #1f67fc);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  text-decoration: none;
+}
+.ohs-dash-person__name:hover {
+  text-decoration: underline;
+}
+.ohs-dash-person__sub {
+  display: block;
+  color: var(--ohs-color-text-muted, #696969);
+  font-size: var(--ohs-font-text-s-size, 12px);
+  line-height: var(--ohs-font-text-s-line, 16px);
+}
+
+/* Donut card: title pinned at top, donut + legend centred in the remaining height so the
+   card bottom aligns with the taller table card beside it. */
+.ohs-dist-card {
+  display: flex;
+  flex-direction: column;
+}
+.ohs-dist-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ohs-spacing-2, 8px);
+}
+.ohs-dist-card__body > .ohs-donut-legend {
+  width: 100%;
+}
+
+/* Donut chart */
+.ohs-donut {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--ohs-spacing-4, 16px) auto;
+}
+.ohs-donut__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.ohs-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-spacing-2, 8px);
+}
+.ohs-donut-legend__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-spacing-2, 8px);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.ohs-donut-legend__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.ohs-donut-legend__pct {
+  margin-left: auto;
+  color: var(--ohs-color-text-muted, #696969);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Dark theme ---------- */

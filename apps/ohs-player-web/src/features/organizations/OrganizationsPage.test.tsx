@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'vitest-axe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -44,6 +45,8 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
 
 const { OrganizationsPage } = await import('./OrganizationsPage');
 
+const renderPage = () => render(<OrganizationsPage />, { wrapper: MemoryRouter });
+
 beforeEach(() => {
   vi.clearAllMocks();
   // transaction returns the created Organization location for id extraction
@@ -52,14 +55,14 @@ beforeEach(() => {
 
 describe('OrganizationsPage', () => {
   it('renders the org table and has no critical a11y violations', async () => {
-    const { container } = render(<OrganizationsPage />);
+    const { container } = renderPage();
     expect(await screen.findByText('Ministry of Health')).toBeInTheDocument();
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
   });
 
   it('create with a selected location issues one transaction: POST org (urn) + PATCH the location to it', async () => {
-    render(<OrganizationsPage />);
+    renderPage();
     fireEvent.click(screen.getByText('addOrganization'));
 
     const drawer = await screen.findByRole('dialog');
