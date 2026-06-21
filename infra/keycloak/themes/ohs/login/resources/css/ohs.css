@@ -5,9 +5,12 @@
  * Verified against Keycloak 26.0.8 base login.ftl / template.ftl selectors.
  */
 
-/* ---- Full-bleed dark background from the exported Figma asset ---- */
-body.login-pf {
-  background: #0d0d0d url("../img/login-bg.svg") center / cover no-repeat fixed;
+/* ---- Full-bleed dark background from the exported Figma asset ----
+   KC26 puts the `login-pf` class on <html>, and the base theme styles the background via
+   `.login-pf body` (not `body.login-pf`). Match that exact selector so ours wins on load order. */
+.login-pf body {
+  background: #0d0d0d url("../img/login-bg.svg") no-repeat center center fixed;
+  background-size: cover;
   font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
