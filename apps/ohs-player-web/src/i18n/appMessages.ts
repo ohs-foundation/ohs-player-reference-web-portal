@@ -4,9 +4,8 @@ import type { MessageCatalog } from 'ohs-player-web-core';
  * Reference-app-only copy overrides (merged into core English catalog via `platformConfig.i18n`).
  */
 export const appMessageOverrides = {
-  loginHeading: 'OHS Player Web',
-  loginPrompt: 'Authenticate with your identity provider to continue.',
-  backHome: 'Back home',
+  loginHeading: 'Sign in to continue',
+  loginSubtitle: 'You’ll be redirected to your identity provider to sign in securely.',
 
   navDashboard: 'Dashboard',
   navUsers: 'Users',

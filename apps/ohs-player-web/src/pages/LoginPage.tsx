@@ -1,8 +1,8 @@
 import { useAuth, useTranslation } from 'ohs-player-web-core';
-import { Card, Page, Stack } from '../components/ui';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Button, Card, Stack } from '../components/ui';
 import { BrandMark } from '../layout/BrandMark';
+import loginBackground from '../assets/illustrations/login-bg.svg';
 
 export function LoginPage() {
   const auth = useAuth();
@@ -13,51 +13,49 @@ export function LoginPage() {
   const onSignIn = (): void => {
     setSignInError(null);
     setBusy(true);
-    void auth
-      .login()
-      .catch((e: unknown) => {
-        setBusy(false);
-        setSignInError(e instanceof Error ? e.message : String(e));
-      });
+    void auth.login().catch((e: unknown) => {
+      setBusy(false);
+      setSignInError(e instanceof Error ? e.message : String(e));
+    });
   };
 
+  const error = auth.error?.message ?? signInError;
+
   return (
-    <Page>
-      <Stack gap={4} style={{ maxWidth: 440, margin: '0 auto', padding: '3rem 1rem' }}>
-        <header style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <BrandMark size={40} />
-          <h1 style={{ margin: 0, fontSize: 'var(--ohs-text-headline, 24px)' }}>{t('loginHeading')}</h1>
-        </header>
-        <Card>
-          <Stack gap={3}>
-            <p>{t('loginPrompt')}</p>
-            {auth.error ? (
-              <p role="alert" className="ohs-field__error">
-                {auth.error.message}
-              </p>
-            ) : null}
-            {signInError ? (
-              <p role="alert" className="ohs-field__error">
-                {signInError}
-              </p>
-            ) : null}
-            {/* Native button: Material Web md-filled-button does not reliably receive React onClick in all browsers */}
-            <button
-              type="button"
-              className="ohs-button"
-              data-variant="primary"
-              aria-label={t('signIn')}
-              disabled={busy || auth.status === 'loading'}
-              onClick={onSignIn}
-            >
-              {busy ? t('loading') : t('signIn')}
-            </button>
-            <p>
-              <Link to="/">{t('backHome')}</Link>
-            </p>
+    <div className="ohs-login">
+      <div
+        className="ohs-login__bg"
+        aria-hidden="true"
+        style={{ backgroundImage: `url(${loginBackground})` }}
+      />
+      <Card className="ohs-login__card">
+        <Stack gap={5}>
+          <Stack gap={2}>
+            <h1 className="ohs-login__title">{t('loginHeading')}</h1>
+            <p className="ohs-login__subtitle">{t('loginSubtitle')}</p>
           </Stack>
-        </Card>
-      </Stack>
-    </Page>
+
+          {error ? (
+            <p role="alert" className="ohs-field__error">
+              {error}
+            </p>
+          ) : null}
+
+          <Button
+            variant="primary"
+            className="ohs-login__submit"
+            loading={busy || auth.status === 'loading'}
+            onClick={onSignIn}
+          >
+            {busy ? t('loading') : t('signIn')}
+          </Button>
+
+          <div className="ohs-login__brand">
+            <BrandMark size={32} />
+            <span className="ohs-login__wordmark">{t('appTopbarTitle')}</span>
+          </div>
+        </Stack>
+      </Card>
+    </div>
   );
 }

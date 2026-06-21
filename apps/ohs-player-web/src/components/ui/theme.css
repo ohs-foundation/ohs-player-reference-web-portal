@@ -1682,6 +1682,68 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Login screen ---------- */
+/* Full-viewport: the exported dark gradient fills the screen behind one centred card. The gradient
+   is a fixed dark image (same for light/dark); only the card flips via the surface/text tokens. */
+.ohs-login {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ohs-spacing-5, 24px);
+  box-sizing: border-box;
+}
+.ohs-login__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.ohs-login__card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 600px;
+  padding: 40px;
+  border: none;
+  border-radius: var(--ohs-radius-default, 12px);
+  box-shadow:
+    0 0 10px rgba(0, 0, 0, 0.08),
+    0 12px 24px rgba(0, 0, 0, 0.1);
+}
+.ohs-login__title {
+  margin: 0;
+  font-size: var(--ohs-text-display, 32px);
+  line-height: 40px;
+  letter-spacing: -1px;
+  font-weight: var(--ohs-font-weight-medium, 500);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.ohs-login__subtitle {
+  margin: 0;
+  font-size: var(--ohs-font-text-m-size, 14px);
+  line-height: var(--ohs-font-text-m-line, 20px);
+  color: var(--ohs-color-text-muted, #696969);
+}
+.ohs-login__submit {
+  width: 100%;
+  justify-content: center;
+}
+.ohs-login__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ohs-spacing-2, 8px);
+}
+.ohs-login__wordmark {
+  font-weight: var(--ohs-font-weight-medium, 500);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+
 /* ---------- Dark theme ---------- */
 /* The managed colour tokens (primary/surface/background/text/border/error/success/…) flip via
    applyTheme(darkTheme). These are the tokens defined statically above (not part of the
