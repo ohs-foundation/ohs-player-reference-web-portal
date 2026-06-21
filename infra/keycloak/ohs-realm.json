@@ -3,6 +3,7 @@
   "realm": "ohs",
   "enabled": true,
   "sslRequired": "none",
+  "loginTheme": "ohs",
   "roles": {
     "realm": [
       { "id": "role-admin", "name": "admin", "description": "Administrator" },
