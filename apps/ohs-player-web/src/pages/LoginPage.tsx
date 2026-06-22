@@ -20,6 +20,10 @@ export function LoginPage() {
   };
 
   const error = auth.error?.message ?? signInError;
+  // `busy` is user-initiated sign-in (drives the spinner/aria-busy + "Loading…" label). The initial
+  // OIDC session check (`auth.status === 'loading'`) only disables the button — it must not flip the
+  // label to "Loading…" or mark it aria-busy before the user has acted.
+  const disabled = busy || auth.status === 'loading';
 
   return (
     <div className="ohs-login">
@@ -44,7 +48,8 @@ export function LoginPage() {
           <Button
             variant="primary"
             className="ohs-login__submit"
-            loading={busy || auth.status === 'loading'}
+            loading={busy}
+            disabled={disabled}
             onClick={onSignIn}
           >
             {busy ? t('loading') : t('signIn')}
