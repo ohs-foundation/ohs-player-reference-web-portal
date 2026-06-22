@@ -63,11 +63,15 @@ export class FhirClient {
     const body = await readBody(res);
     let message = `HTTP ${res.status}`;
     if (isOperationOutcome(body)) {
-      const oo = body as {
-        issue?: { diagnostics?: string }[];
-      };
-      const d = oo.issue?.[0]?.diagnostics;
+      const d = (body as { issue?: { diagnostics?: string }[] }).issue?.[0]?.diagnostics;
       if (d) message = d;
+    } else if (body && typeof body === 'object') {
+      // Gateway custom routes (/api/*) return a plain JSON error, e.g. `{ "error": "...", "status": 409 }`.
+      const b = body as { error?: unknown; message?: unknown };
+      const m = typeof b.error === 'string' ? b.error : typeof b.message === 'string' ? b.message : '';
+      if (m) message = m;
+    } else if (typeof body === 'string' && body.trim()) {
+      message = body;
     }
     const err = new FhirError(message, res.status, body);
     this.onError?.(err);

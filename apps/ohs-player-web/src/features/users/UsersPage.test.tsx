@@ -35,6 +35,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useFhirClient: () => mockFhirClient,
     useAuth: () => ({ status: 'authenticated', user: { preferred_username: 'tester' } }),
     useStatusBar: () => ({ notify: vi.fn() }),
+    useRefreshResources: () => vi.fn().mockResolvedValue(undefined),
     PermissionGuard: ({ children }: { children: React.ReactNode }) => children,
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     useCustomEndpoint: () => ({

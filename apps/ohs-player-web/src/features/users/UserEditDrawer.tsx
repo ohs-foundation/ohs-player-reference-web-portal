@@ -9,12 +9,11 @@ import {
 } from '@remixicon/react';
 import {
   commitBundle,
-  FhirError,
-  formatOperationOutcomeMessage,
   useCustomEndpoint,
   useFhirClient,
   useResource,
   useSearch,
+  useStatusBar,
   useTranslation,
 } from 'ohs-player-web-core';
 import { useWriteAudit } from '../audit/useWriteAudit';
@@ -27,8 +26,8 @@ import {
   type NewUserFields,
   usernameFromEmail,
 } from '../sdc/resourceFromAnswers';
+import { toErrorMessage, userErrorMessage } from '../sdc/toErrorMessage';
 import {
-  ImageUpload,
   MultiSelect,
   RadioRow,
   Section,
@@ -48,12 +47,6 @@ type PractitionerRoleRes = {
   code?: { coding?: { code?: string }[] }[];
 };
 
-function toErrorMessage(error: unknown): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
 function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
@@ -72,6 +65,7 @@ export function UserEditDrawer({
   const { t } = useTranslation();
   const client = useFhirClient();
   const writeAudit = useWriteAudit();
+  const status = useStatusBar();
   const { put } = useCustomEndpoint('users');
 
   const read = useResource('Practitioner', id);
@@ -223,7 +217,9 @@ export function UserEditDrawer({
         await writeAudit({ action: 'update', resourceType: 'Practitioner', resourceId: id });
         onSuccess();
       } catch (err) {
-        setError(toErrorMessage(err));
+        const message = userErrorMessage(err, t, 'userSaveError');
+        setError(message);
+        status.notify({ tone: 'error', title: message });
       } finally {
         setSubmitting(false);
       }
@@ -266,7 +262,6 @@ export function UserEditDrawer({
 
           <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
             <Stack gap={5}>
-              <ImageUpload />
               <div className="ohs-detail-grid">
                 <StackedInput
                   label={t('givenName')}

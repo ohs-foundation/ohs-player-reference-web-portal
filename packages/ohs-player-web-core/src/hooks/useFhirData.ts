@@ -69,7 +69,7 @@ export function useUpdateResource(resourceType: string) {
  *
  * @example
  * const refresh = useRefreshResources();
- * await refresh('CareTeam');          // one type
+ * await refresh('CareTeam');                           // one type
  * await refresh(['Practitioner', 'PractitionerRole']); // several
  */
 export function useRefreshResources(): (resourceTypes: string | readonly string[]) => Promise<void> {

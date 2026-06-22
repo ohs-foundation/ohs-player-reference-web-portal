@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
+import careTeamsEmptyIllustration from '../../assets/illustrations/careteams-empty.svg';
 import {
   OhsDropdownMenu,
   PermissionGuard,
@@ -181,8 +182,9 @@ export function CareTeamsPage() {
       {noTeams ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <EmptyState
-            title={t('emptyTitle')}
-            description={t('emptyDescription')}
+            illustration={<img src={careTeamsEmptyIllustration} alt="" width={110} height={104} />}
+            title={t('careTeamsEmptyTitle')}
+            description={t('careTeamsEmptyDescription')}
             action={
               <PermissionGuard permission="careteams.manage">
                 <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
@@ -334,8 +336,8 @@ export function CareTeamsPage() {
           errorState={teamsError ? <ErrorState description={teamsError} /> : undefined}
           emptyState={
             <EmptyState
-              title={t('emptyTitle')}
-              description={isFiltering ? t('filterEmptyGeneric') : t('emptyDescription')}
+              title={t('careTeamsEmptyTitle')}
+              description={isFiltering ? t('filterEmptyGeneric') : t('careTeamsEmptyDescription')}
             />
           }
         />

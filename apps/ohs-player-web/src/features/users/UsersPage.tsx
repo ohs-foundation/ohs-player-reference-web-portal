@@ -4,6 +4,7 @@ import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
   PermissionGuard,
+  useRefreshResources,
   useSearch,
   useStatusBar,
   useTranslation,
@@ -93,6 +94,7 @@ function buildOrgNameMap(
 export function UsersPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
+  const refresh = useRefreshResources();
   const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [roleFilter, setRoleFilter] = useState<string>('');
@@ -188,6 +190,12 @@ export function UsersPage() {
     setCreateOpen(true);
   };
 
+  // Refresh the lists after a mutation; useRefreshResources retries shortly after to catch HAPI's
+  // search-index lag (a just-created Practitioner may not be indexed by the immediate refetch).
+  const refetchUsers = (): void => {
+    void refresh(['Practitioner', 'PractitionerRole']);
+  };
+
   const isFiltering = q.trim() !== '' || statusFilter !== 'all' || roleFilter !== '';
   // Only the genuine "no users at all" case hides the toolbar; a no-match search keeps it.
   const noUsers = !search.isLoading && !searchError && rawRows.length === 0 && !isFiltering;
@@ -226,8 +234,7 @@ export function UsersPage() {
           onSuccess={() => {
             setCreateOpen(false);
             status.notify({ tone: 'success', title: t('userCreated') });
-            void search.refetch();
-            void roleSearch.refetch();
+            refetchUsers();
           }}
         />
       ) : null}
@@ -434,8 +441,7 @@ export function UsersPage() {
           onDeleted={() => {
             closeViewer();
             status.notify({ tone: 'success', title: t('userDeactivated') });
-            void search.refetch();
-            void roleSearch.refetch();
+            refetchUsers();
           }}
         />
       ) : null}
@@ -447,8 +453,7 @@ export function UsersPage() {
           onSuccess={() => {
             closeViewer();
             status.notify({ tone: 'success', title: t('saved') });
-            void search.refetch();
-            void roleSearch.refetch();
+            refetchUsers();
           }}
         />
       ) : null}
