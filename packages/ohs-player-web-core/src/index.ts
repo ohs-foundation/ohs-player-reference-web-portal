@@ -57,6 +57,19 @@ export { FhirClient } from './client/FhirClient';
 export { FhirError, isOperationOutcome } from './client/FhirError';
 
 export {
+  bundleEntry,
+  commitBundle,
+  committedId,
+  committedReference,
+  newUrnUuid,
+} from './bundle/transaction';
+export type {
+  BundleEntryMethod,
+  TransactionBundleEntry,
+  TransactionResponseBundle,
+} from './bundle/transaction';
+
+export {
   useCreateResource,
   useCustomEndpoint,
   useFhirCapabilities,
