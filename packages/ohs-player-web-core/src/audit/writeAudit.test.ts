@@ -32,4 +32,19 @@ describe('writeAuditEvent', () => {
     expect((client.create.mock.calls[0][0] as { action?: string }).action).toBe('C');
     expect((client.create.mock.calls[1][0] as { action?: string }).action).toBe('D');
   });
+
+  it('omits the entity when no resourceId is given', async () => {
+    const client = clientStub();
+    await writeAuditEvent(client, { action: 'create', resourceType: 'Bundle' });
+    const record = client.create.mock.calls[0][0] as { entity?: unknown[] };
+    expect(record.entity).toEqual([]);
+  });
+
+  it('propagates the error when the underlying create fails (does not swallow it)', async () => {
+    const create = vi.fn().mockRejectedValue(new Error('boom'));
+    const client = { create } as unknown as FhirClient;
+    await expect(
+      writeAuditEvent(client, { action: 'update', resourceType: 'Location', resourceId: 'l1' }),
+    ).rejects.toThrow('boom');
+  });
 });
