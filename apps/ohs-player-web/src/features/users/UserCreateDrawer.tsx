@@ -9,14 +9,15 @@ import {
   RiUserLine,
 } from '@remixicon/react';
 import {
+  commitBundle,
   FhirError,
   formatOperationOutcomeMessage,
   useCustomEndpoint,
   useFhirClient,
   useSearch,
   useTranslation,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import { buildNewUserBundle, buildNewUserPayload, type NewUserFields } from '../sdc/resourceFromAnswers';
@@ -55,6 +56,7 @@ export function UserCreateDrawer({
 }: Readonly<{ onClose: () => void; onSuccess: () => void }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const { post } = useCustomEndpoint('users');
 
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
@@ -163,10 +165,10 @@ export function UserCreateDrawer({
             .map((cid) => careTeamById.get(cid))
             .filter((r): r is Record<string, unknown> => Boolean(r));
           const bundle = buildNewUserBundle(created, fields, selectedCareTeams);
-          if (bundle.entry.length > 0) await client.transaction(bundle);
+          if (bundle.entry.length > 0) await commitBundle(client, bundle.entry);
         }
         const kcId = (created.identifier as { value?: string }[] | undefined)?.find((i) => i.value)?.value;
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: 'create',
           resourceType: 'Practitioner',
           resourceId: createdId || undefined,

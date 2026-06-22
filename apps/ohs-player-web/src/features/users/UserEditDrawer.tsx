@@ -8,6 +8,7 @@ import {
   RiUserLine,
 } from '@remixicon/react';
 import {
+  commitBundle,
   FhirError,
   formatOperationOutcomeMessage,
   useCustomEndpoint,
@@ -15,8 +16,8 @@ import {
   useResource,
   useSearch,
   useTranslation,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import {
@@ -70,6 +71,7 @@ export function UserEditDrawer({
 }: Readonly<{ id: string; onClose: () => void; onSuccess: () => void }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const { put } = useCustomEndpoint('users');
 
   const read = useResource('Practitioner', id);
@@ -217,8 +219,8 @@ export function UserEditDrawer({
         await put.mutateAsync({ id, body: buildNewUserPayload(fields, originalUsername) });
         // FHIR handles only what the gateway doesn't: PractitionerRoles + CareTeam membership.
         const bundle = buildUserEditBundle(id, fields, { existingRoleIds, careTeamAdds, careTeamRemoves });
-        if (bundle.entry.length > 0) await client.transaction(bundle);
-        await writeAuditEvent(client, { action: 'update', resourceType: 'Practitioner', resourceId: id });
+        if (bundle.entry.length > 0) await commitBundle(client, bundle.entry);
+        await writeAudit({ action: 'update', resourceType: 'Practitioner', resourceId: id });
         onSuccess();
       } catch (err) {
         setError(toErrorMessage(err));

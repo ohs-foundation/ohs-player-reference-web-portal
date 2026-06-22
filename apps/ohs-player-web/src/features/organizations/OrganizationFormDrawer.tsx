@@ -1,11 +1,16 @@
 import { type FormEvent, useState } from 'react';
 import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
 import {
+  bundleEntry,
+  commitBundle,
+  committedId,
+  newUrnUuid,
   useFhirClient,
   useRefreshResources,
   useTranslation,
-  writeAuditEvent,
+  type TransactionBundleEntry,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import {
   type OrgFormFields,
@@ -19,8 +24,6 @@ import type { Option } from '../users/userFormOptions';
 import type { ManagedLocation, OrgRow } from './OrganizationDetailsDrawer';
 
 const FORM_ID = 'organization-form';
-// RFC 4122 UUID URN — the bundle-local ref for the org being created (one org per transaction).
-const ORG_FULL_URL = 'urn:uuid:7d9e9a5e-9a22-4d5e-8a9f-6a83f6b5f5d9';
 
 function emailOf(org: OrgRow | undefined): string {
   return org?.telecom?.find((tc) => tc.system === 'email')?.value ?? '';
@@ -47,6 +50,7 @@ export function OrganizationFormDrawer({
 }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const refresh = useRefreshResources();
   const editing = Boolean(org?.id);
 
@@ -65,17 +69,19 @@ export function OrganizationFormDrawer({
 
   const locId = (ref: string): string => ref.replace(/^Location\//, '');
 
-  type Entry = { fullUrl?: string; resource: Record<string, unknown>; request: { method: string; url: string } };
-
   // PATCH entries that set/clear each to-link/to-unlink Location's managingOrganization — no read of the
   // full resource, so no clobber window. `orgRef` is `urn:uuid:` (create) or `Organization/{id}` (edit).
-  const locationEntries = (orgRef: string): { entries: Entry[]; linked: string[]; unlinked: string[] } => {
+  const locationEntries = (
+    orgRef: string,
+  ): { entries: TransactionBundleEntry[]; linked: string[]; unlinked: string[] } => {
     const linked = locationIds.filter((ref) => !originalLocationRefs.includes(ref));
     const unlinked = originalLocationRefs.filter((ref) => !locationIds.includes(ref));
-    const entries = [...linked, ...unlinked].map((ref) => ({
-      resource: locationManagingOrgPatch(linked.includes(ref) ? orgRef : null),
-      request: { method: 'PATCH', url: `Location/${locId(ref)}` },
-    }));
+    const entries = [...linked, ...unlinked].map((ref) =>
+      bundleEntry(
+        { method: 'PATCH', url: `Location/${locId(ref)}` },
+        locationManagingOrgPatch(linked.includes(ref) ? orgRef : null),
+      ),
+    );
     return { entries, linked, unlinked };
   };
 
@@ -84,19 +90,19 @@ export function OrganizationFormDrawer({
   const commit = async (
     fields: OrgFormFields,
   ): Promise<{ id: string; linked: string[]; unlinked: string[] }> => {
-    const orgRef = editing && org?.id ? `Organization/${org.id}` : ORG_FULL_URL;
-    const orgEntry: Entry =
+    // On create the org has no id yet, so a urn:uuid: placeholder lets the Location PATCHes reference it
+    // within the same Bundle; the server resolves it on commit.
+    const orgRef = editing && org?.id ? `Organization/${org.id}` : newUrnUuid();
+    const orgEntry: TransactionBundleEntry =
       editing && org?.id
-        ? { resource: organizationFromForm(fields, org), request: { method: 'PUT', url: `Organization/${org.id}` } }
-        : { fullUrl: orgRef, resource: organizationFromForm(fields), request: { method: 'POST', url: 'Organization' } };
+        ? bundleEntry({ method: 'PUT', url: `Organization/${org.id}` }, organizationFromForm(fields, org))
+        : bundleEntry({ method: 'POST', url: 'Organization' }, organizationFromForm(fields), orgRef);
 
     const { entries, linked, unlinked } = locationEntries(orgRef);
-    const bundle = { resourceType: 'Bundle', type: 'transaction', entry: [orgEntry, ...entries] };
-    const result = (await client.transaction(bundle)) as { entry?: { response?: { location?: string } }[] };
+    const result = await commitBundle(client, [orgEntry, ...entries]);
 
     if (editing && org?.id) return { id: org.id, linked, unlinked };
-    const location = result.entry?.[0]?.response?.location ?? '';
-    const id = /Organization\/([^/]+)/.exec(location)?.[1];
+    const id = committedId(result, 0);
     if (!id) throw new Error('Create did not return an id');
     return { id, linked, unlinked };
   };
@@ -113,16 +119,16 @@ export function OrganizationFormDrawer({
       try {
         const { id, linked, unlinked } = await commit(fields);
         const orgRef = `Organization/${id}`;
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: editing ? 'update' : 'create',
           resourceType: 'Organization',
           resourceId: id,
         });
         for (const ref of linked) {
-          await writeAuditEvent(client, { action: 'update', resourceType: 'Location', resourceId: locId(ref), description: `Linked to ${orgRef}` });
+          await writeAudit({ action: 'update', resourceType: 'Location', resourceId: locId(ref), description: `Linked to ${orgRef}` });
         }
         for (const ref of unlinked) {
-          await writeAuditEvent(client, { action: 'update', resourceType: 'Location', resourceId: locId(ref), description: `Unlinked from ${orgRef}` });
+          await writeAudit({ action: 'update', resourceType: 'Location', resourceId: locId(ref), description: `Unlinked from ${orgRef}` });
         }
         await refresh(['Organization', 'Location']);
         onSuccess();

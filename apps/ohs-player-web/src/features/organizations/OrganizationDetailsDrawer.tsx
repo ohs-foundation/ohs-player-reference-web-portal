@@ -3,12 +3,11 @@ import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
 import {
   OhsDialog,
   PermissionGuard,
-  useFhirClient,
   useStatusBar,
   useTranslation,
   useUpdateResource,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 import { toErrorMessage } from '../sdc/toErrorMessage';
@@ -56,7 +55,7 @@ export function OrganizationDetailsDrawer({
   onChanged: () => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
-  const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const status = useStatusBar();
   const update = useUpdateResource('Organization');
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -74,7 +73,7 @@ export function OrganizationDetailsDrawer({
         const body: Record<string, unknown> = { ...org, resourceType: 'Organization', active: false };
         delete body.managedLocations;
         await update.mutateAsync({ id, body });
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: 'update',
           resourceType: 'Organization',
           resourceId: id,

@@ -10,6 +10,7 @@ import {
   type RemixiconComponentType,
 } from '@remixicon/react';
 import {
+  commitBundle,
   OhsDialog,
   PermissionGuard,
   useFhirClient,
@@ -17,8 +18,8 @@ import {
   useSearch,
   useStatusBar,
   useTranslation,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Avatar, Button, Drawer, IconButton, Spinner, StatusBadge } from '../../components/ui';
 import { buildDeactivateBundle, NATIONAL_ID_IDENTIFIER_SYSTEM } from '../sdc/resourceFromAnswers';
 
@@ -77,6 +78,7 @@ export function UserDetailsDrawer({
 }: Readonly<{ id: string; onClose: () => void; onEdit: () => void; onDeleted: () => void }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const status = useStatusBar();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
@@ -163,8 +165,8 @@ export function UserDetailsDrawer({
           careTeams,
           new Date().toISOString(),
         );
-        await client.transaction(bundle);
-        await writeAuditEvent(client, {
+        await commitBundle(client, bundle.entry);
+        await writeAudit({
           action: 'update',
           resourceType: 'Practitioner',
           resourceId: id,

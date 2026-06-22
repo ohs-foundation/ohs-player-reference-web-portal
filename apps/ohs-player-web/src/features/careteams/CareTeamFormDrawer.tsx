@@ -4,11 +4,10 @@ import {
   FhirError,
   formatOperationOutcomeMessage,
   useCreateResource,
-  useFhirClient,
   useTranslation,
   useUpdateResource,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { careTeamFromForm } from '../sdc/resourceFromAnswers';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect, StackedTextArea } from '../users/userFormControls';
@@ -44,7 +43,7 @@ export function CareTeamFormDrawer({
   onSuccess: () => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
-  const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const create = useCreateResource('CareTeam');
   const update = useUpdateResource('CareTeam');
   const editing = Boolean(team?.id);
@@ -80,7 +79,7 @@ export function CareTeamFormDrawer({
           resourceId = ((await create.mutateAsync(body)) as { id?: string }).id;
           if (!resourceId) throw new Error('Create did not return an id');
         }
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: editing ? 'update' : 'create',
           resourceType: 'CareTeam',
           resourceId,
