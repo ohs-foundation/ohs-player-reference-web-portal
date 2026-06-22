@@ -14,6 +14,7 @@ import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
 import { StackedSelect } from './userFormControls';
 import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
+import { useDebounced } from '../search/useGlobalSearch';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 
@@ -111,8 +112,16 @@ export function UsersPage() {
     setRoleFilter('');
   };
 
-  // Name search is client-side (below) so typing never refires the query — keeps the table from flickering.
-  const search = useSearch('Practitioner', { _count: '500' });
+  // Server-side name search (debounced so each keystroke doesn't refire the query): `name:contains`
+  // matches given/family on the server, removing the client-side fetch cap. Status/role still filter
+  // client-side on the returned set (role derives from the separate PractitionerRole search).
+  const debouncedQ = useDebounced(q.trim(), 300);
+  const searchParams = useMemo<Record<string, string>>(() => {
+    const params: Record<string, string> = { _count: '500' };
+    if (debouncedQ) params['name:contains'] = debouncedQ;
+    return params;
+  }, [debouncedQ]);
+  const search = useSearch('Practitioner', searchParams);
   const roleSearch = useSearch('PractitionerRole', { _count: '500' });
   const orgSearch = useSearch('Organization', { _count: '500' });
 
@@ -153,14 +162,11 @@ export function UsersPage() {
     return sorted.map((code) => ({ value: code, label: code }));
   }, [roleMap]);
 
+  // Name matching is done server-side via `name:contains`; here we only apply the status/role filters
+  // to the returned set.
   const filteredRows = useMemo(() => {
-    const term = q.trim().toLowerCase();
     return rawRows.filter((p) => {
       if (!p.id) return false;
-      if (term) {
-        const haystack = `${fullName(p)} ${identifierOf(p)} ${emailOf(p)}`.toLowerCase();
-        if (!haystack.includes(term)) return false;
-      }
       if (statusFilter === 'active' && p.active === false) return false;
       if (statusFilter === 'inactive' && p.active !== false) return false;
       if (roleFilter) {
@@ -169,7 +175,7 @@ export function UsersPage() {
       }
       return true;
     });
-  }, [rawRows, q, statusFilter, roleFilter, roleMap]);
+  }, [rawRows, statusFilter, roleFilter, roleMap]);
 
   let searchError: string | null = null;
   if (search.error) {

@@ -9,10 +9,14 @@ const mockPost = vi.fn();
 const mockPut = vi.fn();
 const mockCustomGet = vi.fn();
 const mockCreateResource = vi.fn();
+const mockUseSearch = vi.fn();
 // Stable client reference (the real useFhirClient is useMemo'd) so effects with a [client] dep run once.
 const mockFhirClient = { transaction: mockTransaction, baseUrl: '', customGet: mockCustomGet };
 
 const searchBundles: Record<string, { entry: { resource: Record<string, unknown> }[] }> = {
+  Practitioner: {
+    entry: [{ resource: { resourceType: 'Practitioner', id: 'p1', active: true, name: [{ family: 'Smith', given: ['Jane'] }] } }],
+  },
   Organization: { entry: [{ resource: { resourceType: 'Organization', id: 'o1', name: 'Org One' } }] },
   Location: { entry: [{ resource: { resourceType: 'Location', id: 'l1', name: 'Loc One' } }] },
 };
@@ -29,6 +33,9 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
       formatNumber: (v: unknown) => String(v),
     }),
     useFhirClient: () => mockFhirClient,
+    useAuth: () => ({ status: 'authenticated', user: { preferred_username: 'tester' } }),
+    useStatusBar: () => ({ notify: vi.fn() }),
+    PermissionGuard: ({ children }: { children: React.ReactNode }) => children,
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     useCustomEndpoint: () => ({
       post: { mutateAsync: mockPost, isPending: false },
@@ -37,12 +44,15 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     }),
     useCreateResource: () => ({ mutateAsync: mockCreateResource, isPending: false }),
     useResource: () => ({ data: mockPractitioner, isLoading: false, error: null }),
-    useSearch: (resourceType: string) => ({
-      data: searchBundles[resourceType] ?? { entry: [] },
-      isLoading: false,
-      error: null,
-      refetch: vi.fn(),
-    }),
+    useSearch: (resourceType: string, params?: Record<string, string>) => {
+      mockUseSearch(resourceType, params);
+      return {
+        data: searchBundles[resourceType] ?? { entry: [] },
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      };
+    },
   };
 });
 
@@ -57,6 +67,7 @@ vi.mock('../../config/env', () => ({
 
 const { UserCreateDrawer } = await import('./UserCreateDrawer');
 const { UserEditDrawer } = await import('./UserEditDrawer');
+const { UsersPage } = await import('./UsersPage');
 
 const mockPractitioner = {
   resourceType: 'Practitioner',
@@ -200,5 +211,30 @@ describe('UserCreateDrawer', () => {
     expect(urls).toContain('POST PractitionerRole');
     expect(urls.some((u) => u.startsWith('PUT Practitioner/'))).toBe(false);
     expect(bundle.entry?.[0].resource?.organization?.reference).toBe('Organization/o1');
+  });
+});
+
+describe('UsersPage search', () => {
+  beforeEach(() => mockUseSearch.mockClear());
+
+  it('queries Practitioner with name:contains (server-side) when a term is typed', async () => {
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+    // initial load: Practitioner search with no name param
+    const initial = mockUseSearch.mock.calls.find((c) => c[0] === 'Practitioner');
+    expect(initial?.[1]).not.toHaveProperty('name:contains');
+
+    fireEvent.change(screen.getByPlaceholderText('searchByNameOrId'), { target: { value: 'jane' } });
+
+    // debounced (300ms) → eventually a Practitioner search carries name:contains
+    await waitFor(() => {
+      const withTerm = mockUseSearch.mock.calls.find(
+        (c) => c[0] === 'Practitioner' && (c[1] as Record<string, string> | undefined)?.['name:contains'] === 'jane',
+      );
+      expect(withTerm).toBeDefined();
+    });
   });
 });
