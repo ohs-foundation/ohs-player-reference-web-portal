@@ -70,8 +70,14 @@ export function committedReference(
   response: TransactionResponseBundle,
   index = 0,
 ): string | undefined {
+  // `location` may be relative (`Organization/1010/_history/1`) or absolute
+  // (`https://host/fhir/Organization/1010/_history/1`), so match the `{Type}/{id}` pair anywhere —
+  // the one immediately before `/_history` when versioned, else the last pair. R4 resource types are
+  // capitalised, which avoids matching URL host/path segments.
   const location = response.entry?.[index]?.response?.location ?? '';
-  return /^([A-Za-z]+\/[^/]+)/.exec(location)?.[1];
+  const versioned = /([A-Z][A-Za-z]+\/[^/]+)\/_history\//.exec(location)?.[1];
+  if (versioned) return versioned;
+  return /([A-Z][A-Za-z]+\/[^/]+)\/?$/.exec(location)?.[1];
 }
 
 /** The server-assigned id (just the id, not the typed reference) for the entry at `index`. */

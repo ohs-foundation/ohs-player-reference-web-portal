@@ -113,8 +113,10 @@ export function UsersPage() {
   };
 
   // Server-side name search (debounced so each keystroke doesn't refire the query): `name:contains`
-  // matches given/family on the server, removing the client-side fetch cap. Status/role still filter
-  // client-side on the returned set (role derives from the separate PractitionerRole search).
+  // matches given/family on the server, so the search runs against the full dataset rather than only
+  // the first page fetched client-side. `_count: '500'` still caps each response page (no pagination
+  // yet), but with server filtering you only reach it if 500+ users match the term. Status/role still
+  // filter client-side on the returned set (role derives from the separate PractitionerRole search).
   const debouncedQ = useDebounced(q.trim(), 300);
   const searchParams = useMemo<Record<string, string>>(() => {
     const params: Record<string, string> = { _count: '500' };

@@ -77,4 +77,23 @@ describe('committedReference / committedId', () => {
     expect(committedReference(response, 9)).toBeUndefined();
     expect(committedReference({ resourceType: 'Bundle', type: 't' })).toBeUndefined();
   });
+
+  it('parses an absolute location URL (server may return a full URL)', () => {
+    const abs = {
+      resourceType: 'Bundle' as const,
+      type: 'transaction-response',
+      entry: [{ response: { location: 'https://hapi.example.org/fhir/Organization/1010/_history/3' } }],
+    };
+    expect(committedReference(abs)).toBe('Organization/1010');
+    expect(committedId(abs)).toBe('1010');
+  });
+
+  it('parses a location without a _history version segment', () => {
+    const noVer = {
+      resourceType: 'Bundle' as const,
+      type: 'transaction-response',
+      entry: [{ response: { location: 'https://host/fhir/Practitioner/p9' } }],
+    };
+    expect(committedReference(noVer)).toBe('Practitioner/p9');
+  });
 });
