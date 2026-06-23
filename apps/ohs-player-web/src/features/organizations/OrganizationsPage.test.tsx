@@ -29,6 +29,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     ...actual,
     useTranslation: () => ({ t: (key: string, vars?: Record<string, unknown>) => (vars ? `${key} ${JSON.stringify(vars)}` : key), dir: 'ltr', locale: 'en' }),
     useFhirClient: () => mockFhirClient,
+    useAuth: () => ({ status: 'authenticated', user: { preferred_username: 'tester' } }),
     useRefreshResources: () => mockRefresh,
     useStatusBar: () => ({ notify: mockNotify }),
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,

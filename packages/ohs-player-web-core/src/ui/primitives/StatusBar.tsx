@@ -74,7 +74,7 @@ export function StatusBarProvider({ children }: { children: ReactNode }): React.
             key={e.id}
             className="ohs-toast-root"
             data-tone={e.tone}
-            duration={e.tone === 'error' ? Infinity : 3500}
+            duration={e.tone === 'error' ? 8000 : 3500}
             onOpenChange={(open) => {
               if (!open) setEvents((prev) => prev.filter((x) => x.id !== e.id));
             }}
@@ -98,6 +98,12 @@ export function StatusBarProvider({ children }: { children: ReactNode }): React.
                 </button>
               </Toast.Action>
             ) : null}
+            <Toast.Close className="ohs-toast-close" aria-label={t('close')}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+              </svg>
+            </Toast.Close>
           </Toast.Root>
         ))}
         <Toast.Viewport className="ohs-toast-viewport" />

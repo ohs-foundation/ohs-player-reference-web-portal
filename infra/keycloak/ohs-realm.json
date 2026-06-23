@@ -41,6 +41,18 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "ohs-backend",
+      "name": "OHS Backend Service Account",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "ohs-backend-dev-secret",
+      "protocol": "openid-connect"
     }
   ],
   "users": [
@@ -59,6 +71,14 @@
       "email": "manager@example.com",
       "credentials": [{ "type": "password", "value": "manager", "temporary": false }],
       "realmRoles": ["care-team-manager"]
+    },
+    {
+      "username": "service-account-ohs-backend",
+      "enabled": true,
+      "serviceAccountClientId": "ohs-backend",
+      "clientRoles": {
+        "realm-management": ["manage-users", "view-users", "manage-realm", "view-realm"]
+      }
     }
   ]
 }

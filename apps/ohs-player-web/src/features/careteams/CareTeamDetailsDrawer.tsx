@@ -3,12 +3,11 @@ import { RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
 import {
   OhsDialog,
   PermissionGuard,
-  useFhirClient,
   useStatusBar,
   useTranslation,
   useUpdateResource,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Avatar, Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 
@@ -55,7 +54,7 @@ export function CareTeamDetailsDrawer({
   onChanged: () => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
-  const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const status = useStatusBar();
   const update = useUpdateResource('CareTeam');
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -78,7 +77,7 @@ export function CareTeamDetailsDrawer({
       setSaving(true);
       try {
         await update.mutateAsync({ id, body: { ...team, resourceType: 'CareTeam', status: 'inactive' } });
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: 'update',
           resourceType: 'CareTeam',
           resourceId: id,

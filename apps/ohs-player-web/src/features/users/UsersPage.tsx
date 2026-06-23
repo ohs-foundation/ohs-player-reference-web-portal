@@ -4,6 +4,7 @@ import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
   PermissionGuard,
+  useRefreshResources,
   useSearch,
   useStatusBar,
   useTranslation,
@@ -14,6 +15,7 @@ import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
 import { StackedSelect } from './userFormControls';
 import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
+import { useDebounced } from '../search/useGlobalSearch';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 
@@ -92,6 +94,7 @@ function buildOrgNameMap(
 export function UsersPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
+  const refresh = useRefreshResources();
   const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [roleFilter, setRoleFilter] = useState<string>('');
@@ -111,8 +114,18 @@ export function UsersPage() {
     setRoleFilter('');
   };
 
-  // Name search is client-side (below) so typing never refires the query — keeps the table from flickering.
-  const search = useSearch('Practitioner', { _count: '500' });
+  // Server-side name search (debounced so each keystroke doesn't refire the query): `name:contains`
+  // matches given/family on the server, so the search runs against the full dataset rather than only
+  // the first page fetched client-side. `_count: '500'` still caps each response page (no pagination
+  // yet), but with server filtering you only reach it if 500+ users match the term. Status/role still
+  // filter client-side on the returned set (role derives from the separate PractitionerRole search).
+  const debouncedQ = useDebounced(q.trim(), 300);
+  const searchParams = useMemo<Record<string, string>>(() => {
+    const params: Record<string, string> = { _count: '500' };
+    if (debouncedQ) params['name:contains'] = debouncedQ;
+    return params;
+  }, [debouncedQ]);
+  const search = useSearch('Practitioner', searchParams);
   const roleSearch = useSearch('PractitionerRole', { _count: '500' });
   const orgSearch = useSearch('Organization', { _count: '500' });
 
@@ -153,14 +166,11 @@ export function UsersPage() {
     return sorted.map((code) => ({ value: code, label: code }));
   }, [roleMap]);
 
+  // Name matching is done server-side via `name:contains`; here we only apply the status/role filters
+  // to the returned set.
   const filteredRows = useMemo(() => {
-    const term = q.trim().toLowerCase();
     return rawRows.filter((p) => {
       if (!p.id) return false;
-      if (term) {
-        const haystack = `${fullName(p)} ${identifierOf(p)} ${emailOf(p)}`.toLowerCase();
-        if (!haystack.includes(term)) return false;
-      }
       if (statusFilter === 'active' && p.active === false) return false;
       if (statusFilter === 'inactive' && p.active !== false) return false;
       if (roleFilter) {
@@ -169,7 +179,7 @@ export function UsersPage() {
       }
       return true;
     });
-  }, [rawRows, q, statusFilter, roleFilter, roleMap]);
+  }, [rawRows, statusFilter, roleFilter, roleMap]);
 
   let searchError: string | null = null;
   if (search.error) {
@@ -178,6 +188,12 @@ export function UsersPage() {
 
   const openCreate = (): void => {
     setCreateOpen(true);
+  };
+
+  // Refresh the lists after a mutation; useRefreshResources retries shortly after to catch HAPI's
+  // search-index lag (a just-created Practitioner may not be indexed by the immediate refetch).
+  const refetchUsers = (): void => {
+    void refresh(['Practitioner', 'PractitionerRole']);
   };
 
   const isFiltering = q.trim() !== '' || statusFilter !== 'all' || roleFilter !== '';
@@ -218,8 +234,7 @@ export function UsersPage() {
           onSuccess={() => {
             setCreateOpen(false);
             status.notify({ tone: 'success', title: t('userCreated') });
-            void search.refetch();
-            void roleSearch.refetch();
+            refetchUsers();
           }}
         />
       ) : null}
@@ -426,8 +441,7 @@ export function UsersPage() {
           onDeleted={() => {
             closeViewer();
             status.notify({ tone: 'success', title: t('userDeactivated') });
-            void search.refetch();
-            void roleSearch.refetch();
+            refetchUsers();
           }}
         />
       ) : null}
@@ -439,8 +453,7 @@ export function UsersPage() {
           onSuccess={() => {
             closeViewer();
             status.notify({ tone: 'success', title: t('saved') });
-            void search.refetch();
-            void roleSearch.refetch();
+            refetchUsers();
           }}
         />
       ) : null}

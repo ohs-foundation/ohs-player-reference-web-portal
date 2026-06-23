@@ -20,7 +20,7 @@ Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`,
 
 Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`.
 
-Primitive props (subset): `ButtonProps`, `ButtonSize`, `ButtonVariant`, `CardHeaderProps`, `CardProps`, `DataTableColumn`, `DataTableProps`, `EmptyStateProps`, `ErrorStateProps`, `FieldRootProps`, `IconButtonProps`, `InlineProps`, `PageHeaderProps`, `PageProps`, `SelectFieldOption`, `SelectFieldProps`, `StackProps`, `StatusBadgeProps`, `StatusTone`, `TextAreaFieldProps`, `TextFieldProps`.
+UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, etc. — are **app**-level, in `apps/ohs-player-web/src/components/ui/`, not library exports.)
 
 ---
 
@@ -119,6 +119,22 @@ Methods:
 
 ---
 
+## Bundle transactions
+
+Helpers for building and committing FHIR transaction Bundles. Single-resource saves (one entry) and multi-resource commits (with `urn:uuid:` cross-references) both go through `commitBundle`.
+
+| Export | Description |
+| --- | --- |
+| `newUrnUuid()` | A `urn:uuid:` placeholder (`crypto.randomUUID`) for a not-yet-created resource, referenceable within the same Bundle. |
+| `bundleEntry(request, resource?, fullUrl?)` | Builds one `TransactionBundleEntry`; pass `fullUrl` (from `newUrnUuid`) to cross-reference before the server assigns an id. |
+| `commitBundle(client, entries)` | Wraps `entries` in a `type: 'transaction'` Bundle and submits via `client.transaction` (all-or-nothing); returns the `TransactionResponseBundle`. |
+| `committedReference(response, index?)` | `{Type}/{id}` for the entry at `index`, parsed from its `response.location`. |
+| `committedId(response, index?)` | The bare server-assigned id for the entry at `index`. |
+
+Types: `BundleEntryMethod`, `TransactionBundleEntry`, `TransactionResponseBundle`.
+
+---
+
 ## Errors
 
 | Export | Description |
@@ -154,23 +170,19 @@ Supported item types for rendering include `string`, `text`, `integer`, `decimal
 
 ---
 
-## UI primitives (token-driven + Material Web)
+## UI exports
 
-Exported React components and helpers from `./ui/primitives`:
-
-`Button`, `Card`, `CardHeader`, `DataTable`, `EmptyState`, `ErrorState`, `Field`, `IconButton`, `Inline`, `Page`, `PageHeader`, `SelectField`, `Spinner`, `Stack`, `StatusBadge`, `StatusBarProvider`, `TextAreaField`, `TextField`, `useStatusBar`.
-
-See Material bridge notes in [ARCHITECTURE.md](./ARCHITECTURE.md).
-
----
-
-## Radix & Material wrappers
+The library ships **behavior + Radix wrappers only** — it does **not** export presentational primitives (`Button`, `Card`, `TextField`, `DataTable`, etc.); those live in the app (`apps/ohs-player-web/src/components/ui/`). See **UI primitives & theming** in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 | Export | Description |
 | --- | --- |
-| `OhsDialog`, `OhsToast`, `OhsTooltip` | Radix-based overlays (see source under `ui/radix`). |
-| `OhsDropdownMenu` | Material `md-menu` wrapper. |
-| `OhsTabs` | Material tabs (`OhsM3Tabs` alias). |
+| `OhsDialog`, `OhsToast`, `OhsTooltip` | Radix-based overlays (`ui/radix`). |
+| `OhsDropdownMenu` | Radix dropdown-menu compound API. |
+| `OhsTabs` | Radix tabs compound API. |
+| `StatusBarProvider`, `useStatusBar` | Status bar context + consumer (`ui/primitives/StatusBar`). |
+| `formatOperationOutcomeMessage` | Human-readable message from a FHIR `OperationOutcome`. |
+
+Types: `OhsDialogProps`, `StatusTone`.
 
 ---
 

@@ -6,17 +6,16 @@ import {
   PermissionGuard,
   QuestionnaireFields,
   useCreateResource,
-  useFhirClient,
   useQuestionnaireFormState,
   useResource,
   useSearch,
   useTranslation,
   useUpdateResource,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
 import { Button, Card, ErrorState, Inline, LinearProgress, Page, PageHeader, Spinner, Stack } from '../../components/ui';
 import { Link, useNavigate } from 'react-router-dom';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import {
   LOCATION_LINK_IDS,
   locationBodyFromAnswers,
@@ -159,7 +158,7 @@ function LocationCreateForm({
 
   const createLoc = useCreateResource('Location');
   const createQr = useCreateResource('QuestionnaireResponse');
-  const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const [validationError, setValidationError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -177,7 +176,7 @@ function LocationCreateForm({
       try {
         const body = locationBodyFromAnswers(answers);
         await createLoc.mutateAsync(body);
-        await writeAuditEvent(client, { action: 'create', resourceType: 'Location' });
+        await writeAudit({ action: 'create', resourceType: 'Location' });
 
         const qr = buildQuestionnaireResponse({
           questionnaire,
@@ -185,7 +184,7 @@ function LocationCreateForm({
           status: 'completed',
         });
         await createQr.mutateAsync(qr);
-        await writeAuditEvent(client, { action: 'create', resourceType: 'QuestionnaireResponse' });
+        await writeAudit({ action: 'create', resourceType: 'QuestionnaireResponse' });
         onSuccess();
       } catch (x) {
         setSubmitError(x instanceof Error ? x.message : String(x));
@@ -292,7 +291,7 @@ export function LocationsPage() {
 export function LocationEditPage({ id }: { id: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const all = useSearch('Location', { _count: '500' });
   const updateLoc = useUpdateResource('Location');
   const createQr = useCreateResource('QuestionnaireResponse');
@@ -422,7 +421,7 @@ export function LocationEditPage({ id }: { id: string }) {
           id,
           body: { ...(current ?? {}), ...body },
         });
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: 'update',
           resourceType: 'Location',
           resourceId: id,
@@ -430,7 +429,7 @@ export function LocationEditPage({ id }: { id: string }) {
 
         const qr = buildCapturedQuestionnaireResponse();
         await createQr.mutateAsync(qr);
-        await writeAuditEvent(client, { action: 'create', resourceType: 'QuestionnaireResponse' });
+        await writeAudit({ action: 'create', resourceType: 'QuestionnaireResponse' });
 
         void navigate('/locations');
       } catch (x) {

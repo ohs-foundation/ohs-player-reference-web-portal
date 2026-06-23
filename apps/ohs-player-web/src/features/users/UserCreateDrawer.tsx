@@ -1,27 +1,26 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import {
   RiBriefcaseLine,
   RiBuildingLine,
   RiCloseLine,
-  RiGroupLine,
   RiMapPinLine,
   RiTeamLine,
   RiUserLine,
 } from '@remixicon/react';
 import {
-  FhirError,
-  formatOperationOutcomeMessage,
+  commitBundle,
   useCustomEndpoint,
   useFhirClient,
   useSearch,
+  useStatusBar,
   useTranslation,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import { buildNewUserBundle, buildNewUserPayload, type NewUserFields } from '../sdc/resourceFromAnswers';
+import { userErrorMessage } from '../sdc/toErrorMessage';
 import {
-  ImageUpload,
   MultiSelect,
   RadioRow,
   Section,
@@ -36,25 +35,14 @@ interface SearchBundle {
   total?: number;
 }
 
-function toErrorMessage(error: unknown): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
-/** Map the gateway `GET /api/groups` payload (IamGroupRepresentation[]) to multiselect options. */
-function toGroupOptions(data: unknown): Option[] {
-  return (Array.isArray(data) ? (data as { id?: string; name?: string; path?: string }[]) : [])
-    .filter((g) => typeof g.id === 'string')
-    .map((g) => ({ value: g.id as string, label: g.name ?? g.path ?? (g.id as string) }));
-}
-
 export function UserCreateDrawer({
   onClose,
   onSuccess,
 }: Readonly<{ onClose: () => void; onSuccess: () => void }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const writeAudit = useWriteAudit();
+  const status = useStatusBar();
   const { post } = useCustomEndpoint('users');
 
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
@@ -94,23 +82,9 @@ export function UserCreateDrawer({
   const [orgs, setOrgs] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [careTeamIds, setCareTeamIds] = useState<string[]>([]);
-  const [groupIds, setGroupIds] = useState<string[]>([]);
-  const [groupOptions, setGroupOptions] = useState<Option[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<UserFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
-
-  // IAM groups come from the gateway (not FHIR); load once. Failure is non-fatal — groups stay empty.
-  useEffect(() => {
-    let active = true;
-    void client
-      .customGet('groups')
-      .then((data) => active && setGroupOptions(toGroupOptions(data)))
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [client]);
 
   const clearError = (key: keyof UserFormErrors) =>
     setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
@@ -150,7 +124,6 @@ export function UserCreateDrawer({
       role: role ? { system: PRACTITIONER_ROLE_SYSTEM, code: role } : null,
       organizations: orgs,
       locations,
-      groupIds,
     };
 
     void (async () => {
@@ -163,10 +136,10 @@ export function UserCreateDrawer({
             .map((cid) => careTeamById.get(cid))
             .filter((r): r is Record<string, unknown> => Boolean(r));
           const bundle = buildNewUserBundle(created, fields, selectedCareTeams);
-          if (bundle.entry.length > 0) await client.transaction(bundle);
+          if (bundle.entry.length > 0) await commitBundle(client, bundle.entry);
         }
         const kcId = (created.identifier as { value?: string }[] | undefined)?.find((i) => i.value)?.value;
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: 'create',
           resourceType: 'Practitioner',
           resourceId: createdId || undefined,
@@ -174,7 +147,10 @@ export function UserCreateDrawer({
         });
         onSuccess();
       } catch (err) {
-        setError(toErrorMessage(err));
+        const message = userErrorMessage(err, t, 'userCreateError');
+        setError(message);
+        // Toast as well — the inline banner sits at the top of a scrollable drawer and is easy to miss.
+        status.notify({ tone: 'error', title: message });
       } finally {
         setSubmitting(false);
       }
@@ -212,7 +188,6 @@ export function UserCreateDrawer({
 
         <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
           <Stack gap={5}>
-            <ImageUpload />
             <div className="ohs-detail-grid">
               <StackedInput
                 label={t('givenName')}
@@ -333,16 +308,6 @@ export function UserCreateDrawer({
             value={careTeamIds}
             onChange={setCareTeamIds}
             placeholder={careTeamOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
-          />
-        </Section>
-
-        <Section icon={RiGroupLine} title={t('sectionGroups')}>
-          <MultiSelect
-            label={t('groupsLabel')}
-            options={groupOptions}
-            value={groupIds}
-            onChange={setGroupIds}
-            placeholder={groupOptions.length > 0 ? t('selectPlaceholder') : t('groupsEmpty')}
           />
         </Section>
       </form>

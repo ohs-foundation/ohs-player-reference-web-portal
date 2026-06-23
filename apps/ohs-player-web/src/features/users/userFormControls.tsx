@@ -1,7 +1,6 @@
 import { type ReactNode, useId } from 'react';
-import { RiArrowDownSLine, RiCloseLine, RiImageAddLine, type RemixiconComponentType } from '@remixicon/react';
+import { RiArrowDownSLine, RiCloseLine, type RemixiconComponentType } from '@remixicon/react';
 import { useTranslation } from 'ohs-player-web-core';
-import { Button } from '../../components/ui';
 import type { Option } from './userFormOptions';
 
 /** Shared controls for the Add User / Edit User drawers (bespoke, token-styled per DESIGN.md). */
@@ -273,20 +272,3 @@ export function MultiSelect({
   );
 }
 
-/** Avatar upload placeholder — disabled until the backend offers image storage (ticket follow-up). */
-export function ImageUpload(): React.ReactElement {
-  const { t } = useTranslation();
-  return (
-    <div className="ohs-image-upload">
-      <span className="ohs-image-upload__placeholder">
-        <RiImageAddLine size={24} aria-hidden="true" />
-      </span>
-      <div>
-        <Button variant="outlined" size="sm" type="button" disabled>
-          {t('uploadImage')}
-        </Button>
-        <p className="ohs-image-upload__helper">{t('uploadImageHelp')}</p>
-      </div>
-    </div>
-  );
-}

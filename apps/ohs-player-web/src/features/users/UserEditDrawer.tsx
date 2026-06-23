@@ -8,15 +8,15 @@ import {
   RiUserLine,
 } from '@remixicon/react';
 import {
-  FhirError,
-  formatOperationOutcomeMessage,
+  commitBundle,
   useCustomEndpoint,
   useFhirClient,
   useResource,
   useSearch,
+  useStatusBar,
   useTranslation,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import {
@@ -26,8 +26,8 @@ import {
   type NewUserFields,
   usernameFromEmail,
 } from '../sdc/resourceFromAnswers';
+import { toErrorMessage, userErrorMessage } from '../sdc/toErrorMessage';
 import {
-  ImageUpload,
   MultiSelect,
   RadioRow,
   Section,
@@ -47,12 +47,6 @@ type PractitionerRoleRes = {
   code?: { coding?: { code?: string }[] }[];
 };
 
-function toErrorMessage(error: unknown): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
 function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
@@ -70,6 +64,8 @@ export function UserEditDrawer({
 }: Readonly<{ id: string; onClose: () => void; onSuccess: () => void }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const writeAudit = useWriteAudit();
+  const status = useStatusBar();
   const { put } = useCustomEndpoint('users');
 
   const read = useResource('Practitioner', id);
@@ -217,11 +213,13 @@ export function UserEditDrawer({
         await put.mutateAsync({ id, body: buildNewUserPayload(fields, originalUsername) });
         // FHIR handles only what the gateway doesn't: PractitionerRoles + CareTeam membership.
         const bundle = buildUserEditBundle(id, fields, { existingRoleIds, careTeamAdds, careTeamRemoves });
-        if (bundle.entry.length > 0) await client.transaction(bundle);
-        await writeAuditEvent(client, { action: 'update', resourceType: 'Practitioner', resourceId: id });
+        if (bundle.entry.length > 0) await commitBundle(client, bundle.entry);
+        await writeAudit({ action: 'update', resourceType: 'Practitioner', resourceId: id });
         onSuccess();
       } catch (err) {
-        setError(toErrorMessage(err));
+        const message = userErrorMessage(err, t, 'userSaveError');
+        setError(message);
+        status.notify({ tone: 'error', title: message });
       } finally {
         setSubmitting(false);
       }
@@ -264,7 +262,6 @@ export function UserEditDrawer({
 
           <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
             <Stack gap={5}>
-              <ImageUpload />
               <div className="ohs-detail-grid">
                 <StackedInput
                   label={t('givenName')}

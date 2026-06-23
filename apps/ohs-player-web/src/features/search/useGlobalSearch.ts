@@ -22,7 +22,7 @@ const DEBOUNCE_MS = 300;
 const PER_TYPE = 5;
 
 /** Debounce a fast-changing value so each keystroke doesn't fire a query. */
-function useDebounced(value: string, delay: number): string {
+export function useDebounced(value: string, delay: number): string {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
     const id = setTimeout(() => setDebounced(value), delay);
