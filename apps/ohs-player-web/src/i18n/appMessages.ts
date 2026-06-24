@@ -95,6 +95,7 @@ export const appMessageOverrides = {
   editUserSubtitle: 'Update the details for this user profile.',
   userConflictError: 'A user with that email already exists.',
   userCreateError: 'Could not create the user. Please try again.',
+  userCreatedAssignmentFailed: 'User created, but role/team assignment failed. Edit the user to retry.',
   userSaveError: 'Could not save the user. Please try again.',
   validationRequiredGiven: 'Given name is required.',
   validationRequiredFamily: 'Family name is required.',

@@ -38,7 +38,11 @@ interface SearchBundle {
 export function UserCreateDrawer({
   onClose,
   onSuccess,
-}: Readonly<{ onClose: () => void; onSuccess: () => void }>): React.ReactElement {
+}: Readonly<{
+  onClose: () => void;
+  /** Receives the created Practitioner (from the gateway 201) for an optimistic list insert. */
+  onSuccess: (created?: { id?: string } & Record<string, unknown>) => void;
+}>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
   const writeAudit = useWriteAudit();
@@ -129,15 +133,27 @@ export function UserCreateDrawer({
     void (async () => {
       setSubmitting(true);
       try {
+        // Phase 1 — the gateway create owns the user; its success is what "user created" means.
         const created = (await post.mutateAsync(buildNewUserPayload(fields))) as Record<string, unknown>;
         const createdId = typeof created.id === 'string' ? created.id : '';
+
+        // Phase 2 — role/CareTeam assignment is a separate FHIR transaction. The user already exists, so a
+        // failure here must not read as "create failed": warn, but still close + refresh on the create.
+        let assignmentFailed = false;
         if (createdId) {
           const selectedCareTeams = careTeamIds
             .map((cid) => careTeamById.get(cid))
             .filter((r): r is Record<string, unknown> => Boolean(r));
           const bundle = buildNewUserBundle(created, fields, selectedCareTeams);
-          if (bundle.entry.length > 0) await commitBundle(client, bundle.entry);
+          if (bundle.entry.length > 0) {
+            try {
+              await commitBundle(client, bundle.entry);
+            } catch {
+              assignmentFailed = true;
+            }
+          }
         }
+
         const kcId = (created.identifier as { value?: string }[] | undefined)?.find((i) => i.value)?.value;
         await writeAudit({
           action: 'create',
@@ -145,7 +161,9 @@ export function UserCreateDrawer({
           resourceId: createdId || undefined,
           description: kcId ? `User created via backend (Keycloak ${kcId})` : 'User created via backend',
         });
-        onSuccess();
+
+        if (assignmentFailed) status.notify({ tone: 'warning', title: t('userCreatedAssignmentFailed') });
+        onSuccess(created);
       } catch (err) {
         const message = userErrorMessage(err, t, 'userCreateError');
         setError(message);

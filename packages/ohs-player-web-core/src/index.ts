@@ -73,11 +73,13 @@ export {
   useCreateResource,
   useCustomEndpoint,
   useFhirCapabilities,
+  useOptimisticInsert,
   useRefreshResources,
   useResource,
   useSearch,
   useUpdateResource,
 } from './hooks/useFhirData';
+export type { OptimisticInsertOptions } from './hooks/useFhirData';
 
 export { formatOperationOutcomeMessage } from './ui/operationOutcome';
 export {

@@ -10,6 +10,7 @@ const mockPut = vi.fn();
 const mockCustomGet = vi.fn();
 const mockCreateResource = vi.fn();
 const mockUseSearch = vi.fn();
+const mockNotify = vi.fn();
 // Stable client reference (the real useFhirClient is useMemo'd) so effects with a [client] dep run once.
 const mockFhirClient = { transaction: mockTransaction, baseUrl: '', customGet: mockCustomGet };
 
@@ -34,8 +35,9 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     }),
     useFhirClient: () => mockFhirClient,
     useAuth: () => ({ status: 'authenticated', user: { preferred_username: 'tester' } }),
-    useStatusBar: () => ({ notify: vi.fn() }),
+    useStatusBar: () => ({ notify: mockNotify }),
     useRefreshResources: () => vi.fn().mockResolvedValue(undefined),
+    useOptimisticInsert: () => () => () => undefined,
     PermissionGuard: ({ children }: { children: React.ReactNode }) => children,
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     useCustomEndpoint: () => ({
@@ -137,6 +139,7 @@ describe('UserCreateDrawer', () => {
     mockTransaction.mockReset().mockResolvedValue({});
     mockCustomGet.mockReset().mockResolvedValue([]);
     mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
+    mockNotify.mockReset();
   });
 
   function fillDemographics() {
@@ -212,6 +215,28 @@ describe('UserCreateDrawer', () => {
     expect(urls).toContain('POST PractitionerRole');
     expect(urls.some((u) => u.startsWith('PUT Practitioner/'))).toBe(false);
     expect(bundle.entry?.[0].resource?.organization?.reference).toBe('Organization/o1');
+  });
+
+  it('treats the user as created when only the role/CareTeam follow-up fails (still closes + warns)', async () => {
+    // The gateway create (post) succeeds; the FHIR follow-up transaction rejects (e.g. staging 401/301).
+    mockTransaction.mockReset().mockRejectedValue(new Error('transaction failed'));
+    const onSuccess = vi.fn();
+    render(
+      <MemoryRouter>
+        <UserCreateDrawer onClose={vi.fn()} onSuccess={onSuccess} />
+      </MemoryRouter>,
+    );
+
+    fillDemographics();
+    fireEvent.change(screen.getByLabelText(/contextOrganization/), { target: { value: 'Organization/o1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    // The follow-up failure must NOT block create success: drawer closes + list refreshes via onSuccess.
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    // ...but the user is warned the assignment didn't land, not told the whole create failed.
+    expect(mockNotify).toHaveBeenCalledWith({ tone: 'warning', title: 'userCreatedAssignmentFailed' });
+    // The audit still records the create.
+    await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
   });
 });
 

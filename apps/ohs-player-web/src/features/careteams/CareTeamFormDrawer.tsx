@@ -40,7 +40,8 @@ export function CareTeamFormDrawer({
   practOptions: Option[];
   orgOptions: Option[];
   onClose: () => void;
-  onSuccess: () => void;
+  /** On create, receives the new resource (server id + form body) for an optimistic list insert. */
+  onSuccess: (created?: { id?: string } & Record<string, unknown>) => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
   const writeAudit = useWriteAudit();
@@ -84,7 +85,7 @@ export function CareTeamFormDrawer({
           resourceType: 'CareTeam',
           resourceId,
         });
-        onSuccess();
+        onSuccess(editing ? undefined : { ...body, id: resourceId });
       } catch (err) {
         setError(toErrorMessage(err));
       } finally {

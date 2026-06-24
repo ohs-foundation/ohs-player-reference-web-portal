@@ -4,6 +4,7 @@ import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
   PermissionGuard,
+  useOptimisticInsert,
   useRefreshResources,
   useSearch,
   useStatusBar,
@@ -95,6 +96,7 @@ export function UsersPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
   const refresh = useRefreshResources();
+  const insert = useOptimisticInsert();
   const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [roleFilter, setRoleFilter] = useState<string>('');
@@ -190,10 +192,17 @@ export function UsersPage() {
     setCreateOpen(true);
   };
 
-  // Refresh the lists after a mutation; useRefreshResources retries shortly after to catch HAPI's
-  // search-index lag (a just-created Practitioner may not be indexed by the immediate refetch).
   const refetchUsers = (): void => {
     void refresh(['Practitioner', 'PractitionerRole']);
+  };
+
+  // Show the created user immediately; the optimistic insert reconciles (incl. PractitionerRole-derived
+  // columns) in the background without the refetch wiping the row. Plain refresh only if no resource came back.
+  const handleUserCreated = (created?: { id?: string } & Record<string, unknown>): void => {
+    setCreateOpen(false);
+    status.notify({ tone: 'success', title: t('userCreated') });
+    if (created) insert('Practitioner', created, { also: ['PractitionerRole'] });
+    else refetchUsers();
   };
 
   const isFiltering = q.trim() !== '' || statusFilter !== 'all' || roleFilter !== '';
@@ -229,14 +238,7 @@ export function UsersPage() {
       {search.isLoading ? <LinearProgress /> : null}
 
       {createOpen ? (
-        <UserCreateDrawer
-          onClose={() => setCreateOpen(false)}
-          onSuccess={() => {
-            setCreateOpen(false);
-            status.notify({ tone: 'success', title: t('userCreated') });
-            refetchUsers();
-          }}
-        />
+        <UserCreateDrawer onClose={() => setCreateOpen(false)} onSuccess={handleUserCreated} />
       ) : null}
 
       {noUsers ? (

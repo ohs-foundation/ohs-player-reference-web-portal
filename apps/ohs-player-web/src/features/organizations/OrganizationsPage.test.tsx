@@ -31,6 +31,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useFhirClient: () => mockFhirClient,
     useAuth: () => ({ status: 'authenticated', user: { preferred_username: 'tester' } }),
     useRefreshResources: () => mockRefresh,
+    useOptimisticInsert: () => () => () => undefined,
     useStatusBar: () => ({ notify: mockNotify }),
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     useUpdateResource: () => ({ mutateAsync: vi.fn() }),

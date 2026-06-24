@@ -6,6 +6,7 @@ import {
   committedId,
   newUrnUuid,
   useFhirClient,
+  useOptimisticInsert,
   useRefreshResources,
   useTranslation,
   type TransactionBundleEntry,
@@ -52,6 +53,7 @@ export function OrganizationFormDrawer({
   const client = useFhirClient();
   const writeAudit = useWriteAudit();
   const refresh = useRefreshResources();
+  const insert = useOptimisticInsert();
   const editing = Boolean(org?.id);
 
   // The MultiSelect stores `Location/{id}` refs; the org's currently-managed locations seed the edit form.
@@ -130,7 +132,10 @@ export function OrganizationFormDrawer({
         for (const ref of unlinked) {
           await writeAudit({ action: 'update', resourceType: 'Location', resourceId: locId(ref), description: `Unlinked from ${orgRef}` });
         }
-        await refresh(['Organization', 'Location']);
+        // Create: show the new row immediately; the optimistic insert reconciles (org + linked locations)
+        // in the background without the refetch wiping it. Edit: the row exists, so just refresh.
+        if (editing) await refresh(['Organization', 'Location']);
+        else insert('Organization', { ...organizationFromForm(fields), id }, { also: ['Location'] });
         onSuccess();
       } catch (err) {
         setError(toErrorMessage(err));

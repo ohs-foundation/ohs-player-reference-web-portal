@@ -4,6 +4,7 @@ import careTeamsEmptyIllustration from '../../assets/illustrations/careteams-emp
 import {
   OhsDropdownMenu,
   PermissionGuard,
+  useOptimisticInsert,
   useRefreshResources,
   useSearch,
   useStatusBar,
@@ -48,6 +49,7 @@ export function CareTeamsPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
   const refresh = useRefreshResources();
+  const insert = useOptimisticInsert();
   const teams = useSearch('CareTeam', { _count: '200' });
   const pract = useSearch('Practitioner', { _count: '500' });
   const orgs = useSearch('Organization', { _count: '500' });
@@ -157,10 +159,13 @@ export function CareTeamsPage() {
           practOptions={practOptions}
           orgOptions={orgOptions}
           onClose={() => setCreateOpen(false)}
-          onSuccess={() => {
+          onSuccess={(created) => {
             setCreateOpen(false);
             status.notify({ tone: 'success', title: t('careTeamCreated') });
-            void refresh('CareTeam');
+            // Optimistic insert reconciles in the background; only fall back to a plain refresh if the
+            // create response carried no resource to insert.
+            if (created) insert('CareTeam', created);
+            else void refresh('CareTeam');
           }}
         />
       ) : null}
