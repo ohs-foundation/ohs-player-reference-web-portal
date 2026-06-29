@@ -1,0 +1,53 @@
+/*
+ * Tailwind v4 entry. Preflight (the global reset) is intentionally NOT imported — the hand-written CSS owns
+ * resets/base styles. Enabling Preflight would reset margins/headings/box-sizing globally; do so deliberately.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/*
+ * Token bridge — maps utility names to the existing `--ohs-*` design tokens
+ * (defined in `components/ui/theme.css`). Utilities like `bg-primary`, `text-text-muted`,
+ * `rounded`, `shadow-md` resolve to `var(--ohs-color-primary)` etc., so:
+ *   - the look stays identical to the hand-CSS (same token values), and
+ *   - dark mode / VITE_THEME_ALT keep working (they flip token values, read live here).
+ * NEVER hardcode hex/px here — every value points at a token (the portable contract).
+ */
+@theme {
+  /* Colour roles (Material-3-shaped) */
+  --color-primary: var(--ohs-color-primary);
+  --color-primary-hover: var(--ohs-color-primary-hover);
+  --color-primary-container: var(--ohs-color-primary-container);
+  --color-primary-contrast: var(--ohs-color-primary-contrast);
+  --color-surface: var(--ohs-color-surface);
+  --color-surface-variant: var(--ohs-color-surface-variant);
+  --color-background: var(--ohs-color-background);
+  --color-text: var(--ohs-color-text);
+  --color-text-muted: var(--ohs-color-text-muted);
+  --color-text-quaternary: var(--ohs-color-text-quaternary);
+  --color-border: var(--ohs-color-border);
+  --color-border-secondary: var(--ohs-color-border-secondary);
+  --color-border-tertiary: var(--ohs-color-border-tertiary);
+  --color-focus: var(--ohs-color-focus-ring);
+  --color-error: var(--ohs-color-error);
+  --color-success: var(--ohs-color-success);
+  --color-warning: var(--ohs-color-warning);
+  --color-positive: var(--ohs-color-positive);
+  --color-positive-surface: var(--ohs-color-positive-surface);
+  --color-neutral-surface: var(--ohs-color-neutral-surface);
+
+  /* Shape scale — `--radius` backs the bare `rounded` utility (v4); keep it = the OHS default. */
+  --radius: var(--ohs-radius-default);
+  --radius-sm: var(--ohs-radius-sm);
+  --radius-pill: var(--ohs-radius-pill);
+
+  /* Elevation */
+  --shadow-sm: var(--ohs-shadow-sm);
+  --shadow-md: var(--ohs-shadow-md);
+  --shadow-lg: var(--ohs-shadow-lg);
+
+  /* Typography families */
+  --font-heading: var(--ohs-font-heading);
+  --font-body: var(--ohs-font-body);
+}

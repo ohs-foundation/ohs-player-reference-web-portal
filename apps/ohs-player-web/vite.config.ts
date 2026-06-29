@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 const appDir = path.dirname(fileURLToPath(import.meta.url));
 const coreRoot = path.resolve(appDir, '../../packages/ohs-player-web-core');
@@ -16,7 +17,7 @@ export default defineConfig(({ mode }) => {
   return {
   // Load `.env` from the monorepo root (where QUICKSTART/`.env.example` live), not the app dir.
   envDir,
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
       // Workspace lib is consumed from source so dev/build work without a prebuilt `dist/` (see package `exports` pointing at dist).
