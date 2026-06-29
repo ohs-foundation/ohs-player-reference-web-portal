@@ -196,17 +196,6 @@ export function useOptimisticInsert(): (
       const matchType = (type: string) => searchKeyMatcher(type);
 
       const apply = (): void => {
-        // TEMP DIAGNOSTIC — remove after debugging the optimistic-render lag.
-        const matched = qc
-          .getQueryCache()
-          .findAll({ predicate: (q) => matchType(resourceType)(q.queryKey) });
-        // eslint-disable-next-line no-console
-        console.log('[optimistic] apply', resourceType, id, {
-          matchedQueries: matched.length,
-          keys: matched.map((q) => JSON.stringify(q.queryKey)),
-          hasData: matched.map((q) => q.state.data !== undefined),
-          status: matched.map((q) => q.state.fetchStatus),
-        });
         qc.setQueriesData<SearchBundleShape>(
           { predicate: (q) => matchType(resourceType)(q.queryKey) },
           (bundle) => {
