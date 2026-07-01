@@ -182,19 +182,6 @@
 
 /* ---------- Card ---------- */
 
-.ohs-card {
-  background: var(--ohs-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border, #cdd7e1);
-  border-radius: var(--ohs-radius-default, 12px);
-  box-shadow: var(--ohs-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
-  padding: var(--ohs-spacing-5, 24px);
-}
-.ohs-card[data-flush='true'] {
-  padding: 0;
-}
-.ohs-card-header {
-  margin-bottom: var(--ohs-spacing-4, 16px);
-}
 .ohs-card-header__title {
   font-size: var(--ohs-text-title, 18px);
   font-weight: 600;
