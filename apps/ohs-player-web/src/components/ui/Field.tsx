@@ -8,6 +8,12 @@ import {
 } from 'react';
 import * as Select from '@radix-ui/react-select';
 import { useTranslation } from 'ohs-player-web-core';
+import { cn } from '../../lib/cn';
+
+const inputClass =
+  'text-base text-text bg-surface border border-border rounded-sm px-3 h-11 w-full outline-none ' +
+  'transition-[border-color,box-shadow] duration-[120ms] ease-out ' +
+  'not-disabled:hover:border-text-muted aria-invalid:border-error';
 
 export interface FieldRootProps {
   title: ReactNode;
@@ -30,17 +36,17 @@ export function Field({
 }: Readonly<FieldRootProps>): React.ReactElement {
   const { t } = useTranslation();
   return (
-    <div className="ohs-field">
-      <span className="ohs-field__title" data-size={compact ? 'compact' : undefined}>
+    <div className="flex flex-col gap-1">
+      <span className={cn('font-semibold text-text', compact ? 'text-base' : 'text-lg')}>
         {title}
         {required ? (
-          <span className="ohs-field__required" aria-hidden="true">
+          <span className="ml-1 text-error" aria-hidden="true">
             {t('fieldRequiredAsterisk')}
           </span>
         ) : null}
       </span>
       {required ? (
-        <span className="ohs-field__instructions">
+        <span className="text-sm text-text-muted">
           {instructions ? (
             <>
               {instructions}
@@ -50,16 +56,16 @@ export function Field({
           {t('fieldRequired')}
         </span>
       ) : instructions ? (
-        <span className="ohs-field__instructions">{instructions}</span>
+        <span className="text-sm text-text-muted">{instructions}</span>
       ) : null}
       {children}
       {error ? (
-        <span className="ohs-field__error" role="alert">
+        <span className="inline-flex items-center gap-1 text-sm text-error" role="alert">
           <ErrorMark />
           {error}
         </span>
       ) : entryFormat ? (
-        <span className="ohs-field__entry-format">{entryFormat}</span>
+        <span className="text-sm text-text-muted">{entryFormat}</span>
       ) : null}
     </div>
   );
@@ -93,7 +99,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
       <input
         ref={ref}
         id={inputId}
-        className={['ohs-input', error ? 'ohs-input--error' : '', className ?? ''].filter(Boolean).join(' ')}
+        className={cn(inputClass, className)}
         aria-invalid={error ? true : undefined}
         required={required}
         {...rest}
@@ -120,7 +126,7 @@ export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaFieldProps>
       <textarea
         ref={ref}
         id={inputId}
-        className={['ohs-textarea', error ? 'ohs-textarea--error' : '', className ?? ''].filter(Boolean).join(' ')}
+        className={cn(inputClass, 'h-auto min-h-24 resize-y p-3', className)}
         aria-invalid={error ? true : undefined}
         required={required}
         {...rest}

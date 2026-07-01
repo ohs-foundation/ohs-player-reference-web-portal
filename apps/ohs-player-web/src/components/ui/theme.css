@@ -117,42 +117,7 @@
 
 /* ---------- Field / inputs ---------- */
 
-.ohs-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ohs-spacing-1, 4px);
-}
-.ohs-field__title {
-  font-size: var(--ohs-text-title, 18px);
-  font-weight: 600;
-  color: var(--ohs-color-text, #1f2933);
-}
-.ohs-field__title[data-size='compact'] {
-  font-size: var(--ohs-text-body, 16px);
-}
-.ohs-field__required {
-  color: var(--ohs-color-error, #b3261e);
-  margin-left: var(--ohs-spacing-1, 4px);
-}
-.ohs-field__instructions {
-  color: var(--ohs-color-text-muted, #52606d);
-  font-size: var(--ohs-text-label, 14px);
-}
-.ohs-field__entry-format {
-  color: var(--ohs-color-text-muted, #52606d);
-  font-size: var(--ohs-text-label, 14px);
-}
-.ohs-field__error {
-  color: var(--ohs-color-error, #b3261e);
-  font-size: var(--ohs-text-label, 14px);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ohs-spacing-1, 4px);
-}
-
-.ohs-input,
-.ohs-select,
-.ohs-textarea {
+.ohs-select {
   font-family: inherit;
   font-size: var(--ohs-text-body, 16px);
   color: var(--ohs-color-text, #1f2933);
@@ -164,30 +129,18 @@
   width: 100%;
   outline: none;
   transition: border-color 120ms ease, box-shadow 120ms ease;
-}
-.ohs-textarea {
-  height: auto;
-  padding: var(--ohs-spacing-3, 12px);
-  min-height: 96px;
-  resize: vertical;
-}
-.ohs-input:hover:not(:disabled),
-.ohs-select:hover:not(:disabled),
-.ohs-textarea:hover:not(:disabled) {
-  border-color: var(--ohs-color-text-muted, #52606d);
-}
-.ohs-input[aria-invalid='true'],
-.ohs-select[aria-invalid='true'],
-.ohs-textarea[aria-invalid='true'] {
-  border-color: var(--ohs-color-error, #b3261e);
-}
-.ohs-select {
   appearance: none;
   -webkit-appearance: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2352606d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
   background-repeat: no-repeat;
   background-position: right var(--ohs-spacing-3, 12px) center;
   padding-right: var(--ohs-spacing-7, 48px);
+}
+.ohs-select:hover:not(:disabled) {
+  border-color: var(--ohs-color-text-muted, #52606d);
+}
+.ohs-select[aria-invalid='true'] {
+  border-color: var(--ohs-color-error, #b3261e);
 }
 
 /* ---------- Select (Radix) ---------- */
