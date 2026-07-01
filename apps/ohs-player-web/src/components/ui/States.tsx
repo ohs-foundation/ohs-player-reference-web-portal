@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import * as Progress from '@radix-ui/react-progress';
+import { cva } from 'class-variance-authority';
 import { useTranslation } from 'ohs-player-web-core';
 
 export interface EmptyStateProps {
@@ -58,9 +59,25 @@ export interface StatusBadgeProps {
   icon?: ReactNode;
 }
 
+const badge = cva(
+  'inline-flex items-center gap-2 rounded-pill px-3 py-1 text-sm/5 font-medium',
+  {
+    variants: {
+      tone: {
+        success: 'bg-positive-surface text-positive',
+        neutral: 'bg-neutral-surface text-text-muted',
+        warning: 'bg-[rgba(224,140,0,0.14)] text-warning',
+        error: 'bg-[rgba(179,38,30,0.12)] text-error',
+        info: 'bg-primary-container text-primary',
+      },
+    },
+    defaultVariants: { tone: 'neutral' },
+  },
+);
+
 export function StatusBadge({ tone = 'neutral', icon, children }: Readonly<StatusBadgeProps>): React.ReactElement {
   return (
-    <span className="ohs-badge" data-tone={tone}>
+    <span className={badge({ tone })}>
       {icon}
       {children}
     </span>

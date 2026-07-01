@@ -1048,42 +1048,12 @@
 
 /* ---------- Status badge ---------- */
 
-.ohs-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ohs-spacing-2, 8px);
-  padding: 4px var(--ohs-spacing-3, 12px);
-  font-size: var(--ohs-font-text-m-size, 14px);
-  line-height: var(--ohs-font-text-m-line, 20px);
-  font-weight: var(--ohs-font-weight-medium, 500);
-  border-radius: var(--ohs-radius-pill, 999px);
-}
 .ohs-badge__dot {
   width: 6px;
   height: 6px;
   flex-shrink: 0;
   border-radius: var(--ohs-radius-pill, 999px);
   background: currentColor;
-}
-.ohs-badge[data-tone='success'] {
-  background: var(--ohs-color-positive-surface, #e6f6ec);
-  color: var(--ohs-color-positive, #009933);
-}
-.ohs-badge[data-tone='neutral'] {
-  background: var(--ohs-color-neutral-surface, #f0f0f0);
-  color: var(--ohs-color-text-muted, #696969);
-}
-.ohs-badge[data-tone='warning'] {
-  background: rgba(224, 140, 0, 0.14);
-  color: var(--ohs-color-warning, #e08c00);
-}
-.ohs-badge[data-tone='error'] {
-  background: rgba(179, 38, 30, 0.12);
-  color: var(--ohs-color-error, #b3261e);
-}
-.ohs-badge[data-tone='info'] {
-  background: var(--ohs-color-primary-container, #e6eef6);
-  color: var(--ohs-color-primary, #094f9a);
 }
 
 /* ---------- Spinner ---------- */
