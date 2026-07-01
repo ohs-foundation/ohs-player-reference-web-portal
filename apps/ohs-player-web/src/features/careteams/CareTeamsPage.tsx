@@ -268,7 +268,7 @@ export function CareTeamsPage() {
                       {members.length > 0 ? (
                         <span className="ohs-avatar-stack">
                           {members.slice(0, 3).map((mid) => (
-                            <Avatar key={mid} name={practNameById.get(mid) ?? mid} className="ohs-avatar--sm" />
+                            <Avatar key={mid} name={practNameById.get(mid) ?? mid} size="sm" />
                           ))}
                         </span>
                       ) : null}

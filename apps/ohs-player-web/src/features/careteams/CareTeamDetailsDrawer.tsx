@@ -158,7 +158,7 @@ export function CareTeamDetailsDrawer({
                       borderBottom: i < members.length - 1 ? '1px solid var(--ohs-color-border, #ededed)' : 'none',
                     }}
                   >
-                    <Avatar name={m.name} className="ohs-avatar--sm" />
+                    <Avatar name={m.name} size="sm" />
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                       <span>{m.name}</span>
                       {m.role ? (
