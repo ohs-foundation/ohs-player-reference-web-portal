@@ -1,5 +1,6 @@
 import * as RadixCheckbox from '@radix-ui/react-checkbox';
 import { forwardRef, useId } from 'react';
+import { cn } from '../../lib/cn';
 
 export interface CheckboxProps {
   checked?: boolean;
@@ -35,20 +36,31 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(function Ch
       name={name}
       value={value}
       aria-label={label ? undefined : ariaLabel}
-      className="ohs-checkbox-root"
+      className={cn(
+        'group inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center p-0',
+        'rounded-[4px] border border-border-tertiary bg-surface text-primary-contrast cursor-pointer',
+        'transition-[background-color,border-color] duration-[120ms] ease-out',
+        'focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)]',
+        'data-[state=checked]:bg-primary data-[state=checked]:border-primary',
+        'data-[state=indeterminate]:bg-primary data-[state=indeterminate]:border-primary',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+      )}
     >
-      <RadixCheckbox.Indicator className="ohs-checkbox-indicator">
-        <CheckIcon className="ohs-checkbox-check" />
-        <span className="ohs-checkbox-dash" aria-hidden="true" />
+      <RadixCheckbox.Indicator className="inline-flex items-center justify-center text-primary-contrast">
+        <CheckIcon className="hidden group-data-[state=checked]:block" />
+        <span
+          className="hidden h-0.5 w-2 rounded-[1px] bg-current group-data-[state=indeterminate]:block"
+          aria-hidden="true"
+        />
       </RadixCheckbox.Indicator>
     </RadixCheckbox.Root>
   );
 
   if (label) {
     return (
-      <div className="ohs-checkbox">
+      <div className="inline-flex items-center gap-2">
         {cbEl}
-        <label htmlFor={inputId} style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}>
+        <label htmlFor={inputId} className={disabled ? 'cursor-not-allowed' : 'cursor-pointer'}>
           {label}
         </label>
       </div>

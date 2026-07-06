@@ -1,5 +1,6 @@
 import { forwardRef, type InputHTMLAttributes } from 'react';
 import { RiSearchLine } from '@remixicon/react';
+import { cn } from '../../lib/cn';
 
 export interface SearchFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Accessible label (rendered as `aria-label`; the field has no visible label). */
@@ -12,13 +13,26 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
   { label, size = 'md', className, ...rest },
   ref,
 ) {
-  const cls = ['ohs-search-field', size === 'lg' ? 'ohs-search-field--lg' : '', className]
-    .filter(Boolean)
-    .join(' ');
   return (
-    <div className={cls}>
-      <RiSearchLine size={20} className="ohs-search-field__icon" aria-hidden="true" />
-      <input ref={ref} type="search" className="ohs-search-field__input" aria-label={label} {...rest} />
+    <div
+      className={cn(
+        'inline-flex items-center gap-4 w-[357px] max-w-full box-border px-6 rounded',
+        'border border-border-secondary bg-surface focus-within:border-text-muted',
+        size === 'lg' ? 'h-14' : 'h-12',
+        className,
+      )}
+    >
+      <RiSearchLine size={20} className="shrink-0 text-text-quaternary" aria-hidden="true" />
+      <input
+        ref={ref}
+        type="search"
+        className={cn(
+          'flex-1 min-w-0 border-none bg-transparent font-body text-sm text-text',
+          'placeholder:text-text-quaternary focus:outline-none focus:shadow-none',
+        )}
+        aria-label={label}
+        {...rest}
+      />
     </div>
   );
 });

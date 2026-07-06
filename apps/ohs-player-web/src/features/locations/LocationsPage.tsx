@@ -66,14 +66,12 @@ function LocationBreadcrumbs({ locList, leafId }: { locList: Loc[]; leafId: stri
   return (
     <nav aria-label="Breadcrumb">
       <ol
-        className="ohs-inline"
+        className="flex flex-row flex-wrap items-center"
         style={{
-          flexWrap: 'wrap',
           listStyle: 'none',
           padding: 0,
           margin: '0 0 1rem',
           gap: 'var(--ohs-spacing-2, 8px)',
-          alignItems: 'center',
         }}
       >
         <li>
@@ -82,7 +80,7 @@ function LocationBreadcrumbs({ locList, leafId }: { locList: Loc[]; leafId: stri
         {chain.map((loc, i) => {
           const last = i === chain.length - 1;
           return (
-            <li key={loc.id} className="ohs-inline" style={{ gap: 8, alignItems: 'center' }}>
+            <li key={loc.id} className="flex flex-row flex-wrap items-center" style={{ gap: 8 }}>
               <span aria-hidden="true" style={{ opacity: 0.6 }}>
                 /
               </span>

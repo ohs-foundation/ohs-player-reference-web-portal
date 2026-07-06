@@ -6,6 +6,7 @@ import '@fontsource/ibm-plex-sans/500.css';
 import 'ohs-player-web-core/styles.css';
 import './components/ui/theme.css';
 import './index.css';
+import './tailwind.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

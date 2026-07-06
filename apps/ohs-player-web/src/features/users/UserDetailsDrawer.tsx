@@ -130,7 +130,7 @@ export function UserDetailsDrawer({
   const header = (
     <div className="ohs-user-drawer__head">
       <div className="ohs-user-drawer__identity">
-        <Avatar name={details.fullName} className="ohs-avatar--lg" />
+        <Avatar name={details.fullName} size="lg" />
         <div>
           <div className="ohs-user-drawer__name-row">
             <h2 className="ohs-user-drawer__name">{details.fullName}</h2>
