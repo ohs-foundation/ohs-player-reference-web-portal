@@ -1,9 +1,5 @@
 import { useMemo, useState, type FormEvent, type ReactElement } from 'react';
-import type { Questionnaire } from 'ohs-player-web-core';
 import {
-  buildQuestionnaireResponse,
-  OhsDialog,
-  PermissionGuard,
   QuestionnaireFields,
   useCreateResource,
   useQuestionnaireFormState,
@@ -12,7 +8,7 @@ import {
   useTranslation,
   useUpdateResource,
 } from 'ohs-player-web-core';
-import { Button, Card, ErrorState, Inline, LinearProgress, Page, PageHeader, Spinner, Stack } from '../../components/ui';
+import { Button, Card, ErrorState, Inline, Page, PageHeader, Spinner, Stack } from '../../components/ui';
 import { Link, useNavigate } from 'react-router-dom';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { useWriteAudit } from '../audit/useWriteAudit';
@@ -30,18 +26,6 @@ type Loc = {
   mode?: string;
   address?: { text?: string };
 };
-
-function buildTree(locs: Loc[]): Map<string | undefined, Loc[]> {
-  const m = new Map<string | undefined, Loc[]>();
-  for (const l of locs) {
-    const parent = l.partOf?.reference?.replace('Location/', '');
-    const k = parent ?? undefined;
-    const arr = m.get(k) ?? [];
-    arr.push(l);
-    m.set(k, arr);
-  }
-  return m;
-}
 
 /** Root-first chain from root down to `leafId`. */
 function ancestorChain(locList: Loc[], leafId: string): Loc[] {
@@ -97,194 +81,9 @@ function LocationBreadcrumbs({ locList, leafId }: { locList: Loc[]; leafId: stri
   );
 }
 
-function TreeBranch({
-  parentId,
-  tree,
-  depth,
-}: {
-  parentId: string | undefined;
-  tree: Map<string | undefined, Loc[]>;
-  depth: number;
-}): ReactElement {
-  const kids = tree.get(parentId) ?? [];
-  return (
-    <ul style={{ listStyle: 'none', paddingLeft: depth ? 16 : 0, margin: 0 }}>
-      {kids.map((l) => (
-        <li key={l.id}>
-          <Link to={`/locations/${l.id}`}>{l.name ?? l.id}</Link>
-          <TreeBranch parentId={l.id} tree={tree} depth={depth + 1} />
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function LocationCreateForm({
-  questionnaire,
-  locList,
-  onSuccess,
-  onCancel,
-}: {
-  questionnaire: Questionnaire;
-  locList: Loc[];
-  onSuccess: () => void;
-  onCancel: () => void;
-}): ReactElement {
-  const { t } = useTranslation();
-  const parentOptions = useMemo(() => {
-    const root = { value: '__root__', label: t('rootLocation') };
-    const rest = locList
-      .filter((l) => l.id)
-      .map((l) => ({ value: `Location/${l.id as string}`, label: l.name ?? l.id }));
-    return [root, ...rest];
-  }, [locList, t]);
-
-  const referenceOptionsByLinkId = useMemo(
-    () => ({
-      [LOCATION_LINK_IDS.parent]: parentOptions,
-    }),
-    [parentOptions],
-  );
-
-  const { answers, setAnswer, validateRequired } = useQuestionnaireFormState(questionnaire, {
-    [LOCATION_LINK_IDS.name]: '',
-    [LOCATION_LINK_IDS.status]: 'active',
-    [LOCATION_LINK_IDS.mode]: 'instance',
-    [LOCATION_LINK_IDS.addressLine]: '',
-    [LOCATION_LINK_IDS.parent]: '__root__',
-  });
-
-  const createLoc = useCreateResource('Location');
-  const createQr = useCreateResource('QuestionnaireResponse');
-  const writeAudit = useWriteAudit();
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setValidationError(null);
-    setSubmitError(null);
-    const missing = validateRequired();
-    if (missing.length > 0) {
-      setValidationError(t('questionnaireRequiredFields'));
-      return;
-    }
-
-    void (async () => {
-      try {
-        const body = locationBodyFromAnswers(answers);
-        await createLoc.mutateAsync(body);
-        await writeAudit({ action: 'create', resourceType: 'Location' });
-
-        const qr = buildQuestionnaireResponse({
-          questionnaire,
-          answers,
-          status: 'completed',
-        });
-        await createQr.mutateAsync(qr);
-        await writeAudit({ action: 'create', resourceType: 'QuestionnaireResponse' });
-        onSuccess();
-      } catch (x) {
-        setSubmitError(x instanceof Error ? x.message : String(x));
-      }
-    })();
-  };
-
-  return (
-    <form id="loc-create-form" onSubmit={onSubmit}>
-      <Stack gap={3}>
-        {validationError ? <ErrorState description={validationError} /> : null}
-        {submitError ? <ErrorState description={submitError} /> : null}
-        <QuestionnaireFields
-          questionnaire={questionnaire}
-          answers={answers}
-          setAnswer={setAnswer}
-          referenceOptionsByLinkId={referenceOptionsByLinkId}
-        />
-        <Inline justify="end" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="outlined" type="button" onClick={onCancel} disabled={createLoc.isPending || createQr.isPending}>
-            {t('cancel')}
-          </Button>
-          <Button type="submit" disabled={createLoc.isPending || createQr.isPending}>
-            {t('saveAndClose')}
-          </Button>
-        </Inline>
-      </Stack>
-    </form>
-  );
-}
-
-export function LocationsPage() {
-  const { t } = useTranslation();
-  const search = useSearch('Location', { _count: '500' });
-  const tree = useMemo(() => {
-    const bundle = search.data as { entry?: { resource?: Loc }[] } | undefined;
-    const locs =
-      bundle?.entry
-        ?.map((e) => e.resource)
-        .filter((r): r is Loc => r !== undefined && r !== null) ?? [];
-    return buildTree(locs);
-  }, [search.data]);
-
-  const locList =
-    (search.data as { entry?: { resource?: Loc }[] } | undefined)?.entry
-      ?.map((e) => e.resource)
-      .filter((r): r is Loc => r !== undefined && r !== null) ?? [];
-
-  const questionnaire = getBundledQuestionnaires().location;
-  const [modalOpen, setModalOpen] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
-
-  let err: string | null = null;
-  if (search.error) {
-    err = search.error instanceof Error ? search.error.message : String(search.error);
-  }
-
-  const openModal = () => {
-    setResetKey((k) => k + 1);
-    setModalOpen(true);
-  };
-
-  return (
-    <Page>
-      <PageHeader
-        title={t('pageLocations')}
-        description={t('pageLocationsDescription')}
-        actions={
-          <PermissionGuard permission="locations.edit">
-            <Button type="button" onClick={openModal}>
-              {t('newLocation')}
-            </Button>
-          </PermissionGuard>
-        }
-      />
-      <Stack gap={4}>
-        <OhsDialog
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          headline={t('dialogCreateLocation')}
-          minWidth="min(96vw, 520px)"
-        >
-          <LocationCreateForm
-            key={resetKey}
-            questionnaire={questionnaire}
-            locList={locList}
-            onCancel={() => setModalOpen(false)}
-            onSuccess={() => setModalOpen(false)}
-          />
-        </OhsDialog>
-
-        {search.isLoading ? <LinearProgress /> : null}
-        {err ? <ErrorState description={err} /> : null}
-        {!search.isLoading && !err ? (
-          <Card>
-            <TreeBranch parentId={undefined} tree={tree} depth={0} />
-          </Card>
-        ) : null}
-      </Stack>
-    </Page>
-  );
-}
+// The Locations landing page is the hierarchy browser (Tree + Columns); its full implementation lives in
+// LocationsHierarchyPage. LocationEditPage (below) remains the /locations/:id SDC edit form.
+export { LocationsHierarchyPage as LocationsPage } from './LocationsHierarchyPage';
 
 export function LocationEditPage({ id }: { id: string }) {
   const { t } = useTranslation();

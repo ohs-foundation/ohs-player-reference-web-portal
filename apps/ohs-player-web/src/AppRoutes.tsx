@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { UsersPage } from './features/users/UsersPage';
 import { LocationEditPage, LocationsPage } from './features/locations/LocationsPage';
+import { LocationsNoAccess } from './features/locations/LocationsNoAccess';
 import { OrganizationsPage } from './features/organizations/OrganizationsPage';
 import { CareTeamsPage } from './features/careteams/CareTeamsPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
@@ -65,7 +66,11 @@ export function AppRoutes() {
         <Route
           path="/locations"
           element={
-            <ProtectedRoute flag="locationMgmt" permission="locations.view">
+            <ProtectedRoute
+              flag="locationMgmt"
+              permission="location-hierarchy.view"
+              permissionFallback={<LocationsNoAccess status={403} />}
+            >
               <LocationsPage />
             </ProtectedRoute>
           }
