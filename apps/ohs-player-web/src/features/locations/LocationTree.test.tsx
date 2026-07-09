@@ -15,6 +15,11 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   };
 });
 
+// Row menu needs Router + query/config providers; it has its own test — stub it here.
+vi.mock('./LocationRowMenu', () => ({
+  LocationRowMenu: ({ nodeId }: { nodeId: string }) => <button type="button" aria-label={`actions-${nodeId}`} />,
+}));
+
 const { LocationTree } = await import('./LocationTree');
 
 function node(partial: Partial<LocationNode> & { id: string }): LocationNode {
@@ -50,18 +55,19 @@ describe('LocationTree', () => {
         onToggle={vi.fn()}
         onSelect={vi.fn()}
         onLoadMore={vi.fn()}
+        onChanged={vi.fn()}
       />,
     );
     expect(screen.getByRole('tree')).toBeInTheDocument();
     const items = screen.getAllByRole('treeitem');
-    expect(items.length).toBe(3); // root + 2 children (root expanded)
+    expect(items).toHaveLength(3); // root + 2 children (root expanded)
     expect(screen.getByText('Kenya')).toBeInTheDocument();
     expect(items[0]).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('renders an unnamed placeholder for null names', () => {
     render(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
     );
     expect(screen.getByText(/locationsUnnamed/)).toBeInTheDocument();
   });
@@ -69,15 +75,54 @@ describe('LocationTree', () => {
   it('calls onSelect when a row is clicked', () => {
     const onSelect = vi.fn();
     render(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={onSelect} onLoadMore={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={onSelect} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
     );
     fireEvent.click(screen.getByText('Nairobi'));
     expect(onSelect).toHaveBeenCalledWith('nrb');
   });
 
+  it('shows a status badge and a child-count meta line on the root row', () => {
+    render(
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+    );
+    // Root has partOf === null → a "Root" meta prefix, and 2 children → child-count text.
+    expect(screen.getByText(/locationLevelRoot/)).toBeInTheDocument();
+    expect(screen.getByText(/locationsChildLocations/)).toBeInTheDocument();
+    // Every node carries status 'active' → a status badge renders (default helper key).
+    expect(screen.getAllByText(/locationStatusActive/).length).toBeGreaterThan(0);
+  });
+
+  it('uses an expand toggle (not a checkbox) on expandable rows', () => {
+    render(
+      <LocationTree root={root} expanded={new Set()} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+    );
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /expand/ })).toBeInTheDocument();
+  });
+
+  it('renders real tree connector lines for expanded children (not margin-only indent)', () => {
+    const { container } = render(
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+    );
+    // Child rows draw 1px connector spans using the border token; the root (depth 0) draws none.
+    const lines = container.querySelectorAll('span.bg-border-secondary');
+    expect(lines.length).toBeGreaterThan(0);
+  });
+
+  it('uses a down chevron when expanded and a right chevron when collapsed', () => {
+    const { rerender } = render(
+      <LocationTree root={root} expanded={new Set()} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', { name: /expand/ })).toBeInTheDocument();
+    rerender(
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', { name: /collapse/ })).toBeInTheDocument();
+  });
+
   it('has no axe violations', async () => {
     const { container } = render(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId="nrb" onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId="nrb" onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
     );
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations).toEqual([]);

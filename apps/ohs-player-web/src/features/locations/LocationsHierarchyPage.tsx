@@ -1,14 +1,17 @@
 import { useMemo, useState } from 'react';
 import type { Location } from '@medplum/fhirtypes';
-import { RiUploadCloud2Line } from '@remixicon/react';
-import { PermissionGuard, useSearch, useTranslation } from 'ohs-player-web-core';
-import { Button, Page, PageHeader, SelectField } from '../../components/ui';
+import { RiArrowDownSLine, RiUploadCloud2Line } from '@remixicon/react';
+import { PermissionGuard, useSearch, useStatusBar, useTranslation } from 'ohs-player-web-core';
+import { Button, Page, PageHeader, SearchField, SelectField } from '../../components/ui';
 import { collectExpandableIds, filterTree } from './expand';
 import { nodeChain, type LocationNode } from './hierarchy';
 import type { HierarchyError } from './useLocationHierarchy';
 import { relativeTimeFrom } from './relativeTime';
 import { useLocationHierarchy } from './useLocationHierarchy';
 import { LocationTree } from './LocationTree';
+import { LocationColumnTable } from './LocationColumnTable';
+import { LocationViewToggle, type LocationView } from './LocationViewToggle';
+import { LocationFilterMenu, type LocationStatusFilter } from './LocationFilterMenu';
 import { LocationBreadcrumb } from './LocationBreadcrumb';
 import { LocationDetailPanel } from './LocationDetailPanel';
 import { LocationImportDrawer } from './LocationImportDrawer';
@@ -19,6 +22,7 @@ interface BodyArgs {
   loading: boolean;
   error: HierarchyError | null;
   tree: LocationNode | null;
+  view: LocationView;
   expanded: ReadonlySet<string>;
   selectedId: string | null;
   onToggle: (id: string) => void;
@@ -28,7 +32,7 @@ interface BodyArgs {
   onImport: () => void;
 }
 
-/** Pick the tree body from data + error state (keeps the component's JSX flat). */
+/** Pick the body from data + error state, then Tree vs Column view (keeps the component's JSX flat). */
 function renderBody(a: BodyArgs): React.ReactElement | null {
   if (a.loading) return <HierarchySkeleton />;
   if (a.error) {
@@ -47,6 +51,9 @@ function renderBody(a: BodyArgs): React.ReactElement | null {
       </PermissionGuard>
     );
   }
+  if (a.view === 'column') {
+    return <LocationColumnTable root={a.tree} onSelect={a.onSelect} onChanged={a.onRetry} />;
+  }
   return (
     <LocationTree
       root={a.tree}
@@ -55,6 +62,7 @@ function renderBody(a: BodyArgs): React.ReactElement | null {
       onToggle={a.onToggle}
       onSelect={a.onSelect}
       onLoadMore={a.onLoadMore}
+      onChanged={a.onRetry}
     />
   );
 }
@@ -69,10 +77,13 @@ function rootOptions(data: unknown, unnamed: (id: string) => string): { value: s
 
 export function LocationsHierarchyPage(): React.ReactElement {
   const { t, locale } = useTranslation();
+  const status = useStatusBar();
   const [rootId, setRootId] = useState<string>('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [filter, setFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<LocationStatusFilter>('all');
+  const [view, setView] = useState<LocationView>('tree');
   const [importOpen, setImportOpen] = useState(false);
 
   // Root candidates: Locations with no partOf. (HAPI here rejects partOf:missing, so filter client-side.)
@@ -119,11 +130,21 @@ export function LocationsHierarchyPage(): React.ReactElement {
       title={t('pageLocations')}
       description={t('pageLocationsDescription')}
       actions={
-        <PermissionGuard permission="bulk-import.manage">
-          <Button type="button" iconLeft={<RiUploadCloud2Line size={18} />} onClick={() => setImportOpen(true)}>
-            {t('locationsImport')}
+        <>
+          <Button
+            variant="secondary"
+            type="button"
+            iconRight={<RiArrowDownSLine size={20} />}
+            onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
+          >
+            {t('locationsExport')}
           </Button>
-        </PermissionGuard>
+          <PermissionGuard permission="bulk-import.manage">
+            <Button type="button" iconLeft={<RiUploadCloud2Line size={18} />} onClick={() => setImportOpen(true)}>
+              {t('locationsImport')}
+            </Button>
+          </PermissionGuard>
+        </>
       }
     />
   );
@@ -131,12 +152,13 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const meta = query.data?.meta;
   const builtAtLabel = relativeTimeFrom(meta?.builtAt ?? null, locale);
 
-  // Apply the client-side name filter to the loaded tree; filtered matches force-expand their ancestors.
+  // Apply the client-side name + status filter to the loaded tree; matches force-expand their ancestors.
   const displayed = useMemo(() => {
     if (!query.data) return null;
-    return filterTree(query.data.root, filter);
-  }, [query.data, filter]);
-  const effectiveExpanded = filter.trim() && displayed ? displayed.expand : expanded;
+    return filterTree(query.data.root, filter, statusFilter);
+  }, [query.data, filter, statusFilter]);
+  const filtering = filter.trim() !== '' || statusFilter !== 'all';
+  const effectiveExpanded = filtering && displayed ? displayed.expand : expanded;
 
   return (
     <Page>
@@ -157,24 +179,28 @@ export function LocationsHierarchyPage(): React.ReactElement {
               }}
             />
           </div>
-          <input
-            type="search"
-            aria-label={t('locationsFilter')}
-            placeholder={t('locationsFilter')}
+          <SearchField
+            label={t('locationsSearch')}
+            placeholder={t('locationsSearch')}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="h-11 rounded-sm border border-border bg-surface px-3 text-base text-text outline-none focus:border-text-muted"
+            className="w-84 h-12"
           />
+          <LocationFilterMenu value={statusFilter} onChange={setStatusFilter} />
         </div>
-        <div className="flex items-end gap-2">
-          <Button variant="outlined" type="button" onClick={expandAll}>
-            {t('locationsExpandAll')}
-          </Button>
-          <Button variant="outlined" type="button" onClick={collapseAll}>
+        <LocationViewToggle value={view} onChange={setView} />
+      </div>
+
+      {view === 'tree' ? (
+        <div className="flex justify-end gap-2">
+          <Button variant="outlined" size="sm" type="button" className="rounded-pill" onClick={collapseAll}>
             {t('locationsCollapseAll')}
           </Button>
+          <Button variant="outlined" size="sm" type="button" className="rounded-pill" onClick={expandAll}>
+            {t('locationsExpandAll')}
+          </Button>
         </div>
-      </div>
+      ) : null}
 
       {query.data ? <LocationBreadcrumb root={query.data.root} selectedId={selectedId} onSelect={select} /> : null}
       {meta?.truncated ? <TruncatedNotice nodeCount={meta.nodeCount} builtAtLabel={builtAtLabel} /> : null}
@@ -184,6 +210,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
           loading: rootsSearch.isLoading || query.isLoading,
           error: query.isError ? query.error : null,
           tree: displayed?.tree ?? null,
+          view,
           expanded: effectiveExpanded,
           selectedId,
           onToggle: toggle,
