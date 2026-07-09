@@ -84,17 +84,20 @@
 }
 
 /* Preflight is intentionally disabled, so reset the browser's native <button> chrome (the box that made
-   bare icon buttons look like checkboxes). Wrapped in :where() for ZERO specificity, so ANY class-based
-   button styling (Tailwind utilities, .app-topbar__user, etc.) overrides it without a specificity fight. */
-:where([data-ohs-root] button) {
-  appearance: none;
-  -webkit-appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
+   bare icon buttons look like checkboxes). In `@layer base` (ordered below `utilities` in tailwind.css)
+   AND :where() zero specificity, so ANY class-based button styling — Tailwind utilities included — wins.
+   (Unlayered, this rule would beat every layered utility regardless of specificity.) */
+@layer base {
+  :where([data-ohs-root] button) {
+    appearance: none;
+    -webkit-appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
 }
 
 [data-ohs-root] a {

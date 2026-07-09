@@ -13,8 +13,12 @@
  *   - the look stays identical to the hand-CSS (same token values), and
  *   - dark mode / VITE_THEME_ALT keep working (they flip token values, read live here).
  * NEVER hardcode hex/px here — every value points at a token (the portable contract).
+ *
+ * MUST be `@theme inline`: it substitutes the var() into each utility so it resolves at the
+ * element. Plain `@theme` declares the bridge on `:root`, where unmanaged `--ohs-*` tokens
+ * (declared only on [data-ohs-root]) don't exist — those utilities then compute to nothing.
  */
-@theme {
+@theme inline {
   /* Colour roles (Material-3-shaped) */
   --color-primary: var(--ohs-color-primary);
   --color-primary-hover: var(--ohs-color-primary-hover);
