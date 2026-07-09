@@ -13,8 +13,19 @@
 [data-ohs-root] {
   /* Definite height so descendants' `height: 100%` resolves (the wrapper sets only min-height inline). */
   height: 100%;
+  color: var(--ohs-color-text, #1f2933);
+  background: var(--ohs-color-background, #f4f7fb);
+  font-family: var(--ohs-font-body, system-ui, sans-serif);
+  font-size: var(--ohs-font-size-base, 16px);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* --- Design tokens not managed by applyTheme; managed colours/fonts/radius come from lightTheme. --- */
+/* --- Design tokens not managed by applyTheme; managed colours/fonts/radius come from lightTheme. ---
+   Declared on :root TOO so Radix portals (drawers/dialogs/dropdowns render outside [data-ohs-root])
+   resolve them; the dark overrides below already cover portals via their [data-theme='dark'] selector. */
+:root,
+[data-ohs-root] {
   /* Neutral scale */
   --ohs-neutral-50: #fafafa;
   --ohs-neutral-100: #ededed;
@@ -70,13 +81,6 @@
   --ohs-font-text-s-line: 16px;
   --ohs-font-weight-regular: 400;
   --ohs-font-weight-medium: 500;
-
-  color: var(--ohs-color-text, #1f2933);
-  background: var(--ohs-color-background, #f4f7fb);
-  font-family: var(--ohs-font-body, system-ui, sans-serif);
-  font-size: var(--ohs-font-size-base, 16px);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
 }
 
 [data-ohs-root] * {
@@ -84,11 +88,12 @@
 }
 
 /* Preflight is intentionally disabled, so reset the browser's native <button> chrome (the box that made
-   bare icon buttons look like checkboxes). In `@layer base` (ordered below `utilities` in tailwind.css)
-   AND :where() zero specificity, so ANY class-based button styling — Tailwind utilities included — wins.
+   bare icon buttons look like checkboxes). Global (not [data-ohs-root]-scoped) so buttons inside Radix
+   portals are reset too. In `@layer base` (ordered below `utilities` in tailwind.css) AND :where() zero
+   specificity, so ANY class-based button styling — Tailwind utilities included — wins.
    (Unlayered, this rule would beat every layered utility regardless of specificity.) */
 @layer base {
-  :where([data-ohs-root] button) {
+  :where(button) {
     appearance: none;
     -webkit-appearance: none;
     background: none;

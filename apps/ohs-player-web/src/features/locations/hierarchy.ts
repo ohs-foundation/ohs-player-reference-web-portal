@@ -46,12 +46,12 @@ export interface RawHierarchyResponse {
   meta: RawHierarchyMeta;
 }
 
-/** Normalized node: bare ids, a resolved parent label, and inline CodeableConcepts for badges. */
+/** Normalized node: bare ids, a resolved parent label, and inline CodeableConcepts for badges.
+ *  Raw `description` is dropped — no UI consumes it and no write path populates it. */
 export interface LocationNode {
   id: string;
   name: string | null;
   status: string | null;
-  description: string | null;
   /** Bare parent id (prefix stripped), or null on the root. */
   partOf: string | null;
   /** Parent display label from `partOf.display`, for the "Part of" link. */
@@ -86,7 +86,6 @@ function normalizeNode(n: RawLocationNode): LocationNode {
     id: bareId(n.id) ?? n.id,
     name: n.name,
     status: n.status ?? null,
-    description: n.description ?? null,
     partOf: bareId(n.partOf?.reference),
     partOfLabel: n.partOf?.display ?? null,
     physicalType: n.physicalType ?? null,

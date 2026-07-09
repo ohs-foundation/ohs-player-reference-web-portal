@@ -26,7 +26,6 @@ function node(partial: Partial<LocationNode> & { id: string }): LocationNode {
   return {
     name: null,
     status: 'active',
-    description: null,
     partOf: 'ke',
     partOfLabel: 'Kenya',
     physicalType: null,
@@ -55,7 +54,7 @@ describe('LocationTree', () => {
         onToggle={vi.fn()}
         onSelect={vi.fn()}
         onLoadMore={vi.fn()}
-        onChanged={vi.fn()}
+        onEdit={vi.fn()}
       />,
     );
     expect(screen.getByRole('tree')).toBeInTheDocument();
@@ -67,7 +66,7 @@ describe('LocationTree', () => {
 
   it('renders an unnamed placeholder for null names', () => {
     render(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
     );
     expect(screen.getByText(/locationsUnnamed/)).toBeInTheDocument();
   });
@@ -75,7 +74,7 @@ describe('LocationTree', () => {
   it('calls onSelect when a row is clicked', () => {
     const onSelect = vi.fn();
     render(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={onSelect} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={onSelect} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
     );
     fireEvent.click(screen.getByText('Nairobi'));
     expect(onSelect).toHaveBeenCalledWith('nrb');
@@ -83,7 +82,7 @@ describe('LocationTree', () => {
 
   it('shows a status badge and a child-count meta line on the root row', () => {
     render(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
     );
     // Root has partOf === null → a "Root" meta prefix, and 2 children → child-count text.
     expect(screen.getByText(/locationLevelRoot/)).toBeInTheDocument();
@@ -94,7 +93,7 @@ describe('LocationTree', () => {
 
   it('uses an expand toggle (not a checkbox) on expandable rows', () => {
     render(
-      <LocationTree root={root} expanded={new Set()} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set()} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
     );
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /expand/ })).toBeInTheDocument();
@@ -102,7 +101,7 @@ describe('LocationTree', () => {
 
   it('renders real tree connector lines for expanded children (not margin-only indent)', () => {
     const { container } = render(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
     );
     // Child rows draw 1px connector spans using the border token; the root (depth 0) draws none.
     const lines = container.querySelectorAll('span.bg-border-secondary');
@@ -111,18 +110,18 @@ describe('LocationTree', () => {
 
   it('uses a down chevron when expanded and a right chevron when collapsed', () => {
     const { rerender } = render(
-      <LocationTree root={root} expanded={new Set()} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set()} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
     );
     expect(screen.getByRole('button', { name: /expand/ })).toBeInTheDocument();
     rerender(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
     );
     expect(screen.getByRole('button', { name: /collapse/ })).toBeInTheDocument();
   });
 
   it('has no axe violations', async () => {
     const { container } = render(
-      <LocationTree root={root} expanded={new Set(['ke'])} selectedId="nrb" onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onChanged={vi.fn()} />,
+      <LocationTree root={root} expanded={new Set(['ke'])} selectedId="nrb" onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
     );
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations).toEqual([]);

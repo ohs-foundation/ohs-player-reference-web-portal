@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useParams, Link } from 'react-router-dom';
+import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useTranslation } from 'ohs-player-web-core';
 import { Page, PageHeader } from './components/ui';
 import { ProtectedRoute } from './auth/ProtectedRoute';
@@ -7,26 +7,11 @@ import { CallbackPage } from './pages/CallbackPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { UsersPage } from './features/users/UsersPage';
-import { LocationEditPage, LocationsPage } from './features/locations/LocationsPage';
+import { LocationsPage } from './features/locations/LocationsPage';
 import { LocationsNoAccess } from './features/locations/LocationsNoAccess';
 import { OrganizationsPage } from './features/organizations/OrganizationsPage';
 import { CareTeamsPage } from './features/careteams/CareTeamsPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
-
-function LocationEditPermissionFallback() {
-  const { t } = useTranslation();
-  return (
-    <Page>
-      <PageHeader
-        title={t('pageLocationEditForbiddenTitle')}
-        description={t('pageLocationEditForbiddenDescription')}
-      />
-      <p>
-        <Link to="/locations">{t('breadcrumbLocations')}</Link>
-      </p>
-    </Page>
-  );
-}
 
 function OrganizationsPermissionFallback() {
   const { t } = useTranslation();
@@ -76,18 +61,6 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/locations/:id"
-          element={
-            <ProtectedRoute
-              flag="locationMgmt"
-              permission="locations.edit"
-              permissionFallback={<LocationEditPermissionFallback />}
-            >
-              <LocationEditWrap />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/organizations"
           element={
             <ProtectedRoute
@@ -111,10 +84,4 @@ export function AppRoutes() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-}
-
-function LocationEditWrap() {
-  const { id } = useParams();
-  if (!id) return <Navigate to="/locations" replace />;
-  return <LocationEditPage id={id} />;
 }

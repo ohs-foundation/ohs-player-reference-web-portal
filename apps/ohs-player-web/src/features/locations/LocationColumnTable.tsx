@@ -11,8 +11,8 @@ import { LocationRowMenu } from './LocationRowMenu';
 export interface LocationColumnTableProps {
   root: LocationNode;
   onSelect: (id: string) => void;
-  /** Refetch the hierarchy after a row action mutates a node (e.g. deactivate). */
-  onChanged: () => void;
+  /** Open the edit drawer for a node (locations.edit only). */
+  onEdit: (id: string) => void;
 }
 
 /** Depth-first flatten of the whole tree into a flat row list for the Column (table) view. */
@@ -26,7 +26,7 @@ function flattenAll(root: LocationNode): LocationNode[] {
   return rows;
 }
 
-export function LocationColumnTable({ root, onSelect, onChanged }: Readonly<LocationColumnTableProps>): React.ReactElement {
+export function LocationColumnTable({ root, onSelect, onEdit }: Readonly<LocationColumnTableProps>): React.ReactElement {
   const { t } = useTranslation();
   const rows = useMemo(() => flattenAll(root), [root]);
   const [selectedKeys, setSelectedKeys] = useState<ReadonlySet<string>>(new Set());
@@ -83,10 +83,10 @@ export function LocationColumnTable({ root, onSelect, onChanged }: Readonly<Loca
         header: <span className="sr-only">{t('rowActions')}</span>,
         align: 'right',
         width: '48px',
-        render: (r) => <LocationRowMenu nodeId={r.id} status={r.status} onView={onSelect} onChanged={onChanged} />,
+        render: (r) => <LocationRowMenu nodeId={r.id} onView={onSelect} onEdit={onEdit} />,
       },
     ],
-    [t, onSelect, onChanged],
+    [t, onSelect, onEdit],
   );
 
   return (

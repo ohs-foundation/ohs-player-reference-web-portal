@@ -14,6 +14,7 @@ import { LocationViewToggle, type LocationView } from './LocationViewToggle';
 import { LocationFilterMenu, type LocationStatusFilter } from './LocationFilterMenu';
 import { LocationBreadcrumb } from './LocationBreadcrumb';
 import { LocationDetailPanel } from './LocationDetailPanel';
+import { LocationEditDrawer } from './LocationEditDrawer';
 import { LocationImportDrawer } from './LocationImportDrawer';
 import { LocationsNoAccess } from './LocationsNoAccess';
 import { HierarchyEmpty, HierarchyErrorState, HierarchySkeleton, TruncatedNotice } from './LocationStates';
@@ -30,6 +31,7 @@ interface BodyArgs {
   onLoadMore: (id: string) => void;
   onRetry: () => void;
   onImport: () => void;
+  onEdit: (id: string) => void;
 }
 
 /** Pick the body from data + error state, then Tree vs Column view (keeps the component's JSX flat). */
@@ -52,7 +54,7 @@ function renderBody(a: BodyArgs): React.ReactElement | null {
     );
   }
   if (a.view === 'column') {
-    return <LocationColumnTable root={a.tree} onSelect={a.onSelect} onChanged={a.onRetry} />;
+    return <LocationColumnTable root={a.tree} onSelect={a.onSelect} onEdit={a.onEdit} />;
   }
   return (
     <LocationTree
@@ -62,7 +64,7 @@ function renderBody(a: BodyArgs): React.ReactElement | null {
       onToggle={a.onToggle}
       onSelect={a.onSelect}
       onLoadMore={a.onLoadMore}
-      onChanged={a.onRetry}
+      onEdit={a.onEdit}
     />
   );
 }
@@ -85,6 +87,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const [statusFilter, setStatusFilter] = useState<LocationStatusFilter>('all');
   const [view, setView] = useState<LocationView>('tree');
   const [importOpen, setImportOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   // Root candidates: Locations with no partOf. (HAPI here rejects partOf:missing, so filter client-side.)
   const rootsSearch = useSearch('Location', { _count: '200' });
@@ -218,11 +221,25 @@ export function LocationsHierarchyPage(): React.ReactElement {
           onLoadMore: loadMore,
           onRetry: refetch,
           onImport: () => setImportOpen(true),
+          onEdit: setEditId,
         })}
       </div>
 
       {query.data && selectedId ? (
-        <LocationDetailPanel root={query.data.root} nodeId={selectedId} onClose={() => setSelectedId(null)} onSelect={select} />
+        <LocationDetailPanel
+          root={query.data.root}
+          nodeId={selectedId}
+          onClose={() => setSelectedId(null)}
+          onSelect={select}
+          onEdit={(id) => {
+            setSelectedId(null);
+            setEditId(id);
+          }}
+        />
+      ) : null}
+
+      {editId ? (
+        <LocationEditDrawer nodeId={editId} onClose={() => setEditId(null)} onSaved={refetch} />
       ) : null}
 
       {meta ? (

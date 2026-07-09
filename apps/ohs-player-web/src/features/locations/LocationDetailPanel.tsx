@@ -1,62 +1,131 @@
 import { useState } from 'react';
-import { RiCloseLine, RiFileCopyLine, RiInformationLine, RiNodeTree } from '@remixicon/react';
-import { useTranslation } from 'ohs-player-web-core';
-import { Drawer, IconButton, Stack } from '../../components/ui';
+import { RiBuilding2Line, RiCloseLine, RiFileCopyLine, RiInformationLine, RiNodeTree } from '@remixicon/react';
+import { OhsTabs, PermissionGuard, useResource, useTranslation } from 'ohs-player-web-core';
+import type { Location, Organization } from '@medplum/fhirtypes';
+import { Button, Drawer, IconButton } from '../../components/ui';
 import { Section } from '../users/userFormControls';
-import { findNode, type LocationNode } from './hierarchy';
+import { LOCATION_SOURCE_ID_SYSTEM } from '../sdc/resourceFromAnswers';
+import { bareId, findNode, type LocationNode } from './hierarchy';
 import { levelFromType, physicalTypesFromConcept } from './locationLevel';
-import { LocationLevelBadge, PhysicalTypeChip } from './LocationLevelBadge';
-import { LocationBreadcrumb } from './LocationBreadcrumb';
+import { LocationStatusBadge } from './locationStatus';
 
 export interface LocationDetailPanelProps {
   root: LocationNode;
   nodeId: string;
   onClose: () => void;
   onSelect: (id: string) => void;
+  /** Open the edit drawer for this node (locations.edit only). */
+  onEdit: (id: string) => void;
 }
 
-function Field({ label, children }: Readonly<{ label: string; children: React.ReactNode }>): React.ReactElement {
+function Field({ label, children }: Readonly<{ label: string; children?: React.ReactNode }>): React.ReactElement {
   return (
     <div className="ohs-detail-field">
       <span className="ohs-detail-field__label">{label}</span>
-      <span className="ohs-detail-field__value">{children}</span>
+      <span className="ohs-detail-field__value">{children ?? '-'}</span>
     </div>
   );
 }
 
-export function LocationDetailPanel({ root, nodeId, onClose, onSelect }: Readonly<LocationDetailPanelProps>): React.ReactElement {
+/** address.text, else the address lines joined — the two shapes the backend writes. */
+function addressText(resource: Location | undefined): string | null {
+  if (!resource?.address) return null;
+  return resource.address.text ?? resource.address.line?.join(', ') ?? null;
+}
+
+function ParentLink({
+  node,
+  parentLabel,
+  onSelect,
+}: Readonly<{ node: LocationNode | undefined; parentLabel: string | null | undefined; onSelect: (id: string) => void }>): React.ReactElement | null {
   const { t } = useTranslation();
-  const node = findNode(root, nodeId);
+  if (node?.partOf === null) return <span className="text-text-muted">{t('locationsRootParent')}</span>;
+  if (!node?.partOf) return null;
+  return (
+    <button type="button" onClick={() => onSelect(node.partOf as string)} className="text-primary hover:underline">
+      {parentLabel}
+    </button>
+  );
+}
+
+function ChildChips({
+  node,
+  onSelect,
+}: Readonly<{ node: LocationNode | undefined; onSelect: (id: string) => void }>): React.ReactElement {
+  const { t } = useTranslation();
+  const children = node?.children ?? [];
+  if (children.length === 0) {
+    if (node?.hasMoreChildren) return <></>;
+    return <span className="text-text-muted">{t('detailNone')}</span>;
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {children.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onClick={() => onSelect(c.id)}
+          className="inline-flex items-center rounded-pill border border-border px-3 py-1.5 text-sm text-primary hover:bg-surface-variant"
+        >
+          {c.name ?? t('locationsUnnamed', { id: c.id })}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const TAB_TRIGGER =
+  'border-b-2 border-transparent pb-2.5 text-sm font-medium text-text-muted transition-colors ' +
+  'hover:text-text data-[state=active]:border-primary data-[state=active]:text-primary';
+
+export function LocationDetailPanel({
+  root,
+  nodeId,
+  onClose,
+  onSelect,
+  onEdit,
+}: Readonly<LocationDetailPanelProps>): React.ReactElement {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
-  // Level + physicalType + status are inline on the node — no per-node Location fetch.
-  const level = node ? levelFromType(node.type) : null;
-  const physicalTypes = physicalTypesFromConcept(node?.physicalType);
-  const isRoot = node?.partOf === null;
-  const childCount = node?.children.length ?? 0;
-  const partial = Boolean(node?.hasMoreChildren);
-  const name = node?.name ?? t('locationsUnnamed', { id: nodeId });
+  // The hierarchy node renders instantly; the FHIR read fills address/mode/position/identifier/org.
+  const node = findNode(root, nodeId);
+  const read = useResource('Location', nodeId);
+  const resource = read.data as Location | undefined;
 
-  const copyId = () => {
-    void navigator.clipboard?.writeText(nodeId).then(() => {
+  const orgRef = resource?.managingOrganization;
+  const orgId = bareId(orgRef?.reference);
+  const orgRead = useResource('Organization', orgId ?? undefined);
+  const orgName = (orgRead.data as Organization | undefined)?.name ?? orgRef?.display ?? orgId;
+
+  const name = resource?.name ?? node?.name ?? t('locationsUnnamed', { id: nodeId });
+  const status = resource?.status ?? node?.status ?? null;
+  const level = node ? levelFromType(node.type) : null;
+  const physicalTypes = physicalTypesFromConcept(node?.physicalType ?? resource?.physicalType);
+  const sourceId = resource?.identifier?.find((i) => i.system === LOCATION_SOURCE_ID_SYSTEM)?.value;
+  const parentLabel = node?.partOfLabel ?? resource?.partOf?.display ?? node?.partOf;
+  const fhirJson = resource ? JSON.stringify(resource, null, 2) : null;
+
+  const copyText = (text: string): void => {
+    void navigator.clipboard?.writeText(text).then(() => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     });
   };
-
-  let headerBadge: React.ReactNode = null;
-  if (isRoot) headerBadge = <LocationLevelBadge tone="root" labelKey="locationLevelRoot" />;
-  else if (level) headerBadge = <LocationLevelBadge tone={level.tone} labelKey={level.labelKey} />;
 
   const header = (
     <div className="ohs-form-drawer__head">
       <div>
         <div className="ohs-user-drawer__name-row">
           <h2 className="ohs-form-drawer__title">{name}</h2>
-          {headerBadge}
+          <LocationStatusBadge status={status} />
         </div>
-        <button type="button" onClick={copyId} className="ohs-user-drawer__id-chip inline-flex items-center gap-1.5">
-          <span className="font-mono">{nodeId}</span>
+        <button
+          type="button"
+          onClick={() => copyText(sourceId ?? nodeId)}
+          className="ohs-user-drawer__id-chip inline-flex items-center gap-1.5"
+        >
+          <span className="font-mono">{sourceId ?? nodeId}</span>
           <RiFileCopyLine size={13} aria-hidden="true" />
           <span className="sr-only">{copied ? t('copied') : t('copy')}</span>
         </button>
@@ -67,67 +136,95 @@ export function LocationDetailPanel({ root, nodeId, onClose, onSelect }: Readonl
     </div>
   );
 
-  return (
-    <Drawer open onClose={onClose} title={name} header={header}>
-      <div className="ohs-detail-body">
-        <Section icon={RiInformationLine} title={t('sectionBasicInfo')}>
-          <Stack gap={4}>
-            <LocationBreadcrumb root={root} selectedId={nodeId} onSelect={onSelect} />
-            {physicalTypes.length > 0 ? (
-              <Field label={t('locationsPhysicalType')}>
-                <span className="flex flex-wrap gap-2">
-                  {physicalTypes.map((p) => (
-                    <PhysicalTypeChip key={p} label={p} />
-                  ))}
-                </span>
-              </Field>
-            ) : null}
-            <Field label={t('locationsPartOf')}>
-              {node?.partOf ? (
-                <button type="button" onClick={() => onSelect(node.partOf as string)} className="text-primary hover:underline">
-                  {node.partOfLabel ?? t('locationsUnnamed', { id: node.partOf })}
-                </button>
-              ) : (
-                <span className="text-text-muted">{t('locationsRootParent')}</span>
-              )}
-            </Field>
-            {node?.status ? <Field label={t('columnStatus')}>{node.status}</Field> : null}
-          </Stack>
-        </Section>
+  // No Deactivate action: the gateway's hierarchy cache (up to 24 h, no invalidation endpoint) can't
+  // reflect a status write, so it appeared broken. Restore once the backend supports it.
+  const footer = (
+    <div className="ohs-user-drawer__foot">
+      <PermissionGuard permission="locations.edit">
+        <Button type="button" style={{ marginLeft: 'auto' }} onClick={() => onEdit(nodeId)}>
+          {t('editDetails')}
+        </Button>
+      </PermissionGuard>
+    </div>
+  );
 
-        <Section icon={RiNodeTree} title={t('locationsChildrenCount')}>
-          {partial ? (
-            <div className="rounded border border-border-tertiary bg-surface-variant p-3 text-sm text-text-muted">
-              {t('locationsPartialChildrenNotice')}
+  return (
+    <Drawer open onClose={onClose} title={name} header={header} footer={footer}>
+      <OhsTabs.Root defaultValue="info">
+        <OhsTabs.List className="flex gap-6 border-b border-border px-6 pt-2" aria-label={t('locationsDetailTitle')}>
+          <OhsTabs.Trigger value="info" className={TAB_TRIGGER}>
+            {t('locationsTabInfo')}
+          </OhsTabs.Trigger>
+          <OhsTabs.Trigger value="fhir" className={TAB_TRIGGER}>
+            {t('locationsTabFhir')}
+          </OhsTabs.Trigger>
+        </OhsTabs.List>
+
+        <OhsTabs.Content value="info">
+          <div className="ohs-detail-body">
+            <Section icon={RiInformationLine} title={t('sectionBasicInfo')}>
+              <div className="ohs-detail-grid">
+                <Field label={t('locationName')}>{name}</Field>
+                <Field label={t('columnStatus')}>{status ? <LocationStatusBadge status={status} /> : null}</Field>
+                <Field label={t('locationsAddressLine')}>{addressText(resource)}</Field>
+                <Field label={t('locationsMode')}>
+                  {resource?.mode ? <span className="capitalize">{resource.mode}</span> : null}
+                </Field>
+                <Field label={t('locationsAdminLevel')}>{level ? t(level.labelKey) : null}</Field>
+                <Field label={t('locationsParentLocation')}>
+                  <ParentLink node={node} parentLabel={parentLabel} onSelect={onSelect} />
+                </Field>
+                <Field label={t('locationsLatitude')}>
+                  {resource?.position?.latitude !== undefined ? String(resource.position.latitude) : null}
+                </Field>
+                <Field label={t('locationsLongitude')}>
+                  {resource?.position?.longitude !== undefined ? String(resource.position.longitude) : null}
+                </Field>
+                <Field label={t('locationsPhysicalType')}>
+                  {physicalTypes.length > 0 ? physicalTypes.join(', ') : null}
+                </Field>
+                <Field label={t('locationsSourceId')}>{sourceId}</Field>
+              </div>
+            </Section>
+
+            {orgRef ? (
+              <Section icon={RiBuilding2Line} title={t('locationsManagingOrg')}>
+                <span className="inline-flex items-center rounded-pill border border-border px-3 py-1.5 text-sm text-primary">
+                  {orgName}
+                </span>
+              </Section>
+            ) : null}
+
+            <Section icon={RiNodeTree} title={t('locationsChildrenCount')}>
+              {node?.hasMoreChildren ? (
+                <div className="mb-3 rounded border border-border-tertiary bg-surface-variant p-3 text-sm text-text-muted">
+                  {t('locationsPartialChildrenNotice')}
+                </div>
+              ) : null}
+              <ChildChips node={node} onSelect={onSelect} />
+            </Section>
+          </div>
+        </OhsTabs.Content>
+
+        <OhsTabs.Content value="fhir">
+          <div className="ohs-detail-body">
+            <div className="mb-3 flex justify-end">
+              <Button
+                variant="outlined"
+                type="button"
+                iconLeft={<RiFileCopyLine size={16} />}
+                disabled={!fhirJson}
+                onClick={() => fhirJson && copyText(fhirJson)}
+              >
+                {copied ? t('copied') : t('locationsCopyCode')}
+              </Button>
             </div>
-          ) : null}
-          {!partial && childCount === 0 ? (
-            <span className="text-text-muted">{t('detailNone')}</span>
-          ) : null}
-          {!partial && childCount > 0 ? (
-            <ul className="m-0 flex list-none flex-col p-0">
-              {node?.children.map((c) => (
-                <li key={c.id} className="border-b border-border/60 last:border-b-0">
-                  <button
-                    type="button"
-                    onClick={() => onSelect(c.id)}
-                    className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-2.5 text-left text-sm hover:bg-surface-variant"
-                  >
-                    <span className={c.name ? 'text-text' : 'italic text-text-muted'}>
-                      {c.name ?? t('locationsUnnamed', { id: c.id })}
-                    </span>
-                    {c.children.length > 0 || c.hasMoreChildren ? (
-                      <span className="shrink-0 rounded-pill bg-surface-variant px-2 py-0.5 text-xs text-text-muted">
-                        {c.children.length || '…'}
-                      </span>
-                    ) : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </Section>
-      </div>
+            <pre className="m-0 overflow-auto rounded bg-surface-variant p-4 text-xs leading-relaxed text-text">
+              {fhirJson ?? t('loading')}
+            </pre>
+          </div>
+        </OhsTabs.Content>
+      </OhsTabs.Root>
     </Drawer>
   );
 }

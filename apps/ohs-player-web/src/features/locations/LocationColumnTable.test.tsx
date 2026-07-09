@@ -27,7 +27,6 @@ function node(partial: Partial<LocationNode> & { id: string }): LocationNode {
   return {
     name: null,
     status: 'active',
-    description: null,
     partOf: 'ke',
     partOfLabel: 'Kenya',
     physicalType: null,
@@ -49,7 +48,7 @@ const root: LocationNode = node({
 
 describe('LocationColumnTable', () => {
   it('flattens the tree into table rows with name, level badge, parent and status', () => {
-    render(<LocationColumnTable root={root} onSelect={vi.fn()} onChanged={vi.fn()} />);
+    render(<LocationColumnTable root={root} onSelect={vi.fn()} onEdit={vi.fn()} />);
     expect(screen.getByRole('table')).toBeInTheDocument();
     // Two data rows: the root (Kenya) and its child (Nairobi).
     const rows = screen.getAllByRole('row');
@@ -64,7 +63,7 @@ describe('LocationColumnTable', () => {
 
   it('selects the clicked parent link', () => {
     const onSelect = vi.fn();
-    render(<LocationColumnTable root={root} onSelect={onSelect} onChanged={vi.fn()} />);
+    render(<LocationColumnTable root={root} onSelect={onSelect} onEdit={vi.fn()} />);
     const nairobiRow = screen.getByText('Nairobi').closest('tr') as HTMLElement;
     fireEvent.click(within(nairobiRow).getByRole('button', { name: /Kenya/ }));
     expect(onSelect).toHaveBeenCalledWith('ke');
@@ -72,13 +71,13 @@ describe('LocationColumnTable', () => {
 
   it('opens the details drawer target on row click', () => {
     const onSelect = vi.fn();
-    render(<LocationColumnTable root={root} onSelect={onSelect} onChanged={vi.fn()} />);
+    render(<LocationColumnTable root={root} onSelect={onSelect} onEdit={vi.fn()} />);
     fireEvent.click(screen.getByText('Nairobi'));
     expect(onSelect).toHaveBeenCalledWith('nrb');
   });
 
   it('has no axe violations', async () => {
-    const { container } = render(<LocationColumnTable root={root} onSelect={vi.fn()} onChanged={vi.fn()} />);
+    const { container } = render(<LocationColumnTable root={root} onSelect={vi.fn()} onEdit={vi.fn()} />);
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations).toEqual([]);
   });

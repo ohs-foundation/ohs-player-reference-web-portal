@@ -46,8 +46,8 @@ export interface LocationTreeProps {
   onSelect: (id: string) => void;
   /** node.hasMoreChildren → re-root to that node (no in-place paging yet; see hierarchy.ts open dependency). */
   onLoadMore: (id: string) => void;
-  /** Refetch the hierarchy after a row action mutates a node (e.g. deactivate). */
-  onChanged: () => void;
+  /** Open the edit drawer for a node (locations.edit only). */
+  onEdit: (id: string) => void;
 }
 
 const INDENT = 32; // px per depth level — the gutter each connector column occupies.
@@ -126,7 +126,7 @@ interface TreeRowProps {
   onSelect: (id: string) => void;
   onLoadMore: (id: string) => void;
   onFocusRow: (id: string) => void;
-  onChanged: () => void;
+  onEdit: (id: string) => void;
 }
 
 function TreeRow({
@@ -140,7 +140,7 @@ function TreeRow({
   onSelect,
   onLoadMore,
   onFocusRow,
-  onChanged,
+  onEdit,
 }: Readonly<TreeRowProps>): React.ReactElement {
   const { t } = useTranslation();
   const { node, depth, expandable, ancestorHasNext, isLast } = row;
@@ -215,7 +215,7 @@ function TreeRow({
         ) : null}
 
         <span className="ml-1 shrink-0">
-          <LocationRowMenu nodeId={node.id} status={node.status} onView={onSelect} onChanged={onChanged} />
+          <LocationRowMenu nodeId={node.id} onView={onSelect} onEdit={onEdit} />
         </span>
       </span>
     </div>
@@ -229,7 +229,7 @@ export function LocationTree({
   onToggle,
   onSelect,
   onLoadMore,
-  onChanged,
+  onEdit,
 }: Readonly<LocationTreeProps>): React.ReactElement {
   const { t } = useTranslation();
   const rows = useMemo(() => flatten(root, expanded), [root, expanded]);
@@ -302,7 +302,7 @@ export function LocationTree({
           onSelect={onSelect}
           onLoadMore={onLoadMore}
           onFocusRow={setFocusId}
-          onChanged={onChanged}
+          onEdit={onEdit}
         />
       ))}
     </div>

@@ -6,7 +6,6 @@ function node(partial: Partial<LocationNode> & { id: string }): LocationNode {
   return {
     name: partial.id,
     status: 'active',
-    description: null,
     partOf: 'ke',
     partOfLabel: 'Kenya',
     physicalType: null,
