@@ -2,11 +2,10 @@ import { useCallback, useMemo, useRef, useState, type KeyboardEvent } from 'reac
 import { RiArrowRightSLine } from '@remixicon/react';
 import { useTranslation } from 'ohs-player-web-core';
 import type { LocationNode } from './hierarchy';
+import { levelFromType, physicalTypesFromConcept } from './locationLevel';
+import { LocationLevelBadge, PhysicalTypeChip } from './LocationLevelBadge';
 
-// NOTE: the hierarchy DTO carries only id/name/partOf/children/hasMoreChildren — NOT the administrative
-// level or physicalType (those live on the full Location). Per-node fetches would be N requests, so the
-// level badge + physical-type chip are shown in the detail panel (which reads the full Location), and tree
-// rows stay lightweight (name + expand state). Revisit if the hierarchy API starts returning level.
+// Level + physicalType are INLINE on every hierarchy node, so badges render directly on each row — no fetch.
 
 interface FlatRow {
   node: LocationNode;
@@ -105,6 +104,12 @@ export function LocationTree({
         const isSelected = selectedId === node.id;
         const label = node.name ?? t('locationsUnnamed', { id: node.id });
         const childCount = node.children.length;
+        // The requested root (no partOf) gets the solid-brand badge; others use their administrative level.
+        const level = levelFromType(node.type);
+        const physical = physicalTypesFromConcept(node.physicalType);
+        let levelBadge: React.ReactNode = null;
+        if (node.partOf === null) levelBadge = <LocationLevelBadge tone="root" labelKey="locationLevelRoot" />;
+        else if (level) levelBadge = <LocationLevelBadge tone={level.tone} labelKey={level.labelKey} />;
         return (
           <div
             key={node.id}
@@ -145,7 +150,12 @@ export function LocationTree({
                 <span className="h-1.5 w-1.5 rounded-pill bg-border-tertiary" />
               </span>
             )}
-            <span className={`flex-1 truncate text-sm ${node.name ? '' : 'italic text-text-muted'}`}>{label}</span>
+            <span className={`truncate text-sm ${node.name ? '' : 'italic text-text-muted'}`}>{label}</span>
+            {levelBadge}
+            {physical.map((p) => (
+              <PhysicalTypeChip key={p} label={p} />
+            ))}
+            <span className="flex-1" />
             {childCount > 0 ? (
               <span className="shrink-0 rounded-pill bg-surface-variant px-2 py-0.5 text-xs text-text-muted">
                 {childCount}

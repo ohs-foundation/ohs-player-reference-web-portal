@@ -43,21 +43,47 @@ describe('normalizeHierarchy', () => {
     root: {
       id: 'Location/loc-country-ke',
       name: 'Kenya',
+      status: 'active',
+      description: null,
       partOf: null,
+      physicalType: null,
+      type: [{ coding: [{ system: 'http://ohs.dev/codes/administrative-level', code: 'country' }] }],
       hasMoreChildren: false,
       children: [
-        { id: 'Location/loc-nairobi', name: 'Nairobi', partOf: 'Location/loc-country-ke', hasMoreChildren: true, children: [] },
-        { id: 'Location/loc-unnamed', name: null, partOf: 'Location/loc-country-ke', hasMoreChildren: false, children: [] },
+        {
+          id: 'Location/loc-nairobi',
+          name: 'Nairobi',
+          status: 'active',
+          description: null,
+          partOf: { reference: 'Location/loc-country-ke', display: 'Kenya' },
+          physicalType: null,
+          type: [],
+          hasMoreChildren: true,
+          children: [],
+        },
+        {
+          id: 'Location/loc-unnamed',
+          name: null,
+          status: 'active',
+          description: null,
+          partOf: { reference: 'Location/loc-country-ke', display: 'Kenya' },
+          physicalType: null,
+          type: [],
+          hasMoreChildren: false,
+          children: [],
+        },
       ],
     },
     meta: { nodeCount: 3, depth: 1, truncated: true, builtAt: 1783494664.17 },
   };
 
-  it('normalizes typed-ref ids to bare ids and epoch builtAt to a Date', () => {
+  it('normalizes typed-ref ids to bare ids, partOf object to id + label, and epoch builtAt to a Date', () => {
     const h = normalizeHierarchy(raw);
     expect(h.root.id).toBe('loc-country-ke');
     expect(h.root.children[0].id).toBe('loc-nairobi');
     expect(h.root.children[0].partOf).toBe('loc-country-ke');
+    expect(h.root.children[0].partOfLabel).toBe('Kenya');
+    expect(h.root.type[0].coding?.[0].code).toBe('country');
     expect(h.root.children[1].name).toBeNull();
     expect(h.meta.truncated).toBe(true);
     expect(h.meta.builtAt).toBeInstanceOf(Date);

@@ -175,6 +175,7 @@ export const appMessageOverrides = {
   locationLevelWard: 'Ward',
   locationLevelFacility: 'Facility',
   locationLevelUnit: 'Unit',
+  locationLevelRoot: 'Root',
   locationLevelUnknown: 'Level',
   // States
   locationsEmptyTitle: 'No child locations',

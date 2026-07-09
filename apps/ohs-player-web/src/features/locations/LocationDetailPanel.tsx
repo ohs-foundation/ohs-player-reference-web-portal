@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import type { Location } from '@medplum/fhirtypes';
 import { RiCloseLine, RiFileCopyLine, RiInformationLine, RiNodeTree } from '@remixicon/react';
-import { useResource, useTranslation } from 'ohs-player-web-core';
-import { Drawer, IconButton, Spinner, Stack } from '../../components/ui';
+import { useTranslation } from 'ohs-player-web-core';
+import { Drawer, IconButton, Stack } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 import { findNode, type LocationNode } from './hierarchy';
-import { levelFromLocation, physicalTypesFromLocation } from './locationLevel';
+import { levelFromType, physicalTypesFromConcept } from './locationLevel';
 import { LocationLevelBadge, PhysicalTypeChip } from './LocationLevelBadge';
 import { LocationBreadcrumb } from './LocationBreadcrumb';
 
@@ -28,16 +27,15 @@ function Field({ label, children }: Readonly<{ label: string; children: React.Re
 export function LocationDetailPanel({ root, nodeId, onClose, onSelect }: Readonly<LocationDetailPanelProps>): React.ReactElement {
   const { t } = useTranslation();
   const node = findNode(root, nodeId);
-  const read = useResource('Location', nodeId);
-  const location = read.data as Location | undefined;
   const [copied, setCopied] = useState(false);
 
-  const level = levelFromLocation(location);
-  const physicalTypes = physicalTypesFromLocation(location);
-  const parent = node?.partOf ? findNode(root, node.partOf) : undefined;
+  // Level + physicalType + status are inline on the node — no per-node Location fetch.
+  const level = node ? levelFromType(node.type) : null;
+  const physicalTypes = physicalTypesFromConcept(node?.physicalType);
+  const isRoot = node?.partOf === null;
   const childCount = node?.children.length ?? 0;
   const partial = Boolean(node?.hasMoreChildren);
-  const name = node?.name ?? location?.name ?? t('locationsUnnamed', { id: nodeId });
+  const name = node?.name ?? t('locationsUnnamed', { id: nodeId });
 
   const copyId = () => {
     void navigator.clipboard?.writeText(nodeId).then(() => {
@@ -47,7 +45,7 @@ export function LocationDetailPanel({ root, nodeId, onClose, onSelect }: Readonl
   };
 
   let headerBadge: React.ReactNode = null;
-  if (read.isLoading) headerBadge = <Spinner />;
+  if (isRoot) headerBadge = <LocationLevelBadge tone="root" labelKey="locationLevelRoot" />;
   else if (level) headerBadge = <LocationLevelBadge tone={level.tone} labelKey={level.labelKey} />;
 
   const header = (
@@ -87,12 +85,13 @@ export function LocationDetailPanel({ root, nodeId, onClose, onSelect }: Readonl
             <Field label={t('locationsPartOf')}>
               {node?.partOf ? (
                 <button type="button" onClick={() => onSelect(node.partOf as string)} className="text-primary hover:underline">
-                  {parent?.name ?? t('locationsUnnamed', { id: node.partOf })}
+                  {node.partOfLabel ?? t('locationsUnnamed', { id: node.partOf })}
                 </button>
               ) : (
                 <span className="text-text-muted">{t('locationsRootParent')}</span>
               )}
             </Field>
+            {node?.status ? <Field label={t('columnStatus')}>{node.status}</Field> : null}
           </Stack>
         </Section>
 

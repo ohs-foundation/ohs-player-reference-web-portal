@@ -1,5 +1,5 @@
 import { RiMapPin2Line, RiErrorWarningLine } from '@remixicon/react';
-import { formatOperationOutcomeMessage, useTranslation } from 'ohs-player-web-core';
+import { useTranslation } from 'ohs-player-web-core';
 import { Button, EmptyState, ErrorState, Inline } from '../../components/ui';
 import type { HierarchyError } from './useLocationHierarchy';
 
@@ -42,7 +42,8 @@ export function HierarchyErrorState({
   onRetry,
 }: Readonly<{ error: HierarchyError; onRetry: () => void }>): React.ReactElement {
   const { t } = useTranslation();
-  const detail = formatOperationOutcomeMessage(error.outcome) || error.message;
+  // Gateway /api errors are plain `{ error }` JSON (not OperationOutcome); HierarchyError.message holds `.error`.
+  const detail = error.message;
   return (
     <ErrorState
       icon={<RiErrorWarningLine size={28} />}

@@ -32,7 +32,10 @@ interface BodyArgs {
 function renderBody(a: BodyArgs): React.ReactElement | null {
   if (a.loading) return <HierarchySkeleton />;
   if (a.error) {
-    if (a.error.status === 401 || a.error.status === 403) return <LocationsNoAccess status={a.error.status} />;
+    if (a.error.status === 401 || a.error.status === 403) {
+      // 401 here is the intermittent gateway token bug — offer Retry (re-mints the token) before no-access.
+      return <LocationsNoAccess status={a.error.status} onRetry={a.onRetry} />;
+    }
     return <HierarchyErrorState error={a.error} onRetry={a.onRetry} />;
   }
   if (!a.tree) return null;

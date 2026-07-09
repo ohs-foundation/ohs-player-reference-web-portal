@@ -17,16 +17,28 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
 
 const { LocationTree } = await import('./LocationTree');
 
-const root: LocationNode = {
+function node(partial: Partial<LocationNode> & { id: string }): LocationNode {
+  return {
+    name: null,
+    status: 'active',
+    description: null,
+    partOf: 'ke',
+    partOfLabel: 'Kenya',
+    physicalType: null,
+    type: [],
+    hasMoreChildren: false,
+    children: [],
+    ...partial,
+  };
+}
+
+const root: LocationNode = node({
   id: 'ke',
   name: 'Kenya',
   partOf: null,
-  hasMoreChildren: false,
-  children: [
-    { id: 'nrb', name: 'Nairobi', partOf: 'ke', hasMoreChildren: false, children: [] },
-    { id: 'unnamed', name: null, partOf: 'ke', hasMoreChildren: false, children: [] },
-  ],
-};
+  partOfLabel: null,
+  children: [node({ id: 'nrb', name: 'Nairobi' }), node({ id: 'unnamed', name: null })],
+});
 
 describe('LocationTree', () => {
   it('renders an accessible tree with treeitems and aria-expanded on the expandable root', () => {

@@ -1,23 +1,36 @@
+import type { CodeableConcept } from '@medplum/fhirtypes';
+
 /**
  * Types + normalizers for the OHS gateway `GET /api/location-hierarchy/{rootId}` response.
  *
- * VERIFIED against the running gateway (branch feature/47-add-location-hierarchy-api) — two deltas from the
- * documented DTO are handled here:
- *   1. `id`/`partOf` come back as FHIR-typed references (e.g. "Location/1000"), NOT bare ids. Normalized to
- *      bare ids so they match the FHIR `{id}` used by useResource/routes.
- *   2. `meta.builtAt` is a Unix-epoch number (seconds, may be fractional), NOT an ISO-8601 string.
+ * VERIFIED against the LIVE gateway — the adapter smooths over contract quirks so components consume a clean
+ * normalized `LocationNode`, never raw API JSON:
+ *   1. `id` is FHIR-prefixed (`"Location/1001"`); the request path wants the bare id (`1001`) — a slash in the
+ *      path 400s. `bareId` strips the prefix. (Pending backend fix.)
+ *   2. `partOf` is an object `{ reference, display }` (or null on the root), NOT a bare id string.
+ *   3. `type` (administrative-level) and `physicalType` are INLINE on every node — badges need no extra fetch.
+ *   4. `meta.builtAt` is Unix-epoch seconds (fractional), NOT ISO-8601. (Pending backend fix.)
  *
- * OPEN DEPENDENCY (backend #47): there is currently no pagination/continuation param. When
- * `hasMoreChildren` or `meta.truncated` is true, the API gives no documented way to fetch the remainder in
- * place — the UI re-roots to `/api/location-hierarchy/{node.id}` instead. Revisit when the backend adds paging.
+ * OPEN DEPENDENCY (backend): no pagination/continuation param. When `hasMoreChildren` / `meta.truncated` is
+ * true, the only "load more" path is re-rooting: fetch `/api/location-hierarchy/{childId}` (bare id). In-place
+ * paging is pending backend work.
  */
+
+interface RawPartOf {
+  reference: string;
+  display: string | null;
+}
 
 export interface RawLocationNode {
   id: string;
   name: string | null;
-  partOf: string | null;
-  hasMoreChildren: boolean;
+  status?: string | null;
+  description?: string | null;
+  partOf: RawPartOf | null;
+  physicalType?: CodeableConcept | null;
+  type?: CodeableConcept[] | null;
   children: RawLocationNode[];
+  hasMoreChildren: boolean;
 }
 
 export interface RawHierarchyMeta {
@@ -33,13 +46,20 @@ export interface RawHierarchyResponse {
   meta: RawHierarchyMeta;
 }
 
-/** Normalized node: `id`/`partOf` are bare FHIR ids. */
+/** Normalized node: bare ids, a resolved parent label, and inline CodeableConcepts for badges. */
 export interface LocationNode {
   id: string;
   name: string | null;
+  status: string | null;
+  description: string | null;
+  /** Bare parent id (prefix stripped), or null on the root. */
   partOf: string | null;
-  hasMoreChildren: boolean;
+  /** Parent display label from `partOf.display`, for the "Part of" link. */
+  partOfLabel: string | null;
+  physicalType: CodeableConcept | null;
+  type: CodeableConcept[];
   children: LocationNode[];
+  hasMoreChildren: boolean;
 }
 
 export interface HierarchyMeta {
@@ -65,9 +85,14 @@ function normalizeNode(n: RawLocationNode): LocationNode {
   return {
     id: bareId(n.id) ?? n.id,
     name: n.name,
-    partOf: bareId(n.partOf),
-    hasMoreChildren: Boolean(n.hasMoreChildren),
+    status: n.status ?? null,
+    description: n.description ?? null,
+    partOf: bareId(n.partOf?.reference),
+    partOfLabel: n.partOf?.display ?? null,
+    physicalType: n.physicalType ?? null,
+    type: Array.isArray(n.type) ? n.type : [],
     children: Array.isArray(n.children) ? n.children.map(normalizeNode) : [],
+    hasMoreChildren: Boolean(n.hasMoreChildren),
   };
 }
 
