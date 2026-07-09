@@ -137,6 +137,7 @@ export function StackedSelect({
   placeholder,
   full,
   error,
+  disabled,
 }: Readonly<{
   label: string;
   value: string;
@@ -145,6 +146,7 @@ export function StackedSelect({
   placeholder: string;
   full?: boolean;
   error?: string;
+  disabled?: boolean;
 }>): React.ReactElement {
   const id = useId();
   return (
@@ -157,6 +159,7 @@ export function StackedSelect({
           id={id}
           className="ohs-formfield__select"
           value={value}
+          disabled={disabled}
           aria-invalid={error ? true : undefined}
           onChange={(e) => onChange(e.target.value)}
         >

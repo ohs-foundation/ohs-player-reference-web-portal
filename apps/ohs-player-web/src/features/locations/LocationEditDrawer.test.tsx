@@ -44,6 +44,15 @@ describe('LocationEditDrawer', () => {
     expect(screen.getByDisplayValue('Nairobi County')).toBeInTheDocument();
     const save = screen.getByRole('button', { name: /save/i });
     expect(save).toHaveAttribute('form', 'location-edit-form');
+    // nrb has no children in the mocked list → the parent stays editable.
+    expect(screen.getByRole('combobox', { name: /locationsParentLocation/ })).not.toBeDisabled();
+  });
+
+  it('locks the parent field for a location that has children', () => {
+    // ke is the parent of nrb in the mocked search bundle.
+    render(<LocationEditDrawer nodeId="ke" onClose={vi.fn()} onSaved={vi.fn()} />);
+    expect(screen.getByRole('combobox', { name: /locationsParentLocation/ })).toBeDisabled();
+    expect(screen.getByText(/locationsParentLocked/)).toBeInTheDocument();
   });
 
   it('submits via the FHIR Location PUT (useUpdateResource) and reports back', async () => {

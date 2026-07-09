@@ -1,7 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { RiCloseLine } from '@remixicon/react';
+import { RiCloseLine, RiInformationLine } from '@remixicon/react';
 import {
-  QuestionnaireFields,
   useCreateResource,
   useQuestionnaireFormState,
   useResource,
@@ -11,10 +10,11 @@ import {
   useUpdateResource,
 } from 'ohs-player-web-core';
 import type { Bundle, Location } from '@medplum/fhirtypes';
-import { Button, Drawer, ErrorState, IconButton, Spinner } from '../../components/ui';
+import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { toErrorMessage } from '../sdc/toErrorMessage';
+import { RadioRow, Section, StackedInput, StackedSelect } from '../users/userFormControls';
 import {
   LOCATION_LINK_IDS,
   locationBodyFromAnswers,
@@ -22,6 +22,17 @@ import {
 } from '../sdc/resourceFromAnswers';
 
 const FORM_ID = 'location-edit-form';
+
+/** Option codes mirror the location questionnaire's answerOptions — the link-id contract is unchanged. */
+const STATUS_OPTIONS = [
+  { value: 'active', labelKey: 'locationStatusActive' },
+  { value: 'suspended', labelKey: 'locationStatusSuspended' },
+  { value: 'inactive', labelKey: 'locationStatusInactive' },
+] as const;
+const MODE_OPTIONS = [
+  { value: 'instance', labelKey: 'locationsModeInstance' },
+  { value: 'kind', labelKey: 'locationsModeKind' },
+] as const;
 
 export interface LocationEditDrawerProps {
   nodeId: string;
@@ -31,8 +42,9 @@ export interface LocationEditDrawerProps {
 }
 
 /**
- * SDC questionnaire-driven edit in a drawer. Writes go through the standard FHIR Location PUT
- * (useUpdateResource) — the read-only /api/location-hierarchy endpoint is never written to.
+ * SDC answers-backed edit in a drawer, rendered with the styled form controls the user drawers use.
+ * Writes go through the standard FHIR Location PUT (useUpdateResource) — the read-only
+ * /api/location-hierarchy endpoint is never written to.
  */
 export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<LocationEditDrawerProps>): React.ReactElement {
   const { t } = useTranslation();
@@ -95,17 +107,25 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
     return [root, ...rest];
   }, [locList, nodeId, t]);
 
-  const referenceOptionsByLinkId = useMemo(
-    () => ({ [LOCATION_LINK_IDS.parent]: parentOptions }),
-    [parentOptions],
+  // Re-parenting a location that has children moves a whole subtree; locked until the backend can
+  // reflect it (the hierarchy cache has no invalidation, so the move never shows). Derived from the
+  // FHIR list, not the cached hierarchy.
+  const hasChildren = useMemo(
+    () => locList.some((l) => l.partOf?.reference?.replace('Location/', '') === nodeId),
+    [locList, nodeId],
   );
+
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const onSave = (e: FormEvent): void => {
     e.preventDefault();
     setFormError(null);
+    setNameError(null);
 
-    if (validateRequired().length > 0) {
-      setFormError(t('questionnaireRequiredFields'));
+    const missing = validateRequired();
+    if (missing.length > 0) {
+      if (missing.includes(LOCATION_LINK_IDS.name)) setNameError(t('questionnaireRequiredFields'));
+      else setFormError(t('questionnaireRequiredFields'));
       return;
     }
     const parentId = parentLocationIdFromAnswer(answers[LOCATION_LINK_IDS.parent]);
@@ -164,12 +184,56 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
       ) : (
         <form id={FORM_ID} className="ohs-detail-body" onSubmit={onSave}>
           {formError ? <ErrorState description={formError} /> : null}
-          <QuestionnaireFields
-            questionnaire={questionnaire}
-            answers={answers}
-            setAnswer={setAnswer}
-            referenceOptionsByLinkId={referenceOptionsByLinkId}
-          />
+          <Section icon={RiInformationLine} title={t('sectionBasicInfo')}>
+            <Stack gap={5}>
+              <div className="ohs-detail-grid">
+                <StackedInput
+                  full
+                  required
+                  label={t('locationName')}
+                  value={answers[LOCATION_LINK_IDS.name] ?? ''}
+                  error={nameError ?? undefined}
+                  onChange={(v) => {
+                    setAnswer(LOCATION_LINK_IDS.name, v);
+                    setNameError(null);
+                  }}
+                />
+                <RadioRow
+                  label={t('columnStatus')}
+                  name="location-status"
+                  value={answers[LOCATION_LINK_IDS.status] ?? 'active'}
+                  onChange={(v) => setAnswer(LOCATION_LINK_IDS.status, v)}
+                  options={STATUS_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
+                />
+                <StackedInput
+                  full
+                  label={t('locationsAddressLine')}
+                  value={answers[LOCATION_LINK_IDS.addressLine] ?? ''}
+                  onChange={(v) => setAnswer(LOCATION_LINK_IDS.addressLine, v)}
+                />
+                <StackedSelect
+                  label={t('locationsMode')}
+                  value={answers[LOCATION_LINK_IDS.mode] ?? 'instance'}
+                  onChange={(v) => setAnswer(LOCATION_LINK_IDS.mode, v)}
+                  options={MODE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
+                  placeholder={t('selectPlaceholder')}
+                />
+                <div>
+                  <StackedSelect
+                    label={t('locationsParentLocation')}
+                    value={answers[LOCATION_LINK_IDS.parent] ?? '__root__'}
+                    onChange={(v) => setAnswer(LOCATION_LINK_IDS.parent, v)}
+                    options={parentOptions}
+                    placeholder={t('selectPlaceholder')}
+                    disabled={hasChildren}
+                  />
+                  {hasChildren ? (
+                    <p className="mt-1 text-xs text-text-muted">{t('locationsParentLocked')}</p>
+                  ) : null}
+                </div>
+              </div>
+            </Stack>
+          </Section>
         </form>
       )}
     </Drawer>
