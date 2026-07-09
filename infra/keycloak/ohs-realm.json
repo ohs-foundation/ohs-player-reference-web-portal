@@ -11,7 +11,9 @@
         "id": "role-care-team-manager",
         "name": "care-team-manager",
         "description": "Care team manager"
-      }
+      },
+      { "name": "location-hierarchy.view", "description": "View the location hierarchy tree" },
+      { "name": "bulk-import.manage", "description": "Manage bulk CSV imports (locations, users, orgs)" }
     ]
   },
   "defaultDefaultClientScopes": [],
@@ -62,7 +64,7 @@
       "emailVerified": true,
       "email": "admin@example.com",
       "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
-      "realmRoles": ["admin"]
+      "realmRoles": ["admin", "location-hierarchy.view", "bulk-import.manage"]
     },
     {
       "username": "manager-user",
@@ -70,7 +72,7 @@
       "emailVerified": true,
       "email": "manager@example.com",
       "credentials": [{ "type": "password", "value": "manager", "temporary": false }],
-      "realmRoles": ["care-team-manager"]
+      "realmRoles": ["care-team-manager", "location-hierarchy.view"]
     },
     {
       "username": "service-account-ohs-backend",
