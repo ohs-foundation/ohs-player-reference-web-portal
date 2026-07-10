@@ -85,10 +85,15 @@ export class FhirClient {
     return readBody(res);
   }
 
-  /** FHIR search interaction: `GET {base}/{resourceType}?…` */
+  /**
+   * FHIR search interaction: `GET {base}/{resourceType}?…` — sent with `Cache-Control: no-cache`,
+   * else HAPI reuses cached search results for 60 s and post-mutation refetches return stale data.
+   */
   async search(resourceType: string, params?: Record<string, string>): Promise<unknown> {
     const sp = params ? `?${new URLSearchParams(params).toString()}` : '';
-    const res = await this.fetchWithAuth(`${this.fhirBaseUrl}/${resourceType}${sp}`);
+    const res = await this.fetchWithAuth(`${this.fhirBaseUrl}/${resourceType}${sp}`, {
+      headers: { 'Cache-Control': 'no-cache' },
+    });
     if (!res.ok) throw await this.toError(res);
     return readBody(res);
   }
