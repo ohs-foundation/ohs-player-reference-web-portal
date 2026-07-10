@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Location } from '@medplum/fhirtypes';
 import { RiArrowDownSLine, RiUploadCloud2Line } from '@remixicon/react';
-import { PermissionGuard, useSearch, useStatusBar, useTranslation } from 'ohs-player-web-core';
+import { PermissionGuard, useRefreshResources, useSearch, useStatusBar, useTranslation } from 'ohs-player-web-core';
 import { Button, Page, PageHeader, SearchField, SelectField } from '../../components/ui';
 import { collectExpandableIds, filterTree } from './expand';
 import { nodeChain, type LocationNode } from './hierarchy';
@@ -34,12 +34,11 @@ interface BodyArgs {
   onEdit: (id: string) => void;
 }
 
-/** Pick the body from data + error state, then Tree vs Column view (keeps the component's JSX flat). */
 function renderBody(a: BodyArgs): React.ReactElement | null {
   if (a.loading) return <HierarchySkeleton />;
   if (a.error) {
     if (a.error.status === 401 || a.error.status === 403) {
-      // 401 here is the intermittent gateway token bug — offer Retry (re-mints the token) before no-access.
+      // 401 is the intermittent gateway token bug — offer Retry before no-access.
       return <LocationsNoAccess status={a.error.status} onRetry={a.onRetry} />;
     }
     return <HierarchyErrorState error={a.error} onRetry={a.onRetry} />;
@@ -89,19 +88,24 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const [importOpen, setImportOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  // Root candidates: Locations with no partOf. (HAPI here rejects partOf:missing, so filter client-side.)
+  // HAPI rejects partOf:missing, so root candidates are filtered client-side.
   const rootsSearch = useSearch('Location', { _count: '200' });
   const roots = useMemo(() => rootOptions(rootsSearch.data, (id) => t('locationsUnnamed', { id })), [rootsSearch.data, t]);
   const effectiveRoot = rootId || roots[0]?.value || '';
 
   const query = useLocationHierarchy(effectiveRoot || undefined);
+  const refreshResources = useRefreshResources();
   const refetch = () => {
     void query.refetch();
+  };
+  // The import bypasses TanStack mutations, so the root dropdown's Location search needs explicit invalidation.
+  const onImportComplete = () => {
+    void refreshResources('Location');
+    refetch();
   };
 
   const select = (id: string) => {
     setSelectedId(id);
-    // Expand the selected node's ancestors so it's visible in tree view.
     const root = query.data?.root;
     if (!root) return;
     const ancestors = nodeChain(root, id).slice(0, -1).map((n) => n.id);
@@ -117,7 +121,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
     });
 
   const loadMore = (id: string) => {
-    // No in-place paging (hierarchy.ts open dependency) — re-root the view to fetch that node's subtree.
+    // No in-place paging — re-root on the node.
     setRootId(id);
     setSelectedId(id);
     setExpanded(new Set());
@@ -155,7 +159,6 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const meta = query.data?.meta;
   const builtAtLabel = relativeTimeFrom(meta?.builtAt ?? null, locale);
 
-  // Apply the client-side name + status filter to the loaded tree; matches force-expand their ancestors.
   const displayed = useMemo(() => {
     if (!query.data) return null;
     return filterTree(query.data.root, filter, statusFilter);
@@ -252,7 +255,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
       <LocationImportDrawer
         open={importOpen}
         onClose={() => setImportOpen(false)}
-        onComplete={refetch}
+        onComplete={onImportComplete}
       />
     </Page>
   );
