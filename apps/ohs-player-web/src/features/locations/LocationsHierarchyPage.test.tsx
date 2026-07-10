@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { LocationNode } from './hierarchy';
 
 const refreshSpy = vi.fn().mockResolvedValue(undefined);
-const hierarchyRefetch = vi.fn().mockResolvedValue(undefined);
+const refreshHierarchySpy = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
@@ -49,12 +49,14 @@ const rootNode: LocationNode = {
 };
 
 vi.mock('./useLocationHierarchy', () => ({
+  useApplyHierarchyEdit: () => vi.fn(),
+  useRefreshHierarchy: () => refreshHierarchySpy,
   useLocationHierarchy: () => ({
     data: { root: rootNode, meta: { nodeCount: 1, depth: 0, truncated: false, builtAt: null } },
     isLoading: false,
     isError: false,
     error: null,
-    refetch: hierarchyRefetch,
+    refetch: vi.fn().mockResolvedValue(undefined),
   }),
 }));
 
@@ -70,12 +72,13 @@ vi.mock('./LocationImportDrawer', () => ({
 const { LocationsHierarchyPage } = await import('./LocationsHierarchyPage');
 
 describe('LocationsHierarchyPage import completion', () => {
-  // Regression: the import bypasses TanStack mutations, so the dropdown search needs explicit invalidation.
-  it('invalidates the Location search cache and refetches the hierarchy when an import completes', () => {
+  // Regression: the import bypasses TanStack mutations, so the dropdown search needs explicit invalidation
+  // and the tree needs an authoritative (cache-evicting) refresh so imported roots survive a reload.
+  it('invalidates the Location search cache and force-refreshes the hierarchy when an import completes', () => {
     render(<LocationsHierarchyPage />);
     fireEvent.click(screen.getByRole('button', { name: /locationsImport/ }));
     fireEvent.click(screen.getByRole('button', { name: 'finish-import' }));
     expect(refreshSpy).toHaveBeenCalledWith('Location');
-    expect(hierarchyRefetch).toHaveBeenCalled();
+    expect(refreshHierarchySpy).toHaveBeenCalled();
   });
 });

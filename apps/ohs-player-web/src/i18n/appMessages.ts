@@ -185,7 +185,6 @@ export const appMessageOverrides = {
   locationsModeKind: 'Kind',
   locationsAdminLevel: 'Administrative Level',
   locationsParentLocation: 'Parent Location',
-  locationsParentLocked: 'The parent can’t be changed for a location that has child locations.',
   locationsLatitude: 'Latitude',
   locationsLongitude: 'Longitude',
   locationsSourceId: 'Source ID',

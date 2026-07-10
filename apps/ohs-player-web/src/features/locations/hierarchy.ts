@@ -131,3 +131,59 @@ export function findNode(root: LocationNode, id: string): LocationNode | undefin
   }
   return undefined;
 }
+
+export interface LocationEditPatch {
+  id: string;
+  name: string;
+  status: string;
+  /** Bare parent id, or null when moved to the top level. */
+  parentId: string | null;
+}
+
+function countNodes(node: LocationNode): number {
+  return 1 + node.children.reduce((sum, c) => sum + countNodes(c), 0);
+}
+
+/**
+ * Mirrors a confirmed FHIR Location write into the cached tree — the gateway's hierarchy cache has no
+ * invalidation, so a refetch would resurrect pre-edit data for up to its TTL.
+ */
+export function applyLocationEdit(hierarchy: LocationHierarchy, patch: LocationEditPatch): LocationHierarchy {
+  const clone = (n: LocationNode): LocationNode => ({ ...n, children: n.children.map(clone) });
+  const root = clone(hierarchy.root);
+  const node = findNode(root, patch.id);
+  if (!node) return hierarchy;
+
+  node.name = patch.name;
+  node.status = patch.status;
+
+  if (patch.id === root.id) {
+    node.partOf = patch.parentId;
+    node.partOfLabel = null;
+    return { ...hierarchy, root };
+  }
+
+  if ((patch.parentId ?? null) !== (node.partOf ?? null)) {
+    const detach = (n: LocationNode): boolean => {
+      const i = n.children.findIndex((c) => c.id === patch.id);
+      if (i >= 0) {
+        n.children.splice(i, 1);
+        return true;
+      }
+      return n.children.some(detach);
+    };
+    detach(root);
+    const newParent = patch.parentId ? findNode(root, patch.parentId) : undefined;
+    if (!newParent) {
+      const removed = countNodes(node);
+      return {
+        root,
+        meta: { ...hierarchy.meta, nodeCount: Math.max(0, hierarchy.meta.nodeCount - removed) },
+      };
+    }
+    node.partOf = newParent.id;
+    node.partOfLabel = newParent.name;
+    newParent.children.push(node);
+  }
+  return { ...hierarchy, root };
+}

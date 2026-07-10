@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyLocationEdit,
   bareId,
   findNode,
   isValidRootId,
@@ -38,8 +39,7 @@ describe('isValidRootId', () => {
   });
 });
 
-describe('normalizeHierarchy', () => {
-  const raw: RawHierarchyResponse = {
+const raw: RawHierarchyResponse = {
     root: {
       id: 'Location/loc-country-ke',
       name: 'Kenya',
@@ -75,8 +75,9 @@ describe('normalizeHierarchy', () => {
       ],
     },
     meta: { nodeCount: 3, depth: 1, truncated: true, builtAt: 1783494664.17 },
-  };
+};
 
+describe('normalizeHierarchy', () => {
   it('normalizes typed-ref ids to bare ids, partOf object to id + label, and epoch builtAt to a Date', () => {
     const h = normalizeHierarchy(raw);
     expect(h.root.id).toBe('loc-country-ke');
@@ -94,5 +95,39 @@ describe('normalizeHierarchy', () => {
     expect(nodeChain(h.root, 'loc-nairobi').map((n) => n.id)).toEqual(['loc-country-ke', 'loc-nairobi']);
     expect(findNode(h.root, 'loc-nairobi')?.hasMoreChildren).toBe(true);
     expect(findNode(h.root, 'missing')).toBeUndefined();
+  });
+});
+
+describe('applyLocationEdit', () => {
+  const h = () => normalizeHierarchy(raw);
+
+  it('renames and restatuses a node in place', () => {
+    const out = applyLocationEdit(h(), { id: 'loc-nairobi', name: 'Nairobi County', status: 'inactive', parentId: 'loc-country-ke' });
+    const node = findNode(out.root, 'loc-nairobi');
+    expect(node?.name).toBe('Nairobi County');
+    expect(node?.status).toBe('inactive');
+    expect(out.root.children).toHaveLength(2);
+  });
+
+  it('moves a node under a new parent within the tree', () => {
+    const out = applyLocationEdit(h(), { id: 'loc-unnamed', name: 'Renamed', status: 'active', parentId: 'loc-nairobi' });
+    expect(out.root.children.map((c) => c.id)).toEqual(['loc-nairobi']);
+    const nairobi = findNode(out.root, 'loc-nairobi');
+    expect(nairobi?.children.map((c) => c.id)).toEqual(['loc-unnamed']);
+    expect(findNode(out.root, 'loc-unnamed')?.partOfLabel).toBe('Nairobi');
+  });
+
+  it('drops a node moved out of the tree and adjusts nodeCount', () => {
+    const out = applyLocationEdit(h(), { id: 'loc-nairobi', name: 'Nairobi', status: 'active', parentId: null });
+    expect(findNode(out.root, 'loc-nairobi')).toBeUndefined();
+    expect(out.meta.nodeCount).toBe(2);
+  });
+
+  it('only updates metadata when the view root itself is edited, and no-ops on unknown ids', () => {
+    const rootEdit = applyLocationEdit(h(), { id: 'loc-country-ke', name: 'Kenya', status: 'active', parentId: 'elsewhere' });
+    expect(rootEdit.root.id).toBe('loc-country-ke');
+    expect(rootEdit.root.partOf).toBe('elsewhere');
+    const noop = applyLocationEdit(h(), { id: 'missing', name: 'X', status: 'active', parentId: null });
+    expect(noop.root.children).toHaveLength(2);
   });
 });

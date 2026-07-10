@@ -7,7 +7,7 @@ import { collectExpandableIds, filterTree } from './expand';
 import { nodeChain, type LocationNode } from './hierarchy';
 import type { HierarchyError } from './useLocationHierarchy';
 import { relativeTimeFrom } from './relativeTime';
-import { useLocationHierarchy } from './useLocationHierarchy';
+import { useApplyHierarchyEdit, useLocationHierarchy, useRefreshHierarchy } from './useLocationHierarchy';
 import { LocationTree } from './LocationTree';
 import { LocationColumnTable } from './LocationColumnTable';
 import { LocationViewToggle, type LocationView } from './LocationViewToggle';
@@ -95,13 +95,22 @@ export function LocationsHierarchyPage(): React.ReactElement {
 
   const query = useLocationHierarchy(effectiveRoot || undefined);
   const refreshResources = useRefreshResources();
+  const refreshHierarchy = useRefreshHierarchy(effectiveRoot || undefined);
   const refetch = () => {
     void query.refetch();
   };
-  // The import bypasses TanStack mutations, so the root dropdown's Location search needs explicit invalidation.
+  const applyEdit = useApplyHierarchyEdit(effectiveRoot || undefined);
+  // Instant optimistic patch, then an authoritative refresh so the edit survives a reload.
+  const onEditSaved = (patch: Parameters<typeof applyEdit>[0]) => {
+    applyEdit(patch);
+    void refreshResources('Location');
+  };
+
+  // The import bypasses TanStack mutations, so refresh both the dropdown's Location search and the tree
+  // (with cache eviction) so imported roots and subtrees survive a reload.
   const onImportComplete = () => {
     void refreshResources('Location');
-    refetch();
+    void refreshHierarchy();
   };
 
   const select = (id: string) => {
@@ -242,7 +251,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
       ) : null}
 
       {editId ? (
-        <LocationEditDrawer nodeId={editId} onClose={() => setEditId(null)} onSaved={refetch} />
+        <LocationEditDrawer nodeId={editId} onClose={() => setEditId(null)} onSaved={onEditSaved} />
       ) : null}
 
       {meta ? (

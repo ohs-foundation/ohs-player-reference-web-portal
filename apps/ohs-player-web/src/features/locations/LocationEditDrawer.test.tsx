@@ -48,11 +48,9 @@ describe('LocationEditDrawer', () => {
     expect(screen.getByRole('combobox', { name: /locationsParentLocation/ })).not.toBeDisabled();
   });
 
-  it('locks the parent field for a location that has children', () => {
-    // ke is the parent of nrb in the mocked search bundle.
+  it('keeps the parent editable for a location that has children (edits are mirrored locally)', () => {
     render(<LocationEditDrawer nodeId="ke" onClose={vi.fn()} onSaved={vi.fn()} />);
-    expect(screen.getByRole('combobox', { name: /locationsParentLocation/ })).toBeDisabled();
-    expect(screen.getByText(/locationsParentLocked/)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /locationsParentLocation/ })).not.toBeDisabled();
   });
 
   it('submits via the FHIR Location PUT (useUpdateResource) and reports back', async () => {
@@ -66,7 +64,9 @@ describe('LocationEditDrawer', () => {
         body: expect.objectContaining({ resourceType: 'Location', name: 'Nairobi County' }) as unknown,
       }),
     );
-    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(onSaved).toHaveBeenCalledWith({ id: 'nrb', name: 'Nairobi County', status: 'active', parentId: 'ke' }),
+    );
     expect(onClose).toHaveBeenCalled();
   });
 });

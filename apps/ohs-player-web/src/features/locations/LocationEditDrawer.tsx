@@ -20,6 +20,7 @@ import {
   locationBodyFromAnswers,
   parentLocationIdFromAnswer,
 } from '../sdc/resourceFromAnswers';
+import type { LocationEditPatch } from './hierarchy';
 
 const FORM_ID = 'location-edit-form';
 
@@ -37,7 +38,8 @@ const MODE_OPTIONS = [
 export interface LocationEditDrawerProps {
   nodeId: string;
   onClose: () => void;
-  onSaved: () => void;
+  /** Receives the saved values so the caller can mirror them into the cached tree. */
+  onSaved: (patch: LocationEditPatch) => void;
 }
 
 /** Writes via the FHIR Location PUT — the read-only hierarchy endpoint is never written to. */
@@ -102,12 +104,6 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
     return [root, ...rest];
   }, [locList, nodeId, t]);
 
-  // Subtree re-parenting is locked: the hierarchy cache has no invalidation, so a move never shows.
-  const hasChildren = useMemo(
-    () => locList.some((l) => l.partOf?.reference?.replace('Location/', '') === nodeId),
-    [locList, nodeId],
-  );
-
   const [nameError, setNameError] = useState<string | null>(null);
 
   const onSave = (e: FormEvent): void => {
@@ -135,7 +131,8 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
         await createQr.mutateAsync(buildQuestionnaireResponse());
         await writeAudit({ action: 'create', resourceType: 'QuestionnaireResponse' });
         statusBar.notify({ tone: 'success', title: t('locationSaved') });
-        onSaved();
+        const body = locationBodyFromAnswers(answers);
+        onSaved({ id: nodeId, name: body.name, status: body.status, parentId: parentId ?? null });
         onClose();
       } catch (err) {
         setFormError(toErrorMessage(err));
@@ -218,11 +215,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
                     onChange={(v) => setAnswer(LOCATION_LINK_IDS.parent, v)}
                     options={parentOptions}
                     placeholder={t('selectPlaceholder')}
-                    disabled={hasChildren}
                   />
-                  {hasChildren ? (
-                    <p className="mt-1 text-xs text-text-muted">{t('locationsParentLocked')}</p>
-                  ) : null}
                 </div>
               </div>
             </Stack>
