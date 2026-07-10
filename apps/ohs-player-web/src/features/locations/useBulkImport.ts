@@ -22,11 +22,7 @@ interface ParsedEvent {
   failed?: number;
 }
 
-/**
- * POST a CSV to `POST /api/bulk-import/locations` (multipart, field `file`) and consume the Server-Sent
- * Events stream: per-row `data: {"processed":N,"total":M}` then a final `data: {"done":true,...}`. Role
- * required: `bulk-import.manage`.
- */
+/** POST a multipart CSV to /api/bulk-import/locations and consume its SSE progress stream. */
 export function useBulkImport() {
   const client = useFhirClient();
   const [phase, setPhase] = useState<ImportPhase>('idle');

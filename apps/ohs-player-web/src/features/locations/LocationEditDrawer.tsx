@@ -37,15 +37,10 @@ const MODE_OPTIONS = [
 export interface LocationEditDrawerProps {
   nodeId: string;
   onClose: () => void;
-  /** Called after a successful save so the page can refetch the hierarchy. */
   onSaved: () => void;
 }
 
-/**
- * SDC answers-backed edit in a drawer, rendered with the styled form controls the user drawers use.
- * Writes go through the standard FHIR Location PUT (useUpdateResource) — the read-only
- * /api/location-hierarchy endpoint is never written to.
- */
+/** Writes via the FHIR Location PUT — the read-only hierarchy endpoint is never written to. */
 export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<LocationEditDrawerProps>): React.ReactElement {
   const { t } = useTranslation();
   const statusBar = useStatusBar();
@@ -107,9 +102,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
     return [root, ...rest];
   }, [locList, nodeId, t]);
 
-  // Re-parenting a location that has children moves a whole subtree; locked until the backend can
-  // reflect it (the hierarchy cache has no invalidation, so the move never shows). Derived from the
-  // FHIR list, not the cached hierarchy.
+  // Subtree re-parenting is locked: the hierarchy cache has no invalidation, so a move never shows.
   const hasChildren = useMemo(
     () => locList.some((l) => l.partOf?.reference?.replace('Location/', '') === nodeId),
     [locList, nodeId],

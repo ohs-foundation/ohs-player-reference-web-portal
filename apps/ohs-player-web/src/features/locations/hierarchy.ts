@@ -1,19 +1,9 @@
 import type { CodeableConcept } from '@medplum/fhirtypes';
 
 /**
- * Types + normalizers for the OHS gateway `GET /api/location-hierarchy/{rootId}` response.
- *
- * VERIFIED against the LIVE gateway — the adapter smooths over contract quirks so components consume a clean
- * normalized `LocationNode`, never raw API JSON:
- *   1. `id` is FHIR-prefixed (`"Location/1001"`); the request path wants the bare id (`1001`) — a slash in the
- *      path 400s. `bareId` strips the prefix. (Pending backend fix.)
- *   2. `partOf` is an object `{ reference, display }` (or null on the root), NOT a bare id string.
- *   3. `type` (administrative-level) and `physicalType` are INLINE on every node — badges need no extra fetch.
- *   4. `meta.builtAt` is Unix-epoch seconds (fractional), NOT ISO-8601. (Pending backend fix.)
- *
- * OPEN DEPENDENCY (backend): no pagination/continuation param. When `hasMoreChildren` / `meta.truncated` is
- * true, the only "load more" path is re-rooting: fetch `/api/location-hierarchy/{childId}` (bare id). In-place
- * paging is pending backend work.
+ * Adapter for the gateway's non-FHIR `GET /api/location-hierarchy/{rootId}`. Verified quirks: ids arrive
+ * FHIR-prefixed but the request path wants bare ids; `meta.builtAt` is epoch seconds; there is no pagination —
+ * `hasMoreChildren`/`truncated` are only resolvable by re-rooting on the child.
  */
 
 interface RawPartOf {
@@ -37,7 +27,7 @@ export interface RawHierarchyMeta {
   nodeCount: number;
   depth: number;
   truncated: boolean;
-  /** Unix epoch seconds (may be fractional) OR an ISO-8601 string, depending on gateway build. */
+  /** Epoch seconds or ISO-8601, depending on gateway build. */
   builtAt: number | string;
 }
 
@@ -46,15 +36,13 @@ export interface RawHierarchyResponse {
   meta: RawHierarchyMeta;
 }
 
-/** Normalized node: bare ids, a resolved parent label, and inline CodeableConcepts for badges.
- *  Raw `description` is dropped — no UI consumes it and no write path populates it. */
+/** Raw `description` is dropped — nothing consumes it and no write path populates it. */
 export interface LocationNode {
   id: string;
   name: string | null;
   status: string | null;
   /** Bare parent id (prefix stripped), or null on the root. */
   partOf: string | null;
-  /** Parent display label from `partOf.display`, for the "Part of" link. */
   partOfLabel: string | null;
   physicalType: CodeableConcept | null;
   type: CodeableConcept[];
@@ -74,7 +62,6 @@ export interface LocationHierarchy {
   meta: HierarchyMeta;
 }
 
-/** Strip a leading `Location/` (or any `{Type}/`) so a bare FHIR id remains. */
 export function bareId(ref: string | null | undefined): string | null {
   if (!ref) return null;
   const slash = ref.lastIndexOf('/');
@@ -95,7 +82,6 @@ function normalizeNode(n: RawLocationNode): LocationNode {
   };
 }
 
-/** Parse `builtAt` (epoch seconds OR ISO string) to a Date; null if unparseable. */
 export function parseBuiltAt(value: number | string | null | undefined): Date | null {
   if (value == null) return null;
   if (typeof value === 'number') {
@@ -118,13 +104,11 @@ export function normalizeHierarchy(raw: RawHierarchyResponse): LocationHierarchy
   };
 }
 
-/** A rootId is a valid FHIR id: 1–64 chars of [A-Za-z0-9-.], and not `.`/`..`. */
 export function isValidRootId(id: string): boolean {
   if (id === '.' || id === '..') return false;
   return /^[A-Za-z0-9.-]{1,64}$/.test(id);
 }
 
-/** Root-first chain of nodes from the tree root down to `targetId` (for breadcrumbs). */
 export function nodeChain(root: LocationNode, targetId: string): LocationNode[] {
   const path: LocationNode[] = [];
   const walk = (node: LocationNode): boolean => {
@@ -139,7 +123,6 @@ export function nodeChain(root: LocationNode, targetId: string): LocationNode[] 
   return walk(root) ? path : [];
 }
 
-/** Find a node by id anywhere in the tree. */
 export function findNode(root: LocationNode, id: string): LocationNode | undefined {
   if (root.id === id) return root;
   for (const child of root.children) {

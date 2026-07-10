@@ -4,14 +4,11 @@ import { IconButton } from '../../components/ui';
 
 export interface LocationRowMenuProps {
   nodeId: string;
-  /** Open the detail drawer for this node. */
   onView: (id: string) => void;
-  /** Open the edit drawer for this node (gated by locations.edit). */
   onEdit: (id: string) => void;
 }
 
-// Deactivate was removed: the gateway's hierarchy cache (up to 24 h, no invalidation endpoint) can't
-// reflect a status write, so the action appeared to do nothing. Restore once the backend supports it.
+// No Deactivate: the hierarchy cache can't reflect a status write; restore when the backend can.
 export function LocationRowMenu({ nodeId, onView, onEdit }: Readonly<LocationRowMenuProps>): React.ReactElement {
   const { t } = useTranslation();
 

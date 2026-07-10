@@ -35,7 +35,6 @@ export interface PhysicalTypeChipProps {
   label: string;
 }
 
-/** Neutral outline chip, lowercase, for a Location.physicalType display value. */
 export function PhysicalTypeChip({ label }: Readonly<PhysicalTypeChipProps>): React.ReactElement {
   return (
     <span className="inline-flex items-center rounded-pill border border-border-tertiary px-2 py-0.5 text-xs lowercase text-text-muted">

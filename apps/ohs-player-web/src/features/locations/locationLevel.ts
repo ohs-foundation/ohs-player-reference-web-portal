@@ -7,16 +7,11 @@ export const ADMIN_LEVEL_SYSTEM = 'http://ohs.dev/codes/administrative-level';
 export const LOCATION_PHYSICAL_TYPE_SYSTEM =
   'http://terminology.hl7.org/CodeSystem/location-physical-type';
 
-/**
- * Administrative-level badge tone. Values map to the `--ohs-color-level-*` tokens (theme.css, light + dark).
- * Keep this the ONE place code→label→tone lives — level comes from the node's inline `type` CodeableConcept
- * (do NOT derive it from tree depth). `root` is applied by the caller for the requested root (partOf null).
- */
+/** Maps to the `--ohs-color-level-*` tokens. Level comes from the inline `type` coding — never tree depth. */
 export type LevelTone = 'root' | 'country' | 'county' | 'subcounty' | 'ward' | 'facility' | 'unit';
 
 interface LevelMeta {
   tone: LevelTone;
-  /** i18n key for the human label. */
   labelKey: string;
 }
 
@@ -36,11 +31,7 @@ export interface LocationLevel {
   labelKey: string;
 }
 
-/**
- * Read the administrative level from a node's inline `type` codings. Unknown/missing codes fall back to a
- * neutral outline badge (`unit` tone) so odd import data never crashes the row. `null` when there is no
- * admin-level coding at all.
- */
+/** Unknown codes fall back to the neutral `unit` tone so odd import data never crashes a row. */
 export function levelFromType(type: CodeableConcept[] | undefined): LocationLevel | null {
   const codings = (type ?? []).flatMap((t) => t.coding ?? []);
   const coding = codings.find((c) => c.system === ADMIN_LEVEL_SYSTEM && c.code);
@@ -51,11 +42,7 @@ export function levelFromType(type: CodeableConcept[] | undefined): LocationLeve
   return { code, tone: meta.tone, labelKey: meta.labelKey };
 }
 
-/**
- * Physical-type display values from an inline `physicalType` CodeableConcept, lowercased. Rendered defensively:
- * the live import currently emits `code: "other"` with odd displays ("Jdn", "Bu"), so the display is shown
- * as-is (no clean-valueset assumption).
- */
+/** Live imports emit code 'other' with odd displays ('Jdn') — shown as-is, no clean-valueset assumption. */
 export function physicalTypesFromConcept(physicalType: CodeableConcept | null | undefined): string[] {
   const codings = (physicalType?.coding ?? []).filter(
     (c) => c.system === LOCATION_PHYSICAL_TYPE_SYSTEM && (c.code || c.display),

@@ -1,7 +1,6 @@
 import { RiCheckLine, RiFilterLine } from '@remixicon/react';
 import { OhsDropdownMenu, useTranslation } from 'ohs-player-web-core';
 
-/** Status filter value: 'all' or a FHIR Location.status code. */
 export type LocationStatusFilter = 'all' | 'active' | 'suspended' | 'inactive';
 
 export interface LocationFilterMenuProps {

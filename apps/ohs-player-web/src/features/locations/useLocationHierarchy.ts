@@ -7,10 +7,8 @@ import {
   type RawHierarchyResponse,
 } from './hierarchy';
 
-/** HTTP status extracted from a failed hierarchy fetch; drives the page's state selection. */
 export type HierarchyErrorStatus = 400 | 401 | 403 | 404 | 500 | 502 | 0;
 
-/** Error carrying the HTTP status + the gateway's error message so the page can pick the right state. */
 export class HierarchyError extends Error {
   readonly status: HierarchyErrorStatus;
   constructor(status: HierarchyErrorStatus, message: string) {
@@ -20,7 +18,7 @@ export class HierarchyError extends Error {
   }
 }
 
-/** Gateway `/api/*` errors are plain JSON `{ error, status, timestamp }` — NOT a FHIR OperationOutcome. */
+/** Gateway `/api/*` errors are plain `{ error }` JSON, not a FHIR OperationOutcome. */
 function messageFromBody(body: unknown, fallback: string): string {
   if (body && typeof body === 'object' && typeof (body as { error?: unknown }).error === 'string') {
     return (body as { error: string }).error;
@@ -40,14 +38,8 @@ function toHierarchyError(err: unknown): HierarchyError {
 }
 
 /**
- * Fetch `GET /api/location-hierarchy/{rootId}` (gateway) and return the normalized tree. Role required:
- * `location-hierarchy.view`. `rootId` is the BARE FHIR id (the adapter strips the `Location/` prefix upstream).
- *
- * 401 IS RETRYABLE: the gateway intermittently returns 401 "Invalid or expired token" for FHIR-backed
- * `/api/{resource}/{id}` paths even with a valid token that works on `/api/users` in the same session — a
- * gateway-side bug, not the frontend. So we retry ONCE on 401 (each attempt re-mints the token via the client's
- * token accessor) before surfacing the no-access state, which itself offers Retry. Every other code
- * (400/403/404/500/502) is surfaced immediately for correct state selection.
+ * The gateway intermittently 401s valid tokens on this path (gateway bug), so retry once with a re-minted
+ * token before surfacing no-access; every other status surfaces immediately.
  */
 export function useLocationHierarchy(rootId: string | undefined) {
   const client = useFhirClient();
@@ -70,7 +62,6 @@ export function useLocationHierarchy(rootId: string | undefined) {
         if (!raw?.root) throw new HierarchyError(500, 'Malformed hierarchy response');
         return normalizeHierarchy(raw);
       } catch (err) {
-        // Normalize every failure to HierarchyError so `query.error.status` drives state selection.
         throw toHierarchyError(err);
       }
     },

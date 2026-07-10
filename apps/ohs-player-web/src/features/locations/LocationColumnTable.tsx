@@ -11,11 +11,9 @@ import { LocationRowMenu } from './LocationRowMenu';
 export interface LocationColumnTableProps {
   root: LocationNode;
   onSelect: (id: string) => void;
-  /** Open the edit drawer for a node (locations.edit only). */
   onEdit: (id: string) => void;
 }
 
-/** Depth-first flatten of the whole tree into a flat row list for the Column (table) view. */
 function flattenAll(root: LocationNode): LocationNode[] {
   const rows: LocationNode[] = [];
   const walk = (node: LocationNode) => {

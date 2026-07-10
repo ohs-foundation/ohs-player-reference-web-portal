@@ -1,4 +1,3 @@
-/** Human "x ago" for a Date, using Intl.RelativeTimeFormat. Returns '' for null. */
 export function relativeTimeFrom(date: Date | null, locale: string): string {
   if (!date) return '';
   const diffMs = date.getTime() - Date.now();

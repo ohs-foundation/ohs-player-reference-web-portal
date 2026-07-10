@@ -21,9 +21,8 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* --- Design tokens not managed by applyTheme; managed colours/fonts/radius come from lightTheme. ---
-   Declared on :root TOO so Radix portals (drawers/dialogs/dropdowns render outside [data-ohs-root])
-   resolve them; the dark overrides below already cover portals via their [data-theme='dark'] selector. */
+/* Unmanaged tokens (managed ones come from lightTheme/applyTheme). On :root too, else Radix portals
+   outside [data-ohs-root] can't resolve them. */
 :root,
 [data-ohs-root] {
   /* Neutral scale */
@@ -87,11 +86,8 @@
   box-sizing: border-box;
 }
 
-/* Preflight is intentionally disabled, so reset the browser's native <button> chrome (the box that made
-   bare icon buttons look like checkboxes). Global (not [data-ohs-root]-scoped) so buttons inside Radix
-   portals are reset too. In `@layer base` (ordered below `utilities` in tailwind.css) AND :where() zero
-   specificity, so ANY class-based button styling — Tailwind utilities included — wins.
-   (Unlayered, this rule would beat every layered utility regardless of specificity.) */
+/* Global button reset (Preflight is off). Must stay in @layer base with :where() — unlayered it would
+   beat every layered Tailwind utility; scoped to [data-ohs-root] it would miss Radix portals. */
 @layer base {
   :where(button) {
     appearance: none;

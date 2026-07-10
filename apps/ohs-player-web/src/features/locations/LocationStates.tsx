@@ -3,7 +3,6 @@ import { useTranslation } from 'ohs-player-web-core';
 import { Button, EmptyState, ErrorState, Inline } from '../../components/ui';
 import type { HierarchyError } from './useLocationHierarchy';
 
-/** Indented skeleton rows for the loading state. */
 export function HierarchySkeleton(): React.ReactElement {
   const rows = [0, 1, 2, 3, 4, 5];
   return (
@@ -42,7 +41,6 @@ export function HierarchyErrorState({
   onRetry,
 }: Readonly<{ error: HierarchyError; onRetry: () => void }>): React.ReactElement {
   const { t } = useTranslation();
-  // Gateway /api errors are plain `{ error }` JSON (not OperationOutcome); HierarchyError.message holds `.error`.
   const detail = error.message;
   return (
     <ErrorState
@@ -63,7 +61,6 @@ export function HierarchyErrorState({
   );
 }
 
-/** Amber full-width notice shown above the tree when meta.truncated is true. */
 export function TruncatedNotice({
   nodeCount,
   builtAtLabel,

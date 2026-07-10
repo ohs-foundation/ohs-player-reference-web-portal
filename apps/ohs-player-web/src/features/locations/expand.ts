@@ -1,6 +1,5 @@
 import type { LocationNode } from './hierarchy';
 
-/** All node ids in the tree that can be expanded (have children or more to load) — for "Expand all". */
 export function collectExpandableIds(root: LocationNode): Set<string> {
   const ids = new Set<string>();
   const walk = (node: LocationNode) => {
@@ -11,12 +10,7 @@ export function collectExpandableIds(root: LocationNode): Set<string> {
   return ids;
 }
 
-/**
- * Client-side filter: keep a node when it (or any descendant) matches the name `term` AND the `status` filter
- * (`'all'` matches any). Returns the pruned tree and the set of ancestor ids to auto-expand so matches are
- * visible. No term and status `'all'` → original tree, no forced expansion. Filters only what's already
- * loaded (the API returns no search endpoint).
- */
+/** Keeps nodes matching name+status (ancestors retained) and returns the ancestor ids to force-expand. */
 export function filterTree(
   root: LocationNode,
   term: string,

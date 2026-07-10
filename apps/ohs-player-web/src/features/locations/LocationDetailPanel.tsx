@@ -14,7 +14,6 @@ export interface LocationDetailPanelProps {
   nodeId: string;
   onClose: () => void;
   onSelect: (id: string) => void;
-  /** Open the edit drawer for this node (locations.edit only). */
   onEdit: (id: string) => void;
 }
 
@@ -27,7 +26,7 @@ function Field({ label, children }: Readonly<{ label: string; children?: React.R
   );
 }
 
-/** address.text, else the address lines joined — the two shapes the backend writes. */
+/** address.text or the joined lines — the two shapes the backend writes. */
 function addressText(resource: Location | undefined): string | null {
   if (!resource?.address) return null;
   return resource.address.text ?? resource.address.line?.join(', ') ?? null;
@@ -88,7 +87,6 @@ export function LocationDetailPanel({
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
-  // The hierarchy node renders instantly; the FHIR read fills address/mode/position/identifier/org.
   const node = findNode(root, nodeId);
   const read = useResource('Location', nodeId);
   const resource = read.data as Location | undefined;
@@ -136,8 +134,7 @@ export function LocationDetailPanel({
     </div>
   );
 
-  // No Deactivate action: the gateway's hierarchy cache (up to 24 h, no invalidation endpoint) can't
-  // reflect a status write, so it appeared broken. Restore once the backend supports it.
+  // No Deactivate: the hierarchy cache can't reflect a status write; restore when the backend can.
   const footer = (
     <div className="ohs-user-drawer__foot">
       <PermissionGuard permission="locations.edit">

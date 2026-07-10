@@ -1,5 +1,4 @@
-/** Column contract of POST /api/bulk-import/locations — mirrors BulkLocationImportServlet (name is the
- *  only required column; parents link via parent_id (FHIR id) or source_parent_id (source id in-batch). */
+/** Mirrors BulkLocationImportServlet: only name is required; parents link via parent_id or source_parent_id. */
 export const EXPECTED_COLUMNS: { key: string; required?: boolean }[] = [
   { key: 'name', required: true },
   { key: 'id' },
@@ -14,8 +13,6 @@ export const EXPECTED_COLUMNS: { key: string; required?: boolean }[] = [
   { key: 'source_org_id' },
 ];
 
-/** Example rows use backend-accepted values (level codes, physical-type words) and demonstrate
- *  in-batch parent chaining via source_parent_id. */
 const TEMPLATE_EXAMPLE_ROWS = [
   ['Kenya', '', 'jurisdiction', 'country', '', '', 'KE', '', '', '', ''],
   ['Nairobi County', '', 'area', 'county', '-1.286389', '36.817223', 'NBO', '', 'KE', '', ''],

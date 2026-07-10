@@ -1,7 +1,6 @@
 import { useTranslation } from 'ohs-player-web-core';
 import { StatusBadge, type StatusTone } from '../../components/ui';
 
-/** Map a FHIR Location.status code to a StatusBadge tone. */
 function statusTone(status: string | null | undefined): StatusTone {
   switch (status) {
     case 'active':
