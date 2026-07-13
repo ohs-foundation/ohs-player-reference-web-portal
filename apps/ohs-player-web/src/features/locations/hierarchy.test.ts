@@ -3,10 +3,12 @@ import {
   applyLocationEdit,
   bareId,
   findNode,
+  hierarchyReflectsEdit,
   isValidRootId,
   nodeChain,
   normalizeHierarchy,
   parseBuiltAt,
+  type LocationNode,
   type RawHierarchyResponse,
 } from './hierarchy';
 
@@ -157,6 +159,46 @@ describe('applyLocationEdit', () => {
     expect(noop.root.children).toHaveLength(2);
   });
 
+  const mombasa = (partOf: string, partOfLabel: string): LocationNode => ({
+    id: 'loc-mombasa',
+    name: 'Mombasa',
+    status: 'active',
+    partOf,
+    partOfLabel,
+    physicalType: null,
+    type: [],
+    children: [],
+    hasMoreChildren: false,
+  });
+
+  it('grafts the node from the fallback snapshot when a refreshed tree lost it', () => {
+    // Observed live: a gateway rebuild inside HAPI's search-cache window dropped the moved node.
+    const out = applyLocationEdit(
+      h(),
+      { id: 'loc-mombasa', name: 'Mombasa', status: 'active', parentId: 'loc-nairobi' },
+      mombasa('loc-nairobi', 'Nairobi'),
+    );
+    expect(findNode(out.root, 'loc-nairobi')?.children.map((c) => c.id)).toEqual(['loc-mombasa']);
+    expect(findNode(out.root, 'loc-mombasa')?.partOf).toBe('loc-nairobi');
+    expect(out.meta.nodeCount).toBe(4);
+  });
+
+  it('collapses duplicated copies to a single node under the patch parent', () => {
+    const base = h();
+    base.root.children.push(mombasa('loc-country-ke', 'Kenya'));
+    findNode(base.root, 'loc-nairobi')?.children.push(mombasa('loc-nairobi', 'Nairobi'));
+    base.meta.nodeCount = 5;
+    const out = applyLocationEdit(base, {
+      id: 'loc-mombasa',
+      name: 'Mombasa',
+      status: 'active',
+      parentId: 'loc-nairobi',
+    });
+    expect(out.root.children.map((c) => c.id)).toEqual(['loc-nairobi', 'loc-unnamed']);
+    expect(findNode(out.root, 'loc-nairobi')?.children.map((c) => c.id)).toEqual(['loc-mombasa']);
+    expect(out.meta.nodeCount).toBe(4);
+  });
+
   it('re-applying the same parent patch is idempotent (safe after a stale hierarchy refresh)', () => {
     const moved = applyLocationEdit(h(), {
       id: 'loc-unnamed',
@@ -172,5 +214,22 @@ describe('applyLocationEdit', () => {
     });
     expect(again.root.children.map((c) => c.id)).toEqual(['loc-nairobi']);
     expect(findNode(again.root, 'loc-nairobi')?.children.map((c) => c.id)).toEqual(['loc-unnamed']);
+  });
+});
+
+describe('hierarchyReflectsEdit', () => {
+  const h = () => normalizeHierarchy(raw);
+  const patch = (id: string, parentId: string | null) => ({ id, name: 'X', status: 'active', parentId });
+
+  it('is true only when exactly one copy sits under the patch parent', () => {
+    expect(hierarchyReflectsEdit(h(), patch('loc-unnamed', 'loc-country-ke'))).toBe(true);
+    expect(hierarchyReflectsEdit(h(), patch('loc-unnamed', 'loc-nairobi'))).toBe(false);
+    expect(hierarchyReflectsEdit(h(), patch('loc-gone', 'loc-nairobi'))).toBe(false);
+  });
+
+  it('expects absence when the node moved to the top level or outside the view', () => {
+    expect(hierarchyReflectsEdit(h(), patch('loc-gone', null))).toBe(true);
+    expect(hierarchyReflectsEdit(h(), patch('loc-unnamed', null))).toBe(false);
+    expect(hierarchyReflectsEdit(h(), patch('loc-unnamed', 'loc-outside'))).toBe(false);
   });
 });

@@ -132,6 +132,19 @@ export function findNode(root: LocationNode, id: string): LocationNode | undefin
   return undefined;
 }
 
+/** All non-root nodes with this id — a mid-edit gateway rebuild can yield zero or duplicate copies. */
+function collectNodes(root: LocationNode, id: string): LocationNode[] {
+  const hits: LocationNode[] = [];
+  const walk = (n: LocationNode): void => {
+    for (const child of n.children) {
+      if (child.id === id) hits.push(child);
+      walk(child);
+    }
+  };
+  walk(root);
+  return hits;
+}
+
 export interface LocationEditPatch {
   id: string;
   name: string;
@@ -147,79 +160,68 @@ function countNodes(node: LocationNode): number {
 /**
  * Mirrors a confirmed FHIR Location write into the cached tree — the gateway hierarchy cache can lag
  * FHIR by up to its TTL, so the UI applies the write locally (and re-applies after a refresh).
+ * `fallback` restores the node when a mid-edit gateway rebuild dropped it from the tree entirely.
  */
-export function applyLocationEdit(hierarchy: LocationHierarchy, patch: LocationEditPatch): LocationHierarchy {
+export function applyLocationEdit(
+  hierarchy: LocationHierarchy,
+  patch: LocationEditPatch,
+  fallback?: LocationNode,
+): LocationHierarchy {
   const clone = (n: LocationNode): LocationNode => ({ ...n, children: n.children.map(clone) });
   const root = clone(hierarchy.root);
-  const node = findNode(root, patch.id);
-  if (!node) return hierarchy;
-
-  node.name = patch.name;
-  node.status = patch.status;
 
   // The view root cannot be re-parented inside this tree; only its labels change here.
   if (patch.id === root.id) {
-    node.partOf = patch.parentId;
-    node.partOfLabel = null;
+    root.name = patch.name;
+    root.status = patch.status;
+    root.partOf = patch.parentId;
+    root.partOfLabel = null;
     return { ...hierarchy, root };
   }
 
-  const nextParentId = patch.parentId ?? null;
-  const prevParentId = node.partOf ?? null;
-  if (nextParentId === prevParentId) {
+  const copies = collectNodes(root, patch.id);
+
+  if (copies.length === 1 && (copies[0].partOf ?? null) === (patch.parentId ?? null)) {
+    copies[0].name = patch.name;
+    copies[0].status = patch.status;
     return { ...hierarchy, root };
   }
 
-  const detach = (n: LocationNode): boolean => {
-    const i = n.children.findIndex((c) => c.id === patch.id);
-    if (i >= 0) {
-      n.children = n.children.filter((c) => c.id !== patch.id);
-      return true;
-    }
-    for (const child of n.children) {
-      if (detach(child)) return true;
-    }
-    return false;
+  // A gateway rebuild racing HAPI's 60 s search cache can return the node under both parents or
+  // under neither — remove every copy (falling back to the caller's snapshot), then attach one.
+  const prune = (n: LocationNode): void => {
+    n.children = n.children.filter((c) => c.id !== patch.id);
+    for (const child of n.children) prune(child);
   };
-  detach(root);
+  prune(root);
+
+  const node = copies[0] ?? (fallback ? clone(fallback) : undefined);
+  if (!node) return hierarchy;
+  node.name = patch.name;
+  node.status = patch.status;
+
+  const removed = copies.reduce((sum, c) => sum + countNodes(c), 0);
+  const done = (attached: boolean): LocationHierarchy => ({
+    root,
+    meta: {
+      ...hierarchy.meta,
+      nodeCount: Math.max(0, hierarchy.meta.nodeCount - removed + (attached ? countNodes(node) : 0)),
+    },
+  });
 
   // Top-level (or parent outside this tree) → drop from the current root view; roots dropdown owns it.
-  if (!nextParentId) {
-    const removed = countNodes(node);
-    return {
-      root,
-      meta: { ...hierarchy.meta, nodeCount: Math.max(0, hierarchy.meta.nodeCount - removed) },
-    };
-  }
-
-  const newParent = findNode(root, nextParentId);
-  if (!newParent) {
-    const removed = countNodes(node);
-    return {
-      root,
-      meta: { ...hierarchy.meta, nodeCount: Math.max(0, hierarchy.meta.nodeCount - removed) },
-    };
-  }
-
-  // Refuse to attach under a descendant of the moved node (cycle) — write path also guards this.
-  if (findNode(node, nextParentId)) {
-    // Re-attach under the previous parent so the tree stays consistent with the last good shape.
-    const oldParent = prevParentId ? findNode(root, prevParentId) : undefined;
-    if (oldParent) {
-      node.partOf = oldParent.id;
-      node.partOfLabel = oldParent.name;
-      oldParent.children = [...oldParent.children, node];
-    } else {
-      // Was a direct child of the view root before detach.
-      node.partOf = root.id;
-      node.partOfLabel = root.name;
-      root.children = [...root.children, node];
-    }
-    return { ...hierarchy, root };
-  }
+  const newParent = patch.parentId ? findNode(root, patch.parentId) : undefined;
+  if (!newParent) return done(false);
 
   node.partOf = newParent.id;
   node.partOfLabel = newParent.name;
   newParent.children = [...newParent.children, node];
-  return { ...hierarchy, root };
+  return done(true);
+}
+
+/** Whether the tree already places the edited node exactly as the patch says (used to decide healing). */
+export function hierarchyReflectsEdit(hierarchy: LocationHierarchy, patch: LocationEditPatch): boolean {
+  const copies = collectNodes(hierarchy.root, patch.id);
+  if (!patch.parentId || !findNode(hierarchy.root, patch.parentId)) return copies.length === 0;
+  return copies.length === 1 && copies[0].partOf === patch.parentId;
 }

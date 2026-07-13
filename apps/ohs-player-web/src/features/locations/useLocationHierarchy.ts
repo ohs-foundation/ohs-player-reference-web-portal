@@ -3,12 +3,17 @@ import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-quer
 import { FhirError, useFhirClient, type FhirClient } from 'ohs-player-web-core';
 import {
   applyLocationEdit,
+  findNode,
+  hierarchyReflectsEdit,
   isValidRootId,
   normalizeHierarchy,
   type LocationEditPatch,
   type LocationHierarchy,
   type RawHierarchyResponse,
 } from './hierarchy';
+
+/** Past HAPI's 60 s search-result cache, after which a gateway rebuild is guaranteed post-edit. */
+const GATEWAY_HEAL_DELAY_MS = 65_000;
 
 export type HierarchyErrorStatus = 400 | 401 | 403 | 404 | 500 | 502 | 0;
 
@@ -104,8 +109,10 @@ export function useRefreshHierarchy(rootId: string | undefined): () => Promise<v
 
 /**
  * Mirrors a confirmed FHIR write into the cached tree for an instant update (see applyLocationEdit),
- * then re-reads with cache eviction. Re-applies the patch after the refresh so a stale gateway tree
- * cannot clobber a re-parent that the FHIR write already committed.
+ * then re-reads with cache eviction, re-applying the patch so a stale gateway tree cannot clobber it.
+ * A rebuild inside HAPI's search-cache window can even lose the moved node entirely (and the gateway
+ * caches that tree), so the placed node is snapshotted for grafting and a delayed refresh heals the
+ * gateway cache once the window has passed.
  */
 export function useApplyHierarchyEdit(rootId: string | undefined): (patch: LocationEditPatch) => void {
   const client = useFhirClient();
@@ -115,11 +122,19 @@ export function useApplyHierarchyEdit(rootId: string | undefined): (patch: Locat
       if (!rootId) return;
       const key = ['location-hierarchy', rootId] as const;
       qc.setQueryData<LocationHierarchy>(key, (old) => (old ? applyLocationEdit(old, patch) : old));
+      const patched = qc.getQueryData<LocationHierarchy>(key);
+      const snapshot = patched ? findNode(patched.root, patch.id) : undefined;
+      const refreshAndReapply = async (): Promise<LocationHierarchy> => {
+        const fresh = await fetchHierarchy(client, rootId, true);
+        qc.setQueryData<LocationHierarchy>(key, applyLocationEdit(fresh, patch, snapshot));
+        return fresh;
+      };
       void (async () => {
         try {
-          const fresh = await fetchHierarchy(client, rootId, true);
-          // Gateway cache can still be pre-edit when refresh is unsupported; re-apply the confirmed patch.
-          qc.setQueryData<LocationHierarchy>(key, applyLocationEdit(fresh, patch));
+          const fresh = await refreshAndReapply();
+          if (!hierarchyReflectsEdit(fresh, patch)) {
+            setTimeout(() => void refreshAndReapply().catch(() => {}), GATEWAY_HEAL_DELAY_MS);
+          }
         } catch {
           // Optimistic patch already shows the change; a failed refresh reverts only on full reload.
         }
