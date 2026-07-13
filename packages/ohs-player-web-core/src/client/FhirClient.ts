@@ -86,13 +86,15 @@ export class FhirClient {
   }
 
   /**
-   * FHIR search interaction: `GET {base}/{resourceType}?…` — sent with `Cache-Control: no-cache`,
-   * else HAPI reuses cached search results for 60 s and post-mutation refetches return stale data.
+   * FHIR search interaction: `GET {base}/{resourceType}?…` — sent with `Cache-Control: no-cache`
+   * (HAPI otherwise reuses cached search results for 60 s, so post-mutation refetches return stale
+   * data) plus `Pragma`/`no-store` so browser and proxy caches cannot serve a stale Bundle either.
    */
   async search(resourceType: string, params?: Record<string, string>): Promise<unknown> {
     const sp = params ? `?${new URLSearchParams(params).toString()}` : '';
     const res = await this.fetchWithAuth(`${this.fhirBaseUrl}/${resourceType}${sp}`, {
-      headers: { 'Cache-Control': 'no-cache' },
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });
     if (!res.ok) throw await this.toError(res);
     return readBody(res);

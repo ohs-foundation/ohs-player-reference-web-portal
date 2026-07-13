@@ -145,8 +145,8 @@ function countNodes(node: LocationNode): number {
 }
 
 /**
- * Mirrors a confirmed FHIR Location write into the cached tree — the gateway's hierarchy cache has no
- * invalidation, so a refetch would resurrect pre-edit data for up to its TTL.
+ * Mirrors a confirmed FHIR Location write into the cached tree — the gateway hierarchy cache can lag
+ * FHIR by up to its TTL, so the UI applies the write locally (and re-applies after a refresh).
  */
 export function applyLocationEdit(hierarchy: LocationHierarchy, patch: LocationEditPatch): LocationHierarchy {
   const clone = (n: LocationNode): LocationNode => ({ ...n, children: n.children.map(clone) });
@@ -157,33 +157,69 @@ export function applyLocationEdit(hierarchy: LocationHierarchy, patch: LocationE
   node.name = patch.name;
   node.status = patch.status;
 
+  // The view root cannot be re-parented inside this tree; only its labels change here.
   if (patch.id === root.id) {
     node.partOf = patch.parentId;
     node.partOfLabel = null;
     return { ...hierarchy, root };
   }
 
-  if ((patch.parentId ?? null) !== (node.partOf ?? null)) {
-    const detach = (n: LocationNode): boolean => {
-      const i = n.children.findIndex((c) => c.id === patch.id);
-      if (i >= 0) {
-        n.children.splice(i, 1);
-        return true;
-      }
-      return n.children.some(detach);
-    };
-    detach(root);
-    const newParent = patch.parentId ? findNode(root, patch.parentId) : undefined;
-    if (!newParent) {
-      const removed = countNodes(node);
-      return {
-        root,
-        meta: { ...hierarchy.meta, nodeCount: Math.max(0, hierarchy.meta.nodeCount - removed) },
-      };
-    }
-    node.partOf = newParent.id;
-    node.partOfLabel = newParent.name;
-    newParent.children.push(node);
+  const nextParentId = patch.parentId ?? null;
+  const prevParentId = node.partOf ?? null;
+  if (nextParentId === prevParentId) {
+    return { ...hierarchy, root };
   }
+
+  const detach = (n: LocationNode): boolean => {
+    const i = n.children.findIndex((c) => c.id === patch.id);
+    if (i >= 0) {
+      n.children = n.children.filter((c) => c.id !== patch.id);
+      return true;
+    }
+    for (const child of n.children) {
+      if (detach(child)) return true;
+    }
+    return false;
+  };
+  detach(root);
+
+  // Top-level (or parent outside this tree) → drop from the current root view; roots dropdown owns it.
+  if (!nextParentId) {
+    const removed = countNodes(node);
+    return {
+      root,
+      meta: { ...hierarchy.meta, nodeCount: Math.max(0, hierarchy.meta.nodeCount - removed) },
+    };
+  }
+
+  const newParent = findNode(root, nextParentId);
+  if (!newParent) {
+    const removed = countNodes(node);
+    return {
+      root,
+      meta: { ...hierarchy.meta, nodeCount: Math.max(0, hierarchy.meta.nodeCount - removed) },
+    };
+  }
+
+  // Refuse to attach under a descendant of the moved node (cycle) — write path also guards this.
+  if (findNode(node, nextParentId)) {
+    // Re-attach under the previous parent so the tree stays consistent with the last good shape.
+    const oldParent = prevParentId ? findNode(root, prevParentId) : undefined;
+    if (oldParent) {
+      node.partOf = oldParent.id;
+      node.partOfLabel = oldParent.name;
+      oldParent.children = [...oldParent.children, node];
+    } else {
+      // Was a direct child of the view root before detach.
+      node.partOf = root.id;
+      node.partOfLabel = root.name;
+      root.children = [...root.children, node];
+    }
+    return { ...hierarchy, root };
+  }
+
+  node.partOf = newParent.id;
+  node.partOfLabel = newParent.name;
+  newParent.children = [...newParent.children, node];
   return { ...hierarchy, root };
 }

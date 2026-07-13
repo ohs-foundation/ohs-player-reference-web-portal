@@ -88,8 +88,9 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const [importOpen, setImportOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  // HAPI rejects partOf:missing, so root candidates are filtered client-side.
-  const rootsSearch = useSearch('Location', { _count: '200' });
+  // HAPI rejects partOf:missing, so root candidates are filtered client-side. Prefer recently updated
+  // rows so a brand-new root still appears when the workspace has more Locations than `_count`.
+  const rootsSearch = useSearch('Location', { _count: '500', _sort: '-_lastUpdated' });
   const roots = useMemo(() => rootOptions(rootsSearch.data, (id) => t('locationsUnnamed', { id })), [rootsSearch.data, t]);
   const effectiveRoot = rootId || roots[0]?.value || '';
 
@@ -100,7 +101,8 @@ export function LocationsHierarchyPage(): React.ReactElement {
     void query.refetch();
   };
   const applyEdit = useApplyHierarchyEdit(effectiveRoot || undefined);
-  // Instant optimistic patch, then an authoritative refresh so the edit survives a reload.
+  // Instant optimistic restructure; hierarchy refresh re-applies the patch so a stale gateway cannot
+  // leave the node in its old place. Location search refresh keeps the root dropdown in sync.
   const onEditSaved = (patch: Parameters<typeof applyEdit>[0]) => {
     applyEdit(patch);
     void refreshResources('Location');

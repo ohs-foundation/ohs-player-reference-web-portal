@@ -86,9 +86,10 @@ async function refreshInto(
   qc: QueryClient,
   client: FhirClient,
   rootId: string,
-): Promise<void> {
+): Promise<LocationHierarchy> {
   const fresh = await fetchHierarchy(client, rootId, true);
   qc.setQueryData<LocationHierarchy>(['location-hierarchy', rootId], fresh);
+  return fresh;
 }
 
 /** Authoritative refresh: re-reads the tree with cache eviction so it survives a reload. */
@@ -103,7 +104,8 @@ export function useRefreshHierarchy(rootId: string | undefined): () => Promise<v
 
 /**
  * Mirrors a confirmed FHIR write into the cached tree for an instant update (see applyLocationEdit),
- * then triggers an authoritative refresh so the change survives a reload.
+ * then re-reads with cache eviction. Re-applies the patch after the refresh so a stale gateway tree
+ * cannot clobber a re-parent that the FHIR write already committed.
  */
 export function useApplyHierarchyEdit(rootId: string | undefined): (patch: LocationEditPatch) => void {
   const client = useFhirClient();
@@ -111,13 +113,17 @@ export function useApplyHierarchyEdit(rootId: string | undefined): (patch: Locat
   return useCallback(
     (patch: LocationEditPatch) => {
       if (!rootId) return;
-      qc.setQueryData<LocationHierarchy>(['location-hierarchy', rootId], (old) =>
-        old ? applyLocationEdit(old, patch) : old,
-      );
-      void refreshInto(qc, client, rootId).catch(() => {
-        // The optimistic patch already shows the change; a failed refresh just means a reload
-        // reverts to the gateway's cached tree until its TTL expires.
-      });
+      const key = ['location-hierarchy', rootId] as const;
+      qc.setQueryData<LocationHierarchy>(key, (old) => (old ? applyLocationEdit(old, patch) : old));
+      void (async () => {
+        try {
+          const fresh = await fetchHierarchy(client, rootId, true);
+          // Gateway cache can still be pre-edit when refresh is unsupported; re-apply the confirmed patch.
+          qc.setQueryData<LocationHierarchy>(key, applyLocationEdit(fresh, patch));
+        } catch {
+          // Optimistic patch already shows the change; a failed refresh reverts only on full reload.
+        }
+      })();
     },
     [qc, client, rootId],
   );

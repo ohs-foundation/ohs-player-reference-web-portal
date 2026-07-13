@@ -126,13 +126,18 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
     void (async () => {
       setSaving(true);
       try {
-        await updateLoc.mutateAsync({ id: nodeId, body: { ...(current ?? {}), ...locationBodyFromAnswers(answers) } });
+        // Spreading a body that omits `partOf` would leave the previous parent on the resource.
+        const fields = locationBodyFromAnswers(answers);
+        const body: Location = { ...(current ?? { resourceType: 'Location' }), ...fields };
+        if (!fields.partOf) {
+          delete body.partOf;
+        }
+        await updateLoc.mutateAsync({ id: nodeId, body });
         await writeAudit({ action: 'update', resourceType: 'Location', resourceId: nodeId });
         await createQr.mutateAsync(buildQuestionnaireResponse());
         await writeAudit({ action: 'create', resourceType: 'QuestionnaireResponse' });
         statusBar.notify({ tone: 'success', title: t('locationSaved') });
-        const body = locationBodyFromAnswers(answers);
-        onSaved({ id: nodeId, name: body.name, status: body.status, parentId: parentId ?? null });
+        onSaved({ id: nodeId, name: fields.name, status: fields.status, parentId: parentId ?? null });
         onClose();
       } catch (err) {
         setFormError(toErrorMessage(err));

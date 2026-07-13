@@ -117,6 +117,32 @@ describe('applyLocationEdit', () => {
     expect(findNode(out.root, 'loc-unnamed')?.partOfLabel).toBe('Nairobi');
   });
 
+  it('moves a direct child under a sibling (typical “change parent” edit)', () => {
+    // Kenya → Nairobi, Mombasa; move Mombasa under Nairobi.
+    const base = h();
+    base.root.children.push({
+      id: 'loc-mombasa',
+      name: 'Mombasa',
+      status: 'active',
+      partOf: 'loc-country-ke',
+      partOfLabel: 'Kenya',
+      physicalType: null,
+      type: [],
+      children: [],
+      hasMoreChildren: false,
+    });
+    const out = applyLocationEdit(base, {
+      id: 'loc-mombasa',
+      name: 'Mombasa',
+      status: 'active',
+      parentId: 'loc-nairobi',
+    });
+    expect(out.root.children.map((c) => c.id).sort()).toEqual(['loc-nairobi', 'loc-unnamed'].sort());
+    expect(findNode(out.root, 'loc-nairobi')?.children.map((c) => c.id)).toContain('loc-mombasa');
+    expect(findNode(out.root, 'loc-mombasa')?.partOf).toBe('loc-nairobi');
+    expect(findNode(out.root, 'loc-mombasa')?.partOfLabel).toBe('Nairobi');
+  });
+
   it('drops a node moved out of the tree and adjusts nodeCount', () => {
     const out = applyLocationEdit(h(), { id: 'loc-nairobi', name: 'Nairobi', status: 'active', parentId: null });
     expect(findNode(out.root, 'loc-nairobi')).toBeUndefined();
@@ -129,5 +155,22 @@ describe('applyLocationEdit', () => {
     expect(rootEdit.root.partOf).toBe('elsewhere');
     const noop = applyLocationEdit(h(), { id: 'missing', name: 'X', status: 'active', parentId: null });
     expect(noop.root.children).toHaveLength(2);
+  });
+
+  it('re-applying the same parent patch is idempotent (safe after a stale hierarchy refresh)', () => {
+    const moved = applyLocationEdit(h(), {
+      id: 'loc-unnamed',
+      name: 'Renamed',
+      status: 'active',
+      parentId: 'loc-nairobi',
+    });
+    const again = applyLocationEdit(moved, {
+      id: 'loc-unnamed',
+      name: 'Renamed',
+      status: 'active',
+      parentId: 'loc-nairobi',
+    });
+    expect(again.root.children.map((c) => c.id)).toEqual(['loc-nairobi']);
+    expect(findNode(again.root, 'loc-nairobi')?.children.map((c) => c.id)).toEqual(['loc-unnamed']);
   });
 });

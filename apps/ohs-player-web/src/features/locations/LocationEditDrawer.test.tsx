@@ -69,4 +69,17 @@ describe('LocationEditDrawer', () => {
     );
     expect(onClose).toHaveBeenCalled();
   });
+
+  // Regression: spreading a body that omits partOf left the old parent on the PUT payload.
+  it('clears partOf on the PUT body when the parent is set to root', async () => {
+    mutateLocation.mockClear();
+    render(<LocationEditDrawer nodeId="nrb" onClose={vi.fn()} onSaved={vi.fn()} />);
+    fireEvent.change(screen.getByRole('combobox', { name: /locationsParentLocation/ }), {
+      target: { value: '__root__' },
+    });
+    fireEvent.submit(document.getElementById('location-edit-form') as HTMLFormElement);
+    await waitFor(() => expect(mutateLocation).toHaveBeenCalled());
+    const arg = mutateLocation.mock.calls[0]?.[0] as { body: { partOf?: unknown } };
+    expect(arg.body.partOf).toBeUndefined();
+  });
 });

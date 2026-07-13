@@ -29,12 +29,92 @@ describe('authoritative hierarchy refresh', () => {
     expect(customGet).toHaveBeenCalledWith('locationHierarchy', { refresh: 'true' }, 'ke');
   });
 
-  it('useApplyHierarchyEdit follows the optimistic patch with a refresh=true read', async () => {
+  it('useApplyHierarchyEdit follows the optimistic patch with a refresh=true read and re-applies the patch', async () => {
     customGet.mockClear();
-    const { result } = renderHook(() => useApplyHierarchyEdit('ke'), { wrapper: wrapper() });
-    result.current({ id: 'ke', name: 'Kenya', status: 'active', parentId: null });
+    customGet.mockResolvedValue({
+      root: {
+        id: 'Location/ke',
+        name: 'Kenya',
+        status: 'active',
+        partOf: null,
+        children: [
+          {
+            id: 'Location/nrb',
+            name: 'Nairobi',
+            status: 'active',
+            partOf: { reference: 'Location/ke', display: 'Kenya' },
+            children: [],
+            hasMoreChildren: false,
+          },
+          {
+            id: 'Location/msa',
+            name: 'Mombasa',
+            status: 'active',
+            partOf: { reference: 'Location/ke', display: 'Kenya' },
+            children: [],
+            hasMoreChildren: false,
+          },
+        ],
+        hasMoreChildren: false,
+      },
+      meta: { nodeCount: 3, depth: 1, truncated: false, builtAt: 0 },
+    });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrap = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: qc }, children);
+    const { result } = renderHook(() => useApplyHierarchyEdit('ke'), { wrapper: wrap });
+    // Seed cache so the optimistic path has a tree to restructure.
+    qc.setQueryData(['location-hierarchy', 'ke'], {
+      root: {
+        id: 'ke',
+        name: 'Kenya',
+        status: 'active',
+        partOf: null,
+        partOfLabel: null,
+        physicalType: null,
+        type: [],
+        children: [
+          {
+            id: 'nrb',
+            name: 'Nairobi',
+            status: 'active',
+            partOf: 'ke',
+            partOfLabel: 'Kenya',
+            physicalType: null,
+            type: [],
+            children: [],
+            hasMoreChildren: false,
+          },
+          {
+            id: 'msa',
+            name: 'Mombasa',
+            status: 'active',
+            partOf: 'ke',
+            partOfLabel: 'Kenya',
+            physicalType: null,
+            type: [],
+            children: [],
+            hasMoreChildren: false,
+          },
+        ],
+        hasMoreChildren: false,
+      },
+      meta: { nodeCount: 3, depth: 1, truncated: false, builtAt: null },
+    });
+
+    result.current({ id: 'msa', name: 'Mombasa', status: 'active', parentId: 'nrb' });
+
     await waitFor(() =>
       expect(customGet).toHaveBeenCalledWith('locationHierarchy', { refresh: 'true' }, 'ke'),
     );
+    await waitFor(() => {
+      const tree = qc.getQueryData<{ root: { children: { id: string; children: { id: string }[] }[] } }>([
+        'location-hierarchy',
+        'ke',
+      ]);
+      // Gateway still returns the pre-edit sibling layout; re-applied patch must nest msa under nrb.
+      expect(tree?.root.children.map((c) => c.id)).toEqual(['nrb']);
+      expect(tree?.root.children[0]?.children.map((c) => c.id)).toEqual(['msa']);
+    });
   });
 });
