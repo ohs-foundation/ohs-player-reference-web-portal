@@ -85,10 +85,17 @@ export class FhirClient {
     return readBody(res);
   }
 
-  /** FHIR search interaction: `GET {base}/{resourceType}?…` */
+  /**
+   * FHIR search interaction: `GET {base}/{resourceType}?…` — sent with `Cache-Control: no-cache`
+   * (HAPI otherwise reuses cached search results for 60 s, so post-mutation refetches return stale
+   * data) plus `Pragma`/`no-store` so browser and proxy caches cannot serve a stale Bundle either.
+   */
   async search(resourceType: string, params?: Record<string, string>): Promise<unknown> {
     const sp = params ? `?${new URLSearchParams(params).toString()}` : '';
-    const res = await this.fetchWithAuth(`${this.fhirBaseUrl}/${resourceType}${sp}`);
+    const res = await this.fetchWithAuth(`${this.fhirBaseUrl}/${resourceType}${sp}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    });
     if (!res.ok) throw await this.toError(res);
     return readBody(res);
   }
@@ -163,6 +170,7 @@ export class FhirClient {
   async customGet(
     alias: string,
     params?: Record<string, string | number | boolean | undefined>,
+    idSegment?: string,
   ): Promise<unknown> {
     const path = this.customEndpoints[alias];
     if (!path) throw new Error(`Unknown custom endpoint alias: ${alias}`);
@@ -180,10 +188,43 @@ export class FhirClient {
           Object.fromEntries(Object.entries(filtered).map(([k, v]) => [k, String(v)])),
         )}`
       : '';
-    const url = `${root}${path.startsWith('/') ? path : `/${path}`}${qs}`;
+    const base = `${root}${path.startsWith('/') ? path : `/${path}`}`;
+    const url = `${idSegment ? `${base}/${encodeURIComponent(idSegment)}` : base}${qs}`;
     const res = await this.fetchWithAuth(url, { method: 'GET' });
     if (!res.ok) throw await this.toError(res);
     return readBody(res);
+  }
+
+  /**
+   * POST a body (e.g. `FormData` for multipart uploads) to a custom endpoint and return the raw
+   * `Response` so the caller can consume a streaming body (Server-Sent Events). Adds the bearer token
+   * and retries once on 401; does NOT set `Content-Type` (the browser sets the multipart boundary).
+   * The caller owns reading `res.body`; check `res.ok` and pass `!res.ok` responses to a handler.
+   */
+  async customPostStream(alias: string, body: BodyInit): Promise<Response> {
+    const path = this.customEndpoints[alias];
+    if (!path) throw new Error(`Unknown custom endpoint alias: ${alias}`);
+    const root = gatewayRootFromFhirBase(this.fhirBaseUrl);
+    const url = `${root}${path.startsWith('/') ? path : `/${path}`}`;
+    const build = (token: string | null): Headers => {
+      const h = new Headers();
+      h.set('Accept', 'text/event-stream');
+      if (token) h.set('Authorization', `Bearer ${token}`);
+      return h;
+    };
+    const token = await this.getAccessToken();
+    const first = await fetch(url, { method: 'POST', headers: build(token), body });
+    if (first.status === 401) {
+      await this.getAccessToken();
+      const t2 = await this.getAccessToken();
+      return fetch(url, { method: 'POST', headers: build(t2), body });
+    }
+    return first;
+  }
+
+  /** Surface a non-OK custom-route `Response` as a `FhirError` (parses the gateway JSON error body). */
+  async errorFromResponse(res: Response): Promise<FhirError> {
+    return this.toError(res);
   }
 
   /** POST JSON to a host-defined custom path (`customEndpoints[alias]`). Uses `application/json`. */

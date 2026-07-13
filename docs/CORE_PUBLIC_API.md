@@ -56,6 +56,7 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types �
 | `useUpdateResource(resourceType)` | Mutation: `client.update`; invalidates read + search. |
 | `useCustomEndpoint(alias)` | `{ get, post, put }` mutations wrapping `customGet` / `customPost` / `customPut` for that alias (`put` takes `{ id?, body }`). |
 | `useRefreshResources()` | Returns `(resourceType \| resourceType[]) => Promise<void>` that invalidates + refetches the cached `search` list(s) so view tables re-render after a mutation. |
+| `useOptimisticInsert()` | Returns `(resourceType, resource, options?) => rollback` that inserts a created resource into every mounted `search` list cache so the row renders instantly, then reconciles via a **delayed** background refetch (re-applying the row if the server isn't consistent yet, so it never disappears). `options.also` adds resource types to reconcile (derived columns); `options.reconcileDelayMs` tunes the delay (default 1500). Don't also call `useRefreshResources` for that create. Call the returned rollback on the mutation's error path. |
 | `useQuestionnaireFormState(questionnaire, initialAnswers?)` | SDC form state: `{ answers, setAnswer, setAnswers, buildQuestionnaireResponse, validateRequired }`. |
 | `useStatusBar()` | Status bar context consumer (primitives). |
 
@@ -113,9 +114,11 @@ Methods:
 | `transaction(bundle)` | `POST` bundle to base URL (typically transaction/batch) |
 | `capabilities()` | `GET …/metadata` (CapabilityStatement) |
 | `postOperation(relativePath, body?)` | `POST …/{relativePath}` — FHIR **$operations** (e.g. `Questionnaire/$extract`). Path must not start with `/`. |
-| `customGet(alias, params?)` | GET non-FHIR path from `customEndpoints[alias]` relative to gateway root derived from FHIR base |
+| `customGet(alias, params?, idSegment?)` | GET non-FHIR path from `customEndpoints[alias]` relative to gateway root, optionally appending `/{idSegment}` (e.g. `location-hierarchy/{rootId}`) |
 | `customPost(alias, body)` | POST JSON to `customEndpoints[alias]` (Accept `application/json`) |
 | `customPut(alias, body, idSegment?)` | PUT JSON to `customEndpoints[alias]`, optionally appending `/{idSegment}` (e.g. a resource id) |
+| `customPostStream(alias, body)` | POST `BodyInit` (e.g. multipart `FormData`) to `customEndpoints[alias]` and return the raw `Response` for streaming (SSE); no `Content-Type` set (browser sets the multipart boundary) |
+| `errorFromResponse(res)` | Convert a non-OK custom-route `Response` into a `FhirError` (parses the gateway JSON error body) |
 
 ---
 

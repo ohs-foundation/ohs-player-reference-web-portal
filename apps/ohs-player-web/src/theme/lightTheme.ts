@@ -11,7 +11,7 @@ export const lightTheme: ThemeConfig = {
     primary: '#094F9A', // Background/Brand, Content/Brand
     primaryHover: '#073C75',
     primaryContrast: '#FAFAFA', // Content/Primary Inverse
-    primaryContainer: '#E6EEF6',
+    primaryContainer: '#DCE5FE', // Brand-subtle surface — selected segment / selected tree row (matches county badge)
     surface: '#FFFFFF', // Background/Secondary — cards, drawers
     background: '#F1F2F4', // Background/Primary — grey page fill behind white cards (perceptibly off-white)
     text: '#0D0D0D', // Content/Primary (Neutral/950)

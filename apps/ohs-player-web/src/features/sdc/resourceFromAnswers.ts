@@ -398,6 +398,9 @@ export const LOCATION_LINK_IDS = {
   parent: 'loc-parent',
 } as const;
 
+/** Identifier system for a Location's import source id (e.g. "MSA"). */
+export const LOCATION_SOURCE_ID_SYSTEM = 'http://ohs.dev/identifiers/source-id';
+
 /** CodeSystem for `Organization.type`. A "Team" is an Organization of type `team` (per backend). */
 export const ORGANIZATION_TYPE_SYSTEM = 'http://terminology.hl7.org/CodeSystem/organization-type';
 

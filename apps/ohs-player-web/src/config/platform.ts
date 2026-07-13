@@ -12,6 +12,10 @@ const permissionMap: PermissionMap = {
   'users.deactivate': ['admin'],
   'locations.view': ['admin', 'care-team-manager'],
   'locations.edit': ['admin'],
+  // Real backend roles (JWT realm_access.roles). The hierarchy browser + bulk import are gated by the
+  // exact endpoint roles, not the coarse 'locations.*' keys — a 403 means the role isn't seeded/granted.
+  'location-hierarchy.view': ['admin', 'location-hierarchy.view'],
+  'bulk-import.manage': ['admin', 'bulk-import.manage'],
   'orgs.view': ['admin', 'care-team-manager'],
   'orgs.create': ['admin'],
   'careteams.view': ['admin', 'care-team-manager'],
@@ -51,5 +55,7 @@ export const platformConfig: CorePlatformConfig = {
     users: '/api/users',
     groups: '/api/groups',
     roles: '/api/roles',
+    locationHierarchy: '/api/location-hierarchy',
+    locationsBulkImport: '/api/bulk-import/locations',
   },
 };

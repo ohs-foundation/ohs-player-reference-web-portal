@@ -13,8 +13,18 @@
 [data-ohs-root] {
   /* Definite height so descendants' `height: 100%` resolves (the wrapper sets only min-height inline). */
   height: 100%;
+  color: var(--ohs-color-text, #1f2933);
+  background: var(--ohs-color-background, #f4f7fb);
+  font-family: var(--ohs-font-body, system-ui, sans-serif);
+  font-size: var(--ohs-font-size-base, 16px);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* --- Design tokens not managed by applyTheme; managed colours/fonts/radius come from lightTheme. --- */
+/* Unmanaged tokens (managed ones come from lightTheme/applyTheme). On :root too, else Radix portals
+   outside [data-ohs-root] can't resolve them. */
+:root,
+[data-ohs-root] {
   /* Neutral scale */
   --ohs-neutral-50: #fafafa;
   --ohs-neutral-100: #ededed;
@@ -31,6 +41,28 @@
   --ohs-color-positive: #009933; /* Content/Positive */
   --ohs-color-positive-surface: #e6f6ec; /* Active pill tint */
   --ohs-color-neutral-surface: #f0f0f0; /* Inactive pill tint */
+  /* Location administrative-level badges (bg / border / text). Root uses the brand fill. */
+  --ohs-color-level-root-bg: #094f9a;
+  --ohs-color-level-root-border: #094f9a;
+  --ohs-color-level-root-text: #fafafa;
+  --ohs-color-level-country-bg: #ccd4ff;
+  --ohs-color-level-country-border: #99a9ff;
+  --ohs-color-level-country-text: #001066;
+  --ohs-color-level-county-bg: #dce5fe;
+  --ohs-color-level-county-border: #95b5fd;
+  --ohs-color-level-county-text: #094f9a;
+  --ohs-color-level-subcounty-bg: #ffeb99;
+  --ohs-color-level-subcounty-border: #ffdb4d;
+  --ohs-color-level-subcounty-text: #997a00;
+  --ohs-color-level-ward-bg: #ededed;
+  --ohs-color-level-ward-border: #d4d4d4;
+  --ohs-color-level-ward-text: #696969;
+  --ohs-color-level-facility-bg: #b8ffcf;
+  --ohs-color-level-facility-border: #29ff70;
+  --ohs-color-level-facility-text: #009933;
+  --ohs-color-level-unit-bg: transparent;
+  --ohs-color-level-unit-border: #d4d4d4;
+  --ohs-color-level-unit-text: #696969;
   /* Type scale (size / line-height); weights below. Applied per component. */
   --ohs-font-heading-xl-size: 40px;
   --ohs-font-heading-xl-line: 48px;
@@ -48,17 +80,25 @@
   --ohs-font-text-s-line: 16px;
   --ohs-font-weight-regular: 400;
   --ohs-font-weight-medium: 500;
-
-  color: var(--ohs-color-text, #1f2933);
-  background: var(--ohs-color-background, #f4f7fb);
-  font-family: var(--ohs-font-body, system-ui, sans-serif);
-  font-size: var(--ohs-font-size-base, 16px);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
 }
 
 [data-ohs-root] * {
   box-sizing: border-box;
+}
+
+/* Global button reset (Preflight is off). Must stay in @layer base with :where() — unlayered it would
+   beat every layered Tailwind utility; scoped to [data-ohs-root] it would miss Radix portals. */
+@layer base {
+  :where(button) {
+    appearance: none;
+    -webkit-appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
 }
 
 [data-ohs-root] a {
@@ -1329,4 +1369,26 @@
   --ohs-color-positive: #00e04b; /* Content/Positive (Green/400) */
   --ohs-color-positive-surface: rgba(0, 224, 75, 0.16);
   --ohs-color-neutral-surface: rgba(255, 255, 255, 0.08);
+  /* Location level badges — desaturated tints on dark so text stays legible. */
+  --ohs-color-level-root-bg: #094f9a;
+  --ohs-color-level-root-border: #3a7bc8;
+  --ohs-color-level-root-text: #fafafa;
+  --ohs-color-level-country-bg: rgba(153, 169, 255, 0.16);
+  --ohs-color-level-country-border: #4d5fb3;
+  --ohs-color-level-country-text: #b8c2ff;
+  --ohs-color-level-county-bg: rgba(149, 181, 253, 0.16);
+  --ohs-color-level-county-border: #3a6bb0;
+  --ohs-color-level-county-text: #a9c5ff;
+  --ohs-color-level-subcounty-bg: rgba(255, 219, 77, 0.16);
+  --ohs-color-level-subcounty-border: #99820d;
+  --ohs-color-level-subcounty-text: #ffdb4d;
+  --ohs-color-level-ward-bg: rgba(255, 255, 255, 0.08);
+  --ohs-color-level-ward-border: #4f4f4f;
+  --ohs-color-level-ward-text: #b8b8b8;
+  --ohs-color-level-facility-bg: rgba(41, 255, 112, 0.16);
+  --ohs-color-level-facility-border: #128a3c;
+  --ohs-color-level-facility-text: #29ff70;
+  --ohs-color-level-unit-bg: transparent;
+  --ohs-color-level-unit-border: #4f4f4f;
+  --ohs-color-level-unit-text: #b8b8b8;
 }
