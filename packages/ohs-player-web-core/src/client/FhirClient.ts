@@ -4,6 +4,40 @@ function gatewayRootFromFhirBase(fhirBaseUrl: string): string {
   return fhirBaseUrl.replace(/\/fhir\/?$/i, '').replace(/\/$/, '') || fhirBaseUrl;
 }
 
+/** Options for {@link FhirClient.searchAll}. */
+export interface SearchAllOptions {
+  /** Resources per page (`_count`). Default 500. */
+  pageSize?: number;
+  /** Hard stop on number of pages fetched (safety valve). Default 100. */
+  maxPages?: number;
+}
+
+interface SearchBundlePage {
+  entry?: { resource?: unknown }[];
+  link?: { relation?: string; url?: string }[];
+}
+
+/**
+ * Map a server-issued Bundle `next` link onto this client's FHIR base so paging works when HAPI
+ * emits an internal host (e.g. `http://hapi-fhir:8080/fhir?_getpages=…`) behind a browser proxy.
+ */
+export function rebaseFhirUrl(nextUrl: string, fhirBaseUrl: string): string {
+  const base = fhirBaseUrl.replace(/\/$/, '');
+  try {
+    const parsed = new URL(nextUrl, `${base}/`);
+    const path = parsed.pathname;
+    const marker = path.toLowerCase().lastIndexOf('/fhir');
+    if (marker >= 0) {
+      const afterFhir = path.slice(marker + '/fhir'.length);
+      return `${base}${afterFhir}${parsed.search}`;
+    }
+    if (!path || path === '/') return `${base}${parsed.search}`;
+    return `${base}${path.startsWith('/') ? path : `/${path}`}${parsed.search}`;
+  } catch {
+    return nextUrl;
+  }
+}
+
 async function readBody(res: Response): Promise<unknown> {
   const text = await res.text();
   if (!text) return undefined;
@@ -92,7 +126,54 @@ export class FhirClient {
    */
   async search(resourceType: string, params?: Record<string, string>): Promise<unknown> {
     const sp = params ? `?${new URLSearchParams(params).toString()}` : '';
-    const res = await this.fetchWithAuth(`${this.fhirBaseUrl}/${resourceType}${sp}`, {
+    return this.searchUrl(`${this.fhirBaseUrl}/${resourceType}${sp}`);
+  }
+
+  /**
+   * Walk every page of a FHIR search result set. Follows Bundle `link[rel=next]`, rebasing each
+   * next URL onto this client's base so docker-internal hosts in HAPI paging links still hit the
+   * browser-reachable gateway/proxy. De-dupes by resource `id`. Caps pages as a safety valve.
+   */
+  async searchAll(
+    resourceType: string,
+    params?: Record<string, string>,
+    options?: SearchAllOptions,
+  ): Promise<unknown[]> {
+    const pageSize = options?.pageSize ?? 500;
+    const maxPages = options?.maxPages ?? 100;
+    const resources: unknown[] = [];
+    const seenIds = new Set<string>();
+
+    let bundle = (await this.search(resourceType, {
+      ...params,
+      _count: String(pageSize),
+    })) as SearchBundlePage;
+
+    for (let page = 0; page < maxPages; page++) {
+      let added = 0;
+      for (const entry of bundle.entry ?? []) {
+        const resource = entry.resource as { id?: string } | undefined;
+        if (!resource) continue;
+        if (typeof resource.id === 'string') {
+          if (seenIds.has(resource.id)) continue;
+          seenIds.add(resource.id);
+        }
+        resources.push(resource);
+        added += 1;
+      }
+
+      const nextRaw = bundle.link?.find((l) => l.relation === 'next')?.url;
+      if (!nextRaw || added === 0) break;
+
+      bundle = (await this.searchUrl(rebaseFhirUrl(nextRaw, this.fhirBaseUrl))) as SearchBundlePage;
+    }
+
+    return resources;
+  }
+
+  /** Authenticated GET of a fully resolved search/paging URL with the same cache-bypass headers as {@link search}. */
+  private async searchUrl(url: string): Promise<unknown> {
+    const res = await this.fetchWithAuth(url, {
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     });

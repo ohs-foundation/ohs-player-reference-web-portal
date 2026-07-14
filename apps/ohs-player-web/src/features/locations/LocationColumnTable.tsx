@@ -97,6 +97,9 @@ export function LocationColumnTable({ root, onSelect, onEdit }: Readonly<Locatio
       onSelectionChange={setSelectedKeys}
       onRowClick={(r) => onSelect(r.id)}
       pagination
+      // Large country trees (thousands of rows) need bigger page sizes than the default 10/25/50.
+      initialPageSize={rows.length > 100 ? 50 : 10}
+      pageSizeOptions={[10, 25, 50, 100, 250]}
       caption={t('locationsTreeLabel')}
       flush
     />

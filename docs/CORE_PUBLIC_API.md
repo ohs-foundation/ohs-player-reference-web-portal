@@ -108,6 +108,8 @@ Methods:
 | --- | --- |
 | `read(resourceType, id)` | `GET …/{type}/{id}` |
 | `search(resourceType, params?)` | `GET …/{type}?…` search parameters |
+| `searchAll(resourceType, params?, options?)` | Walk every search page via Bundle `link[rel=next]` (rebased onto the client base); returns the flat resource list. Options: `pageSize` (default 500), `maxPages` (default 100). Use when a single `_count` page is not enough (e.g. location roots). |
+| `rebaseFhirUrl(nextUrl, fhirBaseUrl)` | Pure helper: map a server-issued paging URL onto the client FHIR base (docker-internal hosts → browser proxy). |
 | `create(body)` | `POST …/{type}` — body must include `resourceType` |
 | `update(resourceType, id, body)` | `PUT …/{type}/{id}` |
 | `delete(resourceType, id)` | `DELETE …/{type}/{id}` — handles 204 empty body |

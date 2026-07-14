@@ -7,6 +7,11 @@ export type { CardHeaderProps, CardProps } from './Card';
 export { Field, TextField, TextAreaField, SelectField } from './Field';
 export type { FieldRootProps, SelectFieldOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './Field';
 
+export { Combobox } from './Combobox';
+export type { ComboboxProps } from './Combobox';
+export { filterComboboxOptions } from './comboboxFilter';
+export type { ComboboxOption } from './comboboxFilter';
+
 export { SearchField } from './SearchField';
 export type { SearchFieldProps } from './SearchField';
 

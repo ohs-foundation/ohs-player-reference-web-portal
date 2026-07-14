@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
-import type { Location } from '@medplum/fhirtypes';
 import { RiArrowDownSLine, RiUploadCloud2Line } from '@remixicon/react';
-import { PermissionGuard, useRefreshResources, useSearch, useStatusBar, useTranslation } from 'ohs-player-web-core';
+import { PermissionGuard, useRefreshResources, useStatusBar, useTranslation } from 'ohs-player-web-core';
 import { Button, Page, PageHeader, SearchField, SelectField } from '../../components/ui';
-import { collectExpandableIds, filterTree } from './expand';
+import { collectExpandableIdsLimited, EXPAND_ALL_MAX, filterTree } from './expand';
 import { nodeChain, type LocationNode } from './hierarchy';
 import type { HierarchyError } from './useLocationHierarchy';
 import { relativeTimeFrom } from './relativeTime';
 import { useApplyHierarchyEdit, useLocationHierarchy, useRefreshHierarchy } from './useLocationHierarchy';
+import { useLocationRoots } from './useLocationRoots';
 import { LocationTree } from './LocationTree';
 import { LocationColumnTable } from './LocationColumnTable';
 import { LocationViewToggle, type LocationView } from './LocationViewToggle';
@@ -23,6 +23,8 @@ interface BodyArgs {
   loading: boolean;
   error: HierarchyError | null;
   tree: LocationNode | null;
+  /** No root candidates after a completed roots search (empty store or failed import surface). */
+  emptyStore: boolean;
   view: LocationView;
   expanded: ReadonlySet<string>;
   selectedId: string | null;
@@ -34,6 +36,14 @@ interface BodyArgs {
   onEdit: (id: string) => void;
 }
 
+function renderEmptyImport(onImport: () => void): React.ReactElement {
+  return (
+    <PermissionGuard permission="bulk-import.manage" fallback={<HierarchyEmpty />}>
+      <HierarchyEmpty onImport={onImport} />
+    </PermissionGuard>
+  );
+}
+
 function renderBody(a: BodyArgs): React.ReactElement | null {
   if (a.loading) return <HierarchySkeleton />;
   if (a.error) {
@@ -43,14 +53,10 @@ function renderBody(a: BodyArgs): React.ReactElement | null {
     }
     return <HierarchyErrorState error={a.error} onRetry={a.onRetry} />;
   }
-  if (!a.tree) return null;
+  if (!a.tree) return a.emptyStore ? renderEmptyImport(a.onImport) : null;
   const isEmpty = a.tree.children.length === 0 && !a.tree.hasMoreChildren;
   if (isEmpty) {
-    return (
-      <PermissionGuard permission="bulk-import.manage" fallback={<HierarchyEmpty />}>
-        <HierarchyEmpty onImport={a.onImport} />
-      </PermissionGuard>
-    );
+    return renderEmptyImport(a.onImport);
   }
   if (a.view === 'column') {
     return <LocationColumnTable root={a.tree} onSelect={a.onSelect} onEdit={a.onEdit} />;
@@ -68,14 +74,6 @@ function renderBody(a: BodyArgs): React.ReactElement | null {
   );
 }
 
-function rootOptions(data: unknown, unnamed: (id: string) => string): { value: string; label: string }[] {
-  const bundle = data as { entry?: { resource?: Location }[] } | undefined;
-  const locs = (bundle?.entry ?? []).map((e) => e.resource).filter((r): r is Location => Boolean(r?.id));
-  return locs
-    .filter((l) => !l.partOf)
-    .map((l) => ({ value: l.id as string, label: l.name ?? unnamed(l.id as string) }));
-}
-
 export function LocationsHierarchyPage(): React.ReactElement {
   const { t, locale } = useTranslation();
   const status = useStatusBar();
@@ -88,11 +86,12 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const [importOpen, setImportOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  // HAPI rejects partOf:missing, so root candidates are filtered client-side. Prefer recently updated
-  // rows so a brand-new root still appears when the workspace has more Locations than `_count`.
-  const rootsSearch = useSearch('Location', { _count: '500', _sort: '-_lastUpdated' });
-  const roots = useMemo(() => rootOptions(rootsSearch.data, (id) => t('locationsUnnamed', { id })), [rootsSearch.data, t]);
-  const effectiveRoot = rootId || roots[0]?.value || '';
+  // Paginated roots (not a single `_count` page) so large imports cannot hide older countries.
+  const rootsSearch = useLocationRoots();
+  const roots = rootsSearch.data ?? [];
+  // Keep a user-chosen root when it still exists; otherwise fall back to the first sorted root.
+  const effectiveRoot =
+    (rootId && roots.some((r) => r.value === rootId) ? rootId : '') || roots[0]?.value || '';
 
   const query = useLocationHierarchy(effectiveRoot || undefined);
   const refreshResources = useRefreshResources();
@@ -139,7 +138,15 @@ export function LocationsHierarchyPage(): React.ReactElement {
   };
 
   const expandAll = () => {
-    if (query.data) setExpanded(collectExpandableIds(query.data.root));
+    if (!query.data) return;
+    const { ids, limited } = collectExpandableIdsLimited(query.data.root, EXPAND_ALL_MAX);
+    setExpanded(ids);
+    if (limited) {
+      status.notify({
+        tone: 'info',
+        title: t('locationsExpandAllLimited', { count: EXPAND_ALL_MAX }),
+      });
+    }
   };
   const collapseAll = () => setExpanded(new Set());
 
@@ -222,11 +229,12 @@ export function LocationsHierarchyPage(): React.ReactElement {
       {query.data ? <LocationBreadcrumb root={query.data.root} selectedId={selectedId} onSelect={select} /> : null}
       {meta?.truncated ? <TruncatedNotice nodeCount={meta.nodeCount} builtAtLabel={builtAtLabel} /> : null}
 
-      <div className="min-h-80 overflow-auto rounded border border-border">
+      <div className="min-h-80 overflow-hidden rounded border border-border">
         {renderBody({
-          loading: rootsSearch.isLoading || query.isLoading,
+          loading: rootsSearch.isLoading || (Boolean(effectiveRoot) && query.isLoading),
           error: query.isError ? query.error : null,
           tree: displayed?.tree ?? null,
+          emptyStore: !rootsSearch.isLoading && roots.length === 0,
           view,
           expanded: effectiveExpanded,
           selectedId,
@@ -254,13 +262,6 @@ export function LocationsHierarchyPage(): React.ReactElement {
 
       {editId ? (
         <LocationEditDrawer nodeId={editId} onClose={() => setEditId(null)} onSaved={onEditSaved} />
-      ) : null}
-
-      {meta ? (
-        <div className="flex flex-wrap justify-between gap-2 text-sm text-text-muted">
-          <span>{t('locationsFooterCount', { count: meta.nodeCount, depth: meta.depth })}</span>
-          <span>{t('locationsFooterBuiltAt', { builtAt: builtAtLabel })}</span>
-        </div>
       ) : null}
 
       <LocationImportDrawer

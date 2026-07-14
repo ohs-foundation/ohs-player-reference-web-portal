@@ -4,13 +4,12 @@ import {
   useCreateResource,
   useQuestionnaireFormState,
   useResource,
-  useSearch,
   useStatusBar,
   useTranslation,
   useUpdateResource,
 } from 'ohs-player-web-core';
-import type { Bundle, Location } from '@medplum/fhirtypes';
-import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
+import type { Location } from '@medplum/fhirtypes';
+import { Button, Combobox, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { toErrorMessage } from '../sdc/toErrorMessage';
@@ -21,6 +20,7 @@ import {
   parentLocationIdFromAnswer,
 } from '../sdc/resourceFromAnswers';
 import type { LocationEditPatch } from './hierarchy';
+import { useAllLocationsLean } from './useLocationRoots';
 
 const FORM_ID = 'location-edit-form';
 
@@ -52,14 +52,9 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
 
   const self = useResource('Location', nodeId);
   const current = self.data as Location | undefined;
-  const all = useSearch('Location', { _count: '500' });
-  const locList = useMemo(
-    () =>
-      ((all.data as Bundle<Location> | undefined)?.entry ?? [])
-        .map((e) => e.resource)
-        .filter((r): r is Location => Boolean(r?.id)),
-    [all.data],
-  );
+  // Full paginated lean list — a single `_count: 500` page drops parents under large imports.
+  const all = useAllLocationsLean(true);
+  const locList = useMemo(() => all.data ?? [], [all.data]);
 
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -100,7 +95,11 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
     const root = { value: '__root__', label: t('rootLocation') };
     const rest = locList
       .filter((l) => l.id !== nodeId)
-      .map((l) => ({ value: `Location/${l.id as string}`, label: l.name ?? (l.id as string) }));
+      .map((l) => ({
+        value: `Location/${l.id as string}`,
+        label: l.name?.trim() ? l.name : (l.id as string),
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
     return [root, ...rest];
   }, [locList, nodeId, t]);
 
@@ -213,15 +212,14 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
                   options={MODE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
                   placeholder={t('selectPlaceholder')}
                 />
-                <div>
-                  <StackedSelect
-                    label={t('locationsParentLocation')}
-                    value={answers[LOCATION_LINK_IDS.parent] ?? '__root__'}
-                    onChange={(v) => setAnswer(LOCATION_LINK_IDS.parent, v)}
-                    options={parentOptions}
-                    placeholder={t('selectPlaceholder')}
-                  />
-                </div>
+                <Combobox
+                  full
+                  label={t('locationsParentLocation')}
+                  value={answers[LOCATION_LINK_IDS.parent] ?? '__root__'}
+                  onChange={(v) => setAnswer(LOCATION_LINK_IDS.parent, v || '__root__')}
+                  options={parentOptions}
+                  placeholder={t('locationsParentSearch')}
+                />
               </div>
             </Stack>
           </Section>

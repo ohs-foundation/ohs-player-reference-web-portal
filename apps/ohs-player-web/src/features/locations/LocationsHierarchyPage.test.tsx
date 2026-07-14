@@ -17,12 +17,15 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useStatusBar: () => ({ notify: vi.fn() }),
     PermissionGuard: ({ children }: { children?: unknown }) => children,
     useRefreshResources: () => refreshSpy,
-    useSearch: () => ({
-      data: { resourceType: 'Bundle', entry: [{ resource: { resourceType: 'Location', id: 'ke', name: 'Kenya' } }] },
-      isLoading: false,
-    }),
   };
 });
+
+vi.mock('./useLocationRoots', () => ({
+  useLocationRoots: () => ({
+    data: [{ value: 'ke', label: 'Kenya' }],
+    isLoading: false,
+  }),
+}));
 
 const rootNode: LocationNode = {
   id: 'ke',

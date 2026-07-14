@@ -155,6 +155,8 @@ export const appMessageOverrides = {
   locationsFilterAll: 'All statuses',
   locationsFilter: 'Filter locations',
   locationsExpandAll: 'Expand All',
+  locationsExpandAllLimited:
+    'Expanded the first {{count}} branches. Use search or re-root on a child for the rest.',
   locationsCollapseAll: 'Collapse All',
   locationsViewTree: 'Tree',
   locationsViewColumn: 'Column',
@@ -169,8 +171,6 @@ export const appMessageOverrides = {
   locationsColumnParent: 'Parent',
   locationsUnnamed: 'Unnamed location ({{id}})',
   locationsLoadMore: 'Load more',
-  locationsFooterCount: '{{count}} locations · {{depth}} levels deep',
-  locationsFooterBuiltAt: 'Hierarchy as of {{builtAt}} · cached up to 24 h',
   locationsTruncatedNotice:
     'Showing {{count}} of many locations — some branches are truncated. Hierarchy as of {{builtAt}}.',
   // Detail panel
@@ -185,6 +185,10 @@ export const appMessageOverrides = {
   locationsModeKind: 'Kind',
   locationsAdminLevel: 'Administrative Level',
   locationsParentLocation: 'Parent Location',
+  locationsParentSearch: 'Search parent location…',
+  clear: 'Clear',
+  comboboxNoMatches: 'No matches',
+  comboboxShowingLimited: 'Showing {{shown}} of {{total}} — type to narrow',
   locationsLatitude: 'Latitude',
   locationsLongitude: 'Longitude',
   locationsSourceId: 'Source ID',
