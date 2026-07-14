@@ -736,6 +736,7 @@
 
 /* Stacked-label field: label on top, control below, inside a bordered 72px box (16/20 padding per spec). */
 .ohs-formfield {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--ohs-spacing-1, 4px);
@@ -817,6 +818,69 @@
   position: absolute;
   right: 0;
   pointer-events: none;
+  color: var(--ohs-color-text-muted, #696969);
+}
+
+/* Typeahead combobox (large option sets — Locations parent, etc.) */
+.ohs-combobox__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-spacing-1, 4px);
+}
+.ohs-combobox__input {
+  padding-right: calc(var(--ohs-spacing-6, 32px) + var(--ohs-spacing-5, 24px));
+}
+.ohs-combobox__clear {
+  position: absolute;
+  right: var(--ohs-spacing-6, 32px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ohs-color-text-muted, #696969);
+}
+.ohs-combobox__clear:hover {
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.ohs-combobox__list {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--ohs-spacing-1, 4px));
+  max-height: 16rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--ohs-spacing-1, 4px) 0;
+  list-style: none;
+  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-radius-default, 8px);
+  background: var(--ohs-color-surface, #fff);
+  box-shadow: var(--ohs-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.08));
+}
+.ohs-combobox__option {
+  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-4, 16px);
+  font-size: var(--ohs-font-text-m-size, 14px);
+  line-height: var(--ohs-font-text-m-line, 20px);
+  color: var(--ohs-color-text, #0d0d0d);
+  cursor: pointer;
+}
+.ohs-combobox__option--active {
+  background: var(--ohs-color-surface-variant, #f5f5f5);
+}
+.ohs-combobox__option--selected {
+  font-weight: 600;
+  color: var(--ohs-color-primary, #094f9a);
+}
+.ohs-combobox__empty,
+.ohs-combobox__hint {
+  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-4, 16px);
+  font-size: var(--ohs-font-text-s-size, 12px);
+  line-height: var(--ohs-font-text-s-line, 16px);
   color: var(--ohs-color-text-muted, #696969);
 }
 

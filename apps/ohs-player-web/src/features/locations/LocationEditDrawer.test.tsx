@@ -20,19 +20,20 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useTranslation: () => ({ t: (key: string) => key, dir: 'ltr', locale: 'en' }),
     useStatusBar: () => ({ notify: vi.fn() }),
     useResource: () => ({ data: LOCATION_RESOURCE, isLoading: false }),
-    useSearch: () => ({
-      data: {
-        resourceType: 'Bundle',
-        entry: [
-          { resource: { resourceType: 'Location', id: 'ke', name: 'Kenya' } },
-          { resource: LOCATION_RESOURCE },
-        ],
-      },
-    }),
     useUpdateResource: () => ({ mutateAsync: mutateLocation }),
     useCreateResource: () => ({ mutateAsync: mutateQr }),
   };
 });
+
+vi.mock('./useLocationRoots', () => ({
+  useAllLocationsLean: () => ({
+    data: [
+      { resourceType: 'Location', id: 'ke', name: 'Kenya' },
+      LOCATION_RESOURCE,
+    ],
+    isLoading: false,
+  }),
+}));
 
 vi.mock('../audit/useWriteAudit', () => ({ useWriteAudit: () => vi.fn() }));
 
@@ -74,9 +75,9 @@ describe('LocationEditDrawer', () => {
   it('clears partOf on the PUT body when the parent is set to root', async () => {
     mutateLocation.mockClear();
     render(<LocationEditDrawer nodeId="nrb" onClose={vi.fn()} onSaved={vi.fn()} />);
-    fireEvent.change(screen.getByRole('combobox', { name: /locationsParentLocation/ }), {
-      target: { value: '__root__' },
-    });
+    const parent = screen.getByRole('combobox', { name: /locationsParentLocation/ });
+    fireEvent.focus(parent);
+    fireEvent.mouseDown(screen.getByRole('option', { name: /rootLocation/ }));
     fireEvent.submit(document.getElementById('location-edit-form') as HTMLFormElement);
     await waitFor(() => expect(mutateLocation).toHaveBeenCalled());
     const arg = mutateLocation.mock.calls[0]?.[0] as { body: { partOf?: unknown } };
