@@ -171,8 +171,6 @@ export const appMessageOverrides = {
   locationsColumnParent: 'Parent',
   locationsUnnamed: 'Unnamed location ({{id}})',
   locationsLoadMore: 'Load more',
-  locationsFooterCount: '{{count}} locations · {{depth}} levels deep',
-  locationsFooterBuiltAt: 'Hierarchy as of {{builtAt}} · cached up to 24 h',
   locationsTruncatedNotice:
     'Showing {{count}} of many locations — some branches are truncated. Hierarchy as of {{builtAt}}.',
   // Detail panel

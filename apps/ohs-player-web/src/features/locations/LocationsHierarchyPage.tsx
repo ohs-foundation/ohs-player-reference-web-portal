@@ -264,13 +264,6 @@ export function LocationsHierarchyPage(): React.ReactElement {
         <LocationEditDrawer nodeId={editId} onClose={() => setEditId(null)} onSaved={onEditSaved} />
       ) : null}
 
-      {meta ? (
-        <div className="flex flex-wrap justify-between gap-2 text-sm text-text-muted">
-          <span>{t('locationsFooterCount', { count: meta.nodeCount, depth: meta.depth })}</span>
-          <span>{t('locationsFooterBuiltAt', { builtAt: builtAtLabel })}</span>
-        </div>
-      ) : null}
-
       <LocationImportDrawer
         open={importOpen}
         onClose={() => setImportOpen(false)}
