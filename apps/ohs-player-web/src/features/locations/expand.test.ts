@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LocationNode } from './hierarchy';
-import { collectExpandableIds, filterTree } from './expand';
+import { collectExpandableIds, collectExpandableIdsLimited, filterTree } from './expand';
 
 function node(partial: Partial<LocationNode> & { id: string }): LocationNode {
   return {
@@ -50,5 +50,27 @@ describe('collectExpandableIds', () => {
   it('collects ids of nodes that have children', () => {
     expect(collectExpandableIds(tree).has('ke')).toBe(true);
     expect(collectExpandableIds(tree).has('nrb')).toBe(false);
+  });
+});
+
+describe('collectExpandableIdsLimited', () => {
+  it('BFS-caps expand-all so large trees do not open every node', () => {
+    const wide: LocationNode = node({
+      id: 'root',
+      children: Array.from({ length: 5 }, (_, i) =>
+        node({
+          id: `r${i}`,
+          children: [node({ id: `r${i}-c`, children: [] })],
+        }),
+      ),
+    });
+    const full = collectExpandableIdsLimited(wide, 1000);
+    expect(full.limited).toBe(false);
+    expect(full.ids.size).toBe(6); // root + 5 regions
+
+    const capped = collectExpandableIdsLimited(wide, 3);
+    expect(capped.limited).toBe(true);
+    expect(capped.ids.size).toBe(3);
+    expect(capped.ids.has('root')).toBe(true);
   });
 });

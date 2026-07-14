@@ -155,6 +155,8 @@ export const appMessageOverrides = {
   locationsFilterAll: 'All statuses',
   locationsFilter: 'Filter locations',
   locationsExpandAll: 'Expand All',
+  locationsExpandAllLimited:
+    'Expanded the first {{count}} branches. Use search or re-root on a child for the rest.',
   locationsCollapseAll: 'Collapse All',
   locationsViewTree: 'Tree',
   locationsViewColumn: 'Column',

@@ -21,6 +21,7 @@ vi.mock('./LocationRowMenu', () => ({
 }));
 
 const { LocationTree } = await import('./LocationTree');
+const { visibleRowRange } = await import('./treeWindow');
 
 function node(partial: Partial<LocationNode> & { id: string }): LocationNode {
   return {
@@ -127,3 +128,19 @@ describe('LocationTree', () => {
     expect(result.violations).toEqual([]);
   });
 });
+
+describe('visibleRowRange', () => {
+  it('windows a large list so only a slice around the scroll position is painted', () => {
+    // 1000 rows × 60px; viewport 300px at scrollTop 6000 → around row 100.
+    const { start, end } = visibleRowRange(1000, 6000, 300, 60, 2);
+    expect(start).toBe(98); // floor(6000/60) - 2
+    expect(end).toBe(107); // ceil((6000+300)/60) + 2
+    expect(end - start).toBeLessThan(20);
+  });
+
+  it('clamps to the list bounds', () => {
+    expect(visibleRowRange(5, 0, 1000, 60, 8)).toEqual({ start: 0, end: 5 });
+    expect(visibleRowRange(0, 0, 100, 60, 8)).toEqual({ start: 0, end: 0 });
+  });
+});
+
