@@ -53,7 +53,8 @@ export { swMessageCatalogStub } from './i18n/locales/sw';
 
 export { applyTheme, defaultTheme, mergeTheme } from './theme/theme';
 
-export { FhirClient } from './client/FhirClient';
+export { FhirClient, rebaseFhirUrl } from './client/FhirClient';
+export type { SearchAllOptions } from './client/FhirClient';
 export { FhirError, isOperationOutcome } from './client/FhirError';
 
 export {
