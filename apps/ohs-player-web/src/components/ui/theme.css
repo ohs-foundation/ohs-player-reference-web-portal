@@ -117,6 +117,18 @@
   outline-offset: 2px;
   box-shadow: 0 0 0 4px var(--ohs-color-focus-ring, rgba(27, 110, 243, 0.28));
 }
+/* Search fields own their focus affordance on the wrapper (see .ohs-searchfield), so the
+   input itself never draws the global blue ring. */
+[data-ohs-root] .ohs-searchfield input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.ohs-searchfield:focus-within {
+  border-color: var(--ohs-color-text-muted, #696969);
+}
+.ohs-searchfield:has(input:focus-visible) {
+  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(27, 110, 243, 0.28));
+}
 
 /* ---------- Typography ---------- */
 
