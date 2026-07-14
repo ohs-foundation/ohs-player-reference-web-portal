@@ -11,7 +11,7 @@ import {
   useTranslation,
 } from 'ohs-player-web-core';
 import { Avatar, Button, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, IconButton, Inline, LinearProgress, Page, PageHeader, SearchField, Stack, StatusBadge } from '../../components/ui';
-import { UserCreateDrawer } from './UserCreateDrawer';
+import { UserCreateEntryDrawer } from './UserCreateEntryDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
 import { StackedSelect } from './userFormControls';
@@ -238,7 +238,7 @@ export function UsersPage() {
       {search.isLoading ? <LinearProgress /> : null}
 
       {createOpen ? (
-        <UserCreateDrawer onClose={() => setCreateOpen(false)} onSuccess={handleUserCreated} />
+        <UserCreateEntryDrawer onClose={() => setCreateOpen(false)} onSuccess={handleUserCreated} />
       ) : null}
 
       {noUsers ? (

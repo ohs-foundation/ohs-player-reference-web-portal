@@ -69,6 +69,8 @@ vi.mock('../../config/env', () => ({
 }));
 
 const { UserCreateDrawer } = await import('./UserCreateDrawer');
+const { UserCreateEntryDrawer } = await import('./UserCreateEntryDrawer');
+const { UserCreateWizard } = await import('./UserCreateWizard');
 const { UserEditDrawer } = await import('./UserEditDrawer');
 const { UsersPage } = await import('./UsersPage');
 
@@ -240,8 +242,112 @@ describe('UserCreateDrawer', () => {
   });
 });
 
+describe('UserCreateEntryDrawer', () => {
+  beforeEach(() => {
+    mockPost.mockReset().mockResolvedValue({
+      resourceType: 'Practitioner',
+      id: 'new',
+      identifier: [{ system: 'http://ohs.dev/identifiers/keycloak-user-id', value: 'kc-123' }],
+    });
+    mockTransaction.mockReset().mockResolvedValue({});
+    mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
+    mockNotify.mockReset();
+  });
+
+  it('shows the mode chooser when opened', () => {
+    render(
+      <MemoryRouter>
+        <UserCreateEntryDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('addUserModeSubtitle')).toBeInTheDocument();
+    expect(screen.getByText('addUserQuickTitle')).toBeInTheDocument();
+    expect(screen.getByText('addUserWizardTitle')).toBeInTheDocument();
+  });
+
+  it('opens quick add from the chooser and can create a user', async () => {
+    const onSuccess = vi.fn();
+    render(
+      <MemoryRouter>
+        <UserCreateEntryDrawer onClose={vi.fn()} onSuccess={onSuccess} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /addUserQuickTitle/i }));
+    fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), { target: { value: 'jane@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('UserCreateWizard', () => {
+  beforeEach(() => {
+    mockPost.mockReset().mockResolvedValue({
+      resourceType: 'Practitioner',
+      id: 'new',
+      identifier: [{ system: 'http://ohs.dev/identifiers/keycloak-user-id', value: 'kc-123' }],
+    });
+    mockTransaction.mockReset().mockResolvedValue({});
+    mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
+    mockNotify.mockReset();
+  });
+
+  it('blocks advancing from basic info when required fields are missing', async () => {
+    render(
+      <MemoryRouter>
+        <UserCreateWizard onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+
+    expect(await screen.findByText('validationRequiredGiven')).toBeInTheDocument();
+    expect(screen.getAllByText('wizardStepBasic').length).toBeGreaterThan(0);
+  });
+
+  it('walks through steps and creates a user from the review step', async () => {
+    const onSuccess = vi.fn();
+    render(
+      <MemoryRouter>
+        <UserCreateWizard onClose={vi.fn()} onSuccess={onSuccess} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), { target: { value: 'jane@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+
+    expect(screen.getByText('wizardReviewIntro')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'createUser' }));
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+  });
+});
+
 describe('UsersPage search', () => {
   beforeEach(() => mockUseSearch.mockClear());
+
+  it('opens the add-user mode chooser from the header action', () => {
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'addUser' }));
+    expect(screen.getByText('addUserModeSubtitle')).toBeInTheDocument();
+  });
 
   it('queries Practitioner with name:contains (server-side) when a term is typed', async () => {
     render(
