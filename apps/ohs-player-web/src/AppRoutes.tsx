@@ -11,6 +11,7 @@ import { LocationsPage } from './features/locations/LocationsPage';
 import { LocationsNoAccess } from './features/locations/LocationsNoAccess';
 import { OrganizationsPage } from './features/organizations/OrganizationsPage';
 import { CareTeamsPage } from './features/careteams/CareTeamsPage';
+import { SetupWizardPage } from './features/setup-wizard/SetupWizardPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
 
 function OrganizationsPermissionFallback() {
@@ -77,6 +78,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute flag="careTeams" permission="careteams.view">
               <CareTeamsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup"
+          element={
+            <ProtectedRoute flag="setupWizard" permission="setup.view">
+              <SetupWizardPage />
             </ProtectedRoute>
           }
         />

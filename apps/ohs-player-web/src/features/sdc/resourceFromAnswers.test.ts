@@ -321,6 +321,14 @@ describe('organizationFromForm', () => {
     // email was blank in base → cleared; the non-email telecom survives
     expect(org.telecom).toEqual([{ system: 'phone', value: '0700' }]);
   });
+
+  it('sets partOf when partOfReference is provided', () => {
+    const org = organizationFromForm({
+      ...base,
+      partOfReference: 'Organization/parent',
+    }) as { partOf?: { reference?: string } };
+    expect(org.partOf?.reference).toBe('Organization/parent');
+  });
 });
 
 describe('locationManagingOrgPatch', () => {

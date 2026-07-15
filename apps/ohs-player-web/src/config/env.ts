@@ -15,6 +15,7 @@ export const env = {
     careTeams: import.meta.env.VITE_FLAG_CARE_TEAMS !== 'false',
     dashboard: import.meta.env.VITE_FLAG_DASHBOARD !== 'false',
     orgMgmt: import.meta.env.VITE_FLAG_ORG_MGMT !== 'false',
+    setupWizard: import.meta.env.VITE_FLAG_SETUP_WIZARD !== 'false',
   },
   /** Which bundled Questionnaire JSON set to use (`src/questionnaires/registry.ts`). */
   questionnaireVariant: import.meta.env.VITE_QUESTIONNAIRE_VARIANT ?? 'default',

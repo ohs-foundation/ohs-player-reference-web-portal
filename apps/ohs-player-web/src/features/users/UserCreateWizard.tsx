@@ -38,7 +38,8 @@ export function UserCreateWizard({
 
   const goBack = (): void => {
     if (step === 0) {
-      onBack?.() ?? onClose();
+      if (onBack) onBack();
+      else onClose();
       return;
     }
     setStep((s) => s - 1);

@@ -34,13 +34,17 @@ function typeCodeOf(org: OrgRow | undefined): string {
   return org?.type?.[0]?.coding?.[0]?.code ?? '';
 }
 
-/** Add or Edit an Organisation. Pass `org` to edit (prefills + updates); omit it to create. */
+/** Add or Edit an Organisation. Pass `org` to edit (prefills + updates); omit it to create.
+ * In `mode: 'wizard'`, builds Bundle entries and calls `onEmit` instead of committing. */
 export function OrganizationFormDrawer({
   org,
   managedLocations,
   locationOptions,
   onClose,
   onSuccess,
+  mode = 'standalone',
+  onEmit,
+  partOfOptions,
 }: Readonly<{
   org?: OrgRow;
   /** Locations this org currently manages (edit), to prefill + diff on save. */
@@ -48,6 +52,16 @@ export function OrganizationFormDrawer({
   locationOptions: Option[];
   onClose: () => void;
   onSuccess: () => void;
+  mode?: 'standalone' | 'wizard';
+  /** Wizard: receive transaction entries + metadata instead of POSTing. */
+  onEmit?: (payload: {
+    entries: TransactionBundleEntry[];
+    orgFullUrl: string;
+    resource: Record<string, unknown>;
+    managedLocationRefs: string[];
+  }) => void;
+  /** Optional parent-organisation picker options (`Organization/{id}` or urn). */
+  partOfOptions?: Option[];
 }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
@@ -65,6 +79,7 @@ export function OrganizationFormDrawer({
     org?.active === false ? 'inactive' : 'active',
   );
   const [locationIds, setLocationIds] = useState<string[]>(originalLocationRefs);
+  const [partOf, setPartOf] = useState('');
   const [nameError, setNameError] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -115,10 +130,32 @@ export function OrganizationFormDrawer({
       setNameError(t('organizationNameRequired'));
       return;
     }
-    const fields: OrgFormFields = { name, typeCode, email, active: statusActive === 'active' };
+    const fields: OrgFormFields = {
+      name,
+      typeCode,
+      email,
+      active: statusActive === 'active',
+      ...(partOfOptions ? { partOfReference: partOf } : {}),
+    };
     void (async () => {
       setSubmitting(true);
       try {
+        if (mode === 'wizard' && onEmit) {
+          const orgRef = editing && org?.id ? `Organization/${org.id}` : newUrnUuid();
+          const orgEntry: TransactionBundleEntry =
+            editing && org?.id
+              ? bundleEntry({ method: 'PUT', url: `Organization/${org.id}` }, organizationFromForm(fields, org))
+              : bundleEntry({ method: 'POST', url: 'Organization' }, organizationFromForm(fields), orgRef);
+          const { entries } = locationEntries(orgRef);
+          onEmit({
+            entries: [orgEntry, ...entries],
+            orgFullUrl: orgRef,
+            resource: organizationFromForm(fields, org),
+            managedLocationRefs: locationIds,
+          });
+          onSuccess();
+          return;
+        }
         const { id, linked, unlinked } = await commit(fields);
         const orgRef = `Organization/${id}`;
         await writeAudit({
@@ -214,6 +251,16 @@ export function OrganizationFormDrawer({
               value={email}
               onChange={setEmail}
             />
+            {partOfOptions ? (
+              <StackedSelect
+                full
+                label={t('setupPartOfOrganization')}
+                value={partOf}
+                onChange={setPartOf}
+                options={[{ value: '', label: t('detailNone') }, ...partOfOptions]}
+                placeholder={t('selectPlaceholder')}
+              />
+            ) : null}
             <RadioRow
               label={t('columnStatus')}
               name="org-status"
