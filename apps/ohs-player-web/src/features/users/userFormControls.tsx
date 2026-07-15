@@ -48,6 +48,7 @@ export function StackedInput({
   full,
   error,
   required,
+  max,
 }: Readonly<{
   label: string;
   value: string;
@@ -57,6 +58,8 @@ export function StackedInput({
   full?: boolean;
   error?: string;
   required?: boolean;
+  /** Native upper bound (e.g. today's date on a `type="date"` field). */
+  max?: string;
 }>): React.ReactElement {
   const id = useId();
   return (
@@ -71,6 +74,7 @@ export function StackedInput({
         type={type}
         value={value}
         placeholder={placeholder}
+        max={max}
         aria-invalid={error ? true : undefined}
         aria-required={required ? true : undefined}
         onChange={(e) => onChange(e.target.value)}

@@ -119,6 +119,7 @@ export const appMessageOverrides = {
   validationInvalidEmail: 'Enter a valid email address.',
   validationInvalidPhone: 'Enter a valid phone number.',
   validationInvalidDob: 'Enter a valid date (YYYY-MM-DD).',
+  validationFutureDob: 'Date of birth cannot be in the future.',
   validationEmailUsernameLength: 'Email must have at least 3 characters before the “@” (it becomes the username).',
   givenName: 'Given name',
   familyName: 'Family name',

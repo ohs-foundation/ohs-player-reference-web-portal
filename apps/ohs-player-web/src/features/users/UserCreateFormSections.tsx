@@ -15,6 +15,7 @@ import {
   StackedInput,
   StackedSelect,
 } from './userFormControls';
+import { todayIso } from './userFormSchema';
 import type { UserCreateFormState } from './useUserCreateForm';
 
 type Form = Pick<
@@ -101,6 +102,7 @@ export function UserBasicInfoFields({ form }: Readonly<{ form: Form }>): React.R
           <StackedInput
             label={t('dateOfBirth')}
             type="date"
+            max={todayIso()}
             value={form.dob}
             error={fieldErrors.dob}
             onChange={(v) => {
@@ -253,6 +255,7 @@ export function UserBasicInfoStep({ form }: Readonly<{ form: Form }>): React.Rea
         <StackedInput
           label={t('dateOfBirth')}
           type="date"
+          max={todayIso()}
           value={form.dob}
           error={fieldErrors.dob}
           onChange={(v) => {
