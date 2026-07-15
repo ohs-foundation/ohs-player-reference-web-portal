@@ -35,7 +35,7 @@ import {
   StackedSelect,
 } from './userFormControls';
 import { type Option, referenceOptions } from './userFormOptions';
-import { type UserFormErrors, validateUserForm } from './userFormSchema';
+import { todayIso, type UserFormErrors, validateUserForm } from './userFormSchema';
 
 interface SearchBundle {
   entry?: { resource?: Record<string, unknown> }[];
@@ -306,6 +306,7 @@ export function UserEditDrawer({
                 <StackedInput
                   label={t('dateOfBirth')}
                   type="date"
+                  max={todayIso()}
                   value={dob}
                   error={fieldErrors.dob}
                   onChange={(v) => {

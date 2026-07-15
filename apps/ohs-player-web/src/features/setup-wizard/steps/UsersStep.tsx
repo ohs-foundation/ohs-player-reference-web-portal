@@ -3,7 +3,7 @@ import { RiBriefcaseLine, RiUserLine } from '@remixicon/react';
 import { useTranslation } from 'ohs-player-web-core';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../../config/roles';
 import { Button, Stack } from '../../../components/ui';
-import { validateUserForm, type UserFormErrors } from '../../users/userFormSchema';
+import { todayIso, validateUserForm, type UserFormErrors } from '../../users/userFormSchema';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect } from '../../users/userFormControls';
 import type { Option } from '../../users/userFormOptions';
 import { DraftList, StepIntro } from '../DraftList';
@@ -207,6 +207,7 @@ export function UsersStep({
           <StackedInput
             label={t('dateOfBirth')}
             type="date"
+            max={todayIso()}
             value={dob}
             error={fieldErrors.dob}
             onChange={(v) => {
