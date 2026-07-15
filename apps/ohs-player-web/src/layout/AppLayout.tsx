@@ -22,6 +22,8 @@ import {
   RiTeamLine,
   RiUserFill,
   RiUserLine,
+  RiMagicLine,
+  RiMagicFill,
   type RemixiconComponentType,
 } from '@remixicon/react';
 import { Avatar, IconButton } from '../components/ui';
@@ -31,6 +33,7 @@ import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
 import { GlobalSearch } from '../features/search/GlobalSearch';
 import { NotificationsBell } from '../features/activity/NotificationsBell';
+import { useSetupWizardAutoRedirect } from '../features/setup-wizard/useSetupWizardAutoRedirect';
 
 const ICON_SIZE = 20;
 
@@ -49,6 +52,7 @@ const NAV_DEFS = [
   { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: RiMapPin3Line, FillIcon: RiMapPin3Fill },
   { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: RiBuildingLine, FillIcon: RiBuildingFill },
   { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: RiTeamLine, FillIcon: RiTeamFill },
+  { to: '/setup', labelKey: 'navSetup', permission: 'setup.view', flag: 'setupWizard', LineIcon: RiMagicLine, FillIcon: RiMagicFill },
 ] as const;
 
 export function AppLayout() {
@@ -57,6 +61,7 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { t } = useTranslation();
   const { mode, toggle } = useThemeMode();
+  useSetupWizardAutoRedirect();
 
   if (auth.status !== 'authenticated') {
     return (

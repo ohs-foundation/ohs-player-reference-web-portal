@@ -3,6 +3,7 @@ import { RiBuildingLine, RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon
 import {
   FhirError,
   formatOperationOutcomeMessage,
+  newUrnUuid,
   useCreateResource,
   useTranslation,
   useUpdateResource,
@@ -28,13 +29,16 @@ function memberIdsOf(team: CareTeamRow | undefined): string[] {
     .filter(Boolean);
 }
 
-/** Add or Edit a Care Team. Pass `team` to edit (prefills + PUTs); omit it to create (POSTs). */
+/** Add or Edit a Care Team. Pass `team` to edit (prefills + PUTs); omit it to create (POSTs).
+ * In `mode: 'wizard'`, emits a Bundle entry via `onEmit` instead of POSTing. */
 export function CareTeamFormDrawer({
   team,
   practOptions,
   orgOptions,
   onClose,
   onSuccess,
+  mode = 'standalone',
+  onEmit,
 }: Readonly<{
   team?: CareTeamRow;
   practOptions: Option[];
@@ -42,6 +46,8 @@ export function CareTeamFormDrawer({
   onClose: () => void;
   /** On create, receives the new resource (server id + form body) for an optimistic list insert. */
   onSuccess: (created?: { id?: string } & Record<string, unknown>) => void;
+  mode?: 'standalone' | 'wizard';
+  onEmit?: (payload: { fullUrl: string; resource: Record<string, unknown> }) => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
   const writeAudit = useWriteAudit();
@@ -73,6 +79,12 @@ export function CareTeamFormDrawer({
     void (async () => {
       setSubmitting(true);
       try {
+        if (mode === 'wizard' && onEmit) {
+          const fullUrl = editing && team?.id ? `CareTeam/${team.id}` : newUrnUuid();
+          onEmit({ fullUrl, resource: body });
+          onSuccess(editing ? undefined : { ...body, id: fullUrl });
+          return;
+        }
         let resourceId = team?.id;
         if (editing && team?.id) {
           await update.mutateAsync({ id: team.id, body });

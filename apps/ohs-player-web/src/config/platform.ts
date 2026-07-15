@@ -20,6 +20,7 @@ const permissionMap: PermissionMap = {
   'orgs.create': ['admin'],
   'careteams.view': ['admin', 'care-team-manager'],
   'careteams.manage': ['admin', 'care-team-manager'],
+  'setup.view': ['admin'],
 };
 
 export const platformConfig: CorePlatformConfig = {
@@ -44,6 +45,7 @@ export const platformConfig: CorePlatformConfig = {
       careTeams: env.flags.careTeams,
       dashboard: env.flags.dashboard,
       orgMgmt: env.flags.orgMgmt,
+      setupWizard: env.flags.setupWizard,
     },
   },
   i18n: {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiArrowDownSLine, RiUploadCloud2Line } from '@remixicon/react';
+import { RiAddLine, RiArrowDownSLine, RiUploadCloud2Line } from '@remixicon/react';
 import { PermissionGuard, useRefreshResources, useStatusBar, useTranslation } from 'ohs-player-web-core';
 import { Button, Page, PageHeader, SearchField, SelectField } from '../../components/ui';
 import { collectExpandableIdsLimited, EXPAND_ALL_MAX, filterTree } from './expand';
@@ -14,6 +14,7 @@ import { LocationViewToggle, type LocationView } from './LocationViewToggle';
 import { LocationFilterMenu, type LocationStatusFilter } from './LocationFilterMenu';
 import { LocationBreadcrumb } from './LocationBreadcrumb';
 import { LocationDetailPanel } from './LocationDetailPanel';
+import { LocationCreateDrawer } from './LocationCreateDrawer';
 import { LocationEditDrawer } from './LocationEditDrawer';
 import { LocationImportDrawer } from './LocationImportDrawer';
 import { LocationsNoAccess } from './LocationsNoAccess';
@@ -84,6 +85,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const [statusFilter, setStatusFilter] = useState<LocationStatusFilter>('all');
   const [view, setView] = useState<LocationView>('tree');
   const [importOpen, setImportOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
   // Paginated roots (not a single `_count` page) so large imports cannot hide older countries.
@@ -164,6 +166,11 @@ export function LocationsHierarchyPage(): React.ReactElement {
           >
             {t('locationsExport')}
           </Button>
+          <PermissionGuard permission="locations.edit">
+            <Button type="button" variant="secondary" iconLeft={<RiAddLine size={18} />} onClick={() => setCreateOpen(true)}>
+              {t('dialogCreateLocation')}
+            </Button>
+          </PermissionGuard>
           <PermissionGuard permission="bulk-import.manage">
             <Button type="button" iconLeft={<RiUploadCloud2Line size={18} />} onClick={() => setImportOpen(true)}>
               {t('locationsImport')}
@@ -262,6 +269,17 @@ export function LocationsHierarchyPage(): React.ReactElement {
 
       {editId ? (
         <LocationEditDrawer nodeId={editId} onClose={() => setEditId(null)} onSaved={onEditSaved} />
+      ) : null}
+
+      {createOpen ? (
+        <LocationCreateDrawer
+          onClose={() => setCreateOpen(false)}
+          onSuccess={() => {
+            void rootsSearch.refetch();
+            void refreshResources(['Location']);
+            void refreshHierarchy();
+          }}
+        />
       ) : null}
 
       <LocationImportDrawer

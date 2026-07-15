@@ -415,6 +415,8 @@ export interface OrgFormFields {
   typeCode: string;
   email: string;
   active: boolean;
+  /** Parent org ref (`Organization/{id}` or `urn:uuid:…`), or '' for none. */
+  partOfReference?: string;
 }
 
 /**
@@ -449,7 +451,37 @@ export function organizationFromForm(
   if (telecom.length > 0) org.telecom = telecom;
   else delete org.telecom;
 
+  const partOf = fields.partOfReference?.trim() ?? '';
+  if (partOf) {
+    org.partOf = { reference: partOf.includes('/') || partOf.startsWith('urn:uuid:') ? partOf : `Organization/${partOf}` };
+  } else if (fields.partOfReference !== undefined) {
+    delete org.partOf;
+  }
+
   return org;
+}
+
+/**
+ * OrganizationAffiliation linking a parent and child org (partOf edge as an affiliation resource),
+ * or an org to one or more locations. Used by the guided setup wizard Bundle.
+ */
+export function organizationAffiliationFromLinks(opts: {
+  organizationRef: string;
+  participatingOrganizationRef?: string;
+  locationRefs?: string[];
+}): Record<string, unknown> {
+  const resource: Record<string, unknown> = {
+    resourceType: 'OrganizationAffiliation',
+    active: true,
+    organization: { reference: opts.organizationRef },
+  };
+  if (opts.participatingOrganizationRef) {
+    resource.participatingOrganization = { reference: opts.participatingOrganizationRef };
+  }
+  if (opts.locationRefs && opts.locationRefs.length > 0) {
+    resource.location = opts.locationRefs.map((reference) => ({ reference }));
+  }
+  return resource;
 }
 
 /**
