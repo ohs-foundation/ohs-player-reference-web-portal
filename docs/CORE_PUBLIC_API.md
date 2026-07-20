@@ -51,9 +51,11 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types �
 | `useTranslation()` | `t(key)`, interpolation, RTL/dir future-ready. |
 | `useResource(resourceType, id)` | TanStack Query read: `client.read`. |
 | `useSearch(resourceType, params?)` | TanStack Query search bundle: `client.search`. |
+| `usePagedSearch(resourceType, { page, pageSize, params })` | Offset-paged search (`_count`/`_offset`/`_total=accurate`, as strings). Returns `{ rows, total, page, pageSize, hasNext, hasPrev, paginationMode, isLoading, isFetching, error }`. `paginationMode` is `'numbered'` when the server reports an accurate `total`, else `'links'`. Shares the `['fhir','search',type,…]` cache namespace, so delete/update/refresh invalidate it. |
 | `useFhirCapabilities()` | TanStack Query: `GET …/metadata`. |
 | `useCreateResource(resourceType)` | Mutation: `client.create`; invalidates search for `resourceType`. |
 | `useUpdateResource(resourceType)` | Mutation: `client.update`; invalidates read + search. |
+| `useDeleteResource(resourceType)` | Mutation: `client.delete` (hard delete); invalidates read + search for `resourceType`. Rejects with `FhirError` — surface 409/`OperationOutcome` conflicts. |
 | `useCustomEndpoint(alias)` | `{ get, post, put }` mutations wrapping `customGet` / `customPost` / `customPut` for that alias (`put` takes `{ id?, body }`). |
 | `useRefreshResources()` | Returns `(resourceType \| resourceType[]) => Promise<void>` that invalidates + refetches the cached `search` list(s) so view tables re-render after a mutation. |
 | `useOptimisticInsert()` | Returns `(resourceType, resource, options?) => rollback` that inserts a created resource into every mounted `search` list cache so the row renders instantly, then reconciles via a **delayed** background refetch (re-applying the row if the server isn't consistent yet, so it never disappears). `options.also` adds resource types to reconcile (derived columns); `options.reconcileDelayMs` tunes the delay (default 1500). Don't also call `useRefreshResources` for that create. Call the returned rollback on the mutation's error path. |
@@ -185,9 +187,11 @@ The library ships **behavior + Radix wrappers only** — it does **not** export 
 | `OhsDropdownMenu` | Radix dropdown-menu compound API. |
 | `OhsTabs` | Radix tabs compound API. |
 | `StatusBarProvider`, `useStatusBar` | Status bar context + consumer (`ui/primitives/StatusBar`). |
+| `FhirJsonView` | Read-only pretty-printed FHIR JSON + Copy button. Token-styled, dark-mode-safe; labels (`copyLabel`/`copiedLabel`) and `onCopy`/`onCopyError` are passed in (the app owns i18n + status feedback). |
+| `FhirJsonEditor` | Editable "FHIR Resource (JSON)" field with inline validation; rejects unparseable JSON and any change to `resourceType`/`id`. Reports `(parsed, text)` and validity via callbacks. Seeds once on mount — pass a `key` to reset. |
 | `formatOperationOutcomeMessage` | Human-readable message from a FHIR `OperationOutcome`. |
 
-Types: `OhsDialogProps`, `StatusTone`.
+Types: `OhsDialogProps`, `StatusTone`, `FhirJsonViewProps`, `FhirJsonEditorProps`, `PagedSearchParams`, `PagedSearchResult`.
 
 ---
 

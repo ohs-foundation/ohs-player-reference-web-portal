@@ -1,5 +1,11 @@
 import { useCallback } from 'react';
-import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useFhirClient } from '../providers/FhirClientProvider';
 
 export function useResource(resourceType: string | undefined, id: string | undefined) {
@@ -24,6 +30,104 @@ export function useSearch(resourceType: string | undefined, params?: Record<stri
       return client.search(resourceType, params);
     },
   });
+}
+
+/** Params for {@link usePagedSearch}. */
+export interface PagedSearchParams {
+  /** 0-indexed page to fetch. Default `0`. */
+  page?: number;
+  /** Resources per page (`_count`). Default `10`. */
+  pageSize?: number;
+  /** Extra FHIR search params (e.g. `{ name: 'jane' }`). Reserved paging keys are set by the hook. */
+  params?: Record<string, string>;
+}
+
+/** Result of {@link usePagedSearch}. */
+export interface PagedSearchResult<T = unknown> {
+  /** Resources on the current page. */
+  rows: T[];
+  /** Accurate grand total when the server reports one (`Bundle.total`), else `undefined`. */
+  total: number | undefined;
+  /** Current 0-indexed page. */
+  page: number;
+  /** Page size in effect (`_count`). */
+  pageSize: number;
+  /** Whether a later page exists. */
+  hasNext: boolean;
+  /** Whether an earlier page exists. */
+  hasPrev: boolean;
+  /**
+   * `'numbered'` when the server returns an accurate `total` (a page count is meaningful, so the UI
+   * may render numbered pages); `'links'` when it doesn't (degrade to prev/next only).
+   */
+  paginationMode: 'numbered' | 'links';
+  isLoading: boolean;
+  isFetching: boolean;
+  error: unknown;
+}
+
+interface PagedBundleShape {
+  entry?: { resource?: unknown }[];
+  total?: number;
+  link?: { relation?: string }[];
+}
+
+/**
+ * Offset-paged FHIR search for browsing a resource collection page-by-page. Requests
+ * `_count`/`_offset`/`_total=accurate` and derives a `paginationMode`: servers that return an
+ * accurate `Bundle.total` (HAPI 8.8 does) get `'numbered'`; servers that omit it degrade to
+ * `'links'` (prev/next). Shares the `['fhir','search',type,params]` cache namespace, so
+ * {@link useDeleteResource}, {@link useUpdateResource}, and {@link useRefreshResources} invalidate it
+ * automatically. Previous-page rows stay visible while the next page loads (no empty flash).
+ *
+ * @example
+ * const { rows, total, hasNext, paginationMode } = usePagedSearch('Patient', { page, pageSize: 10 });
+ */
+export function usePagedSearch<T = unknown>(
+  resourceType: string | undefined,
+  { page = 0, pageSize = 10, params }: PagedSearchParams = {},
+): PagedSearchResult<T> {
+  const client = useFhirClient();
+  const searchParams: Record<string, string> = {
+    ...params,
+    _count: String(pageSize),
+    _offset: String(page * pageSize),
+    _total: 'accurate',
+  };
+  const query = useQuery({
+    queryKey: ['fhir', 'search', resourceType, searchParams],
+    enabled: Boolean(resourceType),
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      if (!resourceType) return undefined;
+      return client.search(resourceType, searchParams);
+    },
+  });
+
+  const bundle = query.data as PagedBundleShape | undefined;
+  const rows = (bundle?.entry ?? [])
+    .map((e) => e.resource)
+    .filter((r): r is T => r !== undefined && r !== null);
+  const total = typeof bundle?.total === 'number' ? bundle.total : undefined;
+  const paginationMode: 'numbered' | 'links' = typeof total === 'number' ? 'numbered' : 'links';
+  const hasNextLink = Boolean(bundle?.link?.some((l) => l.relation === 'next'));
+  const hasNext =
+    paginationMode === 'numbered'
+      ? (page + 1) * pageSize < (total ?? 0)
+      : hasNextLink || rows.length === pageSize;
+
+  return {
+    rows,
+    total,
+    page,
+    pageSize,
+    hasNext,
+    hasPrev: page > 0,
+    paginationMode,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    error: query.error,
+  };
 }
 
 export function useFhirCapabilities() {
@@ -53,6 +157,28 @@ export function useUpdateResource(resourceType: string) {
       client.update(resourceType, id, body),
     onSuccess: (_, v) => {
       void qc.invalidateQueries({ queryKey: ['fhir', 'read', resourceType, v.id] });
+      void qc.invalidateQueries({ queryKey: ['fhir', 'search', resourceType] });
+    },
+  });
+}
+
+/**
+ * FHIR hard-delete mutation (`DELETE {resourceType}/{id}`). Invalidates the read and search caches
+ * for the type on success (mirroring {@link useUpdateResource}), so open lists drop the row. The
+ * mutation rejects with a {@link FhirError} on failure — surface `409`/`OperationOutcome`
+ * referential-integrity errors to the user; do not swallow them.
+ *
+ * @example
+ * const del = useDeleteResource('Organization');
+ * await del.mutateAsync(id);
+ */
+export function useDeleteResource(resourceType: string) {
+  const client = useFhirClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => client.delete(resourceType, id),
+    onSuccess: (_, id) => {
+      void qc.invalidateQueries({ queryKey: ['fhir', 'read', resourceType, id] });
       void qc.invalidateQueries({ queryKey: ['fhir', 'search', resourceType] });
     },
   });

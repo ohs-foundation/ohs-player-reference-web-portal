@@ -73,14 +73,20 @@ export type {
 export {
   useCreateResource,
   useCustomEndpoint,
+  useDeleteResource,
   useFhirCapabilities,
   useOptimisticInsert,
+  usePagedSearch,
   useRefreshResources,
   useResource,
   useSearch,
   useUpdateResource,
 } from './hooks/useFhirData';
-export type { OptimisticInsertOptions } from './hooks/useFhirData';
+export type {
+  OptimisticInsertOptions,
+  PagedSearchParams,
+  PagedSearchResult,
+} from './hooks/useFhirData';
 
 export { formatOperationOutcomeMessage } from './ui/operationOutcome';
 export {
@@ -94,6 +100,11 @@ export type { OhsDialogProps } from './ui/radix';
 
 export { StatusBarProvider, useStatusBar } from './ui/primitives/StatusBar';
 export type { StatusTone } from './ui/primitives/StatusBar';
+
+export { FhirJsonView } from './ui/primitives/FhirJsonView';
+export type { FhirJsonViewProps } from './ui/primitives/FhirJsonView';
+export { FhirJsonEditor } from './ui/primitives/FhirJsonEditor';
+export type { FhirJsonEditorProps } from './ui/primitives/FhirJsonEditor';
 
 export { writeAuditEvent } from './audit/writeAudit';
 
