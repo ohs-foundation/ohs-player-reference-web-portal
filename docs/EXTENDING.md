@@ -21,3 +21,20 @@ Pass `theme` into `CorePlatformConfig` (from `platform.ts`). The reference app a
 2. In a component: `const { post } = useCustomEndpoint('myAction');` then `post.mutateAsync(body)`.
 
 Resolution strips `/fhir` from `fhirBaseUrl` and appends the mapped path for non-FHIR gateway calls.
+
+## 4. Add a FHIR Viewer resource type
+
+The FHIR Viewer (`/resources`) is registry-driven. Adding a type is **one registry row + one i18n label** — no screens, routes, or components change.
+
+1. Add an entry to `ENTRIES` in [`apps/ohs-player-web/src/features/fhir-viewer/registry.ts`](apps/ohs-player-web/src/features/fhir-viewer/registry.ts): `['Endpoint', '_id', 'status']` — `[resourceType, searchParam, statusFacet?]`. Use `'name'` for `searchParam` only if the type declares a `name` search parameter; otherwise `'_id'`. Set `statusFacet` only where the type has a plain `active`/`status` search param.
+2. Add its label to [`appMessages.ts`](apps/ohs-player-web/src/i18n/appMessages.ts): `fhirTypeEndpoint: 'Endpoint'` (key is `fhirType<ResourceType>`, value is the FHIR spec spelling, humanised).
+
+**FHIR-only rule (enforced):** every `resourceType` must be a real FHIR R4 type present in the backend `CapabilityStatement`. `registry.test.ts` fails the build for any entry that isn't — so a non-FHIR label (e.g. the design's mislabeled "Medication Required") cannot ship; it maps to its real type (`MedicationRequest`) or is dropped.
+
+### Governing rules & known constraints
+
+- **Backend wins over design.** Only valid FHIR R4 types appear; display/search/pagination adapt to what the backend serves, not to the Figma mockup.
+- **Delete is a hard FHIR `DELETE`**, gated by `fhir-viewer.edit` (admin) with a mandatory confirm — an explicit exception to the repo's deactivate-first convention, justified by the viewer being a raw admin/debug tool where deactivation doesn't generalize across arbitrary types.
+- **Edit is raw JSON** (a power-user surface), outside the SDC/typed-form path; `resourceType`/`id` are immutable.
+- **Seed prerequisite:** the demo HAPI store starts empty — run `pnpm seed` before expecting rows. Only `Organization`/`Practitioner`/`Location`/`CareTeam` are seeded today; other types show the empty state until seeded.
+- **Gateway constraint (backend ticket):** the viewer's FHIR reads work via the dev direct-HAPI proxy. The OHS Info Gateway 401s all `/fhir` reads without a `patient_list` token claim the realm doesn't issue, so against the gateway the viewer renders the "not available from this backend" state for every type until a Keycloak realm mapper is added.

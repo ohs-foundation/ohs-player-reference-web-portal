@@ -21,6 +21,9 @@ const permissionMap: PermissionMap = {
   'careteams.view': ['admin', 'care-team-manager'],
   'careteams.manage': ['admin', 'care-team-manager'],
   'setup.view': ['admin'],
+  // FHIR Viewer: read for admins + care-team managers; edit/delete (raw-JSON mutations) admin-only.
+  'fhir-viewer.view': ['admin', 'care-team-manager'],
+  'fhir-viewer.edit': ['admin'],
 };
 
 export const platformConfig: CorePlatformConfig = {
@@ -46,6 +49,7 @@ export const platformConfig: CorePlatformConfig = {
       dashboard: env.flags.dashboard,
       orgMgmt: env.flags.orgMgmt,
       setupWizard: env.flags.setupWizard,
+      fhirViewer: env.flags.fhirViewer,
     },
   },
   i18n: {

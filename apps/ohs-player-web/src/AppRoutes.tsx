@@ -12,6 +12,7 @@ import { LocationsNoAccess } from './features/locations/LocationsNoAccess';
 import { OrganizationsPage } from './features/organizations/OrganizationsPage';
 import { CareTeamsPage } from './features/careteams/CareTeamsPage';
 import { SetupWizardPage } from './features/setup-wizard/SetupWizardPage';
+import { FhirViewerPage } from './features/fhir-viewer/FhirViewerPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
 
 function OrganizationsPermissionFallback() {
@@ -86,6 +87,22 @@ export function AppRoutes() {
           element={
             <ProtectedRoute flag="setupWizard" permission="setup.view">
               <SetupWizardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/resources"
+          element={
+            <ProtectedRoute flag="fhirViewer" permission="fhir-viewer.view">
+              <FhirViewerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/resources/:resourceType"
+          element={
+            <ProtectedRoute flag="fhirViewer" permission="fhir-viewer.view">
+              <FhirViewerPage />
             </ProtectedRoute>
           }
         />
