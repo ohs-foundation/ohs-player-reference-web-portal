@@ -545,6 +545,8 @@
   animation: ohs-fade-in 150ms ease;
 }
 .ohs-drawer {
+  /* Portals render outside [data-ohs-root], so inherit box-sizing here. */
+  box-sizing: border-box;
   position: fixed;
   top: 0;
   right: 0;
@@ -554,17 +556,23 @@
   max-width: 100vw;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: var(--ohs-color-surface, #fff);
   box-shadow: -8px 0 32px rgba(15, 23, 42, 0.16);
   animation: ohs-slide-in-right 200ms ease;
+}
+.ohs-drawer *,
+.ohs-drawer *::before,
+.ohs-drawer *::after {
+  box-sizing: border-box;
 }
 @keyframes ohs-slide-in-right {
   from { transform: translateX(24px); opacity: 0.6; }
   to { transform: none; opacity: 1; }
 }
-.ohs-drawer__header { flex-shrink: 0; }
-.ohs-drawer__body { flex: 1; min-height: 0; overflow-y: auto; }
-.ohs-drawer__footer { flex-shrink: 0; }
+.ohs-drawer__header { flex-shrink: 0; min-width: 0; }
+.ohs-drawer__body { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; }
+.ohs-drawer__footer { flex-shrink: 0; min-width: 0; }
 
 /* Larger avatar (drawer header) */
 .ohs-avatar-stack {

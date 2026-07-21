@@ -13,7 +13,11 @@
         "description": "Care team manager"
       },
       { "name": "location-hierarchy.view", "description": "View the location hierarchy tree" },
-      { "name": "bulk-import.manage", "description": "Manage bulk CSV imports (locations, users, orgs)" }
+      { "name": "bulk-import.manage", "description": "Manage bulk CSV imports (locations, users, orgs)" },
+      { "name": "users.manage", "description": "Manage users via the gateway /api/users (view+edit+delete)" },
+      { "name": "groups.manage", "description": "Manage groups via the gateway /api/groups (view+edit+manage)" },
+      { "name": "roles.view", "description": "View roles via the gateway /api/roles" },
+      { "name": "practitioner-details.view", "description": "View practitioner details via the gateway /api/practitioner-details" }
     ]
   },
   "defaultDefaultClientScopes": [],
@@ -64,7 +68,7 @@
       "emailVerified": true,
       "email": "admin@example.com",
       "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
-      "realmRoles": ["admin", "location-hierarchy.view", "bulk-import.manage"]
+      "realmRoles": ["admin", "location-hierarchy.view", "bulk-import.manage", "users.manage", "groups.manage", "roles.view", "practitioner-details.view"]
     },
     {
       "username": "manager-user",

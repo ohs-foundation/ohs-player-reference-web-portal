@@ -24,6 +24,8 @@ import {
   RiUserLine,
   RiMagicLine,
   RiMagicFill,
+  RiDatabase2Line,
+  RiDatabase2Fill,
   type RemixiconComponentType,
 } from '@remixicon/react';
 import { Avatar, IconButton } from '../components/ui';
@@ -52,6 +54,7 @@ const NAV_DEFS = [
   { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: RiMapPin3Line, FillIcon: RiMapPin3Fill },
   { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: RiBuildingLine, FillIcon: RiBuildingFill },
   { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: RiTeamLine, FillIcon: RiTeamFill },
+  { to: '/resources', labelKey: 'navFhirViewer', permission: 'fhir-viewer.view', flag: 'fhirViewer', LineIcon: RiDatabase2Line, FillIcon: RiDatabase2Fill },
   { to: '/setup', labelKey: 'navSetup', permission: 'setup.view', flag: 'setupWizard', LineIcon: RiMagicLine, FillIcon: RiMagicFill },
 ] as const;
 
