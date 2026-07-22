@@ -24,6 +24,11 @@ interface ResourceDrawerProps {
   resourceId: string;
   open: boolean;
   onClose: () => void;
+  /**
+   * Render this bundled example instead of reading from the server: read-only, no fetch, and no
+   * edit/delete, because the resource does not exist on the server.
+   */
+  example?: FhirRecord;
 }
 
 function asRecord(value: unknown): FhirRecord {
@@ -46,6 +51,7 @@ export function ResourceDrawer({
   resourceId,
   open,
   onClose,
+  example,
 }: Readonly<ResourceDrawerProps>): React.ReactElement {
   const { t } = useTranslation();
   const status = useStatusBar();
@@ -53,7 +59,9 @@ export function ResourceDrawer({
   const refresh = useRefreshResources();
   const update = useUpdateResource(def.resourceType);
   const del = useDeleteResource(def.resourceType);
-  const read = useResource(def.resourceType, resourceId);
+  const isExample = example !== undefined;
+  // Disabled query for the example: there is nothing to read from the server.
+  const read = useResource(def.resourceType, isExample ? undefined : resourceId);
   const canEdit = usePermission('fhir-viewer.edit').can;
 
   const [mode, setMode] = useState<'view' | 'edit'>('view');
@@ -64,7 +72,7 @@ export function ResourceDrawer({
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [conflict, setConflict] = useState(false);
 
-  const resource = read.data;
+  const resource = isExample ? example : read.data;
   const record = asRecord(resource);
   const typeLabel = t(def.labelKey);
   const title = displayNameFor(def, record);
@@ -144,8 +152,7 @@ export function ResourceDrawer({
     </div>
   );
 
-  const footer =
-    mode === 'edit' ? (
+  const footer = isExample ? undefined : mode === 'edit' ? (
       <div className="ohs-user-drawer__foot">
         <Button variant="outlined" onClick={requestCancel} disabled={update.isPending}>
           {t('fhirViewerCancel')}
@@ -193,14 +200,21 @@ export function ResourceDrawer({
               <ErrorState description={errorMessage(read.error, t('fhirViewerDrawerLoadError'))} />
             </div>
           ) : mode === 'view' ? (
-            <FhirJsonView
-              className="flex-1 min-h-0 min-w-0"
-              resource={resource}
-              copyLabel={t('fhirViewerCopyCode')}
-              copiedLabel={t('fhirViewerCopied')}
-              onCopy={() => status.notify({ tone: 'success', title: t('fhirViewerCopiedToast') })}
-              onCopyError={() => status.notify({ tone: 'error', title: t('fhirViewerCopyFailed') })}
-            />
+            <>
+              {isExample ? (
+                <p className="m-0 rounded border border-border bg-surface-variant p-3 text-sm text-text-muted">
+                  {t('fhirViewerExampleNotice', { type: typeLabel })}
+                </p>
+              ) : null}
+              <FhirJsonView
+                className="flex-1 min-h-0 min-w-0"
+                resource={resource}
+                copyLabel={t('fhirViewerCopyCode')}
+                copiedLabel={t('fhirViewerCopied')}
+                onCopy={() => status.notify({ tone: 'success', title: t('fhirViewerCopiedToast') })}
+                onCopyError={() => status.notify({ tone: 'error', title: t('fhirViewerCopyFailed') })}
+              />
+            </>
           ) : (
             <div className="flex-1 min-h-0 min-w-0 flex flex-col gap-4">
               {conflict ? (

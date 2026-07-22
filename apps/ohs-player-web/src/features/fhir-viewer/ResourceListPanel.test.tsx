@@ -53,6 +53,16 @@ function base(partial: Partial<PagedState>): PagedState {
 const orgRows = (n: number) =>
   Array.from({ length: n }, (_, i) => ({ resourceType: 'Organization', id: `o${i}`, name: `Org ${i}` }));
 
+function renderPanel(overrides: { onOpenResource?: () => void; onOpenExample?: () => void } = {}) {
+  return render(
+    <ResourceListPanel
+      def={org}
+      onOpenResource={overrides.onOpenResource ?? vi.fn()}
+      onOpenExample={overrides.onOpenExample ?? vi.fn()}
+    />,
+  );
+}
+
 beforeEach(() => {
   paged.current = base({});
 });
@@ -66,7 +76,7 @@ describe('ResourceListPanel', () => {
       paginationMode: 'numbered',
     });
     const onOpen = vi.fn();
-    render(<ResourceListPanel def={org} onOpenResource={onOpen} />);
+    renderPanel({ onOpenResource: onOpen });
 
     expect(screen.getByText('Ministry of Health')).toBeInTheDocument();
     expect(screen.getByText('o1')).toBeInTheDocument();
@@ -74,21 +84,15 @@ describe('ResourceListPanel', () => {
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 'o1' }));
   });
 
-  it('shows the zero-results empty state', () => {
-    paged.current = base({ rows: [], total: 0 });
-    render(<ResourceListPanel def={org} onOpenResource={vi.fn()} />);
-    expect(screen.getByText(/fhirViewerEmptyTitle/)).toBeInTheDocument();
-  });
-
   it('renders "not available from this backend" on a gateway 401', () => {
     paged.current = base({ error: new FhirError('no patient_list claim', 401, undefined) });
-    render(<ResourceListPanel def={org} onOpenResource={vi.fn()} />);
+    renderPanel();
     expect(screen.getByText('fhirViewerUnsupportedTitle')).toBeInTheDocument();
   });
 
   it('renders a genuine ErrorState on a 5xx', () => {
     paged.current = base({ error: new FhirError('Server boom', 500, undefined) });
-    render(<ResourceListPanel def={org} onOpenResource={vi.fn()} />);
+    renderPanel();
     expect(screen.getByText('Server boom')).toBeInTheDocument();
   });
 
@@ -99,7 +103,7 @@ describe('ResourceListPanel', () => {
       hasNext: true,
       paginationMode: 'numbered',
     });
-    render(<ResourceListPanel def={org} onOpenResource={vi.fn()} />);
+    renderPanel();
     expect(screen.getByText(/fhirViewerShowingOf/)).toBeInTheDocument();
   });
 
@@ -109,8 +113,51 @@ describe('ResourceListPanel', () => {
       total: 1,
       paginationMode: 'numbered',
     });
-    const { container } = render(<ResourceListPanel def={org} onOpenResource={vi.fn()} />);
+    const { container } = renderPanel();
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
+  });
+});
+
+describe('example placeholder', () => {
+  it('shows a badged example row instead of a blank table when there is no data', () => {
+    paged.current = base({ rows: [], total: 0 });
+    renderPanel();
+
+    expect(screen.getByText('fhirViewerExampleBadge')).toBeInTheDocument();
+    expect(screen.getByText('Demo Health Organization')).toBeInTheDocument();
+    expect(screen.getByText(/fhirViewerExampleNote/)).toBeInTheDocument();
+  });
+
+  it('opens the example through onOpenExample, never onOpenResource', () => {
+    paged.current = base({ rows: [], total: 0 });
+    const onOpenResource = vi.fn();
+    const onOpenExample = vi.fn();
+    renderPanel({ onOpenResource, onOpenExample });
+
+    fireEvent.click(screen.getByText('Demo Health Organization'));
+    expect(onOpenExample).toHaveBeenCalledWith(expect.objectContaining({ id: 'example' }));
+    expect(onOpenResource).not.toHaveBeenCalled();
+  });
+
+  it('disappears automatically once real rows exist', () => {
+    paged.current = base({ rows: orgRows(1), total: 1, paginationMode: 'numbered' });
+    renderPanel();
+
+    expect(screen.queryByText('fhirViewerExampleBadge')).toBeNull();
+    expect(screen.queryByText(/fhirViewerExampleNote/)).toBeNull();
+    expect(screen.getByText('Org 0')).toBeInTheDocument();
+  });
+
+  it('is not shown when the type is unavailable from this backend', () => {
+    paged.current = base({ error: new FhirError('denied', 403, undefined) });
+    renderPanel();
+    expect(screen.queryByText('fhirViewerExampleBadge')).toBeNull();
+  });
+
+  it('is not shown while still loading', () => {
+    paged.current = base({ rows: [], isLoading: true });
+    renderPanel();
+    expect(screen.queryByText('fhirViewerExampleBadge')).toBeNull();
   });
 });

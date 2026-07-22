@@ -19,6 +19,7 @@ export function FhirViewerPage(): React.ReactElement {
   const navigate = useNavigate();
   const { resourceType } = useParams<{ resourceType?: string }>();
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const [viewingExample, setViewingExample] = useState<FhirRecord | null>(null);
 
   const def = resourceTypeDef(resourceType) ?? resourceTypeDef(DEFAULT_TYPE);
 
@@ -40,10 +41,24 @@ export function FhirViewerPage(): React.ReactElement {
           selected={def.resourceType}
           onSelect={(rt) => void navigate(`/resources/${rt}`)}
         />
-        <ResourceListPanel key={def.resourceType} def={def} onOpenResource={openResource} />
+        <ResourceListPanel
+          key={def.resourceType}
+          def={def}
+          onOpenResource={openResource}
+          onOpenExample={setViewingExample}
+        />
       </div>
       {viewingId ? (
         <ResourceDrawer def={def} resourceId={viewingId} open onClose={() => setViewingId(null)} />
+      ) : null}
+      {viewingExample ? (
+        <ResourceDrawer
+          def={def}
+          resourceId={typeof viewingExample.id === 'string' ? viewingExample.id : 'example'}
+          example={viewingExample}
+          open
+          onClose={() => setViewingExample(null)}
+        />
       ) : null}
     </Page>
   );

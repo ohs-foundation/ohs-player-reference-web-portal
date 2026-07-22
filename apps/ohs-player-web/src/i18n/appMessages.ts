@@ -402,6 +402,11 @@ export const appMessageOverrides = {
   fhirViewerPrevPage: 'Previous page',
   fhirViewerNextPage: 'Next page',
   fhirViewerGoToPage: 'Go to page {{page}}',
+  fhirViewerExampleBadge: 'Example',
+  fhirViewerExampleNote:
+    'No {{type}} resources stored yet. The row below is an example structure and disappears once real data exists.',
+  fhirViewerExampleNotice:
+    'Example structure for {{type}}. This resource is not stored on the server, so it cannot be edited or deleted. Copy it as a starting template.',
   fhirViewerEmptyTitle: 'No {{type}} resources yet',
   fhirViewerEmptyDescription: 'When {{type}} resources are created they will appear here.',
   fhirViewerUnsupportedTitle: 'Not available from this backend yet',
