@@ -402,6 +402,27 @@ export const appMessageOverrides = {
   fhirViewerPrevPage: 'Previous page',
   fhirViewerNextPage: 'Next page',
   fhirViewerGoToPage: 'Go to page {{page}}',
+  // Add resource
+  fhirViewerAdd: 'Add resource',
+  fhirViewerAddTitle: 'Add {{type}}',
+  fhirViewerAddSubtitle: 'Paste a FHIR resource as JSON, or generate a template to start from.',
+  fhirViewerAddSubmit: 'Add',
+  fhirViewerQuickAdd: 'Quick resource add',
+  fhirViewerQuickAddHint: 'Fills the field with a valid {{type}} template and a new unique id. Review it, then click Add.',
+  fhirViewerAddPlaceholder: 'Paste a FHIR {{type}} resource as JSON',
+  fhirViewerAddIdHint:
+    'With an id, the resource is created at that id and replaces any existing one. Without an id, the server assigns one.',
+  fhirViewerAddInvalidJson: 'Invalid JSON. Fix the syntax to continue.',
+  fhirViewerAddNotAnObject: 'A FHIR resource must be a JSON object.',
+  fhirViewerAddTypeMismatch: 'resourceType must be "{{type}}".',
+  fhirViewerAdded: '{{type}} created',
+  fhirViewerAddFailed: 'Could not create the resource',
+
+  fhirViewerExampleBadge: 'Example',
+  fhirViewerExampleNote:
+    'No {{type}} resources stored yet. The row below is an example structure and disappears once real data exists.',
+  fhirViewerExampleNotice:
+    'Example structure for {{type}}. This resource is not stored on the server, so it cannot be edited or deleted. Copy it as a starting template.',
   fhirViewerEmptyTitle: 'No {{type}} resources yet',
   fhirViewerEmptyDescription: 'When {{type}} resources are created they will appear here.',
   fhirViewerUnsupportedTitle: 'Not available from this backend yet',

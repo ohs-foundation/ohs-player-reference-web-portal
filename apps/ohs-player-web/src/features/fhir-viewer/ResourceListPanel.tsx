@@ -13,7 +13,10 @@ import {
   EmptyState,
   ErrorState,
   SearchField,
+  StatusBadge,
 } from '../../components/ui';
+import { cn } from '../../lib/cn';
+import { exampleFor } from './examples';
 import {
   type FhirRecord,
   type ResourceTypeDef,
@@ -41,6 +44,8 @@ function classifyError(error: unknown): ErrorClass {
 interface ResourceListPanelProps {
   def: ResourceTypeDef;
   onOpenResource: (resource: FhirRecord) => void;
+  /** Opens the read-only example placeholder shown while a type has no stored resources. */
+  onOpenExample: (resource: FhirRecord) => void;
 }
 
 /**
@@ -51,6 +56,7 @@ interface ResourceListPanelProps {
 export function ResourceListPanel({
   def,
   onOpenResource,
+  onOpenExample,
 }: Readonly<ResourceListPanelProps>): React.ReactElement {
   const { t } = useTranslation();
   const [searchInput, setSearchInput] = useState('');
@@ -93,6 +99,12 @@ export function ResourceListPanel({
   const classified = classifyError(error);
   const typeLabel = t(def.labelKey);
 
+  // No stored resources → show a single read-only example row so the type still teaches its shape.
+  // It vanishes on its own the moment the server returns a real row.
+  const example = exampleFor(def.resourceType);
+  const showExample = !classified && !isLoading && rows.length === 0 && example !== undefined;
+  const tableRows: readonly FhirRecord[] = showExample && example ? [example] : rows;
+
   const columns: readonly DataTableColumn<FhirRecord>[] = useMemo(
     () => [
       {
@@ -100,26 +112,43 @@ export function ResourceListPanel({
         header: t('fhirViewerColumnId'),
         width: '42%',
         render: (r) => (
-          <span className="font-mono text-sm text-text-muted break-all">
-            {typeof r.id === 'string' ? r.id : '—'}
+          <span
+            className={cn(
+              'font-mono text-sm break-all text-text-muted',
+              showExample && 'italic opacity-70',
+            )}
+          >
+            {typeof r.id === 'string' ? r.id : ''}
           </span>
         ),
       },
       {
         key: 'name',
         header: t('fhirViewerColumnName'),
-        render: (r) => (
-          <button
-            type="button"
-            className="text-left text-primary hover:underline font-medium"
-            onClick={() => onOpenResource(r)}
-          >
-            {displayNameFor(def, r)}
-          </button>
-        ),
+        render: (r) =>
+          showExample ? (
+            <span className="inline-flex items-center gap-2">
+              <button
+                type="button"
+                className="text-left text-text-muted italic hover:underline"
+                onClick={() => onOpenExample(r)}
+              >
+                {displayNameFor(def, r)}
+              </button>
+              <StatusBadge tone="info">{t('fhirViewerExampleBadge')}</StatusBadge>
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="text-left text-primary hover:underline font-medium"
+              onClick={() => onOpenResource(r)}
+            >
+              {displayNameFor(def, r)}
+            </button>
+          ),
       },
     ],
-    [def, t, onOpenResource],
+    [def, t, onOpenResource, onOpenExample, showExample],
   );
 
   const errorNode =
@@ -179,10 +208,11 @@ export function ResourceListPanel({
       </h3>
       <DataTable<FhirRecord>
         columns={columns}
-        rows={rows}
+        rows={tableRows}
         rowKey={(r) => (typeof r.id === 'string' ? r.id : displayNameFor(def, r))}
         loading={isLoading}
         toolbar={toolbar}
+        caption={showExample ? t('fhirViewerExampleNote', { type: typeLabel }) : undefined}
         emptyState={
           <EmptyState
             title={t('fhirViewerEmptyTitle', { type: typeLabel })}

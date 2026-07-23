@@ -111,6 +111,18 @@ describe('ResourceDrawer', () => {
     );
   });
 
+  it('example mode is read-only: shows the notice and no Delete/Edit actions', () => {
+    const example = { resourceType: 'Organization', id: 'example', name: 'Demo Health Organization' };
+    render(
+      <ResourceDrawer def={org} resourceId="example" example={example} open onClose={vi.fn()} />,
+    );
+
+    expect(screen.getByText(/fhirViewerExampleNotice/)).toBeInTheDocument();
+    expect(screen.getByText(/"name": "Demo Health Organization"/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /fhirViewerDelete /i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /fhirViewerEdit /i })).toBeNull();
+  });
+
   it('disables Save until the JSON is edited', () => {
     renderDrawer();
     fireEvent.click(screen.getByRole('button', { name: /fhirViewerEdit /i }));

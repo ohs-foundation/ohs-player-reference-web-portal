@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'ohs-player-web-core';
-import { Page, PageHeader } from '../../components/ui';
+import { usePermission, useTranslation } from 'ohs-player-web-core';
+import { RiAddLine } from '@remixicon/react';
+import { Button, Page, PageHeader } from '../../components/ui';
 import { ResourceTypeSidebar } from './ResourceTypeSidebar';
 import { ResourceListPanel } from './ResourceListPanel';
 import { ResourceDrawer } from './ResourceDrawer';
+import { AddResourceDrawer } from './AddResourceDrawer';
 import { type FhirRecord, RESOURCE_TYPE_DEFS, resourceTypeDef } from './registry';
 
 const DEFAULT_TYPE = RESOURCE_TYPE_DEFS[0].resourceType;
@@ -19,6 +21,9 @@ export function FhirViewerPage(): React.ReactElement {
   const navigate = useNavigate();
   const { resourceType } = useParams<{ resourceType?: string }>();
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const [viewingExample, setViewingExample] = useState<FhirRecord | null>(null);
+  const [adding, setAdding] = useState(false);
+  const canEdit = usePermission('fhir-viewer.edit').can;
 
   const def = resourceTypeDef(resourceType) ?? resourceTypeDef(DEFAULT_TYPE);
 
@@ -34,17 +39,46 @@ export function FhirViewerPage(): React.ReactElement {
 
   return (
     <Page>
-      <PageHeader title={t('pageFhirViewer')} description={t('pageFhirViewerDescription')} />
+      <PageHeader
+        title={t('pageFhirViewer')}
+        description={t('pageFhirViewerDescription')}
+        actions={
+          canEdit ? (
+            <Button
+              variant="primary"
+              iconLeft={<RiAddLine size={18} aria-hidden="true" />}
+              onClick={() => setAdding(true)}
+            >
+              {t('fhirViewerAdd')}
+            </Button>
+          ) : undefined
+        }
+      />
       <div className="flex gap-6 items-start max-[900px]:flex-col">
         <ResourceTypeSidebar
           selected={def.resourceType}
           onSelect={(rt) => void navigate(`/resources/${rt}`)}
         />
-        <ResourceListPanel key={def.resourceType} def={def} onOpenResource={openResource} />
+        <ResourceListPanel
+          key={def.resourceType}
+          def={def}
+          onOpenResource={openResource}
+          onOpenExample={setViewingExample}
+        />
       </div>
       {viewingId ? (
         <ResourceDrawer def={def} resourceId={viewingId} open onClose={() => setViewingId(null)} />
       ) : null}
+      {viewingExample ? (
+        <ResourceDrawer
+          def={def}
+          resourceId={typeof viewingExample.id === 'string' ? viewingExample.id : 'example'}
+          example={viewingExample}
+          open
+          onClose={() => setViewingExample(null)}
+        />
+      ) : null}
+      {adding ? <AddResourceDrawer def={def} open onClose={() => setAdding(false)} /> : null}
     </Page>
   );
 }

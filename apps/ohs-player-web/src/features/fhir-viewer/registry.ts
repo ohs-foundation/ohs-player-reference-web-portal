@@ -47,11 +47,19 @@ function humanName(resource: FhirRecord): string | undefined {
   return full || str(first.text);
 }
 
+/**
+ * Best text for a CodeableConcept, a bare Coding, a `0..*` array of either, or a plain code string
+ * (e.g. `MeasureReport.type`). Covers the shapes FHIR uses for the "what is this" element.
+ */
 function codeableText(value: unknown): string | undefined {
-  const c = asRecord(value);
+  const first: unknown = Array.isArray(value) ? (value as unknown[])[0] : value;
+  if (typeof first === 'string') return str(first);
+  const c = asRecord(first);
   if (!c) return undefined;
   const coding = Array.isArray(c.coding) ? asRecord(c.coding[0]) : undefined;
-  return str(c.text) ?? str(coding?.display) ?? str(coding?.code);
+  return (
+    str(c.text) ?? str(coding?.display) ?? str(coding?.code) ?? str(c.display) ?? str(c.code)
+  );
 }
 
 /** `Type/id` fallback when a resource has no human-friendly label. */
@@ -59,14 +67,21 @@ export function idReference(resource: FhirRecord): string {
   return `${str(resource.resourceType) ?? 'Resource'}/${str(resource.id) ?? '—'}`;
 }
 
-/** Best-effort human label for any resource: HumanName → name/title → code/type → `Type/id`. */
+/**
+ * Best-effort human label for any resource: HumanName → name/title/description → the defining
+ * coded element (code/type/class/medication/vaccine) → `Type/id`. A few resources (e.g.
+ * QuestionnaireResponse) genuinely carry no human-facing label and fall through to `Type/id`.
+ */
 export function genericDisplayName(resource: FhirRecord): string {
   return (
     humanName(resource) ??
     str(resource.name) ??
     str(resource.title) ??
+    str(resource.description) ??
+    codeableText(resource.description) ??
     codeableText(resource.code) ??
     codeableText(resource.type) ??
+    codeableText(resource.class) ??
     codeableText(resource.medicationCodeableConcept) ??
     codeableText(resource.vaccineCode) ??
     idReference(resource)
