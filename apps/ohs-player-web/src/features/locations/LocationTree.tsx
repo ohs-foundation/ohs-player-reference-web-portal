@@ -8,7 +8,7 @@ import {
   type KeyboardEvent,
   type UIEvent,
 } from 'react';
-import { RiArrowDownSLine, RiArrowRightSLine } from '@remixicon/react';
+import { IconChevronDown, IconChevronRight } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import type { LocationNode } from './hierarchy';
 import { levelFromType } from './locationLevel';
@@ -141,7 +141,7 @@ function TreeRow({
             }}
             className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-text-muted hover:bg-surface hover:text-text"
           >
-            {isExpanded ? <RiArrowDownSLine size={20} /> : <RiArrowRightSLine size={20} />}
+            {isExpanded ? <IconChevronDown size={20} /> : <IconChevronRight size={20} />}
           </button>
         ) : (
           <span className="h-6 w-6 shrink-0" aria-hidden="true" />

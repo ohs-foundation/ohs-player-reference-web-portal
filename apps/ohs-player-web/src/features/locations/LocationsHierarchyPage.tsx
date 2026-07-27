@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiUploadCloud2Line } from '@remixicon/react';
+import { IconAdd, IconChevronDown, IconUpload } from '../../components/ui/icons';
 import { PermissionGuard, useRefreshResources, useStatusBar, useTranslation } from 'ohs-player-web-core';
 import { Button, Page, PageHeader, SearchField, SelectField } from '../../components/ui';
 import { collectExpandableIdsLimited, EXPAND_ALL_MAX, filterTree } from './expand';
@@ -161,18 +161,18 @@ export function LocationsHierarchyPage(): React.ReactElement {
           <Button
             variant="secondary"
             type="button"
-            iconRight={<RiArrowDownSLine size={20} />}
+            iconRight={<IconChevronDown size={20} />}
             onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
           >
             {t('locationsExport')}
           </Button>
           <PermissionGuard permission="locations.edit">
-            <Button type="button" variant="secondary" iconLeft={<RiAddLine size={18} />} onClick={() => setCreateOpen(true)}>
+            <Button type="button" variant="secondary" iconLeft={<IconAdd size={18} />} onClick={() => setCreateOpen(true)}>
               {t('dialogCreateLocation')}
             </Button>
           </PermissionGuard>
           <PermissionGuard permission="bulk-import.manage">
-            <Button type="button" iconLeft={<RiUploadCloud2Line size={18} />} onClick={() => setImportOpen(true)}>
+            <Button type="button" iconLeft={<IconUpload size={18} />} onClick={() => setImportOpen(true)}>
               {t('locationsImport')}
             </Button>
           </PermissionGuard>

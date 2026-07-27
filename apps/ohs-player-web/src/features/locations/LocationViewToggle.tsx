@@ -1,4 +1,4 @@
-import { RiCheckLine } from '@remixicon/react';
+import { IconCheck } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 
 export type LocationView = 'tree' | 'column';
@@ -30,7 +30,7 @@ export function LocationViewToggle({ value, onChange }: Readonly<LocationViewTog
               active ? 'bg-primary-container text-primary' : 'bg-transparent text-text-muted hover:text-text'
             }`}
           >
-            {active ? <RiCheckLine size={16} aria-hidden="true" /> : null}
+            {active ? <IconCheck size={16} aria-hidden="true" /> : null}
             {t(v.labelKey)}
           </button>
         );

@@ -5,7 +5,7 @@ import {
   usePagedSearch,
   useTranslation,
 } from 'ohs-player-web-core';
-import { RiFilter3Line } from '@remixicon/react';
+import { IconFilterList } from '../../components/ui/icons';
 import {
   Button,
   DataTable,
@@ -179,7 +179,7 @@ export function ResourceListPanel({
         />
         <Button
           variant={filtersOpen ? 'primary' : 'outlined'}
-          iconLeft={<RiFilter3Line size={16} />}
+          iconLeft={<IconFilterList size={16} />}
           aria-expanded={filtersOpen}
           onClick={() => setFiltersOpen((v) => !v)}
         >

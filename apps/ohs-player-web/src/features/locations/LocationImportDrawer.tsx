@@ -1,12 +1,12 @@
 import { useRef, useState, type DragEvent } from 'react';
 import {
-  RiCheckboxCircleFill,
-  RiCloseLine,
-  RiDownloadLine,
-  RiErrorWarningFill,
-  RiFileList3Line,
-  RiUploadCloud2Line,
-} from '@remixicon/react';
+  IconCheckCircleFill,
+  IconClose,
+  IconDownload,
+  IconErrorFill,
+  IconFileList,
+  IconUpload,
+} from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { Button, Drawer, IconButton, LinearProgress, Stack } from '../../components/ui';
 import { Section } from '../users/userFormControls';
@@ -18,7 +18,7 @@ const FORM_ID = 'location-import-form';
 function ColumnsSection(): React.ReactElement {
   const { t } = useTranslation();
   return (
-    <Section icon={RiFileList3Line} title={t('locationsExpectedColumns')}>
+    <Section icon={IconFileList} title={t('locationsExpectedColumns')}>
       <Stack gap={4}>
         <div className="flex flex-wrap gap-2">
           {EXPECTED_COLUMNS.map((c) => (
@@ -34,7 +34,7 @@ function ColumnsSection(): React.ReactElement {
         </div>
         <p className="m-0 text-xs text-text-muted">{t('locationsTemplateHint')}</p>
         <div>
-          <Button variant="outlined" type="button" iconLeft={<RiDownloadLine size={18} />} onClick={downloadImportTemplate}>
+          <Button variant="outlined" type="button" iconLeft={<IconDownload size={18} />} onClick={downloadImportTemplate}>
             {t('locationsDownloadTemplate')}
           </Button>
         </div>
@@ -47,7 +47,7 @@ function ProgressSection({ processed, total }: Readonly<{ processed: number; tot
   const { t } = useTranslation();
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
   return (
-    <Section icon={RiUploadCloud2Line} title={t('locationsUploadFile')}>
+    <Section icon={IconUpload} title={t('locationsUploadFile')}>
       <Stack gap={3}>
         <LinearProgress indeterminate={total === 0} value={processed} max={total || 100} />
         <span className="text-sm text-text-muted">{t('locationsImportProgress', { processed, total, pct })}</span>
@@ -59,13 +59,13 @@ function ProgressSection({ processed, total }: Readonly<{ processed: number; tot
 function ResultSection({ result }: Readonly<{ result: ImportResult }>): React.ReactElement {
   const { t } = useTranslation();
   return (
-    <Section icon={RiUploadCloud2Line} title={t('locationsImportTitle')}>
+    <Section icon={IconUpload} title={t('locationsImportTitle')}>
       <Stack gap={4}>
         <div className="flex items-center gap-2 text-text">
           {result.failed > 0 ? (
-            <RiErrorWarningFill size={22} className="text-warning" />
+            <IconErrorFill size={22} className="text-warning" />
           ) : (
-            <RiCheckboxCircleFill size={22} className="text-positive" />
+            <IconCheckCircleFill size={22} className="text-positive" />
           )}
           <span className="text-base font-semibold">
             {result.failed > 0 ? t('locationsImportPartial') : t('locationsImportComplete')}
@@ -133,7 +133,7 @@ export function LocationImportDrawer({ open, onClose, onComplete }: Readonly<Loc
         <p className="ohs-form-drawer__subtitle">{t('locationsImportSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={close}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -167,7 +167,7 @@ export function LocationImportDrawer({ open, onClose, onComplete }: Readonly<Loc
       <form id={FORM_ID} onSubmit={onSubmit} className="ohs-detail-body">
         {phase === 'idle' || phase === 'error' ? (
           <>
-            <Section icon={RiUploadCloud2Line} title={t('locationsUploadFile')}>
+            <Section icon={IconUpload} title={t('locationsUploadFile')}>
               <Stack gap={4}>
                 <button
                   type="button"
@@ -182,7 +182,7 @@ export function LocationImportDrawer({ open, onClose, onComplete }: Readonly<Loc
                     focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)]
                     ${dragging ? 'border-primary bg-primary-container' : 'border-outline hover:border-text-muted'}`}
                 >
-                  <RiUploadCloud2Line size={32} className="text-text-muted" />
+                  <IconUpload size={32} className="text-text-muted" />
                   <span className={`text-sm ${file ? 'font-medium text-primary' : 'text-text'}`}>
                     {file ? file.name : t('locationsDropzone')}
                   </span>
@@ -197,7 +197,7 @@ export function LocationImportDrawer({ open, onClose, onComplete }: Readonly<Loc
                 />
                 {error ? (
                   <div className="flex items-start gap-2 rounded border border-border-tertiary bg-surface-variant p-3 text-sm text-error">
-                    <RiErrorWarningFill size={18} className="shrink-0" />
+                    <IconErrorFill size={18} className="shrink-0" />
                     <span>{error}</span>
                   </div>
                 ) : null}

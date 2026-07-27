@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
+import { IconClose, IconGroup, IconTeam } from '../../components/ui/icons';
 import {
   OhsDialog,
   PermissionGuard,
@@ -107,7 +107,7 @@ export function CareTeamDetailsDrawer({
         <span className="ohs-user-drawer__id-chip">{team.id}</span>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -131,7 +131,7 @@ export function CareTeamDetailsDrawer({
     <>
       <Drawer open onClose={onClose} title={team.name ?? team.id ?? ''} header={header} footer={footer}>
         <div className="ohs-detail-body">
-          <Section icon={RiTeamLine} title={t('sectionBasicInfo')}>
+          <Section icon={IconTeam} title={t('sectionBasicInfo')}>
             <Stack gap={4}>
               <Field label={t('descriptionLabel')} value={description} />
               <Field label={t('organizationForTeam')} value={orgName} />
@@ -142,7 +142,7 @@ export function CareTeamDetailsDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiGroupLine} title={t('sectionMembers')}>
+          <Section icon={IconGroup} title={t('sectionMembers')}>
             {members.length === 0 ? (
               <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
             ) : (

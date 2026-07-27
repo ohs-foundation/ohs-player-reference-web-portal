@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'ohs-player-web-core';
-import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react';
+import { IconChevronLeft, IconChevronRight } from './icons';
 import { Checkbox } from './Checkbox';
 
 export interface DataTableColumn<Row> {
@@ -256,7 +256,7 @@ export function DataTable<Row>({
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  <RiArrowLeftSLine size={20} />
+                  <IconChevronLeft size={20} />
                 </button>
                 {pageWindow(page, totalPages).map((n) => (
                   <button
@@ -276,7 +276,7 @@ export function DataTable<Row>({
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
-                  <RiArrowRightSLine size={20} />
+                  <IconChevronRight size={20} />
                 </button>
               </div>
             </div>

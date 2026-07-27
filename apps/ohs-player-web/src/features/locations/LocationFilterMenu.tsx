@@ -1,4 +1,4 @@
-import { RiCheckLine, RiFilterLine } from '@remixicon/react';
+import { IconCheck, IconFilter } from '../../components/ui/icons';
 import { OhsDropdownMenu, useTranslation } from 'ohs-player-web-core';
 
 export type LocationStatusFilter = 'all' | 'active' | 'suspended' | 'inactive';
@@ -27,7 +27,7 @@ export function LocationFilterMenu({ value, onChange }: Readonly<LocationFilterM
             active ? 'border-primary bg-primary-container text-primary' : 'border-border-secondary bg-surface text-text hover:border-text-muted'
           }`}
         >
-          <RiFilterLine size={18} aria-hidden="true" />
+          <IconFilter size={18} aria-hidden="true" />
           {t('locationsFilterButton')}
         </button>
       </OhsDropdownMenu.Trigger>
@@ -43,7 +43,7 @@ export function LocationFilterMenu({ value, onChange }: Readonly<LocationFilterM
               onSelect={() => onChange(o.value)}
             >
               {t(o.labelKey)}
-              {value === o.value ? <RiCheckLine size={16} className="text-primary" aria-hidden="true" /> : null}
+              {value === o.value ? <IconCheck size={16} className="text-primary" aria-hidden="true" /> : null}
             </OhsDropdownMenu.Item>
           ))}
         </OhsDropdownMenu.Content>

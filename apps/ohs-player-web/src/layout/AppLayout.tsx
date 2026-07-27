@@ -6,28 +6,27 @@ import {
   useTranslation,
 } from 'ohs-player-web-core';
 import {
-  RiArrowDownSLine,
-  RiBuildingFill,
-  RiBuildingLine,
-  RiDashboardFill,
-  RiDashboardLine,
-  RiMapPin3Fill,
-  RiMapPin3Line,
-  RiMenuFoldLine,
-  RiMenuLine,
-  RiMenuUnfoldLine,
-  RiMoonLine,
-  RiSunLine,
-  RiTeamFill,
-  RiTeamLine,
-  RiUserFill,
-  RiUserLine,
-  RiMagicLine,
-  RiMagicFill,
-  RiDatabase2Line,
-  RiDatabase2Fill,
-  type RemixiconComponentType,
-} from '@remixicon/react';
+  IconBuilding,
+  IconBuildingFill,
+  IconChevronDown,
+  IconDashboard,
+  IconDashboardFill,
+  IconDatabase,
+  IconDatabaseFill,
+  IconMagic,
+  IconMagicFill,
+  IconMapPin,
+  IconMapPinFill,
+  IconMenu,
+  IconMenuFold,
+  IconMoon,
+  IconSun,
+  IconTeam,
+  IconTeamFill,
+  IconUser,
+  IconUserFill,
+  type IconComponent,
+} from '../components/ui/icons';
 import { Avatar, IconButton } from '../components/ui';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useState } from 'react';
@@ -44,18 +43,18 @@ interface NavItem {
   label: string;
   permission: string;
   flag?: string;
-  LineIcon: RemixiconComponentType;
-  FillIcon: RemixiconComponentType;
+  LineIcon: IconComponent;
+  FillIcon: IconComponent;
 }
 
 const NAV_DEFS = [
-  { to: '/', labelKey: 'navDashboard', permission: 'dashboard.view', flag: 'dashboard', LineIcon: RiDashboardLine, FillIcon: RiDashboardFill },
-  { to: '/users', labelKey: 'navUsers', permission: 'users.view', flag: 'userMgmt', LineIcon: RiUserLine, FillIcon: RiUserFill },
-  { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: RiMapPin3Line, FillIcon: RiMapPin3Fill },
-  { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: RiBuildingLine, FillIcon: RiBuildingFill },
-  { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: RiTeamLine, FillIcon: RiTeamFill },
-  { to: '/resources', labelKey: 'navFhirViewer', permission: 'fhir-viewer.view', flag: 'fhirViewer', LineIcon: RiDatabase2Line, FillIcon: RiDatabase2Fill },
-  { to: '/setup', labelKey: 'navSetup', permission: 'setup.view', flag: 'setupWizard', LineIcon: RiMagicLine, FillIcon: RiMagicFill },
+  { to: '/', labelKey: 'navDashboard', permission: 'dashboard.view', flag: 'dashboard', LineIcon: IconDashboard, FillIcon: IconDashboardFill },
+  { to: '/users', labelKey: 'navUsers', permission: 'users.view', flag: 'userMgmt', LineIcon: IconUser, FillIcon: IconUserFill },
+  { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: IconMapPin, FillIcon: IconMapPinFill },
+  { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: IconBuilding, FillIcon: IconBuildingFill },
+  { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: IconTeam, FillIcon: IconTeamFill },
+  { to: '/resources', labelKey: 'navFhirViewer', permission: 'fhir-viewer.view', flag: 'fhirViewer', LineIcon: IconDatabase, FillIcon: IconDatabaseFill },
+  { to: '/setup', labelKey: 'navSetup', permission: 'setup.view', flag: 'setupWizard', LineIcon: IconMagic, FillIcon: IconMagicFill },
 ] as const;
 
 export function AppLayout() {
@@ -92,7 +91,7 @@ export function AppLayout() {
             className="app-topbar__menu-toggle"
             onClick={() => setOpen((v) => !v)}
           >
-            <RiMenuLine size={24} />
+            <IconMenu size={24} />
           </IconButton>
           <span className="app-topbar__logo">
             <BrandMark size={40} />
@@ -103,7 +102,7 @@ export function AppLayout() {
             className="app-topbar__collapse"
             onClick={() => setCollapsed((v) => !v)}
           >
-            {collapsed ? <RiMenuUnfoldLine size={24} /> : <RiMenuFoldLine size={24} />}
+            {collapsed ? <IconMenu size={24} /> : <IconMenuFold size={24} />}
           </IconButton>
         </div>
         <div className="app-topbar__actions">
@@ -113,7 +112,7 @@ export function AppLayout() {
             className="app-topbar__bell"
             onClick={toggle}
           >
-            {mode === 'dark' ? <RiSunLine size={24} /> : <RiMoonLine size={24} />}
+            {mode === 'dark' ? <IconSun size={24} /> : <IconMoon size={24} />}
           </IconButton>
           <NotificationsBell />
           <UserMenu
@@ -209,7 +208,7 @@ function UserMenu({
               {email ? <span className="app-topbar__user-email-inline">{email}</span> : null}
             </span>
           </span>
-          <RiArrowDownSLine size={16} className="app-topbar__user-chevron" aria-hidden="true" />
+          <IconChevronDown size={16} className="app-topbar__user-chevron" aria-hidden="true" />
         </button>
       </OhsDropdownMenu.Trigger>
       <OhsDropdownMenu.Portal>

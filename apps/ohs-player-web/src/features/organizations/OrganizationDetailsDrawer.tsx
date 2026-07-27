@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
+import { IconBuilding, IconClose, IconMapPin } from '../../components/ui/icons';
 import {
   OhsDialog,
   PermissionGuard,
@@ -104,7 +104,7 @@ export function OrganizationDetailsDrawer({
         {identifierValue ? <span className="ohs-user-drawer__id-chip">{identifierValue}</span> : null}
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -128,7 +128,7 @@ export function OrganizationDetailsDrawer({
     <>
       <Drawer open onClose={onClose} title={org.name ?? org.id ?? ''} header={header} footer={footer}>
         <div className="ohs-detail-body">
-          <Section icon={RiBuildingLine} title={t('sectionBasicInfo')}>
+          <Section icon={IconBuilding} title={t('sectionBasicInfo')}>
             <Stack gap={4}>
               <Field label={t('organizationType')} value={typeLabel} />
               <Field label={t('emailAddress')} value={email} />
@@ -139,14 +139,14 @@ export function OrganizationDetailsDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiMapPinLine} title={t('sectionManagedLocations')}>
+          <Section icon={IconMapPin} title={t('sectionManagedLocations')}>
             {locations.length === 0 ? (
               <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
             ) : (
               <Stack gap={3}>
                 {locations.map((l) => (
                   <Inline key={l.id} style={{ gap: 'var(--ohs-sys-spacing-2, 8px)', alignItems: 'center' }}>
-                    <RiMapPinLine size={16} aria-hidden="true" />
+                    <IconMapPin size={16} aria-hidden="true" />
                     <span>{l.name}</span>
                   </Inline>
                 ))}

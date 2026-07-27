@@ -1,4 +1,4 @@
-import { RiMapPin2Line, RiErrorWarningLine } from '@remixicon/react';
+import { IconMapPin, IconWarning } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { Button, EmptyState, ErrorState, Inline } from '../../components/ui';
 import type { HierarchyError } from './useLocationHierarchy';
@@ -22,7 +22,7 @@ export function HierarchyEmpty({ onImport }: Readonly<{ onImport?: () => void }>
   const { t } = useTranslation();
   return (
     <EmptyState
-      icon={<RiMapPin2Line size={28} />}
+      icon={<IconMapPin size={28} />}
       title={t('locationsEmptyTitle')}
       description={t('locationsEmptyDescription')}
       action={
@@ -44,7 +44,7 @@ export function HierarchyErrorState({
   const detail = error.message;
   return (
     <ErrorState
-      icon={<RiErrorWarningLine size={28} />}
+      icon={<IconWarning size={28} />}
       title={t('locationsErrorTitle')}
       description={detail || t('locationsErrorDescription')}
       action={

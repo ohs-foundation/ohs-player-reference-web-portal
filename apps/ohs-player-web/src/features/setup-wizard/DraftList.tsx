@@ -1,4 +1,4 @@
-import { RiDeleteBinLine } from '@remixicon/react';
+import { IconDelete } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { IconButton } from '../../components/ui';
 
@@ -67,7 +67,7 @@ export function DraftList({
             </button>
             {!readOnly && onRemove ? (
               <IconButton label={t('removeAssignment')} onClick={() => onRemove(item.id)}>
-                <RiDeleteBinLine size={20} />
+                <IconDelete size={20} />
               </IconButton>
             ) : null}
           </li>

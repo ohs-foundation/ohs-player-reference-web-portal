@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react';
-import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
+import { IconBuilding, IconClose, IconMapPin } from '../../components/ui/icons';
 import {
   bundleEntry,
   commitBundle,
@@ -196,7 +196,7 @@ export function OrganizationFormDrawer({
         </p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -223,7 +223,7 @@ export function OrganizationFormDrawer({
       <form id={FORM_ID} className="ohs-detail-body" onSubmit={onFormSubmit}>
         {error ? <ErrorState description={error} /> : null}
 
-        <Section icon={RiBuildingLine} title={t('sectionBasicInfo')}>
+        <Section icon={IconBuilding} title={t('sectionBasicInfo')}>
           <Stack gap={5}>
             <StackedInput
               full
@@ -274,7 +274,7 @@ export function OrganizationFormDrawer({
           </Stack>
         </Section>
 
-        <Section icon={RiMapPinLine} title={t('sectionManagedLocations')}>
+        <Section icon={IconMapPin} title={t('sectionManagedLocations')}>
           <MultiSelect
             label={t('contextLocation')}
             options={locationOptions}

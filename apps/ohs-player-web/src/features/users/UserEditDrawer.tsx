@@ -1,12 +1,12 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
-  RiBriefcaseLine,
-  RiBuildingLine,
-  RiCloseLine,
-  RiMapPinLine,
-  RiTeamLine,
-  RiUserLine,
-} from '@remixicon/react';
+  IconBriefcase,
+  IconBuilding,
+  IconClose,
+  IconMapPin,
+  IconTeam,
+  IconUser,
+} from '../../components/ui/icons';
 import {
   commitBundle,
   useCustomEndpoint,
@@ -233,7 +233,7 @@ export function UserEditDrawer({
         <p className="ohs-form-drawer__subtitle">{t('editUserSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -260,7 +260,7 @@ export function UserEditDrawer({
           <button type="submit" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
           {error ? <ErrorState description={error} /> : null}
 
-          <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
+          <Section icon={IconUser} title={t('sectionBasicInfo')}>
             <Stack gap={5}>
               <div className="ohs-detail-grid">
                 <StackedInput
@@ -327,7 +327,7 @@ export function UserEditDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiBriefcaseLine} title={t('sectionRoleStatus')}>
+          <Section icon={IconBriefcase} title={t('sectionRoleStatus')}>
             <Stack gap={5}>
               <div className="ohs-detail-grid">
                 <StackedSelect
@@ -352,7 +352,7 @@ export function UserEditDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiBuildingLine} title={t('sectionPrimaryOrg')}>
+          <Section icon={IconBuilding} title={t('sectionPrimaryOrg')}>
             <MultiSelect
               label={t('contextOrganization')}
               options={orgOptions}
@@ -362,7 +362,7 @@ export function UserEditDrawer({
             />
           </Section>
 
-          <Section icon={RiMapPinLine} title={t('sectionLocation')}>
+          <Section icon={IconMapPin} title={t('sectionLocation')}>
             <MultiSelect
               label={t('contextLocation')}
               options={locOptions}
@@ -372,7 +372,7 @@ export function UserEditDrawer({
             />
           </Section>
 
-          <Section icon={RiTeamLine} title={t('sectionCareTeams')}>
+          <Section icon={IconTeam} title={t('sectionCareTeams')}>
             <MultiSelect
               label={t('sectionCareTeams')}
               options={careTeamOptions}

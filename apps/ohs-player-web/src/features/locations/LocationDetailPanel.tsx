@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiBuilding2Line, RiCloseLine, RiFileCopyLine, RiInformationLine, RiNodeTree } from '@remixicon/react';
+import { IconBuildings, IconClose, IconCopy, IconInfo, IconTree } from '../../components/ui/icons';
 import { OhsTabs, PermissionGuard, useResource, useTranslation } from 'ohs-player-web-core';
 import type { Location, Organization } from '@medplum/fhirtypes';
 import { Button, Drawer, IconButton } from '../../components/ui';
@@ -124,12 +124,12 @@ export function LocationDetailPanel({
           className="ohs-user-drawer__id-chip inline-flex items-center gap-1.5"
         >
           <span className="font-mono">{sourceId ?? nodeId}</span>
-          <RiFileCopyLine size={13} aria-hidden="true" />
+          <IconCopy size={13} aria-hidden="true" />
           <span className="sr-only">{copied ? t('copied') : t('copy')}</span>
         </button>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -159,7 +159,7 @@ export function LocationDetailPanel({
 
         <OhsTabs.Content value="info">
           <div className="ohs-detail-body">
-            <Section icon={RiInformationLine} title={t('sectionBasicInfo')}>
+            <Section icon={IconInfo} title={t('sectionBasicInfo')}>
               <div className="ohs-detail-grid">
                 <Field label={t('locationName')}>{name}</Field>
                 <Field label={t('columnStatus')}>{status ? <LocationStatusBadge status={status} /> : null}</Field>
@@ -185,14 +185,14 @@ export function LocationDetailPanel({
             </Section>
 
             {orgRef ? (
-              <Section icon={RiBuilding2Line} title={t('locationsManagingOrg')}>
+              <Section icon={IconBuildings} title={t('locationsManagingOrg')}>
                 <span className="inline-flex items-center rounded-pill border border-border px-3 py-1.5 text-sm text-primary">
                   {orgName}
                 </span>
               </Section>
             ) : null}
 
-            <Section icon={RiNodeTree} title={t('locationsChildrenCount')}>
+            <Section icon={IconTree} title={t('locationsChildrenCount')}>
               {node?.hasMoreChildren ? (
                 <div className="mb-3 rounded border border-border-tertiary bg-surface-variant p-3 text-sm text-text-muted">
                   {t('locationsPartialChildrenNotice')}
@@ -209,7 +209,7 @@ export function LocationDetailPanel({
               <Button
                 variant="outlined"
                 type="button"
-                iconLeft={<RiFileCopyLine size={16} />}
+                iconLeft={<IconCopy size={16} />}
                 disabled={!fhirJson}
                 onClick={() => fhirJson && copyText(fhirJson)}
               >

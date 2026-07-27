@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
+import { IconAdd, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
 import careTeamsEmptyIllustration from '../../assets/illustrations/careteams-empty.svg';
 import {
   OhsDropdownMenu,
@@ -137,14 +137,14 @@ export function CareTeamsPage() {
               <Button
                 variant="secondary"
                 type="button"
-                iconRight={<RiArrowDownSLine size={20} />}
+                iconRight={<IconChevronDown size={20} />}
                 onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
               >
                 {t('exportLabel')}
               </Button>
             ) : null}
             <PermissionGuard permission="careteams.manage">
-              <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
                 {t('addCareTeam')}
               </Button>
             </PermissionGuard>
@@ -192,7 +192,7 @@ export function CareTeamsPage() {
             description={t('careTeamsEmptyDescription')}
             action={
               <PermissionGuard permission="careteams.manage">
-                <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
                   {t('addCareTeam')}
                 </Button>
               </PermissionGuard>
@@ -217,7 +217,7 @@ export function CareTeamsPage() {
                 <Button
                   variant="secondary"
                   type="button"
-                  iconLeft={<RiFilter3Line size={20} />}
+                  iconLeft={<IconFilterList size={20} />}
                   aria-expanded={filtersOpen}
                   onClick={() => setFiltersOpen((v) => !v)}
                 >
@@ -307,7 +307,7 @@ export function CareTeamsPage() {
                 <OhsDropdownMenu.Root>
                   <OhsDropdownMenu.Trigger asChild>
                     <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
-                      <RiMore2Fill size={20} />
+                      <IconMore size={20} />
                     </IconButton>
                   </OhsDropdownMenu.Trigger>
                   <OhsDropdownMenu.Portal>

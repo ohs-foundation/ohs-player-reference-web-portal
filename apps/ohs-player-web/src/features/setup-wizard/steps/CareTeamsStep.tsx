@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiTeamLine } from '@remixicon/react';
+import { IconTeam } from '../../../components/ui/icons';
 import { newUrnUuid, useTranslation } from 'ohs-player-web-core';
 import { Button, Stack } from '../../../components/ui';
 import { careTeamFromForm } from '../../sdc/resourceFromAnswers';
@@ -92,7 +92,7 @@ export function CareTeamsStep({
         countLabel={t('setupCountCareTeams')}
       />
 
-      <Section icon={RiTeamLine} title={editingId ? t('editCareTeam') : t('addCareTeam')}>
+      <Section icon={IconTeam} title={editingId ? t('editCareTeam') : t('addCareTeam')}>
         {editingId ? (
           <div className="ohs-setup-form__toolbar">
             <Button type="button" variant="outlined" onClick={resetForm}>

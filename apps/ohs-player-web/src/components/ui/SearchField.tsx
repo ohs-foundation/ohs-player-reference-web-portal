@@ -1,5 +1,5 @@
 import { forwardRef, type InputHTMLAttributes } from 'react';
-import { RiSearchLine } from '@remixicon/react';
+import { IconSearch } from './icons';
 import { cn } from '../../lib/cn';
 
 export interface SearchFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
@@ -23,7 +23,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
         className,
       )}
     >
-      <RiSearchLine size={20} className="shrink-0 text-text-quaternary" aria-hidden="true" />
+      <IconSearch size={20} className="shrink-0 text-text-quaternary" aria-hidden="true" />
       <input
         ref={ref}
         type="search"

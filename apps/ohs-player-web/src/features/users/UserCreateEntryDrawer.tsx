@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiArrowRightLine, RiCloseLine, RiGuideLine, RiFlashlightLine } from '@remixicon/react';
+import { IconArrowRight, IconClose, IconFlash, IconGuide } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { Button, Drawer, IconButton } from '../../components/ui';
 import { UserCreateDrawer } from './UserCreateDrawer';
@@ -36,7 +36,7 @@ export function UserCreateEntryDrawer({
         <p className="ohs-form-drawer__subtitle">{t('addUserModeSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -58,13 +58,13 @@ export function UserCreateEntryDrawer({
           onClick={() => setMode('quick')}
         >
           <span className="ohs-create-mode__icon" aria-hidden="true">
-            <RiFlashlightLine size={24} />
+            <IconFlash size={24} />
           </span>
           <span className="ohs-create-mode__text">
             <span className="ohs-create-mode__title">{t('addUserQuickTitle')}</span>
             <span className="ohs-create-mode__desc">{t('addUserQuickDescription')}</span>
           </span>
-          <RiArrowRightLine size={20} className="ohs-create-mode__arrow" aria-hidden="true" />
+          <IconArrowRight size={20} className="ohs-create-mode__arrow" aria-hidden="true" />
         </button>
 
         <button
@@ -73,13 +73,13 @@ export function UserCreateEntryDrawer({
           onClick={() => setMode('wizard')}
         >
           <span className="ohs-create-mode__icon" aria-hidden="true">
-            <RiGuideLine size={24} />
+            <IconGuide size={24} />
           </span>
           <span className="ohs-create-mode__text">
             <span className="ohs-create-mode__title">{t('addUserWizardTitle')}</span>
             <span className="ohs-create-mode__desc">{t('addUserWizardDescription')}</span>
           </span>
-          <RiArrowRightLine size={20} className="ohs-create-mode__arrow" aria-hidden="true" />
+          <IconArrowRight size={20} className="ohs-create-mode__arrow" aria-hidden="true" />
         </button>
       </div>
     </Drawer>

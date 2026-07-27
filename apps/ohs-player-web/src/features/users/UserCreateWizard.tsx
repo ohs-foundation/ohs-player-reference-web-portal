@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiCloseLine } from '@remixicon/react';
+import { IconClose } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES } from '../../config/roles';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
@@ -57,7 +57,7 @@ export function UserCreateWizard({
         <p className="ohs-form-drawer__subtitle">{t(stepKey)}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
