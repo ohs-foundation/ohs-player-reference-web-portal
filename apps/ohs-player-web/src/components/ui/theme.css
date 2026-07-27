@@ -35,10 +35,11 @@
   --ohs-neutral-950: #0d0d0d;
   /* Semantic colours beyond the managed set */
   --ohs-color-surface-variant: #f5f5f5;
-  --ohs-color-text-quaternary: #9e9e9e; /* Content/Quaternary — placeholders/muted */
+  --ohs-color-text-quaternary: #696969; /* Content/Quaternary — placeholders/muted */
   --ohs-color-border-secondary: #d4d4d4; /* Border/Secondary */
   --ohs-color-border-tertiary: #b8b8b8; /* Border/Tertiary */
-  --ohs-color-positive: #009933; /* Content/Positive */
+  --ohs-color-outline: #74777f; /* Control boundaries (inputs, checkboxes, outlined buttons) — WCAG 1.4.11 */
+  --ohs-color-positive: #006e29; /* Content/Positive */
   --ohs-color-positive-surface: #e6f6ec; /* Active pill tint */
   --ohs-color-neutral-surface: #f0f0f0; /* Inactive pill tint */
   /* Location administrative-level badges (bg / border / text). Root uses the brand fill. */
@@ -53,13 +54,13 @@
   --ohs-color-level-county-text: #094f9a;
   --ohs-color-level-subcounty-bg: #ffeb99;
   --ohs-color-level-subcounty-border: #ffdb4d;
-  --ohs-color-level-subcounty-text: #997a00;
+  --ohs-color-level-subcounty-text: #755d00;
   --ohs-color-level-ward-bg: #ededed;
   --ohs-color-level-ward-border: #d4d4d4;
   --ohs-color-level-ward-text: #696969;
   --ohs-color-level-facility-bg: #b8ffcf;
   --ohs-color-level-facility-border: #29ff70;
-  --ohs-color-level-facility-text: #009933;
+  --ohs-color-level-facility-text: #006e29;
   --ohs-color-level-unit-bg: transparent;
   --ohs-color-level-unit-border: #d4d4d4;
   --ohs-color-level-unit-text: #696969;
@@ -84,6 +85,18 @@
 
 [data-ohs-root] * {
   box-sizing: border-box;
+}
+
+/* Unlayered and `!important` so it also reaches Radix portals and Tailwind utility transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Global button reset (Preflight is off). Must stay in @layer base with :where() — unlayered it would
@@ -193,7 +206,7 @@
   font-size: var(--ohs-text-body, 16px);
   color: var(--ohs-color-text, #1f2933);
   background: var(--ohs-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border, #cdd7e1);
+  border: 1px solid var(--ohs-color-outline, #74777f);
   border-radius: var(--ohs-radius-sm, 8px);
   padding: 0 var(--ohs-spacing-3, 12px);
   height: 44px;
@@ -221,7 +234,7 @@
   font-size: var(--ohs-text-body, 16px);
   color: var(--ohs-color-text, #1f2933);
   background: var(--ohs-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border, #cdd7e1);
+  border: 1px solid var(--ohs-color-outline, #74777f);
   border-radius: var(--ohs-radius-sm, 8px);
   padding: 0 var(--ohs-spacing-3, 12px);
   height: 44px;
@@ -694,7 +707,7 @@
 .ohs-detail-field__label {
   font-size: var(--ohs-font-text-s-size, 12px);
   line-height: var(--ohs-font-text-s-line, 16px);
-  color: var(--ohs-color-text-quaternary, #9e9e9e);
+  color: var(--ohs-color-text-quaternary, #696969);
 }
 .ohs-detail-field__value {
   font-size: var(--ohs-font-text-xl-size, 20px);
@@ -801,7 +814,7 @@
 .ohs-formfield__label {
   font-size: var(--ohs-font-text-s-size, 12px);
   line-height: var(--ohs-font-text-s-line, 16px);
-  color: var(--ohs-color-text-quaternary, #9e9e9e);
+  color: var(--ohs-color-text-quaternary, #696969);
 }
 .ohs-formfield__required {
   color: var(--ohs-color-error, #b3261e);
@@ -823,7 +836,7 @@
   min-height: 64px;
 }
 .ohs-formfield__input::placeholder {
-  color: var(--ohs-color-text-quaternary, #9e9e9e);
+  color: var(--ohs-color-text-quaternary, #696969);
 }
 /* Native select sitting flush inside the stacked field, with a remix chevron on the right. */
 .ohs-formfield__selectwrap {
@@ -926,7 +939,7 @@
 .ohs-radio-group__label {
   font-size: var(--ohs-font-text-s-size, 12px);
   line-height: var(--ohs-font-text-s-line, 16px);
-  color: var(--ohs-color-text-quaternary, #9e9e9e);
+  color: var(--ohs-color-text-quaternary, #696969);
 }
 .ohs-radio-group__options {
   display: flex;
@@ -1846,9 +1859,10 @@
 [data-theme='dark'],
 [data-theme='dark'] [data-ohs-root] {
   --ohs-color-surface-variant: #363636; /* Neutral/800 — section headers, chips, avatars */
-  --ohs-color-text-quaternary: #696969; /* Content/Quaternary (Neutral/600) */
+  --ohs-color-text-quaternary: #9e9e9e; /* Content/Quaternary (Neutral/400) */
   --ohs-color-border-secondary: #4f4f4f; /* Border/Secondary (Neutral/700) */
   --ohs-color-border-tertiary: #696969; /* Border/Tertiary (Neutral/600) */
+  --ohs-color-outline: #8e9099;
   --ohs-color-positive: #00e04b; /* Content/Positive (Green/400) */
   --ohs-color-positive-surface: rgba(0, 224, 75, 0.16);
   --ohs-color-neutral-surface: rgba(255, 255, 255, 0.08);

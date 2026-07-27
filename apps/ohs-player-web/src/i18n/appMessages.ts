@@ -15,6 +15,7 @@ export const appMessageOverrides = {
   navCareTeams: 'Care Teams',
   navFhirViewer: 'FHIR Viewer',
   navToggle: 'Toggle navigation',
+  skipToContent: 'Skip to main content',
   appTopbarTitle: 'Open Health Stack',
   globalSearch: 'Global Search',
   searchNoResults: 'No matches found.',

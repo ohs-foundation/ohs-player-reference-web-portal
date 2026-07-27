@@ -9,9 +9,9 @@ import type { ThemeConfig } from 'ohs-player-web-core';
  */
 export const darkTheme: ThemeConfig = {
   colors: {
-    primary: '#106AC9', // Brand/600
-    primaryHover: '#1F87FC', // Brand/500
-    primaryContrast: '#FAFAFA',
+    primary: '#7BACFD',
+    primaryHover: '#A9C7FF',
+    primaryContrast: '#003063',
     primaryContainer: '#04366D', // Brand/800
     surface: '#1A1A1A', // Surface L0 (Neutral/900) — cards, drawers, top bar, sidebar
     background: '#0D0D0D', // Background (Neutral/950) — page

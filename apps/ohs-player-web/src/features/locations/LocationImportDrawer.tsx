@@ -180,7 +180,7 @@ export function LocationImportDrawer({ open, onClose, onComplete }: Readonly<Loc
                   onDrop={onDrop}
                   className={`flex w-full flex-col items-center gap-2 rounded border-2 border-dashed p-8 text-center outline-none
                     focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)]
-                    ${dragging ? 'border-primary bg-primary-container' : 'border-border-tertiary hover:border-text-muted'}`}
+                    ${dragging ? 'border-primary bg-primary-container' : 'border-outline hover:border-text-muted'}`}
                 >
                   <RiUploadCloud2Line size={32} className="text-text-muted" />
                   <span className={`text-sm ${file ? 'font-medium text-primary' : 'text-text'}`}>

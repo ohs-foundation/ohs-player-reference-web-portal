@@ -17,9 +17,9 @@ const button = cva(
       variant: {
         primary: 'bg-primary text-primary-contrast not-disabled:hover:bg-primary-hover',
         secondary:
-          'bg-transparent border-border-tertiary text-text-muted not-disabled:hover:bg-surface-variant',
+          'bg-transparent border-outline text-text-muted not-disabled:hover:bg-surface-variant',
         outlined:
-          'bg-transparent border-border-tertiary text-text-muted not-disabled:hover:bg-surface-variant',
+          'bg-transparent border-outline text-text-muted not-disabled:hover:bg-surface-variant',
         ghost: 'bg-transparent text-text border-border not-disabled:hover:bg-surface-variant',
         danger: 'bg-error text-primary-contrast not-disabled:hover:brightness-[0.92]',
         // M3-elevated: previously unstyled (rendered as base). Now a surface + low elevation.

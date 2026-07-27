@@ -31,6 +31,7 @@
   --color-border: var(--ohs-color-border);
   --color-border-secondary: var(--ohs-color-border-secondary);
   --color-border-tertiary: var(--ohs-color-border-tertiary);
+  --color-outline: var(--ohs-color-outline);
   --color-focus: var(--ohs-color-focus-ring);
   --color-error: var(--ohs-color-error);
   --color-success: var(--ohs-color-success);

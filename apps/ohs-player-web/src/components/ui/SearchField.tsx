@@ -18,7 +18,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
       className={cn(
         'ohs-searchfield',
         'inline-flex items-center gap-4 w-[357px] max-w-full box-border px-6 rounded',
-        'border border-border-secondary bg-surface',
+        'border border-outline bg-surface',
         size === 'lg' ? 'h-14' : 'h-12',
         className,
       )}

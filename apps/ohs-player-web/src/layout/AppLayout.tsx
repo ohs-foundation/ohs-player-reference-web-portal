@@ -82,6 +82,9 @@ export function AppLayout() {
       data-sidebar-open={open ? 'true' : undefined}
       data-sidebar-collapsed={collapsed ? 'true' : undefined}
     >
+      <a className="app-skip-link" href="#main-content">
+        {t('skipToContent')}
+      </a>
       <header className="app-topbar">
         <div className="app-topbar__brand">
           <IconButton
@@ -142,7 +145,7 @@ export function AppLayout() {
         </nav>
       </aside>
 
-      <main className="app-shell__main">
+      <main className="app-shell__main" id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
     </div>

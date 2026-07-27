@@ -13,6 +13,7 @@
     "test": "turbo run test",
     "seed": "tsx scripts/seed.ts",
     "bundle:check": "node scripts/check-core-bundle-size.mjs",
+    "contrast:check": "node scripts/check-contrast.mjs",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
