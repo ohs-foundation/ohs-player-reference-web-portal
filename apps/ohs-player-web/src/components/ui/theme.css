@@ -384,6 +384,14 @@
   min-width: 0;
 }
 /* Drop the cells' outer edges so only interior grid lines remain (card supplies the perimeter). */
+/* Scoped to the wrapper so a dense table cannot leak density into menus, dialogs or toasts. */
+.ohs-table-wrapper[data-density='-1'] {
+  --ohs-sys-density-scale: -1;
+}
+.ohs-table-wrapper[data-density='-2'] {
+  --ohs-sys-density-scale: -2;
+}
+
 .ohs-table-wrapper[data-flush='true'] .ohs-table td:last-child,
 .ohs-table-wrapper[data-flush='true'] .ohs-table th:last-child {
   border-right: none;
@@ -425,7 +433,7 @@
   color: var(--ohs-color-text, #0d0d0d);
 }
 .ohs-table tbody tr {
-  height: 64px;
+  height: calc(64px + var(--ohs-sys-density-scale, 0) * 4px);
   transition: background 80ms ease;
 }
 .ohs-table tbody tr:hover {

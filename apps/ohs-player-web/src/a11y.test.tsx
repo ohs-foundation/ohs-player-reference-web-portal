@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -89,6 +89,33 @@ describe('a11y', () => {
     const main = document.getElementById('main-content');
     expect(main?.tagName).toBe('MAIN');
     expect(main).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('keeps every nav destination reachable and named when railed', () => {
+    const { container } = renderShell();
+    const expanded = Array.from(container.querySelectorAll('.app-sidebar__link')).map(
+      (el) => el.textContent,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
+
+    const aside = container.querySelector('.app-sidebar');
+    expect(aside).toHaveAttribute('data-collapsed', 'true');
+
+    const railed = Array.from(container.querySelectorAll('.app-sidebar__link'));
+    expect(railed.map((el) => el.textContent)).toEqual(expanded);
+    expect(railed.length).toBeGreaterThan(0);
+    for (const link of railed) {
+      expect(link).not.toHaveAttribute('aria-hidden');
+      expect(link.getAttribute('href')).toBeTruthy();
+    }
+  });
+
+  it('rail has no serious or critical axe violations', async () => {
+    const { container } = renderShell();
+    fireEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
+    const result = await axe(container, AXE_OPTIONS);
+    expect(result.violations.filter((v) => BLOCKING.has(v.impact ?? ''))).toEqual([]);
   });
 
   it('places the skip link before every other focusable element', () => {

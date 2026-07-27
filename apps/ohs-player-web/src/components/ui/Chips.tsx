@@ -36,11 +36,21 @@ export function FilterChip({ label, selected, onChange, disabled, icon }: Readon
 export interface ChipSetProps {
   children: ReactNode;
   className?: string;
+  /** Set when more than one chip can be selected at a time. */
+  multiSelect?: boolean;
 }
 
-export function ChipSet({ children, className }: Readonly<ChipSetProps>): React.ReactElement {
+export function ChipSet({
+  children,
+  className,
+  multiSelect,
+}: Readonly<ChipSetProps>): React.ReactElement {
   return (
-    <div role="listbox" aria-multiselectable="true" className={cn('flex flex-wrap gap-2', className)}>
+    <div
+      role="listbox"
+      aria-multiselectable={multiSelect ? true : undefined}
+      className={cn('flex flex-wrap gap-2', className)}
+    >
       {children}
     </div>
   );
