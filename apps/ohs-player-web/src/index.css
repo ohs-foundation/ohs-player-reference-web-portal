@@ -108,6 +108,7 @@ body {
 }
 .app-topbar__collapse:hover,
 .app-topbar__bell:hover {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -196,6 +197,7 @@ body {
 }
 .app-search__hit:hover,
 .app-search__hit:focus-visible {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -274,6 +276,7 @@ body {
   cursor: pointer;
 }
 .app-topbar__user:hover {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -361,6 +364,7 @@ body {
 }
 
 .app-sidebar .app-sidebar__link:hover:not(.app-sidebar__link--active) {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );

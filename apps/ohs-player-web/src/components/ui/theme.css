@@ -189,6 +189,7 @@
 /* Disabled: M3 tints container and content separately instead of fading the whole control. */
 .ohs-button:disabled,
 .ohs-icon-button:disabled {
+  background: var(--ohs-sys-color-surface-container-high, #e9e7ec);
   background: color-mix(
     in srgb,
     var(--ohs-sys-color-on-surface, #0d0d0d)
@@ -196,6 +197,7 @@
     transparent
   );
   border-color: transparent;
+  color: var(--ohs-sys-color-outline, #74777f);
   color: color-mix(
     in srgb,
     var(--ohs-sys-color-on-surface, #0d0d0d)
@@ -326,6 +328,7 @@
   outline: none;
 }
 .ohs-select-item[data-highlighted] {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -430,6 +433,7 @@
   transition: background 80ms ease;
 }
 .ohs-table tbody tr:hover {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -502,6 +506,7 @@
   cursor: pointer;
 }
 .ohs-pagination__page:hover:not(:disabled):not([aria-current='page']) {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -1011,6 +1016,7 @@
   cursor: pointer;
 }
 .ohs-combobox__option--active {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -1300,6 +1306,7 @@
   cursor: pointer;
 }
 .ohs-toast-close:hover {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -1370,6 +1377,7 @@
 }
 .ohs-create-mode__option:hover {
   border-color: var(--ohs-color-text-muted, #696969);
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );

@@ -86,6 +86,7 @@
 
 .ohs-dropdown-item:hover,
 .ohs-dropdown-item[data-highlighted] {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
@@ -148,6 +149,7 @@
 }
 
 .ohs-json-view__copy:hover {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
     from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
   );
