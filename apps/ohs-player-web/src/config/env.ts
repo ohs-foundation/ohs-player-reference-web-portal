@@ -8,7 +8,6 @@ export const env = {
     'http://localhost:8090/realms/ohs',
   clientId: (import.meta.env.VITE_CLIENT_ID as string | undefined) ?? 'ohs-player-web',
   fhirVersion: import.meta.env.VITE_FHIR_VERSION ?? 'R4',
-  themeAlt: import.meta.env.VITE_THEME_ALT === 'true',
   flags: {
     userMgmt: import.meta.env.VITE_FLAG_USER_MGMT !== 'false',
     locationMgmt: import.meta.env.VITE_FLAG_LOCATION_MGMT !== 'false',

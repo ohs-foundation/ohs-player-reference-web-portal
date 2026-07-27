@@ -48,7 +48,6 @@ const LIGHT = {
   borderSecondary: '#D4D4D4',
   borderTertiary: '#B8B8B8',
   error: '#B3261E',
-  warning: '#8F5D00',
   success: '#006E29',
 };
 
@@ -65,7 +64,6 @@ const DARK = {
   borderSecondary: '#4F4F4F',
   borderTertiary: '#696969',
   error: '#FF8F8F',
-  warning: '#FFE066',
   success: '#00E04B',
 };
 
@@ -118,7 +116,7 @@ function pairs(mode, t, badges) {
     ui(t.primary, t.surface, 'primary as focus outline on surface'),
 
     on(t.error, t.surface, 'error text on surface'),
-    on(t.warning, t.surface, 'warning text on surface'),
+    on(sys(mode, 'warning'), t.surface, 'warning text on surface'),
     on(sys(mode, 'success'), t.surface, 'success text on surface'),
 
     ui(sys(mode, 'outline'), t.surface, 'outline as control border on surface'),
@@ -177,7 +175,7 @@ const PAIRS = [
   {
     mode: 'light',
     name: 'warning on StatusBadge tint',
-    fg: LIGHT.warning,
+    fg: SYS.light['--ohs-sys-color-warning'],
     bg: WARNING_TINT,
     over: LIGHT.surface,
     kind: 'text',
@@ -215,7 +213,7 @@ const PAIRS = [
   {
     mode: 'dark',
     name: 'warning on StatusBadge tint',
-    fg: DARK.warning,
+    fg: SYS.dark['--ohs-sys-color-warning'],
     bg: WARNING_TINT,
     over: DARK.surface,
     kind: 'text',
@@ -291,7 +289,7 @@ const SOURCES = [
 
       border: LIGHT.border,
       success: LIGHT.success,
-      warning: LIGHT.warning,
+     
     },
   ],
   [
@@ -309,7 +307,7 @@ const SOURCES = [
 
       border: DARK.border,
       error: DARK.error,
-      warning: DARK.warning,
+     
       success: DARK.success,
     },
   ],

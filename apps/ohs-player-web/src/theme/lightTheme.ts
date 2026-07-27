@@ -19,7 +19,6 @@ export const lightTheme: ThemeConfig = {
     border: '#EDEDED', // Border/Primary (Neutral/100)
     focusRing: 'rgba(9, 79, 154, 0.28)',
     success: '#006E29', // Content/Positive
-    warning: '#8F5D00', // Notice
   },
   typography: {
     fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',

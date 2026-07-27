@@ -1,6 +1,5 @@
 import type { ThemeConfig } from '../types/config';
 import {
-  refPaletteTokens,
   staticSysTokens,
   sysColorTokens,
   sysShape,
@@ -42,16 +41,13 @@ export function upgradeThemeConfig(v1: ThemeConfig): ThemeConfigV2 {
   pin('primary', c.primary);
   pin('on-primary', c.primaryContrast);
   pin('primary-container', c.primaryContainer);
-  pin('secondary', c.secondary);
   pin('surface', c.surface);
   pin('surface-container', c.background);
   pin('on-surface', c.text);
   pin('on-surface-variant', c.textMuted);
   pin('outline-variant', c.border);
   pin('error', c.error);
-  pin('warning', c.warning);
   pin('success', c.success);
-  pin('info', c.info);
 
   return {
     overrides,
@@ -88,7 +84,6 @@ export function themeCss(config: ThemeConfigV2 = {}): string {
   const shape = { ...sysShape, ...config.shape } as Record<ShapeToken, string>;
 
   const light = {
-    ...refPaletteTokens(),
     ...staticSysTokens(typography, scale, shape, config.density ?? 0),
     ...sysColorTokens('light', config.overrides),
   };

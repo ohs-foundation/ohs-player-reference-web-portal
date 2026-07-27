@@ -26,13 +26,6 @@
 :root,
 [data-ohs-root] {
   /* Neutral scale */
-  --ohs-neutral-50: #fafafa;
-  --ohs-neutral-100: #ededed;
-  --ohs-neutral-200: #d4d4d4;
-  --ohs-neutral-300: #b8b8b8;
-  --ohs-neutral-400: #9e9e9e;
-  --ohs-neutral-600: #696969;
-  --ohs-neutral-950: #0d0d0d;
   /* Semantic colours beyond the managed set */
   --ohs-color-border-secondary: #d4d4d4; /* Border/Secondary */
   --ohs-color-border-tertiary: #b8b8b8; /* Border/Tertiary */

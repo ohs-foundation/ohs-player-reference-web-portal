@@ -20,9 +20,7 @@ export const darkTheme: ThemeConfig = {
     border: '#363636', // Border (Neutral/800) — lifted from the spec's 900 for visibility on dark surfaces
     focusRing: 'rgba(31, 135, 252, 0.4)',
     error: '#FF8F8F', // Negative (Red/200)
-    warning: '#FFE066', // Notice (Yellow/300)
     success: '#00E04B', // Positive (Green/400)
-    info: '#99A9FF', // Info (Blue/200)
   },
   typography: {
     fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',

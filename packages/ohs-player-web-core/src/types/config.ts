@@ -49,7 +49,6 @@ export interface ThemeColors {
   primaryContrast?: string;
   /** Tonal container variant of primary (M3 `primaryContainer`). */
   primaryContainer?: string;
-  secondary?: string;
   /** Card/panel background (M3 `surface`). */
   surface?: string;
   /** Page-level background (M3 `surfaceVariant`). */
@@ -63,9 +62,7 @@ export interface ThemeColors {
   /** Focus-ring colour, typically a translucent primary. */
   focusRing?: string;
   error?: string;
-  warning?: string;
   success?: string;
-  info?: string;
 }
 
 export interface ThemeTypography {
@@ -78,21 +75,10 @@ export interface ThemeBorderRadius {
   default?: number;
 }
 
-export interface ThemeShadow {
-  /** M3 elevation level 1 (cards). */
-  sm?: string;
-  /** M3 elevation level 2 (dialogs, dropdowns). */
-  md?: string;
-  /** M3 elevation level 3 (toasts, popovers). */
-  lg?: string;
-}
-
 export interface ThemeConfig {
   colors?: ThemeColors;
   typography?: ThemeTypography;
-  spacing?: { unit?: number };
   borderRadius?: ThemeBorderRadius;
-  shadow?: ThemeShadow;
 }
 
 export type MessageCatalog = Record<

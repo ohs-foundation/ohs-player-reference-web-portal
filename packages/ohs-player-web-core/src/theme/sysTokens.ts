@@ -222,7 +222,7 @@ const MOTION = {
   'easing-standard-accelerate': 'cubic-bezier(0.3, 0, 1, 1)',
 };
 
-/* Not emitted as `--ohs-spacing-N`: applyTheme sets that name inline with different values. */
+
 const SPACING_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20];
 
 export const sysColorSchemes = { light: LIGHT_SCHEME, dark: DARK_SCHEME };
@@ -258,18 +258,6 @@ export function staticSysTokens(
   for (const [token, value] of Object.entries(MOTION)) out[`--ohs-sys-motion-${token}`] = value;
   for (const step of SPACING_STEPS) out[`--ohs-sys-spacing-${step}`] = `${step * 4}px`;
 
-  return out;
-}
-
-/** Reference palette tokens, `--ohs-ref-palette-<name>-<tone>`. */
-export function refPaletteTokens(): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [name, tones] of Object.entries(refPalettes)) {
-    for (const [tone, hex] of Object.entries(tones)) {
-      out[`--ohs-ref-palette-${name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}-${tone}`] =
-        hex;
-    }
-  }
   return out;
 }
 

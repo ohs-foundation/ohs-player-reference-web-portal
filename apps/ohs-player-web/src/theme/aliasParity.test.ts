@@ -13,7 +13,6 @@ const LEGACY_LIGHT: Record<string, string> = {
   '--ohs-color-primary-hover': '#073C75',
   '--ohs-color-primary-contrast': '#FAFAFA',
   '--ohs-color-primary-container': '#DCE5FE',
-  '--ohs-color-secondary': '#0F766E',
   '--ohs-color-surface': '#FFFFFF',
   '--ohs-color-background': '#F1F2F4',
   '--ohs-color-text': '#0D0D0D',
@@ -21,23 +20,13 @@ const LEGACY_LIGHT: Record<string, string> = {
   '--ohs-color-border': '#EDEDED',
   '--ohs-color-focus-ring': 'rgba(9, 79, 154, 0.28)',
   '--ohs-color-error': '#B3261E',
-  '--ohs-color-warning': '#8F5D00',
   '--ohs-color-success': '#006E29',
-  '--ohs-color-info': '#1B6EF3',
   '--ohs-font-size-base': '16px',
   '--ohs-text-display': '36px',
   '--ohs-text-headline': '24px',
   '--ohs-text-title': '18px',
   '--ohs-text-body': '16px',
   '--ohs-text-label': '14px',
-  '--ohs-spacing-1': '4px',
-  '--ohs-spacing-2': '8px',
-  '--ohs-spacing-3': '12px',
-  '--ohs-spacing-4': '16px',
-  '--ohs-spacing-5': '24px',
-  '--ohs-spacing-6': '32px',
-  '--ohs-spacing-7': '48px',
-  '--ohs-spacing-8': '64px',
   '--ohs-radius-default': '8px',
   '--ohs-radius-sm': '4px',
   '--ohs-radius-lg': '12px',
@@ -55,9 +44,7 @@ const LEGACY_DARK: Record<string, string> = {
   '--ohs-color-text-muted': '#9E9E9E',
   '--ohs-color-border': '#363636',
   '--ohs-color-error': '#FF8F8F',
-  '--ohs-color-warning': '#FFE066',
   '--ohs-color-success': '#00E04B',
-  '--ohs-color-info': '#99A9FF',
 };
 
 function inlineVars(config: Parameters<typeof applyTheme>[0]): Record<string, string> {
@@ -71,7 +58,24 @@ function inlineVars(config: Parameters<typeof applyTheme>[0]): Record<string, st
   return out;
 }
 
+const RETIRED = [
+  '--ohs-color-secondary',
+  '--ohs-color-warning',
+  '--ohs-color-info',
+  '--ohs-shadow-sm',
+  '--ohs-shadow-md',
+  '--ohs-shadow-lg',
+  '--ohs-spacing-1',
+  '--ohs-spacing-5',
+  '--ohs-spacing-unit',
+];
+
 describe('legacy alias parity', () => {
+  it('does not re-emit a retired token', () => {
+    const emitted = Object.keys(inlineVars(mergeTheme(defaultTheme, lightTheme)));
+    expect(RETIRED.filter((name) => emitted.includes(name))).toEqual([]);
+  });
+
   it('light theme still resolves every legacy token to its pre-sprint value', () => {
     const actual = inlineVars(mergeTheme(defaultTheme, lightTheme));
     for (const [name, expected] of Object.entries(LEGACY_LIGHT)) {

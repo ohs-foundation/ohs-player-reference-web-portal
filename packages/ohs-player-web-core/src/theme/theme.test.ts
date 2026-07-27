@@ -136,8 +136,19 @@ describe('applyTheme legacy contract', () => {
 
     expect(el.style.getPropertyValue('--ohs-color-primary')).toBe('#094F9A');
     expect(el.style.getPropertyValue('--ohs-color-text-muted')).toBe('#696969');
-    expect(el.style.getPropertyValue('--ohs-spacing-5')).toBe('24px');
     expect(el.style.getPropertyValue('--ohs-radius-default')).toBe('12px');
+  });
+
+  it('no longer emits the retired spacing, shadow and colour tokens', () => {
+    const el = document.createElement('div');
+    applyTheme(mergeTheme(defaultTheme, brandLight), el);
+    const names = Array.from({ length: el.style.length }, (_, i) => el.style.item(i));
+
+    expect(names.filter((n) => n.startsWith('--ohs-spacing-'))).toEqual([]);
+    expect(names.filter((n) => n.startsWith('--ohs-shadow-'))).toEqual([]);
+    for (const retired of ['--ohs-color-secondary', '--ohs-color-warning', '--ohs-color-info']) {
+      expect(names).not.toContain(retired);
+    }
   });
 
   it('emits no --ohs-sys-* name, so the two layers cannot collide', () => {

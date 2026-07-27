@@ -16,7 +16,7 @@ Types-only exports are listed under **Exported types**; runtime values are group
 
 ## Exported types (`./types/config` and `./sdc`)
 
-Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `ThemeShadow`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
+Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
 
 Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`.
 
@@ -100,6 +100,11 @@ names as inline styles, `themeCss` owns `--ohs-sys-*` and `--ohs-ref-*` as CSS r
 attribute selectors, so no token is emitted by both.
 
 Theme types: `ThemeConfigV2`, `SysColorRole`, `SysColorScheme`, `TypescaleRole`, `TypescaleMetrics`, `ShapeToken`.
+
+**Removed** (were emitted by `applyTheme` but read by nothing): `ThemeShadow`, and `ThemeConfig`'s
+`shadow` and `spacing` fields; `ThemeColors.secondary`/`.warning`/`.info`. Spacing, elevation and the
+warning/info roles now come from `themeCss` as `--ohs-sys-spacing-*`, `--ohs-sys-elevation-*` and
+`--ohs-sys-color-{warning,info}*`. Consumers passing the removed fields should move to `ThemeConfigV2`.
 
 ---
 

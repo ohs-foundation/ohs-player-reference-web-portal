@@ -20,7 +20,6 @@ export type {
   RbacConfig,
   ThemeColors,
   ThemeConfig,
-  ThemeShadow,
   TokenStore,
   UnauthorizedBehaviour,
   UseAuthResult,
