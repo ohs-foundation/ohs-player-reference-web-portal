@@ -81,6 +81,7 @@
   --ohs-font-text-s-line: 16px;
   --ohs-font-weight-regular: 400;
   --ohs-font-weight-medium: 500;
+  --ohs-font-mono: ui-monospace, 'SF Mono', 'Menlo', monospace;
 }
 
 [data-ohs-root] * {
@@ -1246,10 +1247,10 @@
 }
 .ohs-create-mode__option:hover {
   border-color: var(--ohs-color-text-muted, #696969);
-  background: var(--ohs-color-surface-muted, #fafafa);
+  background: var(--ohs-color-surface-variant, #f5f5f5);
 }
 .ohs-create-mode__option:focus-visible {
-  outline: 2px solid var(--ohs-color-focus, #0d0d0d);
+  outline: 2px solid var(--ohs-color-primary, #094f9a);
   outline-offset: 2px;
 }
 .ohs-create-mode__icon {
@@ -1260,7 +1261,7 @@
   width: 48px;
   height: 48px;
   border-radius: var(--ohs-radius-default, 8px);
-  background: var(--ohs-color-surface-muted, #f5f5f5);
+  background: var(--ohs-color-surface-variant, #f5f5f5);
   color: var(--ohs-color-text, #0d0d0d);
 }
 .ohs-create-mode__text {
@@ -1485,7 +1486,7 @@
 .ohs-setup-draft-empty {
   padding: var(--ohs-spacing-5, 24px);
   border: 1px dashed var(--ohs-color-border-secondary, #d4d4d4);
-  border-radius: var(--ohs-radius-md, 8px);
+  border-radius: var(--ohs-radius-default, 8px);
   text-align: center;
 }
 .ohs-setup-draft-empty__title {
@@ -1506,7 +1507,7 @@
   display: flex;
   flex-direction: column;
   border: 1px solid var(--ohs-color-border, #ededed);
-  border-radius: var(--ohs-radius-md, 8px);
+  border-radius: var(--ohs-radius-default, 8px);
   overflow: hidden;
 }
 .ohs-setup-draft-list__item {
@@ -1571,11 +1572,11 @@
   gap: 2px;
   padding: var(--ohs-spacing-4, 16px);
   border: 1px solid var(--ohs-color-border, #ededed);
-  border-radius: var(--ohs-radius-md, 8px);
+  border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-color-surface, #fff);
 }
 .ohs-setup-review-summary__count {
-  font-size: var(--ohs-font-heading-s-size, 20px);
+  font-size: var(--ohs-font-text-xl-size, 20px);
   font-weight: var(--ohs-font-weight-medium, 500);
   color: var(--ohs-color-text, #0d0d0d);
 }
@@ -1602,7 +1603,7 @@
 .ohs-setup-commit-status {
   margin: 0;
   padding: var(--ohs-spacing-3, 12px) var(--ohs-spacing-4, 16px);
-  border-radius: var(--ohs-radius-md, 8px);
+  border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-color-surface-variant, #f5f5f5);
   font-size: var(--ohs-font-text-m-size, 14px);
 }

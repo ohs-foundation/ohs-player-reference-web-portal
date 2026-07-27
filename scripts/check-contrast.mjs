@@ -244,9 +244,48 @@ for (const [target, kind, expectations] of SOURCES) {
   }
 }
 
+/**
+ * A `var(--ohs-x, fallback)` whose token is never declared silently pins the fallback in *both*
+ * themes, so a light-mode fallback survives into dark mode and text disappears on it. Contrast pairs
+ * cannot catch that — the token looks fine, it just never applies.
+ */
+const TOKEN_SOURCES = [
+  'apps/ohs-player-web/src/components/ui/theme.css',
+  'apps/ohs-player-web/src/index.css',
+  'apps/ohs-player-web/src/tailwind.css',
+  'packages/ohs-player-web-core/src/styles.css',
+];
+
+function read(path) {
+  return readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+}
+
+const declared = new Set();
+const referenced = new Map();
+
+for (const name of [...read('packages/ohs-player-web-core/src/theme/theme.ts').matchAll(/setVar\(element,\s*'([^']+)'/g)]) {
+  declared.add(`--ohs-${name[1]}`);
+}
+for (const path of TOKEN_SOURCES) {
+  const body = read(path);
+  for (const m of body.matchAll(/(--ohs-[a-z0-9-]+)\s*:/g)) declared.add(m[1]);
+  body.split('\n').forEach((line, i) => {
+    for (const m of line.matchAll(/var\((--ohs-[a-z0-9-]+)/g)) {
+      if (!referenced.has(m[1])) referenced.set(m[1], []);
+      referenced.get(m[1]).push(`${path}:${i + 1}`);
+    }
+  });
+}
+
+const undeclared = [...referenced].filter(([name]) => !declared.has(name));
+
 const failures = [];
 const exemptions = [];
 let checked = 0;
+
+for (const [name, sites] of undeclared) {
+  failures.push(`${name} referenced but never declared — always resolves to its fallback (${sites.join(', ')})`);
+}
 
 for (const pair of PAIRS) {
   const backdrop = toRgb(pair.over ?? (pair.bg.startsWith('rgba') ? '#FFFFFF' : pair.bg));

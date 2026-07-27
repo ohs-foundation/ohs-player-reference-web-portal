@@ -55,7 +55,7 @@
 .ohs-dropdown-content {
   background: var(--ohs-color-surface, #fff);
   border: 1px solid var(--ohs-color-border, #dde3ed);
-  border-radius: var(--ohs-radius-md, 8px);
+  border-radius: var(--ohs-radius-default, 8px);
   box-shadow: var(--ohs-shadow-md, 0 4px 12px rgba(15, 23, 42, 0.15));
   padding: var(--ohs-spacing-1, 4px);
   min-width: 180px;
@@ -78,7 +78,7 @@
 
 .ohs-dropdown-item:hover,
 .ohs-dropdown-item[data-highlighted] {
-  background: var(--ohs-color-surface-hover, #f0f4ff);
+  background: var(--ohs-color-surface-variant, #f0f4ff);
 }
 
 /* ─── Animations ──────────────────────────────────────────────────────────── */
@@ -101,7 +101,7 @@
   min-width: 0;
   min-height: 0;
   border: 1px solid var(--ohs-color-border, #dde3ed);
-  border-radius: var(--ohs-radius-md, 8px);
+  border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-color-surface-variant, #f5f7fb);
   overflow: hidden;
 }
@@ -177,7 +177,7 @@
   resize: vertical;
   padding: var(--ohs-spacing-4, 16px);
   border: 1px solid var(--ohs-color-border, #dde3ed);
-  border-radius: var(--ohs-radius-md, 8px);
+  border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-color-surface-variant, #f5f7fb);
   color: var(--ohs-color-text, #1f2933);
   font-family: var(--ohs-font-mono, ui-monospace, 'SF Mono', 'Menlo', monospace);
