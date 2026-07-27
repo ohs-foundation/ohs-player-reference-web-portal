@@ -64,8 +64,10 @@ export function PageHeader({ title, description, actions, lastUpdated }: Readonl
   return (
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h2 className="m-0 text-[40px]/[48px] font-medium text-text">{title}</h2>
-        {description ? <p className="mt-2 text-xl/7 font-normal text-text-quaternary">{description}</p> : null}
+        <h2 className="ohs-page-header__title m-0 text-text">{title}</h2>
+        {description ? (
+          <p className="ohs-page-header__description mt-2 text-text-quaternary">{description}</p>
+        ) : null}
         {lastUpdated ? <p className="mt-1 text-sm text-text-muted">{lastUpdated}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}

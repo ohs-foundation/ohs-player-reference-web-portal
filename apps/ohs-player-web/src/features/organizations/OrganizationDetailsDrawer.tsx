@@ -145,7 +145,7 @@ export function OrganizationDetailsDrawer({
             ) : (
               <Stack gap={3}>
                 {locations.map((l) => (
-                  <Inline key={l.id} style={{ gap: 'var(--ohs-spacing-2, 8px)', alignItems: 'center' }}>
+                  <Inline key={l.id} style={{ gap: 'var(--ohs-sys-spacing-2, 8px)', alignItems: 'center' }}>
                     <RiMapPinLine size={16} aria-hidden="true" />
                     <span>{l.name}</span>
                   </Inline>
@@ -164,7 +164,7 @@ export function OrganizationDetailsDrawer({
       >
         <Stack gap={4}>
           <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmDeactivateOrgBody')}</p>
-          <Inline justify="end" style={{ gap: 'var(--ohs-spacing-3, 12px)' }}>
+          <Inline justify="end" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}
             </Button>

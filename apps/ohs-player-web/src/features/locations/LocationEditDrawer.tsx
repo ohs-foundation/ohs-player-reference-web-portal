@@ -172,7 +172,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
   return (
     <Drawer open onClose={onClose} title={t('pageLocationEdit')} header={header} footer={footer}>
       {self.isLoading ? (
-        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
+        <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
           <Spinner label={t('loading')} />
         </div>
       ) : (

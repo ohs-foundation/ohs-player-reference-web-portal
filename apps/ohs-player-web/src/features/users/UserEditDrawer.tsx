@@ -252,7 +252,7 @@ export function UserEditDrawer({
   return (
     <Drawer open onClose={onClose} title={t('pageUserEdit')} header={header} footer={footer}>
       {read.isLoading || relationsLoading || !hydrated ? (
-        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
+        <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
           {read.error ? <ErrorState description={toErrorMessage(read.error)} /> : <Spinner label={t('loading')} />}
         </div>
       ) : (

@@ -207,7 +207,7 @@ export function UserDetailsDrawer({
     <>
     <Drawer open onClose={onClose} title={titleText} header={header} footer={footer}>
       {read.isLoading ? (
-        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
+        <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
           <Spinner label={t('loading')} />
         </div>
       ) : (

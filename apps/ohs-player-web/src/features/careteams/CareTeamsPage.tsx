@@ -205,7 +205,7 @@ export function CareTeamsPage() {
             <Stack gap={3}>
               <Inline
                 justify="between"
-                style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}
+                style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}
               >
                 <SearchField
                   label={t('search')}
@@ -253,7 +253,7 @@ export function CareTeamsPage() {
               render: (tm) => {
                 const members = memberIds(tm);
                 return (
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ohs-spacing-1, 4px)', minWidth: 0 }}>
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ohs-sys-spacing-1, 4px)', minWidth: 0 }}>
                     <button
                       type="button"
                       className="ohs-rowlink"
@@ -264,7 +264,7 @@ export function CareTeamsPage() {
                     >
                       {tm.name ?? tm.id}
                     </button>
-                    <Inline justify="start" style={{ gap: 'var(--ohs-spacing-2, 8px)', alignItems: 'center' }}>
+                    <Inline justify="start" style={{ gap: 'var(--ohs-sys-spacing-2, 8px)', alignItems: 'center' }}>
                       {members.length > 0 ? (
                         <span className="ohs-avatar-stack">
                           {members.slice(0, 3).map((mid) => (
@@ -272,7 +272,7 @@ export function CareTeamsPage() {
                           ))}
                         </span>
                       ) : null}
-                      <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                      <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
                         {t('membersCount', { count: members.length })}
                       </span>
                     </Inline>

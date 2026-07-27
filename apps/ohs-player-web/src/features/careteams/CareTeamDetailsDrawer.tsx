@@ -153,8 +153,8 @@ export function CareTeamDetailsDrawer({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 'var(--ohs-spacing-3, 12px)',
-                      padding: 'var(--ohs-spacing-3, 12px) 0',
+                      gap: 'var(--ohs-sys-spacing-3, 12px)',
+                      padding: 'var(--ohs-sys-spacing-3, 12px) 0',
                       borderBottom: i < members.length - 1 ? '1px solid var(--ohs-color-border, #ededed)' : 'none',
                     }}
                   >
@@ -162,7 +162,7 @@ export function CareTeamDetailsDrawer({
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                       <span>{m.name}</span>
                       {m.role ? (
-                        <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                        <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
                           {m.role}
                         </span>
                       ) : null}
@@ -183,7 +183,7 @@ export function CareTeamDetailsDrawer({
       >
         <Stack gap={4}>
           <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmRetireBody')}</p>
-          <Inline justify="end" style={{ gap: 'var(--ohs-spacing-3, 12px)' }}>
+          <Inline justify="end" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}
             </Button>

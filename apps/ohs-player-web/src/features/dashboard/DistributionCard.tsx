@@ -40,7 +40,7 @@ export function DistributionCard({ title, segments, loading }: Readonly<Distribu
 
   return (
     <Card className="ohs-dist-card">
-      <h3 className="ohs-card-header__title" style={{ marginBottom: 'var(--ohs-spacing-3, 12px)' }}>
+      <h3 className="ohs-card-header__title" style={{ marginBottom: 'var(--ohs-sys-spacing-3, 12px)' }}>
         {title}
       </h3>
       <div className="ohs-dist-card__body">{body}</div>

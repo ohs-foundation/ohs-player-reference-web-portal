@@ -23,7 +23,7 @@
   background: var(--ohs-color-surface, #fff);
   border-radius: var(--ohs-radius-lg, 12px);
   box-shadow: var(--ohs-shadow-lg, 0 8px 32px rgba(15, 23, 42, 0.2));
-  padding: var(--ohs-spacing-6, 24px);
+  padding: var(--ohs-sys-spacing-8, 32px);
   width: min(92vw, 560px);
   max-height: calc(100vh - 64px);
   overflow-y: auto;
@@ -31,7 +31,7 @@
 }
 
 .ohs-dialog-title {
-  margin: 0 0 var(--ohs-spacing-4, 16px);
+  margin: 0 0 var(--ohs-sys-spacing-4, 16px);
   font-size: var(--ohs-text-title, 18px);
   font-weight: 600;
   color: var(--ohs-color-text, #1f2933);
@@ -45,8 +45,8 @@
 .ohs-dialog-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--ohs-spacing-3, 12px);
-  margin-top: var(--ohs-spacing-5, 20px);
+  gap: var(--ohs-sys-spacing-3, 12px);
+  margin-top: var(--ohs-sys-spacing-6, 24px);
   flex-wrap: wrap;
 }
 
@@ -57,7 +57,7 @@
   border: 1px solid var(--ohs-color-border, #dde3ed);
   border-radius: var(--ohs-radius-default, 8px);
   box-shadow: var(--ohs-shadow-md, 0 4px 12px rgba(15, 23, 42, 0.15));
-  padding: var(--ohs-spacing-1, 4px);
+  padding: var(--ohs-sys-spacing-1, 4px);
   min-width: 180px;
   z-index: 52;
   animation: ohs-fade-in 120ms ease;
@@ -66,8 +66,8 @@
 .ohs-dropdown-item {
   display: flex;
   align-items: center;
-  gap: var(--ohs-spacing-2, 8px);
-  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-3, 12px);
+  gap: var(--ohs-sys-spacing-2, 8px);
+  padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-3, 12px);
   border-radius: var(--ohs-radius-sm, 4px);
   font-size: var(--ohs-text-body, 14px);
   color: var(--ohs-color-text, #1f2933);
@@ -84,13 +84,23 @@
 /* ─── Animations ──────────────────────────────────────────────────────────── */
 
 @keyframes ohs-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes ohs-slide-up {
-  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
-  to   { opacity: 1; transform: translate(-50%, -50%); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 
 /* ─── FHIR JSON view / editor ─────────────────────────────────────────────── */
@@ -109,15 +119,15 @@
 .ohs-json-view__toolbar {
   display: flex;
   justify-content: flex-end;
-  padding: var(--ohs-spacing-2, 8px);
+  padding: var(--ohs-sys-spacing-2, 8px);
   border-bottom: 1px solid var(--ohs-color-border, #dde3ed);
 }
 
 .ohs-json-view__copy {
   display: inline-flex;
   align-items: center;
-  gap: var(--ohs-spacing-2, 8px);
-  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-3, 12px);
+  gap: var(--ohs-sys-spacing-2, 8px);
+  padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-3, 12px);
   border: 1px solid var(--ohs-color-border, #dde3ed);
   border-radius: var(--ohs-radius-pill, 999px);
   background: var(--ohs-color-surface, #fff);
@@ -147,7 +157,7 @@
   min-width: 0;
   min-height: 0;
   margin: 0;
-  padding: var(--ohs-spacing-4, 16px);
+  padding: var(--ohs-sys-spacing-4, 16px);
   overflow: auto;
   white-space: pre;
   font-family: var(--ohs-font-mono, ui-monospace, 'SF Mono', 'Menlo', monospace);
@@ -160,7 +170,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  gap: var(--ohs-spacing-2, 8px);
+  gap: var(--ohs-sys-spacing-2, 8px);
 }
 
 .ohs-json-editor__label {
@@ -175,7 +185,7 @@
   min-width: 0;
   min-height: 240px;
   resize: vertical;
-  padding: var(--ohs-spacing-4, 16px);
+  padding: var(--ohs-sys-spacing-4, 16px);
   border: 1px solid var(--ohs-color-border, #dde3ed);
   border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-color-surface-variant, #f5f7fb);

@@ -204,7 +204,7 @@ export function OrganizationsPage() {
             <Stack gap={3}>
               <Inline
                 justify="between"
-                style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}
+                style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}
               >
                 <SearchField
                   label={t('search')}

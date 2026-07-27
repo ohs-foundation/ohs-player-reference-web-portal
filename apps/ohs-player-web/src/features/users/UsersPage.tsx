@@ -260,7 +260,7 @@ export function UsersPage() {
       <DataTable<PractitionerRow>
         toolbar={
           <Stack gap={3}>
-            <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
+            <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
               <SearchField
                 label={t('search')}
                 name="userSearch"
@@ -321,7 +321,7 @@ export function UsersPage() {
               const name = fullName(p) || (p.id ?? '');
               const email = emailOf(p);
               return (
-                <Inline justify="start" style={{ gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
+                <Inline justify="start" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
                   <Avatar name={name} />
                   <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <button
@@ -335,7 +335,7 @@ export function UsersPage() {
                       {name}
                     </button>
                     {email ? (
-                      <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                      <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
                         {email}
                       </span>
                     ) : null}

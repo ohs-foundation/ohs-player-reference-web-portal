@@ -134,7 +134,7 @@ export function DashboardPage(): React.ReactElement {
   return (
     <Page>
       <PageHeader title={t('pageDashboard')} description={t('pageDashboardDescription')} />
-      {anyStatsLoading ? <LinearProgress style={{ marginBottom: 'var(--ohs-spacing-4, 16px)' }} /> : null}
+      {anyStatsLoading ? <LinearProgress style={{ marginBottom: 'var(--ohs-sys-spacing-4, 16px)' }} /> : null}
 
       <PermissionGuard permission="dashboard.view">
         <Stack gap={5}>
