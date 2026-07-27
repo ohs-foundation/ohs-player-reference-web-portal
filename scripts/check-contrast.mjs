@@ -79,7 +79,7 @@ const DARK_BADGES = [
   ['unit', '#B8B8B8', 'rgba(255, 255, 255, 0.08)'],
 ];
 
-/** StatusBadge warning tint is a hardcoded rgba in States.tsx; tracked for token-isation in Sprint 1. */
+/** StatusBadge warning tint is a hardcoded rgba in States.tsx. */
 const WARNING_TINT = 'rgba(224, 140, 0, 0.14)';
 
 function pairs(mode, t, badges) {
@@ -113,10 +113,30 @@ function pairs(mode, t, badges) {
     ui(t.outline, t.background, 'outline as control border on page background'),
     ui(t.outline, t.surfaceVariant, 'outline as control border on surface-variant'),
     ui(t.textMuted, t.surface, 'text-muted as control border on hover/focus'),
-    dec(t.border, t.surface, 'border as card + table gridline on surface', 'decorative separator; cards and cells are identified by their fill and content, not this line'),
-    dec(t.borderSecondary, t.surface, 'border-secondary as panel + list separator', 'decorative separator inside already-bounded panels'),
-    dec(t.borderTertiary, t.surface, 'border-tertiary as badge-pill and static panel border', 'decorative; every remaining use is a non-interactive chip or panel'),
-    dec(t.success, t.surface, 'success as border-left accent', 'decorative status stripe, adjacent text carries the meaning'),
+    dec(
+      t.border,
+      t.surface,
+      'border as card + table gridline on surface',
+      'decorative separator; cards and cells are identified by their fill and content, not this line',
+    ),
+    dec(
+      t.borderSecondary,
+      t.surface,
+      'border-secondary as panel + list separator',
+      'decorative separator inside already-bounded panels',
+    ),
+    dec(
+      t.borderTertiary,
+      t.surface,
+      'border-tertiary as badge-pill and static panel border',
+      'decorative; every remaining use is a non-interactive chip or panel',
+    ),
+    dec(
+      t.success,
+      t.surface,
+      'success as border-left accent',
+      'decorative status stripe, adjacent text carries the meaning',
+    ),
 
     ...badges.map(([name, fg, bg]) => on(fg, bg, `location badge ${name}`)),
   ];
@@ -124,16 +144,68 @@ function pairs(mode, t, badges) {
 
 const PAIRS = [
   ...pairs('light', LIGHT, LIGHT_BADGES),
-  { mode: 'light', name: 'positive on positive-surface pill', fg: LIGHT.positive, bg: LIGHT.positiveSurface, kind: 'text' },
-  { mode: 'light', name: 'text-muted on neutral-surface pill', fg: LIGHT.textMuted, bg: LIGHT.neutralSurface, kind: 'text' },
-  { mode: 'light', name: 'warning on StatusBadge tint', fg: LIGHT.warning, bg: WARNING_TINT, over: LIGHT.surface, kind: 'text' },
+  {
+    mode: 'light',
+    name: 'positive on positive-surface pill',
+    fg: LIGHT.positive,
+    bg: LIGHT.positiveSurface,
+    kind: 'text',
+  },
+  {
+    mode: 'light',
+    name: 'text-muted on neutral-surface pill',
+    fg: LIGHT.textMuted,
+    bg: LIGHT.neutralSurface,
+    kind: 'text',
+  },
+  {
+    mode: 'light',
+    name: 'warning on StatusBadge tint',
+    fg: LIGHT.warning,
+    bg: WARNING_TINT,
+    over: LIGHT.surface,
+    kind: 'text',
+  },
 
   ...pairs('dark', DARK, DARK_BADGES),
-  { mode: 'dark', name: 'primary-contrast on primary-hover fill', fg: DARK.primaryContrast, bg: DARK.primaryHover, kind: 'text' },
-  { mode: 'dark', name: 'text on primary-container', fg: DARK.text, bg: DARK.primaryContainer, kind: 'text' },
-  { mode: 'dark', name: 'positive on positive-surface pill', fg: DARK.positive, bg: 'rgba(0, 224, 75, 0.16)', over: DARK.surface, kind: 'text' },
-  { mode: 'dark', name: 'text-muted on neutral-surface pill', fg: DARK.textMuted, bg: 'rgba(255, 255, 255, 0.08)', over: DARK.surface, kind: 'text' },
-  { mode: 'dark', name: 'warning on StatusBadge tint', fg: DARK.warning, bg: WARNING_TINT, over: DARK.surface, kind: 'text' },
+  {
+    mode: 'dark',
+    name: 'primary-contrast on primary-hover fill',
+    fg: DARK.primaryContrast,
+    bg: DARK.primaryHover,
+    kind: 'text',
+  },
+  {
+    mode: 'dark',
+    name: 'text on primary-container',
+    fg: DARK.text,
+    bg: DARK.primaryContainer,
+    kind: 'text',
+  },
+  {
+    mode: 'dark',
+    name: 'positive on positive-surface pill',
+    fg: DARK.positive,
+    bg: 'rgba(0, 224, 75, 0.16)',
+    over: DARK.surface,
+    kind: 'text',
+  },
+  {
+    mode: 'dark',
+    name: 'text-muted on neutral-surface pill',
+    fg: DARK.textMuted,
+    bg: 'rgba(255, 255, 255, 0.08)',
+    over: DARK.surface,
+    kind: 'text',
+  },
+  {
+    mode: 'dark',
+    name: 'warning on StatusBadge tint',
+    fg: DARK.warning,
+    bg: WARNING_TINT,
+    over: DARK.surface,
+    kind: 'text',
+  },
 ];
 
 const MINIMUMS = { text: 4.5, largeText: 3, boundary: 3 };
@@ -191,28 +263,67 @@ function minimumFor(pair) {
  * origin: `<file, regex-name, expected>`. A rename fails the gate loudly rather than passing blind.
  */
 const SOURCES = [
-  ['apps/ohs-player-web/src/theme/lightTheme.ts', 'ts', {
-    primary: LIGHT.primary, primaryContrast: LIGHT.primaryContrast, primaryContainer: LIGHT.primaryContainer,
-    surface: LIGHT.surface, background: LIGHT.background, text: LIGHT.text, textMuted: LIGHT.textMuted,
-    border: LIGHT.border, success: LIGHT.success, warning: LIGHT.warning,
-  }],
-  ['apps/ohs-player-web/src/theme/darkTheme.ts', 'ts', {
-    primary: DARK.primary, primaryHover: DARK.primaryHover, primaryContrast: DARK.primaryContrast,
-    primaryContainer: DARK.primaryContainer, surface: DARK.surface, background: DARK.background,
-    text: DARK.text, textMuted: DARK.textMuted, border: DARK.border, error: DARK.error,
-    warning: DARK.warning, success: DARK.success,
-  }],
-  ['apps/ohs-player-web/src/components/ui/theme.css#light', 'css', {
-    'color-surface-variant': LIGHT.surfaceVariant, 'color-text-quaternary': LIGHT.textQuaternary,
-    'color-border-secondary': LIGHT.borderSecondary, 'color-border-tertiary': LIGHT.borderTertiary, 'color-outline': LIGHT.outline,
-    'color-positive': LIGHT.positive, 'color-positive-surface': LIGHT.positiveSurface,
-    'color-neutral-surface': LIGHT.neutralSurface,
-    'color-level-subcounty-text': LIGHT_BADGES[3][1], 'color-level-facility-text': LIGHT_BADGES[5][1],
-  }],
-  ['apps/ohs-player-web/src/components/ui/theme.css#dark', 'css', {
-    'color-surface-variant': DARK.surfaceVariant, 'color-text-quaternary': DARK.textQuaternary,
-    'color-border-secondary': DARK.borderSecondary, 'color-border-tertiary': DARK.borderTertiary, 'color-outline': DARK.outline,
-  }],
+  [
+    'apps/ohs-player-web/src/theme/lightTheme.ts',
+    'ts',
+    {
+      primary: LIGHT.primary,
+      primaryContrast: LIGHT.primaryContrast,
+      primaryContainer: LIGHT.primaryContainer,
+      surface: LIGHT.surface,
+      background: LIGHT.background,
+      text: LIGHT.text,
+      textMuted: LIGHT.textMuted,
+      border: LIGHT.border,
+      success: LIGHT.success,
+      warning: LIGHT.warning,
+    },
+  ],
+  [
+    'apps/ohs-player-web/src/theme/darkTheme.ts',
+    'ts',
+    {
+      primary: DARK.primary,
+      primaryHover: DARK.primaryHover,
+      primaryContrast: DARK.primaryContrast,
+      primaryContainer: DARK.primaryContainer,
+      surface: DARK.surface,
+      background: DARK.background,
+      text: DARK.text,
+      textMuted: DARK.textMuted,
+      border: DARK.border,
+      error: DARK.error,
+      warning: DARK.warning,
+      success: DARK.success,
+    },
+  ],
+  [
+    'apps/ohs-player-web/src/components/ui/theme.css#light',
+    'css',
+    {
+      'color-surface-variant': LIGHT.surfaceVariant,
+      'color-text-quaternary': LIGHT.textQuaternary,
+      'color-border-secondary': LIGHT.borderSecondary,
+      'color-border-tertiary': LIGHT.borderTertiary,
+      'color-outline': LIGHT.outline,
+      'color-positive': LIGHT.positive,
+      'color-positive-surface': LIGHT.positiveSurface,
+      'color-neutral-surface': LIGHT.neutralSurface,
+      'color-level-subcounty-text': LIGHT_BADGES[3][1],
+      'color-level-facility-text': LIGHT_BADGES[5][1],
+    },
+  ],
+  [
+    'apps/ohs-player-web/src/components/ui/theme.css#dark',
+    'css',
+    {
+      'color-surface-variant': DARK.surfaceVariant,
+      'color-text-quaternary': DARK.textQuaternary,
+      'color-border-secondary': DARK.borderSecondary,
+      'color-border-tertiary': DARK.borderTertiary,
+      'color-outline': DARK.outline,
+    },
+  ],
 ];
 
 const DARK_BLOCK_MARKER = "[data-theme='dark'],";
@@ -263,7 +374,11 @@ function read(path) {
 const declared = new Set();
 const referenced = new Map();
 
-for (const name of [...read('packages/ohs-player-web-core/src/theme/theme.ts').matchAll(/setVar\(element,\s*'([^']+)'/g)]) {
+for (const name of [
+  ...read('packages/ohs-player-web-core/src/theme/theme.ts').matchAll(
+    /setVar\(element,\s*'([^']+)'/g,
+  ),
+]) {
   declared.add(`--ohs-${name[1]}`);
 }
 for (const path of TOKEN_SOURCES) {
@@ -284,7 +399,9 @@ const exemptions = [];
 let checked = 0;
 
 for (const [name, sites] of undeclared) {
-  failures.push(`${name} referenced but never declared — always resolves to its fallback (${sites.join(', ')})`);
+  failures.push(
+    `${name} referenced but never declared — always resolves to its fallback (${sites.join(', ')})`,
+  );
 }
 
 for (const pair of PAIRS) {

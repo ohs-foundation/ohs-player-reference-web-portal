@@ -88,9 +88,18 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types â
 
 | Export | Description |
 | --- | --- |
-| `applyTheme(theme?)` | Applies CSS variables to document (`ThemeConfig`). |
+| `applyTheme(theme, element)` | Writes the legacy `--ohs-*` tokens as inline style properties (`ThemeConfig`). |
 | `defaultTheme` | Baseline theme object. |
 | `mergeTheme(base, patch)` | Deep-merge themes for overrides. |
+| `themeCss(config?)` | Serialises a `ThemeConfigV2` to a stylesheet: `:root` for light plus mode-independent tokens, `[data-theme='dark']` for the dark scheme. |
+| `installThemeCss(config?, doc?)` | Installs or replaces that stylesheet in `document.head`. Idempotent; call once at startup. |
+| `upgradeThemeConfig(v1)` | Maps a v1 `ThemeConfig`'s colours onto their `ThemeConfigV2` sys roles. |
+
+The two layers are disjoint by design: `applyTheme` owns the legacy `--ohs-color-*`/`--ohs-spacing-*`/`--ohs-radius-*`
+names as inline styles, `themeCss` owns `--ohs-sys-*` and `--ohs-ref-*` as CSS rules. Inline styles beat
+attribute selectors, so no token is emitted by both.
+
+Theme types: `ThemeConfigV2`, `SysColorRole`, `SysColorScheme`, `TypescaleRole`, `TypescaleMetrics`, `ShapeToken`.
 
 ---
 
