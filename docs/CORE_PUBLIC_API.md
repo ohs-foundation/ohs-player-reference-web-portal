@@ -18,7 +18,9 @@ Types-only exports are listed under **Exported types**; runtime values are group
 
 Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
 
-Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`.
+Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`, `SelectFieldOption`.
+
+FHIR data-access option shapes: `SearchAllOptions`, `PagedSearchParams`, `PagedSearchResult`, `OptimisticInsertOptions`.
 
 UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, etc. — are **app**-level, in `apps/ohs-player-web/src/components/ui/`, not library exports.)
 
