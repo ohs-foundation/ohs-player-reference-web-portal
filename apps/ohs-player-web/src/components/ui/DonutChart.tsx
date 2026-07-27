@@ -77,7 +77,7 @@ export function DonutChart({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--ohs-sys-color-surface-container-high, #e9e7ec)"
+          stroke="var(--ohs-sys-color-surface-container, #efedf1)"
           strokeWidth={thickness}
         />
         {/* Rotate -90deg so the first segment starts at 12 o'clock. */}

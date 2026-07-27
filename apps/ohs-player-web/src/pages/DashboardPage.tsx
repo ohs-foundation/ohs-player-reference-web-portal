@@ -31,7 +31,7 @@ type OrganizationRow = Named & { active?: boolean; type?: { coding?: { display?:
 type CareTeamRow = Named & { status?: string };
 
 const ACTIVE_COLOR = 'var(--ohs-sys-color-success)';
-const INACTIVE_COLOR = 'var(--ohs-sys-color-surface-container-high)';
+const INACTIVE_COLOR = 'var(--ohs-sys-color-surface-container)';
 
 function fullName(p: PractitionerRow): string {
   const n = p.name?.[0];

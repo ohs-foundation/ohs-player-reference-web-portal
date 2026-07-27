@@ -39,6 +39,7 @@ const sys = (mode, role) => {
 const LIGHT = {
   surface: '#FFFFFF',
   background: '#F1F2F4',
+  textMuted: '#696969',
   text: '#0D0D0D',
   primary: '#094F9A',
   primaryContrast: '#FAFAFA',
@@ -54,6 +55,7 @@ const LIGHT = {
 const DARK = {
   surface: '#1A1A1A',
   background: '#0D0D0D',
+  textMuted: '#9E9E9E',
   text: '#FAFAFA',
   primary: '#7BACFD',
   primaryHover: '#A9C7FF',
@@ -100,12 +102,12 @@ function pairs(mode, t, badges) {
   return [
     on(t.text, t.surface, 'text on surface'),
     on(t.text, t.background, 'text on page background'),
-    on(t.text, sys(mode, 'surface-container-highest'), 'text on surface-variant'),
-    on(sys(mode, 'on-surface-variant'), t.surface, 'text-muted on surface'),
-    on(sys(mode, 'on-surface-variant'), t.background, 'text-muted on page background'),
+    on(t.text, sys(mode, 'surface-container-low'), 'text on surface-variant'),
+    on(t.textMuted, t.surface, 'text-muted on surface'),
+    on(t.textMuted, t.background, 'text-muted on page background'),
     on(
-      sys(mode, 'on-surface-variant'),
-      sys(mode, 'surface-container-highest'),
+      t.textMuted,
+      sys(mode, 'surface-container-low'),
       'text-muted on surface-variant',
     ),
 
@@ -123,10 +125,10 @@ function pairs(mode, t, badges) {
     ui(sys(mode, 'outline'), t.background, 'outline as control border on page background'),
     ui(
       sys(mode, 'outline'),
-      sys(mode, 'surface-container-highest'),
+      sys(mode, 'surface-container-low'),
       'outline as control border on surface-variant',
     ),
-    ui(sys(mode, 'on-surface-variant'), t.surface, 'text-muted as control border on hover/focus'),
+    ui(t.textMuted, t.surface, 'text-muted as control border on hover/focus'),
     dec(
       t.border,
       t.surface,
@@ -167,9 +169,9 @@ const PAIRS = [
   },
   {
     mode: 'light',
-    name: 'text-muted on surface-container-high',
-    fg: SYS.light['--ohs-sys-color-on-surface-variant'],
-    bg: SYS.light['--ohs-sys-color-surface-container-high'],
+    name: 'text-muted on surface-container',
+    fg: LIGHT.textMuted,
+    bg: SYS.light['--ohs-sys-color-surface-container'],
     kind: 'text',
   },
   {
@@ -205,9 +207,9 @@ const PAIRS = [
   },
   {
     mode: 'dark',
-    name: 'text-muted on surface-container-high',
-    fg: SYS.dark['--ohs-sys-color-on-surface-variant'],
-    bg: SYS.dark['--ohs-sys-color-surface-container-high'],
+    name: 'text-muted on surface-container',
+    fg: DARK.textMuted,
+    bg: SYS.dark['--ohs-sys-color-surface-container'],
     kind: 'text',
   },
   {
@@ -280,6 +282,7 @@ const SOURCES = [
     'ts',
     {
       primary: LIGHT.primary,
+    textMuted: LIGHT.textMuted,
       primaryContrast: LIGHT.primaryContrast,
       primaryContainer: LIGHT.primaryContainer,
       surface: LIGHT.surface,
@@ -296,6 +299,7 @@ const SOURCES = [
     'ts',
     {
       primary: DARK.primary,
+    textMuted: DARK.textMuted,
       primaryHover: DARK.primaryHover,
       primaryContrast: DARK.primaryContrast,
       primaryContainer: DARK.primaryContainer,

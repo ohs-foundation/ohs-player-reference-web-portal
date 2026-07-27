@@ -31,11 +31,11 @@
   --color-primary-contrast: var(--ohs-color-primary-contrast);
   /* No sys role — M3 expresses hover as a state layer, not a colour. */
   --color-primary-hover: var(--ohs-color-primary-hover);
-  --color-surface-variant: var(--ohs-sys-color-surface-container-highest);
+  --color-surface-variant: var(--ohs-sys-color-surface-container-low);
   --color-surface-container-high: var(--ohs-sys-color-surface-container-high);
   /* on-surface-variant and outline-variant are darker than these; a deliberate restyle, not a rename. */
-  --color-text-muted: var(--ohs-sys-color-on-surface-variant);
-  --color-text-quaternary: var(--ohs-sys-color-on-surface-variant);
+  --color-text-muted: var(--ohs-color-text-muted, #696969);
+  --color-text-quaternary: var(--ohs-color-text-muted, #696969);
   --color-border: var(--ohs-color-border);
   --color-border-secondary: var(--ohs-color-border-secondary);
   --color-border-tertiary: var(--ohs-color-border-tertiary);
