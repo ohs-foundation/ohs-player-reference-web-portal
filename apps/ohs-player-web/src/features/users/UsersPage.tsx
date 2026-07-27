@@ -335,7 +335,7 @@ export function UsersPage() {
                       {name}
                     </button>
                     {email ? (
-                      <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                      <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-sys-color-on-surface-variant, #44474e)' }}>
                         {email}
                       </span>
                     ) : null}

@@ -30,8 +30,8 @@ type LocationRow = Named & { status?: string; physicalType?: { coding?: { displa
 type OrganizationRow = Named & { active?: boolean; type?: { coding?: { display?: string; code?: string }[] }[] };
 type CareTeamRow = Named & { status?: string };
 
-const ACTIVE_COLOR = 'var(--ohs-color-positive)';
-const INACTIVE_COLOR = 'var(--ohs-color-neutral-surface)';
+const ACTIVE_COLOR = 'var(--ohs-sys-color-success)';
+const INACTIVE_COLOR = 'var(--ohs-sys-color-surface-container-high)';
 
 function fullName(p: PractitionerRow): string {
   const n = p.name?.[0];

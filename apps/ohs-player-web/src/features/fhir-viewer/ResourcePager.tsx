@@ -137,7 +137,7 @@ function PagerButton({
         'border transition-colors duration-[120ms]',
         active
           ? 'bg-primary border-primary text-primary-contrast'
-          : 'bg-surface border-border text-text hover:bg-surface-variant',
+          : 'ohs-state-layer bg-surface border-border text-text',
         'disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:bg-surface',
       )}
     >

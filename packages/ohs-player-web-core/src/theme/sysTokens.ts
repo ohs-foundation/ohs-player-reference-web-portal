@@ -203,13 +203,14 @@ const STATE = {
   'disabled-container-opacity': '0.12',
 };
 
+/* Level structure is M3; the ink stays on the reviewed slate-tinted recipes. */
 const ELEVATION = {
   level0: 'none',
-  level1: '0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15)',
-  level2: '0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15)',
-  level3: '0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 8px 3px rgba(0, 0, 0, 0.15)',
-  level4: '0 2px 3px rgba(0, 0, 0, 0.3), 0 6px 10px 4px rgba(0, 0, 0, 0.15)',
-  level5: '0 4px 4px rgba(0, 0, 0, 0.3), 0 8px 12px 6px rgba(0, 0, 0, 0.15)',
+  level1: '0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
+  level2: '0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.06)',
+  level3: '0 10px 24px rgba(15, 23, 42, 0.12), 0 4px 8px rgba(15, 23, 42, 0.08)',
+  level4: '0 16px 32px rgba(15, 23, 42, 0.16), 0 6px 12px rgba(15, 23, 42, 0.1)',
+  level5: '0 24px 48px rgba(15, 23, 42, 0.2), 0 8px 16px rgba(15, 23, 42, 0.12)',
 };
 
 const MOTION = {

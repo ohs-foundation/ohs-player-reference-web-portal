@@ -64,7 +64,7 @@ function ChildChips({
           key={c.id}
           type="button"
           onClick={() => onSelect(c.id)}
-          className="inline-flex items-center rounded-pill border border-border px-3 py-1.5 text-sm text-primary hover:bg-surface-variant"
+          className="ohs-state-layer inline-flex items-center rounded-pill border border-border px-3 py-1.5 text-sm text-primary"
         >
           {c.name ?? t('locationsUnnamed', { id: c.id })}
         </button>

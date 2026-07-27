@@ -126,7 +126,7 @@ function TreeRow({
       }}
       className={`group flex h-full cursor-pointer items-stretch rounded-sm pl-2 pr-4 outline-none transition-colors
         focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)]
-        ${isSelected ? 'bg-primary-container' : 'hover:bg-surface-variant'}`}
+        ohs-state-layer ${isSelected ? 'bg-primary-container' : ''}`}
     >
       <TreeGuides nodeId={node.id} ancestorHasNext={ancestorHasNext} isLast={isLast} />
       <span className="flex min-w-0 flex-1 items-center">

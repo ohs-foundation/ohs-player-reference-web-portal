@@ -9,39 +9,52 @@
  *   boundary    3.0:1  — anything needed to identify a control (input borders, focus rings) per SC 1.4.11
  *   decorative  exempt — requires a `reason`, so every waiver is reviewable
  *
- * Values restate what lives in apps/ohs-player-web/src/theme/{light,dark}Theme.ts and
- * apps/ohs-player-web/src/components/ui/theme.css; `SOURCES` below re-reads those files and fails on drift.
+ * Sys values come from the built library's `themeCss`, so they are never restated here. The remaining
+ * legacy values are restated below and `SOURCES` re-reads their files to fail on drift.
  */
 
 import { readFileSync } from 'node:fs';
+import { themeCss } from '../packages/ohs-player-web-core/dist/index.js';
+import { sysTheme } from './sysThemeForCheck.mjs';
+
+function sysTokens() {
+  const css = themeCss(sysTheme);
+  const cut = css.indexOf("[data-theme='dark']");
+  const parse = (text) => {
+    const out = {};
+    for (const m of text.matchAll(/(--ohs-[a-z0-9-]+):\s*([^;]+);/g)) out[m[1]] = m[2].trim();
+    return out;
+  };
+  const light = parse(css.slice(0, cut));
+  return { light, dark: { ...light, ...parse(css.slice(cut)) } };
+}
+
+const SYS = sysTokens();
+const sys = (mode, role) => {
+  const value = SYS[mode][`--ohs-sys-color-${role}`];
+  if (!value) throw new Error(`sys role not emitted: ${role}`);
+  return value;
+};
 
 const LIGHT = {
   surface: '#FFFFFF',
   background: '#F1F2F4',
-  surfaceVariant: '#F5F5F5',
   text: '#0D0D0D',
-  textMuted: '#696969',
   primary: '#094F9A',
   primaryContrast: '#FAFAFA',
   primaryContainer: '#DCE5FE',
   border: '#EDEDED',
   borderSecondary: '#D4D4D4',
   borderTertiary: '#B8B8B8',
-  outline: '#74777F',
   error: '#B3261E',
   warning: '#8F5D00',
   success: '#006E29',
-  positive: '#006E29',
-  positiveSurface: '#E6F6EC',
-  neutralSurface: '#F0F0F0',
 };
 
 const DARK = {
   surface: '#1A1A1A',
   background: '#0D0D0D',
-  surfaceVariant: '#363636',
   text: '#FAFAFA',
-  textMuted: '#9E9E9E',
   primary: '#7BACFD',
   primaryHover: '#A9C7FF',
   primaryContrast: '#003063',
@@ -49,11 +62,9 @@ const DARK = {
   border: '#363636',
   borderSecondary: '#4F4F4F',
   borderTertiary: '#696969',
-  outline: '#8E9099',
   error: '#FF8F8F',
   warning: '#FFE066',
   success: '#00E04B',
-  positive: '#00E04B',
 };
 
 /** Location administrative-level badges: [name, text, background] per mode. */
@@ -89,10 +100,14 @@ function pairs(mode, t, badges) {
   return [
     on(t.text, t.surface, 'text on surface'),
     on(t.text, t.background, 'text on page background'),
-    on(t.text, t.surfaceVariant, 'text on surface-variant'),
-    on(t.textMuted, t.surface, 'text-muted on surface'),
-    on(t.textMuted, t.background, 'text-muted on page background'),
-    on(t.textMuted, t.surfaceVariant, 'text-muted on surface-variant'),
+    on(t.text, sys(mode, 'surface-container-highest'), 'text on surface-variant'),
+    on(sys(mode, 'on-surface-variant'), t.surface, 'text-muted on surface'),
+    on(sys(mode, 'on-surface-variant'), t.background, 'text-muted on page background'),
+    on(
+      sys(mode, 'on-surface-variant'),
+      sys(mode, 'surface-container-highest'),
+      'text-muted on surface-variant',
+    ),
 
     on(t.primary, t.surface, 'primary as link/icon text on surface'),
     on(t.primary, t.background, 'primary as link/icon text on page background'),
@@ -102,12 +117,16 @@ function pairs(mode, t, badges) {
 
     on(t.error, t.surface, 'error text on surface'),
     on(t.warning, t.surface, 'warning text on surface'),
-    on(t.positive, t.surface, 'positive text on surface'),
+    on(sys(mode, 'success'), t.surface, 'success text on surface'),
 
-    ui(t.outline, t.surface, 'outline as control border on surface'),
-    ui(t.outline, t.background, 'outline as control border on page background'),
-    ui(t.outline, t.surfaceVariant, 'outline as control border on surface-variant'),
-    ui(t.textMuted, t.surface, 'text-muted as control border on hover/focus'),
+    ui(sys(mode, 'outline'), t.surface, 'outline as control border on surface'),
+    ui(sys(mode, 'outline'), t.background, 'outline as control border on page background'),
+    ui(
+      sys(mode, 'outline'),
+      sys(mode, 'surface-container-highest'),
+      'outline as control border on surface-variant',
+    ),
+    ui(sys(mode, 'on-surface-variant'), t.surface, 'text-muted as control border on hover/focus'),
     dec(
       t.border,
       t.surface,
@@ -141,16 +160,16 @@ const PAIRS = [
   ...pairs('light', LIGHT, LIGHT_BADGES),
   {
     mode: 'light',
-    name: 'positive on positive-surface pill',
-    fg: LIGHT.positive,
-    bg: LIGHT.positiveSurface,
+    name: 'on-success-container on success-container',
+    fg: SYS.light['--ohs-sys-color-on-success-container'],
+    bg: SYS.light['--ohs-sys-color-success-container'],
     kind: 'text',
   },
   {
     mode: 'light',
-    name: 'text-muted on neutral-surface pill',
-    fg: LIGHT.textMuted,
-    bg: LIGHT.neutralSurface,
+    name: 'text-muted on surface-container-high',
+    fg: SYS.light['--ohs-sys-color-on-surface-variant'],
+    bg: SYS.light['--ohs-sys-color-surface-container-high'],
     kind: 'text',
   },
   {
@@ -179,18 +198,16 @@ const PAIRS = [
   },
   {
     mode: 'dark',
-    name: 'positive on positive-surface pill',
-    fg: DARK.positive,
-    bg: 'rgba(0, 224, 75, 0.16)',
-    over: DARK.surface,
+    name: 'on-success-container on success-container',
+    fg: SYS.dark['--ohs-sys-color-on-success-container'],
+    bg: SYS.dark['--ohs-sys-color-success-container'],
     kind: 'text',
   },
   {
     mode: 'dark',
-    name: 'text-muted on neutral-surface pill',
-    fg: DARK.textMuted,
-    bg: 'rgba(255, 255, 255, 0.08)',
-    over: DARK.surface,
+    name: 'text-muted on surface-container-high',
+    fg: SYS.dark['--ohs-sys-color-on-surface-variant'],
+    bg: SYS.dark['--ohs-sys-color-surface-container-high'],
     kind: 'text',
   },
   {
@@ -268,7 +285,7 @@ const SOURCES = [
       surface: LIGHT.surface,
       background: LIGHT.background,
       text: LIGHT.text,
-      textMuted: LIGHT.textMuted,
+
       border: LIGHT.border,
       success: LIGHT.success,
       warning: LIGHT.warning,
@@ -285,7 +302,7 @@ const SOURCES = [
       surface: DARK.surface,
       background: DARK.background,
       text: DARK.text,
-      textMuted: DARK.textMuted,
+
       border: DARK.border,
       error: DARK.error,
       warning: DARK.warning,
@@ -296,14 +313,9 @@ const SOURCES = [
     'apps/ohs-player-web/src/components/ui/theme.css#light',
     'css',
     {
-      'color-surface-variant': LIGHT.surfaceVariant,
-
       'color-border-secondary': LIGHT.borderSecondary,
       'color-border-tertiary': LIGHT.borderTertiary,
-      'color-outline': LIGHT.outline,
-      'color-positive': LIGHT.positive,
-      'color-positive-surface': LIGHT.positiveSurface,
-      'color-neutral-surface': LIGHT.neutralSurface,
+
       'color-level-subcounty-text': LIGHT_BADGES[3][1],
       'color-level-facility-text': LIGHT_BADGES[5][1],
     },
@@ -312,11 +324,8 @@ const SOURCES = [
     'apps/ohs-player-web/src/components/ui/theme.css#dark',
     'css',
     {
-      'color-surface-variant': DARK.surfaceVariant,
-
       'color-border-secondary': DARK.borderSecondary,
       'color-border-tertiary': DARK.borderTertiary,
-      'color-outline': DARK.outline,
     },
   ],
 ];
