@@ -13,7 +13,7 @@
     "test": "turbo run test",
     "seed": "tsx scripts/seed.ts",
     "bundle:check": "node scripts/check-core-bundle-size.mjs",
-    "contrast:check": "node scripts/check-contrast.mjs",
+    "contrast:check": "tsx scripts/check-contrast.mjs",
     "clean": "turbo run clean && rm -rf node_modules",
     "scheme:generate": "tsx scripts/generate-scheme.ts",
     "icons:generate": "tsx scripts/generate-icons.ts"

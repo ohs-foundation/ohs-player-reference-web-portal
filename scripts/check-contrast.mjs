@@ -14,12 +14,13 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { themeCss } from '../packages/ohs-player-web-core/dist/index.js';
+import { themeCss } from '../packages/ohs-player-web-core/src/theme/themeCss.ts';
 import { sysTheme } from './sysThemeForCheck.mjs';
 
 function sysTokens() {
   const css = themeCss(sysTheme);
   const cut = css.indexOf("[data-theme='dark']");
+  if (cut < 0) throw new Error("themeCss emitted no [data-theme='dark'] block; the two schemes cannot be split");
   const parse = (text) => {
     const out = {};
     for (const m of text.matchAll(/(--ohs-[a-z0-9-]+):\s*([^;]+);/g)) out[m[1]] = m[2].trim();
@@ -344,8 +345,14 @@ for (const [target, kind, expectations] of SOURCES) {
     drift.push(`${path} — cannot be read; token values cannot be verified`);
     continue;
   }
-  if (section === 'light') body = body.slice(0, body.indexOf(DARK_BLOCK_MARKER));
-  if (section === 'dark') body = body.slice(body.indexOf(DARK_BLOCK_MARKER));
+  if (section) {
+    const cut = body.indexOf(DARK_BLOCK_MARKER);
+    if (cut < 0) {
+      drift.push(`${path} — no ${DARK_BLOCK_MARKER} block; cannot split light from dark`);
+      continue;
+    }
+    body = section === 'light' ? body.slice(0, cut) : body.slice(cut);
+  }
 
   for (const [name, expected] of Object.entries(expectations)) {
     const pattern =

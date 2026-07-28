@@ -113,7 +113,7 @@ pnpm contrast:check
 
 58 pairs, each classified: `text` (4.5:1), `boundary` (3:1, per WCAG SC 1.4.11 — anything needed to
 identify a control), or `decorative` (exempt, and **every exemption carries a written reason**). Sys
-values are read from the built library rather than restated, so they cannot drift. The remaining
+values are read from the theme source rather than restated, so they cannot drift. The remaining
 restated legacy values are re-read from their source files and the check fails on any mismatch.
 
 Per-role conformance of the generated schemes is asserted separately in `sysContrast.test.ts` — 58
