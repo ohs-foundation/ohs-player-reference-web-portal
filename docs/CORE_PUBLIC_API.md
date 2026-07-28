@@ -16,9 +16,11 @@ Types-only exports are listed under **Exported types**; runtime values are group
 
 ## Exported types (`./types/config` and `./sdc`)
 
-Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `ThemeShadow`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
+Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
 
-Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`.
+Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`, `SelectFieldOption`.
+
+FHIR data-access option shapes: `SearchAllOptions`, `PagedSearchParams`, `PagedSearchResult`, `OptimisticInsertOptions`.
 
 UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, etc. — are **app**-level, in `apps/ohs-player-web/src/components/ui/`, not library exports.)
 
@@ -88,9 +90,23 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types �
 
 | Export | Description |
 | --- | --- |
-| `applyTheme(theme?)` | Applies CSS variables to document (`ThemeConfig`). |
+| `applyTheme(theme, element)` | Writes the legacy `--ohs-*` tokens as inline style properties (`ThemeConfig`). |
 | `defaultTheme` | Baseline theme object. |
 | `mergeTheme(base, patch)` | Deep-merge themes for overrides. |
+| `themeCss(config?)` | Serialises a `ThemeConfigV2` to a stylesheet: `:root` for light plus mode-independent tokens, `[data-theme='dark']` for the dark scheme. |
+| `installThemeCss(config?, doc?)` | Installs or replaces that stylesheet in `document.head`. Idempotent; call once at startup. |
+| `upgradeThemeConfig(v1)` | Maps a v1 `ThemeConfig`'s colours onto their `ThemeConfigV2` sys roles. |
+
+The two layers are disjoint by design: `applyTheme` owns the legacy `--ohs-color-*`/`--ohs-spacing-*`/`--ohs-radius-*`
+names as inline styles, `themeCss` owns `--ohs-sys-*` and `--ohs-ref-*` as CSS rules. Inline styles beat
+attribute selectors, so no token is emitted by both.
+
+Theme types: `ThemeConfigV2`, `SysColorRole`, `SysColorScheme`, `TypescaleRole`, `TypescaleMetrics`, `ShapeToken`.
+
+**Removed** (were emitted by `applyTheme` but read by nothing): `ThemeShadow`, and `ThemeConfig`'s
+`shadow` and `spacing` fields; `ThemeColors.secondary`/`.warning`/`.info`. Spacing, elevation and the
+warning/info roles now come from `themeCss` as `--ohs-sys-spacing-*`, `--ohs-sys-elevation-*` and
+`--ohs-sys-color-{warning,info}*`. Consumers passing the removed fields should move to `ThemeConfigV2`.
 
 ---
 

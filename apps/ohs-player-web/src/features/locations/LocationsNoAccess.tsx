@@ -1,4 +1,4 @@
-import { RiLockLine } from '@remixicon/react';
+import { IconLock } from '../../components/ui/icons';
 import { useAuth, useTranslation } from 'ohs-player-web-core';
 import { Button, EmptyState, Inline, StatusBadge } from '../../components/ui';
 
@@ -16,7 +16,7 @@ export function LocationsNoAccess({ status, onRetry }: Readonly<LocationsNoAcces
 
   return (
     <EmptyState
-      icon={<RiLockLine size={28} />}
+      icon={<IconLock size={28} />}
       title={
         <Inline justify="start">
           <span>{t('locationsNoAccessTitle')}</span>

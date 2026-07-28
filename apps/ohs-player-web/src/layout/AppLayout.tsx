@@ -1,35 +1,35 @@
 import {
   OhsDropdownMenu,
+  OhsTooltip,
   useAuth,
   useFlag,
   usePermission,
   useTranslation,
 } from 'ohs-player-web-core';
 import {
-  RiArrowDownSLine,
-  RiBuildingFill,
-  RiBuildingLine,
-  RiDashboardFill,
-  RiDashboardLine,
-  RiMapPin3Fill,
-  RiMapPin3Line,
-  RiMenuFoldLine,
-  RiMenuLine,
-  RiMenuUnfoldLine,
-  RiMoonLine,
-  RiSunLine,
-  RiTeamFill,
-  RiTeamLine,
-  RiUserFill,
-  RiUserLine,
-  RiMagicLine,
-  RiMagicFill,
-  RiDatabase2Line,
-  RiDatabase2Fill,
-  type RemixiconComponentType,
-} from '@remixicon/react';
+  IconBuilding,
+  IconBuildingFill,
+  IconChevronDown,
+  IconDashboard,
+  IconDashboardFill,
+  IconDatabase,
+  IconDatabaseFill,
+  IconMagic,
+  IconMagicFill,
+  IconMapPin,
+  IconMapPinFill,
+  IconMenu,
+  IconMenuFold,
+  IconMoon,
+  IconSun,
+  IconTeam,
+  IconTeamFill,
+  IconUser,
+  IconUserFill,
+  type IconComponent,
+} from '../components/ui/icons';
 import { Avatar, IconButton } from '../components/ui';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useState } from 'react';
 import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
@@ -44,18 +44,18 @@ interface NavItem {
   label: string;
   permission: string;
   flag?: string;
-  LineIcon: RemixiconComponentType;
-  FillIcon: RemixiconComponentType;
+  LineIcon: IconComponent;
+  FillIcon: IconComponent;
 }
 
 const NAV_DEFS = [
-  { to: '/', labelKey: 'navDashboard', permission: 'dashboard.view', flag: 'dashboard', LineIcon: RiDashboardLine, FillIcon: RiDashboardFill },
-  { to: '/users', labelKey: 'navUsers', permission: 'users.view', flag: 'userMgmt', LineIcon: RiUserLine, FillIcon: RiUserFill },
-  { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: RiMapPin3Line, FillIcon: RiMapPin3Fill },
-  { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: RiBuildingLine, FillIcon: RiBuildingFill },
-  { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: RiTeamLine, FillIcon: RiTeamFill },
-  { to: '/resources', labelKey: 'navFhirViewer', permission: 'fhir-viewer.view', flag: 'fhirViewer', LineIcon: RiDatabase2Line, FillIcon: RiDatabase2Fill },
-  { to: '/setup', labelKey: 'navSetup', permission: 'setup.view', flag: 'setupWizard', LineIcon: RiMagicLine, FillIcon: RiMagicFill },
+  { to: '/', labelKey: 'navDashboard', permission: 'dashboard.view', flag: 'dashboard', LineIcon: IconDashboard, FillIcon: IconDashboardFill },
+  { to: '/users', labelKey: 'navUsers', permission: 'users.view', flag: 'userMgmt', LineIcon: IconUser, FillIcon: IconUserFill },
+  { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: IconMapPin, FillIcon: IconMapPinFill },
+  { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: IconBuilding, FillIcon: IconBuildingFill },
+  { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: IconTeam, FillIcon: IconTeamFill },
+  { to: '/resources', labelKey: 'navFhirViewer', permission: 'fhir-viewer.view', flag: 'fhirViewer', LineIcon: IconDatabase, FillIcon: IconDatabaseFill },
+  { to: '/setup', labelKey: 'navSetup', permission: 'setup.view', flag: 'setupWizard', LineIcon: IconMagic, FillIcon: IconMagicFill },
 ] as const;
 
 export function AppLayout() {
@@ -82,6 +82,9 @@ export function AppLayout() {
       data-sidebar-open={open ? 'true' : undefined}
       data-sidebar-collapsed={collapsed ? 'true' : undefined}
     >
+      <a className="app-skip-link" href="#main-content">
+        {t('skipToContent')}
+      </a>
       <header className="app-topbar">
         <div className="app-topbar__brand">
           <IconButton
@@ -89,7 +92,7 @@ export function AppLayout() {
             className="app-topbar__menu-toggle"
             onClick={() => setOpen((v) => !v)}
           >
-            <RiMenuLine size={24} />
+            <IconMenu size={24} />
           </IconButton>
           <span className="app-topbar__logo">
             <BrandMark size={40} />
@@ -100,7 +103,7 @@ export function AppLayout() {
             className="app-topbar__collapse"
             onClick={() => setCollapsed((v) => !v)}
           >
-            {collapsed ? <RiMenuUnfoldLine size={24} /> : <RiMenuFoldLine size={24} />}
+            <IconMenuFold size={24} />
           </IconButton>
         </div>
         <div className="app-topbar__actions">
@@ -110,7 +113,7 @@ export function AppLayout() {
             className="app-topbar__bell"
             onClick={toggle}
           >
-            {mode === 'dark' ? <RiSunLine size={24} /> : <RiMoonLine size={24} />}
+            {mode === 'dark' ? <IconSun size={24} /> : <IconMoon size={24} />}
           </IconButton>
           <NotificationsBell />
           <UserMenu
@@ -122,60 +125,80 @@ export function AppLayout() {
         </div>
       </header>
 
-      <aside className="app-sidebar" aria-label="Primary navigation">
+      <aside
+        className="app-sidebar"
+        aria-label="Primary navigation"
+        data-collapsed={collapsed ? 'true' : undefined}
+      >
         <nav>
-          <ul className="app-sidebar__list">
-            {NAV_DEFS.map((def) => (
-              <NavRow
-                key={def.to}
-                item={{
-                  to: def.to,
-                  label: t(def.labelKey),
-                  permission: def.permission,
-                  flag: def.flag,
-                  LineIcon: def.LineIcon,
-                  FillIcon: def.FillIcon,
-                }}
-              />
-            ))}
-          </ul>
+          <OhsTooltip.Provider delayDuration={200}>
+            <ul className="app-sidebar__list">
+              {NAV_DEFS.map((def) => (
+                <NavRow
+                  key={def.to}
+                  collapsed={collapsed}
+                  item={{
+                    to: def.to,
+                    label: t(def.labelKey),
+                    permission: def.permission,
+                    flag: def.flag,
+                    LineIcon: def.LineIcon,
+                    FillIcon: def.FillIcon,
+                  }}
+                />
+              ))}
+            </ul>
+          </OhsTooltip.Provider>
         </nav>
       </aside>
 
-      <main className="app-shell__main">
+      <main className="app-shell__main" id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
     </div>
   );
 }
 
-function NavRow({ item }: Readonly<{ item: NavItem }>): React.ReactElement | null {
+function NavRow({
+  item,
+  collapsed,
+}: Readonly<{ item: NavItem; collapsed: boolean }>): React.ReactElement | null {
   const flagOn = useFlag(item.flag ?? '__always_on__');
   const enabled = item.flag ? flagOn : true;
   const { can } = usePermission(item.permission);
+  // Resolved here rather than via NavLink's render props: Radix's `asChild` stringifies a function
+  // `className`, which silently strips the link's styling when railed.
+  const isActive = Boolean(useMatch({ path: item.to, end: item.to === '/' }));
   if (!enabled || !can) return null;
+
+  const Icon = isActive ? item.FillIcon : item.LineIcon;
+  const link = (
+    <NavLink
+      to={item.to}
+      end={item.to === '/'}
+      className={isActive ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'}
+    >
+      <span className="app-sidebar__icon" aria-hidden="true">
+        <Icon size={ICON_SIZE} />
+      </span>
+      <span className="app-sidebar__label">{item.label}</span>
+    </NavLink>
+  );
 
   return (
     <li>
-      <NavLink
-        to={item.to}
-        end={item.to === '/'}
-        className={({ isActive }) =>
-          isActive ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'
-        }
-      >
-        {({ isActive }) => {
-          const Icon = isActive ? item.FillIcon : item.LineIcon;
-          return (
-            <>
-              <span className="app-sidebar__icon" aria-hidden="true">
-                <Icon size={ICON_SIZE} />
-              </span>
-              <span>{item.label}</span>
-            </>
-          );
-        }}
-      </NavLink>
+      {collapsed ? (
+        <OhsTooltip.Root>
+          <OhsTooltip.Trigger asChild>{link}</OhsTooltip.Trigger>
+          <OhsTooltip.Portal>
+            <OhsTooltip.Content className="ohs-tooltip-content" side="right" sideOffset={8}>
+              {item.label}
+            </OhsTooltip.Content>
+          </OhsTooltip.Portal>
+        </OhsTooltip.Root>
+      ) : (
+        link
+      )}
     </li>
   );
 }
@@ -206,7 +229,7 @@ function UserMenu({
               {email ? <span className="app-topbar__user-email-inline">{email}</span> : null}
             </span>
           </span>
-          <RiArrowDownSLine size={16} className="app-topbar__user-chevron" aria-hidden="true" />
+          <IconChevronDown size={16} className="app-topbar__user-chevron" aria-hidden="true" />
         </button>
       </OhsDropdownMenu.Trigger>
       <OhsDropdownMenu.Portal>

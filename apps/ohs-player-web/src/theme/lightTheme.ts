@@ -18,7 +18,7 @@ export const lightTheme: ThemeConfig = {
     textMuted: '#696969', // Content/Tertiary (Neutral/600)
     border: '#EDEDED', // Border/Primary (Neutral/100)
     focusRing: 'rgba(9, 79, 154, 0.28)',
-    success: '#009933', // Content/Positive
+    success: '#006E29', // Content/Positive
   },
   typography: {
     fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',

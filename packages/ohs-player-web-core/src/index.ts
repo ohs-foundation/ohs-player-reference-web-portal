@@ -20,7 +20,6 @@ export type {
   RbacConfig,
   ThemeColors,
   ThemeConfig,
-  ThemeShadow,
   TokenStore,
   UnauthorizedBehaviour,
   UseAuthResult,
@@ -52,6 +51,15 @@ export { defaultMessageCatalog } from './i18n/locales/en';
 export { swMessageCatalogStub } from './i18n/locales/sw';
 
 export { applyTheme, defaultTheme, mergeTheme } from './theme/theme';
+export { installThemeCss, themeCss, upgradeThemeConfig } from './theme/themeCss';
+export type { ThemeConfigV2 } from './theme/themeCss';
+export type {
+  ShapeToken,
+  SysColorRole,
+  SysColorScheme,
+  TypescaleMetrics,
+  TypescaleRole,
+} from './theme/sysTokens';
 
 export { FhirClient, rebaseFhirUrl } from './client/FhirClient';
 export type { SearchAllOptions } from './client/FhirClient';

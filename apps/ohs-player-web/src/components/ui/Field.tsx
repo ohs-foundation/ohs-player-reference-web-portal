@@ -11,7 +11,7 @@ import { useTranslation } from 'ohs-player-web-core';
 import { cn } from '../../lib/cn';
 
 const inputClass =
-  'text-base text-text bg-surface border border-border rounded-sm px-3 h-11 w-full outline-none ' +
+  'text-base text-text bg-surface border border-outline rounded-sm px-3 h-11 w-full outline-none ' +
   'transition-[border-color,box-shadow] duration-[120ms] ease-out ' +
   'not-disabled:hover:border-text-muted aria-invalid:border-error';
 

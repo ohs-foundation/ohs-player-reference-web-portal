@@ -1,7 +1,15 @@
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiUploadCloud2Line } from '@remixicon/react';
+import { IconAdd, IconChevronDown, IconUpload } from '../../components/ui/icons';
 import { PermissionGuard, useRefreshResources, useStatusBar, useTranslation } from 'ohs-player-web-core';
-import { Button, Page, PageHeader, SearchField, SelectField } from '../../components/ui';
+import {
+  Button,
+  ChipSet,
+  FilterChip,
+  Page,
+  PageHeader,
+  SearchField,
+  SelectField,
+} from '../../components/ui';
 import { collectExpandableIdsLimited, EXPAND_ALL_MAX, filterTree } from './expand';
 import { nodeChain, type LocationNode } from './hierarchy';
 import type { HierarchyError } from './useLocationHierarchy';
@@ -11,7 +19,7 @@ import { useLocationRoots } from './useLocationRoots';
 import { LocationTree } from './LocationTree';
 import { LocationColumnTable } from './LocationColumnTable';
 import { LocationViewToggle, type LocationView } from './LocationViewToggle';
-import { LocationFilterMenu, type LocationStatusFilter } from './LocationFilterMenu';
+import { LOCATION_STATUS_FILTERS, type LocationStatusFilter } from './locationStatusFilter';
 import { LocationBreadcrumb } from './LocationBreadcrumb';
 import { LocationDetailPanel } from './LocationDetailPanel';
 import { LocationCreateDrawer } from './LocationCreateDrawer';
@@ -161,18 +169,18 @@ export function LocationsHierarchyPage(): React.ReactElement {
           <Button
             variant="secondary"
             type="button"
-            iconRight={<RiArrowDownSLine size={20} />}
+            iconRight={<IconChevronDown size={20} />}
             onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
           >
             {t('locationsExport')}
           </Button>
           <PermissionGuard permission="locations.edit">
-            <Button type="button" variant="secondary" iconLeft={<RiAddLine size={18} />} onClick={() => setCreateOpen(true)}>
+            <Button type="button" variant="secondary" iconLeft={<IconAdd size={18} />} onClick={() => setCreateOpen(true)}>
               {t('dialogCreateLocation')}
             </Button>
           </PermissionGuard>
           <PermissionGuard permission="bulk-import.manage">
-            <Button type="button" iconLeft={<RiUploadCloud2Line size={18} />} onClick={() => setImportOpen(true)}>
+            <Button type="button" iconLeft={<IconUpload size={18} />} onClick={() => setImportOpen(true)}>
               {t('locationsImport')}
             </Button>
           </PermissionGuard>
@@ -217,7 +225,16 @@ export function LocationsHierarchyPage(): React.ReactElement {
             onChange={(e) => setFilter(e.target.value)}
             className="w-84 h-12"
           />
-          <LocationFilterMenu value={statusFilter} onChange={setStatusFilter} />
+          <ChipSet>
+            {LOCATION_STATUS_FILTERS.map((option) => (
+              <FilterChip
+                key={option.value}
+                label={t(option.labelKey)}
+                selected={statusFilter === option.value}
+                onChange={() => setStatusFilter(option.value)}
+              />
+            ))}
+          </ChipSet>
         </div>
         <LocationViewToggle value={view} onChange={setView} />
       </div>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiBriefcaseLine, RiUserLine } from '@remixicon/react';
+import { IconBriefcase, IconUser } from '../../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../../config/roles';
 import { Button, Stack } from '../../../components/ui';
@@ -148,7 +148,7 @@ export function UsersStep({
         countLabel={t('setupCountUsers')}
       />
 
-      <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
+      <Section icon={IconUser} title={t('sectionBasicInfo')}>
         {editingId ? (
           <div className="ohs-setup-form__toolbar">
             <Button type="button" variant="outlined" onClick={resetForm}>
@@ -236,7 +236,7 @@ export function UsersStep({
         </div>
       </Section>
 
-      <Section icon={RiBriefcaseLine} title={t('sectionAssignments')}>
+      <Section icon={IconBriefcase} title={t('sectionAssignments')}>
         <div className="ohs-detail-grid">
           <MultiSelect
             label={t('contextOrganization')}

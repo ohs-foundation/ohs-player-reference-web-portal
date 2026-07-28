@@ -49,7 +49,7 @@ export function ResourceTypeSidebar({
                   'border border-transparent transition-colors duration-[120ms]',
                   isActive
                     ? 'bg-surface-variant text-text font-medium'
-                    : 'bg-transparent text-text-muted hover:bg-surface-variant hover:text-text',
+                    : 'ohs-state-layer bg-transparent text-text-muted',
                 )}
               >
                 {t(def.labelKey)}

@@ -1,5 +1,5 @@
 import { useTranslation } from 'ohs-player-web-core';
-import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react';
+import { IconChevronLeft, IconChevronRight } from '../../components/ui/icons';
 import { cn } from '../../lib/cn';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
@@ -81,7 +81,7 @@ export function ResourcePager({
             disabled={!hasPrev}
             onClick={() => onPage(page - 1)}
           >
-            <RiArrowLeftSLine size={18} aria-hidden="true" />
+            <IconChevronLeft size={18} aria-hidden="true" />
           </PagerButton>
 
           {mode === 'numbered' && pageCount !== undefined
@@ -102,7 +102,7 @@ export function ResourcePager({
             disabled={!hasNext}
             onClick={() => onPage(page + 1)}
           >
-            <RiArrowRightSLine size={18} aria-hidden="true" />
+            <IconChevronRight size={18} aria-hidden="true" />
           </PagerButton>
         </div>
       </div>
@@ -137,7 +137,7 @@ function PagerButton({
         'border transition-colors duration-[120ms]',
         active
           ? 'bg-primary border-primary text-primary-contrast'
-          : 'bg-surface border-border text-text hover:bg-surface-variant',
+          : 'ohs-state-layer bg-surface border-border text-text',
         'disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:bg-surface',
       )}
     >

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'ohs-player-web-core';
-import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react';
+import { IconChevronLeft, IconChevronRight } from './icons';
 import { Checkbox } from './Checkbox';
 
 export interface DataTableColumn<Row> {
@@ -34,6 +34,8 @@ export interface DataTableProps<Row> {
   pageSizeOptions?: readonly number[];
   /** Drop the wrapper's border/shadow/background and the min-width — for embedding inside a Card. */
   flush?: boolean;
+  /** M3 density: each step down removes 4px of row height. Interactive targets stay >= 44px. */
+  density?: 0 | -1 | -2;
 }
 
 type SortDir = 'asc' | 'desc';
@@ -77,6 +79,7 @@ export function DataTable<Row>({
   onSelectionChange,
   onRowClick,
   pagination,
+  density,
   initialPageSize = 10,
   pageSizeOptions = [10, 25, 50],
   flush,
@@ -145,7 +148,11 @@ export function DataTable<Row>({
   const end = Math.min(page * pageSize, total);
 
   return (
-    <div className="ohs-table-wrapper" data-flush={flush ? 'true' : undefined}>
+    <div
+      className="ohs-table-wrapper"
+      data-flush={flush ? 'true' : undefined}
+      data-density={density ? String(density) : undefined}
+    >
       {toolbar ? <div className="ohs-table__toolbar">{toolbar}</div> : null}
 
       {errorState ? (
@@ -256,7 +263,7 @@ export function DataTable<Row>({
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  <RiArrowLeftSLine size={20} />
+                  <IconChevronLeft size={20} />
                 </button>
                 {pageWindow(page, totalPages).map((n) => (
                   <button
@@ -276,7 +283,7 @@ export function DataTable<Row>({
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
-                  <RiArrowRightSLine size={20} />
+                  <IconChevronRight size={20} />
                 </button>
               </div>
             </div>

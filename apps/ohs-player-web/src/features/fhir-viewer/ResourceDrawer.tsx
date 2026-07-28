@@ -13,7 +13,7 @@ import {
   useTranslation,
   useUpdateResource,
 } from 'ohs-player-web-core';
-import { RiCloseLine, RiDeleteBinLine, RiPencilLine } from '@remixicon/react';
+import { IconClose, IconDelete, IconEdit } from '../../components/ui/icons';
 import { Avatar, Button, ErrorState, IconButton, LinearProgress } from '../../components/ui';
 import { Drawer } from '../../components/ui/Drawer';
 import { useWriteAudit } from '../audit/useWriteAudit';
@@ -147,7 +147,7 @@ export function ResourceDrawer({
         </div>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={20} />
+        <IconClose size={20} />
       </IconButton>
     </div>
   );
@@ -170,7 +170,7 @@ export function ResourceDrawer({
       <div className="ohs-user-drawer__foot">
         <Button
           variant="danger"
-          iconLeft={<RiDeleteBinLine size={18} aria-hidden="true" />}
+          iconLeft={<IconDelete size={18} aria-hidden="true" />}
           aria-label={t('fhirViewerDelete', { type: typeLabel })}
           onClick={() => setConfirmDelete(true)}
         >
@@ -178,7 +178,7 @@ export function ResourceDrawer({
         </Button>
         <Button
           variant="primary"
-          iconLeft={<RiPencilLine size={18} aria-hidden="true" />}
+          iconLeft={<IconEdit size={18} aria-hidden="true" />}
           aria-label={t('fhirViewerEdit', { type: typeLabel })}
           onClick={enterEdit}
         >

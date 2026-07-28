@@ -7,7 +7,7 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { RiArrowDownSLine, RiCloseLine } from '@remixicon/react';
+import { IconChevronDown, IconClose } from './icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { filterComboboxOptions, type ComboboxOption } from './comboboxFilter';
 
@@ -187,10 +187,10 @@ export function Combobox({
               setOpen(true);
             }}
           >
-            <RiCloseLine size={16} />
+            <IconClose size={16} />
           </button>
         ) : null}
-        <RiArrowDownSLine size={20} className="ohs-formfield__chevron" aria-hidden="true" />
+        <IconChevronDown size={20} className="ohs-formfield__chevron" aria-hidden="true" />
       </div>
       {open ? (
         <ul

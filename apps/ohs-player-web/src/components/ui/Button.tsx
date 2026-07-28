@@ -7,23 +7,20 @@ export type ButtonSize = 'sm' | 'md';
 
 // `ohs-button` keeps the marker class so external selectors still match (e.g. the drawer-footer height override).
 const button = cva(
-  'ohs-button inline-flex items-center justify-center gap-2 rounded border border-transparent ' +
-    'h-12 px-6 font-medium whitespace-nowrap cursor-pointer select-none no-underline ' +
-    'transition-[background-color,border-color,color,filter] duration-[120ms] ease-out ' +
-    'focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)] ' +
-    'aria-busy:cursor-progress disabled:opacity-55 disabled:cursor-not-allowed',
+  'ohs-button ohs-state-layer inline-flex items-center justify-center gap-2 rounded ' +
+    'border border-transparent h-12 px-6 font-medium whitespace-nowrap cursor-pointer ' +
+    'select-none no-underline transition-[background-color,border-color,color] ' +
+    'duration-[120ms] ease-out focus-visible:outline-none ' +
+    'focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)] aria-busy:cursor-progress',
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-contrast not-disabled:hover:bg-primary-hover',
-        secondary:
-          'bg-transparent border-border-tertiary text-text-muted not-disabled:hover:bg-surface-variant',
-        outlined:
-          'bg-transparent border-border-tertiary text-text-muted not-disabled:hover:bg-surface-variant',
-        ghost: 'bg-transparent text-text border-border not-disabled:hover:bg-surface-variant',
-        danger: 'bg-error text-primary-contrast not-disabled:hover:brightness-[0.92]',
-        // M3-elevated: previously unstyled (rendered as base). Now a surface + low elevation.
-        elevated: 'bg-surface text-text shadow-sm not-disabled:hover:bg-surface-variant',
+        primary: 'bg-primary text-primary-contrast',
+        secondary: 'bg-transparent border-outline text-text-muted',
+        outlined: 'bg-transparent border-outline text-text-muted',
+        ghost: 'bg-transparent text-text border-border',
+        danger: 'bg-error text-primary-contrast',
+        elevated: 'bg-surface text-text shadow-sm',
       },
       size: {
         md: 'text-base/6',
@@ -79,8 +76,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       ref={ref}
       type={type}
       className={cn(
-        'ohs-icon-button inline-flex items-center justify-center h-9 w-9 rounded-pill ' +
-          'bg-transparent border border-transparent text-text cursor-pointer hover:bg-background',
+        'ohs-icon-button ohs-state-layer inline-flex items-center justify-center h-9 w-9 ' +
+          'rounded-pill bg-transparent border border-transparent text-text cursor-pointer',
         className,
       )}
       aria-label={label}

@@ -30,8 +30,8 @@ type LocationRow = Named & { status?: string; physicalType?: { coding?: { displa
 type OrganizationRow = Named & { active?: boolean; type?: { coding?: { display?: string; code?: string }[] }[] };
 type CareTeamRow = Named & { status?: string };
 
-const ACTIVE_COLOR = 'var(--ohs-color-positive)';
-const INACTIVE_COLOR = 'var(--ohs-color-neutral-surface)';
+const ACTIVE_COLOR = 'var(--ohs-sys-color-success)';
+const INACTIVE_COLOR = 'var(--ohs-sys-color-surface-container)';
 
 function fullName(p: PractitionerRow): string {
   const n = p.name?.[0];
@@ -134,7 +134,7 @@ export function DashboardPage(): React.ReactElement {
   return (
     <Page>
       <PageHeader title={t('pageDashboard')} description={t('pageDashboardDescription')} />
-      {anyStatsLoading ? <LinearProgress style={{ marginBottom: 'var(--ohs-spacing-4, 16px)' }} /> : null}
+      {anyStatsLoading ? <LinearProgress style={{ marginBottom: 'var(--ohs-sys-spacing-4, 16px)' }} /> : null}
 
       <PermissionGuard permission="dashboard.view">
         <Stack gap={5}>

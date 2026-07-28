@@ -1,4 +1,4 @@
-import { RiArrowRightSLine } from '@remixicon/react';
+import { IconChevronRight } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { nodeChain, type LocationNode } from './hierarchy';
 
@@ -21,7 +21,7 @@ export function LocationBreadcrumb({ root, selectedId, onSelect }: Readonly<Loca
         const label = node.name ?? t('locationsUnnamed', { id: node.id });
         return (
           <span key={node.id} className="flex items-center gap-1">
-            {i > 0 ? <RiArrowRightSLine size={14} aria-hidden="true" className="opacity-60" /> : null}
+            {i > 0 ? <IconChevronRight size={14} aria-hidden="true" className="opacity-60" /> : null}
             {last ? (
               <span aria-current="page" className="text-text">{label}</span>
             ) : (

@@ -1,4 +1,4 @@
-import { RiMore2Fill } from '@remixicon/react';
+import { IconMore } from '../../components/ui/icons';
 import { OhsDropdownMenu, PermissionGuard, useTranslation } from 'ohs-player-web-core';
 import { IconButton } from '../../components/ui';
 
@@ -16,7 +16,7 @@ export function LocationRowMenu({ nodeId, onView, onEdit }: Readonly<LocationRow
     <OhsDropdownMenu.Root>
       <OhsDropdownMenu.Trigger asChild>
         <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
-          <RiMore2Fill size={20} />
+          <IconMore size={20} />
         </IconButton>
       </OhsDropdownMenu.Trigger>
       <OhsDropdownMenu.Portal>

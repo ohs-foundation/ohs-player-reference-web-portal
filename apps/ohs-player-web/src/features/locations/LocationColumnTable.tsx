@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiCornerDownRightLine } from '@remixicon/react';
+import { IconSubdirectory } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { DataTable, type DataTableColumn } from '../../components/ui';
 import type { LocationNode } from './hierarchy';
@@ -64,7 +64,7 @@ export function LocationColumnTable({ root, onSelect, onEdit }: Readonly<Locatio
               }}
               className="inline-flex items-center gap-1.5 text-primary hover:underline"
             >
-              <RiCornerDownRightLine size={14} aria-hidden="true" className="text-text-muted" />
+              <IconSubdirectory size={14} aria-hidden="true" className="text-text-muted" />
               {r.partOfLabel ?? t('locationsUnnamed', { id: r.partOf })}
             </button>
           ) : (

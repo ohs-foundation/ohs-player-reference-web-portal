@@ -1,5 +1,5 @@
 import { type ReactNode, useId } from 'react';
-import { RiArrowDownSLine, RiCloseLine, type RemixiconComponentType } from '@remixicon/react';
+import { IconChevronDown, IconClose, type IconComponent } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import type { Option } from './userFormOptions';
 
@@ -9,7 +9,7 @@ export function Section({
   icon: Icon,
   title,
   children,
-}: Readonly<{ icon: RemixiconComponentType; title: string; children: ReactNode }>): React.ReactElement {
+}: Readonly<{ icon: IconComponent; title: string; children: ReactNode }>): React.ReactElement {
   return (
     <details className="ohs-detail-section" open>
       <summary className="ohs-detail-section__header">
@@ -17,7 +17,7 @@ export function Section({
           <Icon size={20} />
           {title}
         </span>
-        <RiArrowDownSLine size={20} className="ohs-detail-section__chevron" aria-hidden="true" />
+        <IconChevronDown size={20} className="ohs-detail-section__chevron" aria-hidden="true" />
       </summary>
       <div className="ohs-detail-section__body">{children}</div>
     </details>
@@ -174,7 +174,7 @@ export function StackedSelect({
             </option>
           ))}
         </select>
-        <RiArrowDownSLine size={20} className="ohs-formfield__chevron" aria-hidden="true" />
+        <IconChevronDown size={20} className="ohs-formfield__chevron" aria-hidden="true" />
       </div>
       {error ? (
         <span className="ohs-formfield__error" role="alert">
@@ -251,7 +251,7 @@ export function MultiSelect({
                 aria-label={t('removeAssignment')}
                 onClick={() => onChange(value.filter((x) => x !== v))}
               >
-                <RiCloseLine size={16} />
+                <IconClose size={16} />
               </button>
             </span>
           ))}
@@ -273,7 +273,7 @@ export function MultiSelect({
             </option>
           ))}
         </select>
-        <RiArrowDownSLine size={20} className="ohs-formfield__chevron" aria-hidden="true" />
+        <IconChevronDown size={20} className="ohs-formfield__chevron" aria-hidden="true" />
       </div>
     </div>
   );

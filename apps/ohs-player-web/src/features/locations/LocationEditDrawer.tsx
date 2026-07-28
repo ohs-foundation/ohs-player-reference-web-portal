@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { RiCloseLine, RiInformationLine } from '@remixicon/react';
+import { IconClose, IconInfo } from '../../components/ui/icons';
 import {
   useCreateResource,
   useQuestionnaireFormState,
@@ -153,7 +153,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
         {current?.name ? <p className="ohs-form-drawer__subtitle">{current.name}</p> : null}
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -172,13 +172,13 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
   return (
     <Drawer open onClose={onClose} title={t('pageLocationEdit')} header={header} footer={footer}>
       {self.isLoading ? (
-        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
+        <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
           <Spinner label={t('loading')} />
         </div>
       ) : (
         <form id={FORM_ID} className="ohs-detail-body" onSubmit={onSave}>
           {formError ? <ErrorState description={formError} /> : null}
-          <Section icon={RiInformationLine} title={t('sectionBasicInfo')}>
+          <Section icon={IconInfo} title={t('sectionBasicInfo')}>
             <Stack gap={5}>
               <div className="ohs-detail-grid">
                 <StackedInput

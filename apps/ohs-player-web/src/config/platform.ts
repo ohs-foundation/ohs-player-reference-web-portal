@@ -1,7 +1,6 @@
 import type { CorePlatformConfig, PermissionMap } from 'ohs-player-web-core';
 import { env } from './env';
 import { appMessageOverrides } from '../i18n/appMessages';
-import { alternateTheme } from '../theme/altTheme';
 import { lightTheme } from '../theme/lightTheme';
 
 const permissionMap: PermissionMap = {
@@ -56,7 +55,7 @@ export const platformConfig: CorePlatformConfig = {
     locale: 'en',
     messages: appMessageOverrides,
   },
-  theme: env.themeAlt ? alternateTheme : lightTheme,
+  theme: lightTheme,
   customEndpoints: {
     users: '/api/users',
     groups: '/api/groups',

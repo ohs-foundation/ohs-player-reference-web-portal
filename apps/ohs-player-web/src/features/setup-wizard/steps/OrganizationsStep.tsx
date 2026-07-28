@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiBuildingLine } from '@remixicon/react';
+import { IconBuilding } from '../../../components/ui/icons';
 import { newUrnUuid, useTranslation } from 'ohs-player-web-core';
 import { Button, Stack } from '../../../components/ui';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../../config/organizations';
@@ -111,7 +111,7 @@ export function OrganizationsStep({
         countLabel={t('setupCountOrganizations')}
       />
 
-      <Section icon={RiBuildingLine} title={editingId ? t('editOrganization') : t('addOrganization')}>
+      <Section icon={IconBuilding} title={editingId ? t('editOrganization') : t('addOrganization')}>
         {editingId ? (
           <div className="ohs-setup-form__toolbar">
             <Button type="button" variant="outlined" onClick={resetForm}>

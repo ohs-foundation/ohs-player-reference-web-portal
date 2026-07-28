@@ -8,7 +8,7 @@ import {
   useTranslation,
   useUpdateResource,
 } from 'ohs-player-web-core';
-import { RiCloseLine, RiMagicLine } from '@remixicon/react';
+import { IconClose, IconMagic } from '../../components/ui/icons';
 import { Button, IconButton, TextAreaField } from '../../components/ui';
 import { Drawer } from '../../components/ui/Drawer';
 import { useWriteAudit } from '../audit/useWriteAudit';
@@ -118,7 +118,7 @@ export function AddResourceDrawer({
         <p className="m-0 mt-1 text-sm text-text-muted">{t('fhirViewerAddSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={close}>
-        <RiCloseLine size={20} />
+        <IconClose size={20} />
       </IconButton>
     </div>
   );
@@ -146,7 +146,7 @@ export function AddResourceDrawer({
         <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="outlined"
-            iconLeft={<RiMagicLine size={18} aria-hidden="true" />}
+            iconLeft={<IconMagic size={18} aria-hidden="true" />}
             onClick={fillTemplate}
           >
             {t('fhirViewerQuickAdd')}

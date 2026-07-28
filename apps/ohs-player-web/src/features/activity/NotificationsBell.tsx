@@ -1,4 +1,4 @@
-import { RiNotificationLine } from '@remixicon/react';
+import { IconNotification } from '../../components/ui/icons';
 import { OhsDropdownMenu, useTranslation } from 'ohs-player-web-core';
 import { IconButton } from '../../components/ui';
 import { ActivityList } from './ActivityList';
@@ -17,7 +17,7 @@ export function NotificationsBell(): React.ReactElement {
     <OhsDropdownMenu.Root>
       <OhsDropdownMenu.Trigger asChild>
         <IconButton label={t('notifications')} className="app-topbar__bell">
-          <RiNotificationLine size={24} />
+          <IconNotification size={24} />
         </IconButton>
       </OhsDropdownMenu.Trigger>
       <OhsDropdownMenu.Portal>

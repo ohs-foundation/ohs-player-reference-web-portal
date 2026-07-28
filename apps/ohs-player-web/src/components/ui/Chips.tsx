@@ -18,7 +18,7 @@ export function FilterChip({ label, selected, onChange, disabled, icon }: Readon
         'ohs-chip inline-flex items-center gap-1 text-sm/[1.2] text-text bg-surface',
         'border border-border rounded-pill px-3 py-2 cursor-pointer select-none',
         'transition-[background-color,border-color,color] duration-[120ms] ease-out',
-        'not-disabled:hover:border-text-muted not-disabled:hover:bg-surface-variant',
+        'ohs-state-layer not-disabled:hover:border-text-muted',
         'focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)]',
         'aria-selected:bg-primary aria-selected:border-primary aria-selected:text-primary-contrast',
         'disabled:opacity-60 disabled:cursor-not-allowed',
@@ -36,11 +36,21 @@ export function FilterChip({ label, selected, onChange, disabled, icon }: Readon
 export interface ChipSetProps {
   children: ReactNode;
   className?: string;
+  /** Set when more than one chip can be selected at a time. */
+  multiSelect?: boolean;
 }
 
-export function ChipSet({ children, className }: Readonly<ChipSetProps>): React.ReactElement {
+export function ChipSet({
+  children,
+  className,
+  multiSelect,
+}: Readonly<ChipSetProps>): React.ReactElement {
   return (
-    <div role="listbox" aria-multiselectable="true" className={cn('flex flex-wrap gap-2', className)}>
+    <div
+      role="listbox"
+      aria-multiselectable={multiSelect ? true : undefined}
+      className={cn('flex flex-wrap gap-2', className)}
+    >
       {children}
     </div>
   );

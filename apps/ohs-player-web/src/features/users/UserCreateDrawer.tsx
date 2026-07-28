@@ -1,5 +1,5 @@
 import { type FormEvent } from 'react';
-import { RiCloseLine } from '@remixicon/react';
+import { IconClose } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { Button, Drawer, ErrorState, IconButton } from '../../components/ui';
 import {
@@ -37,7 +37,7 @@ export function UserCreateDrawer({
         <p className="ohs-form-drawer__subtitle">{t('addUserSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );

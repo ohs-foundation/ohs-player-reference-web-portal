@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react';
-import { RiBuildingLine, RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
+import { IconBuilding, IconClose, IconGroup, IconTeam } from '../../components/ui/icons';
 import {
   FhirError,
   formatOperationOutcomeMessage,
@@ -120,7 +120,7 @@ export function CareTeamFormDrawer({
         </p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -147,7 +147,7 @@ export function CareTeamFormDrawer({
       <form id={FORM_ID} className="ohs-detail-body" onSubmit={onFormSubmit}>
         {error ? <ErrorState description={error} /> : null}
 
-        <Section icon={RiTeamLine} title={t('sectionBasicInfo')}>
+        <Section icon={IconTeam} title={t('sectionBasicInfo')}>
           <Stack gap={5}>
             <StackedInput
               full
@@ -179,7 +179,7 @@ export function CareTeamFormDrawer({
           </Stack>
         </Section>
 
-        <Section icon={RiBuildingLine} title={t('organizationForTeam')}>
+        <Section icon={IconBuilding} title={t('organizationForTeam')}>
           <StackedSelect
             full
             label={t('organizationForTeam')}
@@ -190,7 +190,7 @@ export function CareTeamFormDrawer({
           />
         </Section>
 
-        <Section icon={RiGroupLine} title={t('sectionMembers')}>
+        <Section icon={IconGroup} title={t('sectionMembers')}>
           <MultiSelect
             label={t('usersLabel')}
             options={practOptions}

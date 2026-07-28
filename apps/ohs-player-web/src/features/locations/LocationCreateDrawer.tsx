@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiCloseLine } from '@remixicon/react';
+import { IconClose } from '../../components/ui/icons';
 import {
   bundleEntry,
   commitBundle,
@@ -80,7 +80,7 @@ export function LocationCreateDrawer({
         <p className="ohs-form-drawer__subtitle">{t('addLocationSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );

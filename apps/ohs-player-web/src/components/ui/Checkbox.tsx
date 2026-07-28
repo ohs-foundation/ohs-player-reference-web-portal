@@ -38,7 +38,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(function Ch
       aria-label={label ? undefined : ariaLabel}
       className={cn(
         'group inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center p-0',
-        'rounded-[4px] border border-border-tertiary bg-surface text-primary-contrast cursor-pointer',
+        'rounded-[4px] border border-outline bg-surface text-primary-contrast cursor-pointer',
         'transition-[background-color,border-color] duration-[120ms] ease-out',
         'focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)]',
         'data-[state=checked]:bg-primary data-[state=checked]:border-primary',

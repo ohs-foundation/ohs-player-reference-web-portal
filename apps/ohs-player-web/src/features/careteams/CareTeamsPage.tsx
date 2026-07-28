@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
+import { IconAdd, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
 import careTeamsEmptyIllustration from '../../assets/illustrations/careteams-empty.svg';
 import {
   OhsDropdownMenu,
@@ -137,14 +137,14 @@ export function CareTeamsPage() {
               <Button
                 variant="secondary"
                 type="button"
-                iconRight={<RiArrowDownSLine size={20} />}
+                iconRight={<IconChevronDown size={20} />}
                 onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
               >
                 {t('exportLabel')}
               </Button>
             ) : null}
             <PermissionGuard permission="careteams.manage">
-              <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
                 {t('addCareTeam')}
               </Button>
             </PermissionGuard>
@@ -192,7 +192,7 @@ export function CareTeamsPage() {
             description={t('careTeamsEmptyDescription')}
             action={
               <PermissionGuard permission="careteams.manage">
-                <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
                   {t('addCareTeam')}
                 </Button>
               </PermissionGuard>
@@ -205,7 +205,7 @@ export function CareTeamsPage() {
             <Stack gap={3}>
               <Inline
                 justify="between"
-                style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}
+                style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}
               >
                 <SearchField
                   label={t('search')}
@@ -217,7 +217,7 @@ export function CareTeamsPage() {
                 <Button
                   variant="secondary"
                   type="button"
-                  iconLeft={<RiFilter3Line size={20} />}
+                  iconLeft={<IconFilterList size={20} />}
                   aria-expanded={filtersOpen}
                   onClick={() => setFiltersOpen((v) => !v)}
                 >
@@ -253,7 +253,7 @@ export function CareTeamsPage() {
               render: (tm) => {
                 const members = memberIds(tm);
                 return (
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ohs-spacing-1, 4px)', minWidth: 0 }}>
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ohs-sys-spacing-1, 4px)', minWidth: 0 }}>
                     <button
                       type="button"
                       className="ohs-rowlink"
@@ -264,7 +264,7 @@ export function CareTeamsPage() {
                     >
                       {tm.name ?? tm.id}
                     </button>
-                    <Inline justify="start" style={{ gap: 'var(--ohs-spacing-2, 8px)', alignItems: 'center' }}>
+                    <Inline justify="start" style={{ gap: 'var(--ohs-sys-spacing-2, 8px)', alignItems: 'center' }}>
                       {members.length > 0 ? (
                         <span className="ohs-avatar-stack">
                           {members.slice(0, 3).map((mid) => (
@@ -272,7 +272,7 @@ export function CareTeamsPage() {
                           ))}
                         </span>
                       ) : null}
-                      <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                      <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
                         {t('membersCount', { count: members.length })}
                       </span>
                     </Inline>
@@ -307,7 +307,7 @@ export function CareTeamsPage() {
                 <OhsDropdownMenu.Root>
                   <OhsDropdownMenu.Trigger asChild>
                     <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
-                      <RiMore2Fill size={20} />
+                      <IconMore size={20} />
                     </IconButton>
                   </OhsDropdownMenu.Trigger>
                   <OhsDropdownMenu.Portal>

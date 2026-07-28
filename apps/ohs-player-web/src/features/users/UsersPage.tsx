@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
+import { IconAdd, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
 import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
@@ -220,14 +220,14 @@ export function UsersPage() {
               <Button
                 variant="secondary"
                 type="button"
-                iconRight={<RiArrowDownSLine size={20} />}
+                iconRight={<IconChevronDown size={20} />}
                 onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
               >
                 {t('exportLabel')}
               </Button>
             ) : null}
             <PermissionGuard permission="users.create">
-              <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
                 {t('addUser')}
               </Button>
             </PermissionGuard>
@@ -249,7 +249,7 @@ export function UsersPage() {
             description={t('usersEmptyDescription')}
             action={
               <PermissionGuard permission="users.create">
-                <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
                   {t('addUser')}
                 </Button>
               </PermissionGuard>
@@ -260,7 +260,7 @@ export function UsersPage() {
       <DataTable<PractitionerRow>
         toolbar={
           <Stack gap={3}>
-            <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
+            <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
               <SearchField
                 label={t('search')}
                 name="userSearch"
@@ -271,7 +271,7 @@ export function UsersPage() {
               <Button
                 variant="secondary"
                 type="button"
-                iconLeft={<RiFilter3Line size={20} />}
+                iconLeft={<IconFilterList size={20} />}
                 aria-expanded={filtersOpen}
                 onClick={() => setFiltersOpen((v) => !v)}
               >
@@ -321,7 +321,7 @@ export function UsersPage() {
               const name = fullName(p) || (p.id ?? '');
               const email = emailOf(p);
               return (
-                <Inline justify="start" style={{ gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
+                <Inline justify="start" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
                   <Avatar name={name} />
                   <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <button
@@ -335,7 +335,7 @@ export function UsersPage() {
                       {name}
                     </button>
                     {email ? (
-                      <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                      <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
                         {email}
                       </span>
                     ) : null}
@@ -382,7 +382,7 @@ export function UsersPage() {
               <OhsDropdownMenu.Root>
                 <OhsDropdownMenu.Trigger asChild>
                   <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
-                    <RiMore2Fill size={20} />
+                    <IconMore size={20} />
                   </IconButton>
                 </OhsDropdownMenu.Trigger>
                 <OhsDropdownMenu.Portal>

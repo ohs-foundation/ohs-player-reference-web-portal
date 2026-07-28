@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { usePermission, useTranslation } from 'ohs-player-web-core';
-import { RiAddLine } from '@remixicon/react';
+import { IconAdd } from '../../components/ui/icons';
 import { Button, Page, PageHeader } from '../../components/ui';
 import { ResourceTypeSidebar } from './ResourceTypeSidebar';
 import { ResourceListPanel } from './ResourceListPanel';
@@ -46,7 +46,7 @@ export function FhirViewerPage(): React.ReactElement {
           canEdit ? (
             <Button
               variant="primary"
-              iconLeft={<RiAddLine size={18} aria-hidden="true" />}
+              iconLeft={<IconAdd size={18} aria-hidden="true" />}
               onClick={() => setAdding(true)}
             >
               {t('fhirViewerAdd')}

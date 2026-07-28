@@ -1,14 +1,14 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import {
-  RiArrowDownSLine,
-  RiBriefcaseLine,
-  RiBuildingLine,
-  RiCloseLine,
-  RiMapPinLine,
-  RiTeamLine,
-  RiUserLine,
-  type RemixiconComponentType,
-} from '@remixicon/react';
+  IconBriefcase,
+  IconBuilding,
+  IconChevronDown,
+  IconClose,
+  IconMapPin,
+  IconTeam,
+  IconUser,
+  type IconComponent,
+} from '../../components/ui/icons';
 import {
   commitBundle,
   OhsDialog,
@@ -55,7 +55,7 @@ function Section({
   icon: Icon,
   title,
   children,
-}: Readonly<{ icon: RemixiconComponentType; title: string; children: ReactNode }>): React.ReactElement {
+}: Readonly<{ icon: IconComponent; title: string; children: ReactNode }>): React.ReactElement {
   return (
     <details className="ohs-detail-section" open>
       <summary className="ohs-detail-section__header">
@@ -63,7 +63,7 @@ function Section({
           <Icon size={20} />
           {title}
         </span>
-        <RiArrowDownSLine size={20} className="ohs-detail-section__chevron" aria-hidden="true" />
+        <IconChevronDown size={20} className="ohs-detail-section__chevron" aria-hidden="true" />
       </summary>
       <div className="ohs-detail-section__body">{children}</div>
     </details>
@@ -143,7 +143,7 @@ export function UserDetailsDrawer({
         </div>
       </div>
       <IconButton label={t('close')} className="ohs-user-drawer__close" onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -207,12 +207,12 @@ export function UserDetailsDrawer({
     <>
     <Drawer open onClose={onClose} title={titleText} header={header} footer={footer}>
       {read.isLoading ? (
-        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
+        <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
           <Spinner label={t('loading')} />
         </div>
       ) : (
         <div className="ohs-detail-body">
-          <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
+          <Section icon={IconUser} title={t('sectionBasicInfo')}>
             <div className="ohs-detail-grid">
               <Field label={t('givenName')} value={details.given} />
               <Field label={t('familyName')} value={details.family} />
@@ -225,17 +225,17 @@ export function UserDetailsDrawer({
             </div>
           </Section>
 
-          <Section icon={RiBriefcaseLine} title={t('sectionRoleStatus')}>
+          <Section icon={IconBriefcase} title={t('sectionRoleStatus')}>
             <div className="ohs-detail-grid">
               <Field label={t('columnRole')} value={details.role} />
               <Field label={t('columnStatus')} value={details.active ? t('statusActive') : t('statusInactive')} />
             </div>
           </Section>
 
-          <Section icon={RiBuildingLine} title={t('sectionPrimaryOrg')}>
+          <Section icon={IconBuilding} title={t('sectionPrimaryOrg')}>
             {details.orgName ? (
               <div className="ohs-detail-rel">
-                <RiBuildingLine size={20} className="ohs-detail-rel__icon" />
+                <IconBuilding size={20} className="ohs-detail-rel__icon" />
                 <span className="ohs-detail-rel__title">{details.orgName}</span>
               </div>
             ) : (
@@ -243,10 +243,10 @@ export function UserDetailsDrawer({
             )}
           </Section>
 
-          <Section icon={RiMapPinLine} title={t('sectionLocation')}>
+          <Section icon={IconMapPin} title={t('sectionLocation')}>
             {details.locName ? (
               <div className="ohs-detail-rel">
-                <RiMapPinLine size={20} className="ohs-detail-rel__icon" />
+                <IconMapPin size={20} className="ohs-detail-rel__icon" />
                 <span className="ohs-detail-rel__title">{details.locName}</span>
               </div>
             ) : (
@@ -254,12 +254,12 @@ export function UserDetailsDrawer({
             )}
           </Section>
 
-          <Section icon={RiTeamLine} title={t('sectionCareTeams')}>
+          <Section icon={IconTeam} title={t('sectionCareTeams')}>
             {details.careTeams.length > 0 ? (
               <div className="ohs-detail-list">
                 {details.careTeams.map((ct) => (
                   <div className="ohs-detail-rel" key={ct.id}>
-                    <RiTeamLine size={20} className="ohs-detail-rel__icon" />
+                    <IconTeam size={20} className="ohs-detail-rel__icon" />
                     <span>
                       <span className="ohs-detail-rel__title">{ct.name ?? ct.id}</span>
                       <span className="ohs-detail-rel__sub" style={{ display: 'block' }}>

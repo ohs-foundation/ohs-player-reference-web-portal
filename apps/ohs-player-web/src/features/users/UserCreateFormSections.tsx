@@ -1,10 +1,10 @@
 import {
-  RiBriefcaseLine,
-  RiBuildingLine,
-  RiMapPinLine,
-  RiTeamLine,
-  RiUserLine,
-} from '@remixicon/react';
+  IconBriefcase,
+  IconBuilding,
+  IconMapPin,
+  IconTeam,
+  IconUser,
+} from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES } from '../../config/roles';
 import { Stack } from '../../components/ui';
@@ -56,7 +56,7 @@ export function UserBasicInfoFields({ form }: Readonly<{ form: Form }>): React.R
   const { fieldErrors, clearError } = form;
 
   return (
-    <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
+    <Section icon={IconUser} title={t('sectionBasicInfo')}>
       <Stack gap={5}>
         <div className="ohs-detail-grid">
           <StackedInput
@@ -129,7 +129,7 @@ export function UserRoleStatusFields({ form }: Readonly<{ form: Form }>): React.
   const { t } = useTranslation();
 
   return (
-    <Section icon={RiBriefcaseLine} title={t('sectionRoleStatus')}>
+    <Section icon={IconBriefcase} title={t('sectionRoleStatus')}>
       <Stack gap={5}>
         <div className="ohs-detail-grid">
           <StackedSelect
@@ -160,7 +160,7 @@ export function UserOrganizationFields({ form }: Readonly<{ form: Form }>): Reac
   const { t } = useTranslation();
 
   return (
-    <Section icon={RiBuildingLine} title={t('sectionPrimaryOrg')}>
+    <Section icon={IconBuilding} title={t('sectionPrimaryOrg')}>
       <MultiSelect
         label={t('contextOrganization')}
         options={form.orgOptions}
@@ -176,7 +176,7 @@ export function UserLocationFields({ form }: Readonly<{ form: Form }>): React.Re
   const { t } = useTranslation();
 
   return (
-    <Section icon={RiMapPinLine} title={t('sectionLocation')}>
+    <Section icon={IconMapPin} title={t('sectionLocation')}>
       <MultiSelect
         label={t('contextLocation')}
         options={form.locOptions}
@@ -192,7 +192,7 @@ export function UserCareTeamFields({ form }: Readonly<{ form: Form }>): React.Re
   const { t } = useTranslation();
 
   return (
-    <Section icon={RiTeamLine} title={t('sectionCareTeams')}>
+    <Section icon={IconTeam} title={t('sectionCareTeams')}>
       <MultiSelect
         label={t('sectionCareTeams')}
         options={form.careTeamOptions}
