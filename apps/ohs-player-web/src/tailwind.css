@@ -57,6 +57,9 @@
 
   --font-heading: var(--ohs-ref-typeface-brand);
   --font-body: var(--ohs-ref-typeface-plain);
+  /* Without this the `font-mono` utilities keep Tailwind's own stack, diverging from the token the
+     hand-written CSS and the library's JSON viewer resolve. */
+  --font-mono: var(--ohs-font-mono);
 
   /* One 4px system: Tailwind's spacing scale and `--ohs-sys-spacing-*` share a base step. */
   --spacing: var(--ohs-sys-spacing-1);

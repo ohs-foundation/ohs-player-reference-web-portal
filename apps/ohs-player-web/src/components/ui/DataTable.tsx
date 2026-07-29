@@ -11,6 +11,8 @@ export interface DataTableColumn<Row> {
   width?: string;
   sortable?: boolean;
   sortValue?: (row: Row) => string | number;
+  /** Render the cell in the code face — for identifiers and other machine-readable values. */
+  mono?: boolean;
 }
 
 export interface DataTableProps<Row> {
@@ -222,7 +224,11 @@ export function DataTable<Row>({
                         </td>
                       ) : null}
                       {columns.map((c) => (
-                        <td key={c.key} style={{ textAlign: c.align ?? 'left' }}>
+                        <td
+                          key={c.key}
+                          style={{ textAlign: c.align ?? 'left' }}
+                          data-mono={c.mono ? 'true' : undefined}
+                        >
                           {c.render(row)}
                         </td>
                       ))}

@@ -98,7 +98,7 @@ export function DashboardPage(): React.ReactElement {
   );
 
   const userColumns: DataTableColumn<PractitionerRow>[] = [
-    { key: 'id', header: t('columnIdentifier'), render: (p) => p.id ?? '—' },
+    { key: 'id', header: t('columnIdentifier'), mono: true, render: (p) => p.id ?? '—' },
     {
       key: 'name',
       header: t('columnName'),
@@ -114,7 +114,7 @@ export function DashboardPage(): React.ReactElement {
   ];
 
   const locationColumns: DataTableColumn<LocationRow>[] = [
-    { key: 'id', header: t('columnIdentifier'), render: (l) => l.id ?? '—' },
+    { key: 'id', header: t('columnIdentifier'), mono: true, render: (l) => l.id ?? '—' },
     { key: 'name', header: t('columnName'), render: (l) => l.name ?? l.id ?? '—' },
     {
       key: 'type',
@@ -125,7 +125,7 @@ export function DashboardPage(): React.ReactElement {
   ];
 
   const orgColumns: DataTableColumn<OrganizationRow>[] = [
-    { key: 'id', header: t('columnIdentifier'), render: (o) => o.id ?? '—' },
+    { key: 'id', header: t('columnIdentifier'), mono: true, render: (o) => o.id ?? '—' },
     { key: 'name', header: t('columnName'), render: (o) => o.name ?? o.id ?? '—' },
     {
       key: 'type',
@@ -136,7 +136,7 @@ export function DashboardPage(): React.ReactElement {
   ];
 
   const careTeamColumns: DataTableColumn<CareTeamRow>[] = [
-    { key: 'id', header: t('columnIdentifier'), render: (c) => c.id ?? '—' },
+    { key: 'id', header: t('columnIdentifier'), mono: true, render: (c) => c.id ?? '—' },
     { key: 'name', header: t('columnName'), render: (c) => c.name ?? c.id ?? '—' },
     { key: 'status', header: t('columnStatus'), render: (c) => statusBadge(c.status === 'active', t) },
   ];

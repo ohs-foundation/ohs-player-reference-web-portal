@@ -268,7 +268,7 @@ export function OrganizationsPage() {
             </Stack>
           }
           columns={[
-            { key: 'identifier', header: t('columnIdentifier'), render: (o) => identifierOf(o) || '—' },
+            { key: 'identifier', header: t('columnIdentifier'), mono: true, render: (o) => identifierOf(o) || '—' },
             {
               key: 'name',
               header: t('columnName'),

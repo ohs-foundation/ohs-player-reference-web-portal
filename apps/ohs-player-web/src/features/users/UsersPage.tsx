@@ -310,6 +310,7 @@ export function UsersPage() {
           {
             key: 'identifier',
             header: t('columnIdentifier'),
+            mono: true,
             render: (p) => identifierOf(p),
           },
           {

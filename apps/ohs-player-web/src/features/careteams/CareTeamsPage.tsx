@@ -243,7 +243,7 @@ export function CareTeamsPage() {
             </Stack>
           }
           columns={[
-            { key: 'identifier', header: t('columnIdentifier'), render: (tm) => tm.id ?? '—' },
+            { key: 'identifier', header: t('columnIdentifier'), mono: true, render: (tm) => tm.id ?? '—' },
             {
               key: 'name',
               header: t('columnName'),

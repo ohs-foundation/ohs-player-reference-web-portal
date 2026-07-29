@@ -53,7 +53,7 @@
   --ohs-color-level-unit-text: #696969;
   --ohs-font-weight-regular: 400;
   --ohs-font-weight-medium: 500;
-  --ohs-font-mono: ui-monospace, 'SF Mono', 'Menlo', monospace;
+  --ohs-font-mono: 'Google Sans Code', ui-monospace, 'SF Mono', 'Menlo', monospace;
 }
 
 [data-ohs-root] * {
@@ -419,6 +419,9 @@
   border-bottom: 0.5px solid var(--ohs-color-border-secondary, #d4d4d4);
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   color: var(--ohs-color-text, #0d0d0d);
+}
+.ohs-table td[data-mono='true'] {
+  font-family: var(--ohs-font-mono, ui-monospace, 'SF Mono', 'Menlo', monospace);
 }
 .ohs-table tbody tr {
   transition: background 80ms ease;
