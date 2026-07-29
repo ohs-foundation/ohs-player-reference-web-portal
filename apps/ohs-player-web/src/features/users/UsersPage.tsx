@@ -260,7 +260,7 @@ export function UsersPage() {
       <DataTable<PractitionerRow>
         toolbar={
           <Stack gap={3}>
-            <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
+            <Inline style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
               <SearchField
                 label={t('search')}
                 name="userSearch"

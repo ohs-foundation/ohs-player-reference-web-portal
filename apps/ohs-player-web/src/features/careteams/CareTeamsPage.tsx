@@ -204,7 +204,6 @@ export function CareTeamsPage() {
           toolbar={
             <Stack gap={3}>
               <Inline
-                justify="between"
                 style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}
               >
                 <SearchField
