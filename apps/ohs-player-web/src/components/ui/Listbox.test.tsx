@@ -112,6 +112,30 @@ describe('Listbox', () => {
     expect(trigger).toHaveFocus();
   });
 
+  it('opens on the first enabled option, never a disabled one', () => {
+    const withDisabledFirst = [{ value: 'a', label: 'Alpha', disabled: true }, ...OPTIONS.slice(1)];
+    const onChange = vi.fn();
+    render(
+      <Listbox label="Assignment" value={[]} onChange={onChange} options={withDisabledFirst} placeholder="Pick one" />,
+    );
+    const trigger = screen.getByRole('combobox', { name: /Assignment/ });
+    open();
+
+    // Bravo, not the disabled Alpha — otherwise Enter would be a no-op, since commit skips disabled.
+    expect(trigger).toHaveAttribute('aria-activedescendant', screen.getAllByRole('option')[1].id);
+    fireEvent.keyDown(trigger, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith(['b']);
+  });
+
+  it('opens on the selected option rather than the one after it', () => {
+    render(
+      <Listbox label="Assignment" value={['b']} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+    );
+    const trigger = screen.getByRole('combobox', { name: /Assignment/ });
+    open();
+    expect(trigger).toHaveAttribute('aria-activedescendant', screen.getAllByRole('option')[1].id);
+  });
+
   it('renders an empty state rather than a bare panel', () => {
     render(<Listbox label="Assignment" value={[]} onChange={vi.fn()} options={[]} placeholder="Pick one" />);
     open();

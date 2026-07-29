@@ -136,9 +136,11 @@ export function Listbox({
     close();
   };
 
+  // Opens on the current value, else the first *enabled* option: `commit` ignores disabled ones, so
+  // landing on one would make Enter a no-op. `nextIndex(-1, …)` returns -1 when there are none.
   const openAt = () => {
-    const firstSelected = options.findIndex((o) => value.includes(o.value));
-    setActive(firstSelected >= 0 ? firstSelected : 0);
+    const selected = options.findIndex((o) => value.includes(o.value) && !o.disabled);
+    setActive(selected >= 0 ? selected : nextIndex(-1, 1, options));
     setOpen(true);
   };
 
