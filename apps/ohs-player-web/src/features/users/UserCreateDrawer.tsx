@@ -34,7 +34,6 @@ export function UserCreateDrawer({
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{t('addUserQuickTitle')}</h2>
-        <p className="ohs-form-drawer__subtitle">{t('addUserSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
         <IconClose size={24} />

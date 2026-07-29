@@ -16,7 +16,7 @@ export const defaultTheme: ThemeConfig = {
     textMuted: '#52606D',
     border: '#CDD7E1',
     focusRing: 'rgba(27, 110, 243, 0.28)',
-    error: '#B3261E',
+    error: '#E50000',
     success: '#137333',
   },
   typography: {

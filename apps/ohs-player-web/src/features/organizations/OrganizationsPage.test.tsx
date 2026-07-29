@@ -84,12 +84,9 @@ describe('OrganizationsPage', () => {
     const drawer = await screen.findByRole('dialog');
     fireEvent.change(within(drawer).getByLabelText(/organizationName/i), { target: { value: 'New Org' } });
 
-    // pick a location in the Managed Locations multiselect (a combobox showing the option labels)
-    const select = within(drawer).getAllByRole('combobox').find((el) =>
-      within(el).queryByText('Clinic A'),
-    );
-    expect(select).toBeDefined();
-    fireEvent.change(select as HTMLSelectElement, { target: { value: 'Location/l1' } });
+    // Pick a location in the Managed Locations listbox: open the combobox, then choose the option.
+    fireEvent.click(within(drawer).getByRole('combobox', { name: /contextLocation/ }));
+    fireEvent.click(within(drawer).getByRole('option', { name: 'Clinic A' }));
 
     fireEvent.click(within(drawer).getByText('save'));
 

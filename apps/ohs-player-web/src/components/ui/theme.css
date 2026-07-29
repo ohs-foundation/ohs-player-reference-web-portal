@@ -29,6 +29,10 @@
   /* Semantic colours beyond the managed set */
   --ohs-color-border-secondary: #d4d4d4; /* Border/Secondary */
   --ohs-color-border-tertiary: #b8b8b8; /* Border/Tertiary */
+  --ohs-color-text-secondary: #363636; /* Content/Secondary — field text, option rows */
+  --ohs-color-focus-ring-destructive: rgba(229, 0, 0, 0.28); /* Content/Negative at 28% */
+  --ohs-color-outline-variant: #cac4d0; /* M3 carry-over: chip + outline-button border */
+  --ohs-color-on-surface-variant: #49454f; /* M3 carry-over: chip label, radio ring */
   /* Location administrative-level badges (bg / border / text). Root uses the brand fill. */
   --ohs-color-level-root-bg: #094f9a;
   --ohs-color-level-root-border: #094f9a;
@@ -124,15 +128,27 @@
   outline: none;
   box-shadow: none;
 }
-.ohs-formfield:focus-within {
+.ohs-formfield:hover:not(:focus-within):not(.ohs-formfield--disabled) {
   border-color: var(--ohs-color-text-muted, #696969);
+}
+.ohs-formfield:focus-within {
+  border-color: var(--ohs-color-primary, #094f9a);
+  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
+}
+.ohs-formfield--disabled {
+  border-color: var(--ohs-color-border, #ededed);
+}
+.ohs-formfield--disabled .ohs-formfield__input,
+.ohs-formfield--disabled .ohs-formfield__label {
+  color: var(--ohs-color-border-tertiary, #b8b8b8);
 }
 .ohs-formfield:has(:focus-visible) {
   box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(27, 110, 243, 0.28));
 }
 .ohs-formfield--error:focus-within,
 .ohs-formfield--error:has(:focus-visible) {
-  border-color: var(--ohs-color-error, #b3261e);
+  border-color: var(--ohs-color-error, #e50000);
+  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring-destructive, rgba(229, 0, 0, 0.28));
 }
 
 /* ---------- Typography ---------- */
@@ -350,7 +366,12 @@
 
 .ohs-field-grid {
   display: grid;
-  gap: var(--ohs-sys-spacing-3, 12px);
+  column-gap: var(--ohs-sys-spacing-4, 16px);
+  row-gap: var(--ohs-sys-spacing-8, 32px);
+}
+/* The listbox wraps its field, so `--full` has to reach the wrapper too. */
+.ohs-formfield-slot--full {
+  grid-column: 1 / -1;
 }
 .ohs-field-grid[data-columns='2'] {
   grid-template-columns: 1fr 1fr;
@@ -627,7 +648,10 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--ohs-color-surface, #fff);
-  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.16);
+  border-left: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  box-shadow:
+    0 0 6px 0 rgba(0, 0, 0, 0.08),
+    0 8px 16px 0 rgba(0, 0, 0, 0.1);
   animation: ohs-slide-in-right 200ms ease;
 }
 .ohs-drawer *,
@@ -676,11 +700,13 @@
   box-sizing: border-box;
   min-height: 164px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--ohs-sys-spacing-4, 16px);
+  height: 104px;
+  box-sizing: border-box;
   padding: 32px 40px;
-  border-bottom: 2px solid var(--ohs-color-border, #ededed);
+  border-bottom: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
 }
 .ohs-user-drawer__identity {
   display: flex;
@@ -728,7 +754,7 @@
 }
 /* Panel corner, shared with the dashboard cards so a drawer section reads as the same kind of box. */
 .ohs-detail-section {
-  border: 1px solid var(--ohs-color-border, #ededed);
+  border: 2px solid var(--ohs-color-border, #ededed);
   border-radius: var(--ohs-sys-shape-corner-extra-large-decreased, 24px);
   overflow: hidden;
 }
@@ -740,13 +766,15 @@
   min-height: 76px;
   box-sizing: border-box;
   padding: var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-8, 32px);
-  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
+  background: var(--ohs-color-background, #fafafa);
   border-bottom: 2px solid var(--ohs-color-border, #ededed);
   cursor: pointer;
   list-style: none;
-  font-size: var(--ohs-sys-typescale-title-medium-size, 16px);
+  font-size: var(--ohs-sys-typescale-title-large-size, 20px);
+  line-height: var(--ohs-sys-typescale-title-large-line-height, 28px);
+  letter-spacing: var(--ohs-sys-typescale-title-large-letter-spacing, -0.5px);
   font-weight: var(--ohs-font-weight-medium, 500);
-  color: var(--ohs-color-text, #0d0d0d);
+  color: var(--ohs-color-text-secondary, #363636);
 }
 .ohs-detail-section__header::-webkit-details-marker {
   display: none;
@@ -763,7 +791,7 @@
   gap: var(--ohs-sys-spacing-3, 12px);
 }
 .ohs-detail-section__chevron {
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-color-text-secondary, #363636);
   transition: transform 150ms ease;
   flex-shrink: 0;
 }
@@ -771,6 +799,9 @@
   transform: rotate(180deg);
 }
 .ohs-detail-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-sys-spacing-8, 32px);
   padding: var(--ohs-sys-spacing-8, 32px);
 }
 .ohs-detail-grid {
@@ -840,11 +871,14 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--ohs-sys-spacing-4, 16px);
-  padding: var(--ohs-sys-spacing-6, 24px) 40px;
-  border-top: 2px solid var(--ohs-color-border, #ededed);
+  height: 104px;
+  box-sizing: border-box;
+  padding: 10px var(--ohs-sys-spacing-8, 32px);
+  gap: 10px;
 }
 .ohs-user-drawer__foot .ohs-button {
-  height: 60px;
+  flex: 1;
+  height: 56px;
 }
 .ohs-btn-danger {
   background: transparent;
@@ -859,11 +893,13 @@
 /* Header: title + subtitle + close (32/40 padding per spec; 40 is off the spacing scale, see #18). */
 .ohs-form-drawer__head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--ohs-sys-spacing-4, 16px);
+  height: 104px;
+  box-sizing: border-box;
   padding: 32px 40px;
-  border-bottom: 2px solid var(--ohs-color-border, #ededed);
+  border-bottom: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
 }
 .ohs-form-drawer__title {
   margin: 0;
@@ -872,48 +908,81 @@
   font-weight: var(--ohs-font-weight-medium, 500);
   color: var(--ohs-color-text, #0d0d0d);
 }
-.ohs-form-drawer__subtitle {
-  margin: var(--ohs-sys-spacing-1, 4px) 0 0;
-  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-  line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
-  color: var(--ohs-color-text-muted, #696969);
-}
 
 /* Stacked-label field: label on top, control below, inside a bordered 72px box (16/20 padding per spec). */
 .ohs-formfield {
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: var(--ohs-sys-spacing-1, 4px);
-  min-height: 72px;
+  height: 56px;
   box-sizing: border-box;
-  justify-content: center;
-  padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-6, 24px);
-  border: 0.5px solid var(--ohs-color-border-tertiary, #b8b8b8);
-  border-radius: var(--ohs-radius-pill, 999px);
+  padding: var(--ohs-sys-spacing-1, 4px) 0 var(--ohs-sys-spacing-1, 4px)
+    var(--ohs-sys-spacing-4, 16px);
+  border: 1px solid var(--ohs-color-border-tertiary, #b8b8b8);
+  border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
   background: var(--ohs-color-surface, #fff);
 }
-/* Textarea and multi-select grow with their content; a pill would stretch into a stadium, so hold
-   the corner the 56px search field actually renders. */
-.ohs-formfield:has(.ohs-formfield__textarea),
-.ohs-formfield:has(.ohs-multiselect__chips) {
-  border-radius: var(--ohs-sys-shape-corner-extra-large, 28px);
+/* Multi-line fields hug their content instead of the fixed 56px band. */
+.ohs-formfield--multiline {
+  height: auto;
+  min-height: 103px;
+  align-items: stretch;
+  padding-right: var(--ohs-sys-spacing-4, 16px);
 }
 .ohs-formfield--error {
-  border-color: var(--ohs-color-error, #b3261e);
+  border-color: var(--ohs-color-error, #e50000);
 }
-.ohs-formfield__error {
+/* Error and supporting text sit below the field, aligned to the input's 16px inset. */
+.ohs-formfield__error,
+.ohs-formfield__support {
+  position: absolute;
+  top: calc(100% + var(--ohs-sys-spacing-1, 4px));
+  left: var(--ohs-sys-spacing-4, 16px);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
-  color: var(--ohs-color-error, #b3261e);
+  letter-spacing: var(--ohs-sys-typescale-body-small-letter-spacing, -0.5px);
+  color: var(--ohs-color-error, #e50000);
+}
+.ohs-formfield__support {
+  color: var(--ohs-color-text-muted, #696969);
 }
 .ohs-formfield--full {
   grid-column: 1 / -1;
 }
+/* Always floated onto the top border. The surface-coloured chip is the notch — it interrupts the
+   1px outline with 4px of clear space either side. Permanent, so row heights never shift. */
 .ohs-formfield__label {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  transform: translateY(-50%);
+  max-width: calc(100% - 24px);
+  padding: 0 var(--ohs-sys-spacing-1, 4px);
+  background: var(--ohs-color-surface, #fff);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
+  letter-spacing: var(--ohs-sys-typescale-body-small-letter-spacing, -0.5px);
   color: var(--ohs-color-text-muted, #696969);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+/* Figma's "Content" column: 48px tall inside the 56px band. */
+.ohs-formfield__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: var(--ohs-sys-spacing-1, 4px) 0;
+}
+.ohs-formfield--multiline .ohs-formfield__content {
+  height: auto;
+  flex: 1 1 auto;
 }
 .ohs-formfield__required {
   color: var(--ohs-color-error, #b3261e);
@@ -925,14 +994,21 @@
   margin: 0;
   width: 100%;
   font-family: inherit;
-  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-  line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
-  color: var(--ohs-color-text, #0d0d0d);
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
+  line-height: var(--ohs-sys-typescale-body-large-line-height, 24px);
+  letter-spacing: var(--ohs-sys-typescale-body-large-letter-spacing, -0.5px);
+  color: var(--ohs-color-text-secondary, #363636);
   outline: none;
+}
+/* The trailing `today` button owns the date affordance; the native one would double it. */
+.ohs-formfield__input[type='date']::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
 }
 .ohs-formfield__textarea {
   resize: vertical;
-  min-height: 64px;
+  min-height: 95px;
+  height: 100%;
 }
 .ohs-formfield__input::placeholder {
   color: var(--ohs-color-text-muted, #696969);
@@ -959,10 +1035,146 @@
   outline: none;
   cursor: pointer;
 }
-.ohs-formfield__chevron {
+/* M3 icon button, Round/Small: 48x48 hit target, 40x40 state layer, 24px glyph. Flush right, so
+   the glyph lands at a ~24px optical inset inside the 56px field. */
+.ohs-formfield__trailing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ohs-color-text-muted, #696969);
+  cursor: pointer;
+}
+.ohs-formfield__trailing::after {
+  content: '';
   position: absolute;
-  right: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 100px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--ohs-sys-motion-duration-short2, 100ms) ease;
+}
+.ohs-formfield__trailing:hover::after {
+  opacity: var(--ohs-sys-state-hover-opacity, 0.08);
+}
+.ohs-formfield__trailing:focus-visible {
+  outline: none;
+}
+.ohs-formfield__trailing:focus-visible::after {
+  opacity: var(--ohs-sys-state-focus-opacity, 0.12);
+  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
+}
+.ohs-formfield__trailing svg {
+  position: relative;
+  transition: transform var(--ohs-sys-motion-duration-short2, 100ms) ease;
+}
+.ohs-formfield__trailing[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+/* ---------- Listbox (replaces the native select) ---------- */
+
+.ohs-listbox__trigger {
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: inherit;
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
+  line-height: var(--ohs-sys-typescale-body-large-line-height, 24px);
+  letter-spacing: var(--ohs-sys-typescale-body-large-letter-spacing, -0.5px);
+  color: var(--ohs-color-text-secondary, #363636);
+  cursor: pointer;
+}
+.ohs-listbox__trigger:focus-visible {
+  outline: none;
+}
+.ohs-listbox__placeholder {
+  color: var(--ohs-color-text-muted, #696969);
+}
+.ohs-listbox__native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
   pointer-events: none;
+}
+/* Panel geometry is derived — Web Hi-Fi 2 documents no open-menu frame. Built from the file's
+   own tokens; the 8px corner sits between the 4px field and the 24px section card. */
+.ohs-listbox__panel {
+  position: absolute;
+  top: calc(100% + var(--ohs-sys-spacing-1, 4px));
+  left: 0;
+  right: 0;
+  z-index: 80;
+  margin: 0;
+  padding: var(--ohs-sys-spacing-2, 8px) 0;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--ohs-color-surface, #fff);
+  border: 1px solid var(--ohs-color-border, #ededed);
+  border-radius: var(--ohs-sys-shape-corner-small, 8px);
+  box-shadow:
+    0 0 6px 0 rgba(0, 0, 0, 0.08),
+    0 8px 16px 0 rgba(0, 0, 0, 0.1);
+}
+.ohs-listbox__option {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-3, 12px);
+  height: 48px;
+  padding: 0 var(--ohs-sys-spacing-4, 16px);
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
+  line-height: var(--ohs-sys-typescale-body-large-line-height, 24px);
+  letter-spacing: var(--ohs-sys-typescale-body-large-letter-spacing, -0.5px);
+  color: var(--ohs-color-text-secondary, #363636);
+  cursor: pointer;
+}
+.ohs-listbox__option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ohs-listbox__option[data-active='true'] {
+  background: rgb(from var(--ohs-color-primary, #094f9a) r g b / 0.08);
+}
+.ohs-listbox__option[data-selected='true'] {
+  background: rgb(from var(--ohs-color-primary, #094f9a) r g b / 0.12);
+  color: var(--ohs-color-primary, #094f9a);
+}
+.ohs-listbox__option[aria-disabled='true'] {
+  color: var(--ohs-color-border-tertiary, #b8b8b8);
+  cursor: not-allowed;
+}
+.ohs-listbox__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--ohs-color-text-muted, #696969);
+  border-radius: 2px;
+  color: var(--ohs-color-primary-contrast, #fff);
+}
+.ohs-listbox__option[data-selected='true'] .ohs-listbox__check {
+  background: var(--ohs-color-primary, #094f9a);
+  border-color: var(--ohs-color-primary, #094f9a);
+}
+.ohs-listbox__empty {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 var(--ohs-sys-spacing-4, 16px);
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   color: var(--ohs-color-text-muted, #696969);
 }
 
@@ -1040,7 +1252,7 @@
 .ohs-radio-group {
   display: flex;
   flex-direction: column;
-  gap: var(--ohs-sys-spacing-2, 8px);
+  gap: var(--ohs-sys-spacing-1, 4px);
 }
 .ohs-radio-group__label {
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
@@ -1057,8 +1269,11 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ohs-sys-spacing-3, 12px);
-  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-  color: var(--ohs-color-text, #0d0d0d);
+  height: 48px;
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
+  line-height: var(--ohs-sys-typescale-body-large-line-height, 24px);
+  letter-spacing: var(--ohs-sys-typescale-body-large-letter-spacing, -0.5px);
+  color: var(--ohs-color-text-secondary, #363636);
   cursor: pointer;
 }
 .ohs-radio input[type='radio'] {
@@ -1074,17 +1289,24 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--ohs-sys-spacing-2, 8px);
+  margin-top: var(--ohs-sys-spacing-4, 16px);
 }
+/* M3 Input chip: label only, closing icon shown. */
 .ohs-multiselect__chip {
   display: inline-flex;
   align-items: center;
   gap: var(--ohs-sys-spacing-2, 8px);
-  padding: var(--ohs-sys-spacing-1, 4px) var(--ohs-sys-spacing-3, 12px);
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
-  border-radius: var(--ohs-radius-pill, 999px);
-  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
-  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-  color: var(--ohs-color-text, #0d0d0d);
+  height: 32px;
+  box-sizing: border-box;
+  padding: 6px var(--ohs-sys-spacing-2, 8px) 6px var(--ohs-sys-spacing-3, 12px);
+  border: 1px solid var(--ohs-color-outline-variant, #cac4d0);
+  border-radius: var(--ohs-sys-shape-corner-small, 8px);
+  background: transparent;
+  font-size: var(--ohs-sys-typescale-label-medium-size, 14px);
+  line-height: var(--ohs-sys-typescale-label-medium-line-height, 20px);
+  letter-spacing: var(--ohs-sys-typescale-label-medium-letter-spacing, -0.5px);
+  font-weight: var(--ohs-sys-typescale-label-medium-weight, 500);
+  color: var(--ohs-color-on-surface-variant, #49454f);
 }
 .ohs-multiselect__chip-remove {
   display: inline-flex;
@@ -2036,6 +2258,9 @@
 [data-theme='dark'] [data-ohs-root] {
   --ohs-color-border-secondary: #4f4f4f; /* Border/Secondary (Neutral/700) */
   --ohs-color-border-tertiary: #696969; /* Border/Tertiary (Neutral/600) */
+  --ohs-color-text-secondary: #d4d4d4; /* Content/Secondary, inverted across the ramp */
+  --ohs-color-outline-variant: #4f4f4f;
+  --ohs-color-on-surface-variant: #cac4d0;
   /* Location level badges — desaturated tints on dark so text stays legible. */
   --ohs-color-level-root-bg: #094f9a;
   --ohs-color-level-root-border: #3a7bc8;
@@ -2058,4 +2283,37 @@
   --ohs-color-level-unit-bg: transparent;
   --ohs-color-level-unit-border: #4f4f4f;
   --ohs-color-level-unit-text: #b8b8b8;
+}
+
+/* Compact listbox: keeps the in-table pill appearance while dropping the native option list. */
+.ohs-listbox--compact {
+  height: 40px;
+  min-width: 72px;
+  padding-left: var(--ohs-sys-spacing-3, 12px);
+  border-width: 1px;
+  border-color: var(--ohs-sys-color-outline, #74777f);
+  border-radius: var(--ohs-radius-pill, 999px);
+}
+.ohs-listbox--compact .ohs-formfield__content {
+  height: auto;
+  padding: 0;
+}
+.ohs-listbox--compact .ohs-formfield__trailing {
+  width: 36px;
+  height: 36px;
+}
+.ohs-listbox--compact .ohs-formfield__trailing::after {
+  width: 32px;
+  height: 32px;
+}
+.ohs-listbox__a11y-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }

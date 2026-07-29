@@ -150,7 +150,6 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{t('pageLocationEdit')}</h2>
-        {current?.name ? <p className="ohs-form-drawer__subtitle">{current.name}</p> : null}
       </div>
       <IconButton label={t('close')} onClick={onClose}>
         <IconClose size={24} />

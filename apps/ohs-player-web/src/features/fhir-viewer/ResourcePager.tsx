@@ -1,6 +1,7 @@
 import { useTranslation } from 'ohs-player-web-core';
 import { IconChevronLeft, IconChevronRight } from '../../components/ui/icons';
 import { cn } from '../../lib/cn';
+import { Listbox } from '../../components/ui/Listbox';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
@@ -58,21 +59,14 @@ export function ResourcePager({
       <div className="flex flex-wrap items-center gap-4">
         <label className="flex items-center gap-2 text-sm text-text-muted">
           {t('fhirViewerItemsPerPage')}
-          <select
-            aria-label={t('fhirViewerItemsPerPage')}
-            value={pageSize}
-            onChange={(e) => onPageSize(Number(e.target.value))}
-            className={cn(
-              'h-9 rounded border border-border bg-surface text-text text-sm px-2 cursor-pointer',
-              'focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)]',
-            )}
-          >
-            {PAGE_SIZE_OPTIONS.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+          <Listbox
+            compact
+            label={t('fhirViewerItemsPerPage')}
+            placeholder={String(pageSize)}
+            value={[String(pageSize)]}
+            options={PAGE_SIZE_OPTIONS.map((n: number) => ({ value: String(n), label: String(n) }))}
+            onChange={(next: string[]) => onPageSize(Number(next[0]))}
+          />
         </label>
 
         <div className="flex items-center gap-1">

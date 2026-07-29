@@ -34,7 +34,6 @@ export function UserCreateWizard({
   const form = useUserCreateForm(onSuccess);
   const [step, setStep] = useState(0);
   const isReview = step === WIZARD_STEPS.length - 1;
-  const stepKey = WIZARD_STEPS[step];
 
   const goBack = (): void => {
     if (step === 0) {
@@ -54,7 +53,6 @@ export function UserCreateWizard({
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{t('addUserWizardTitle')}</h2>
-        <p className="ohs-form-drawer__subtitle">{t(stepKey)}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
         <IconClose size={24} />

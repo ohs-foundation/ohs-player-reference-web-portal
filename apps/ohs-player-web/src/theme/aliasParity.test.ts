@@ -6,8 +6,9 @@ import { sysTheme } from './sysTheme';
 
 /**
  * Snapshot of every legacy `--ohs-*` value applyTheme produced before the sys layer was introduced.
- * Recorded from commit 9742a0d. Additive since, except `background`, which the M3 Figma alignment
- * re-mapped from Background/Primary #F1F2F4 to Background/Secondary #FAFAFA.
+ * Recorded from commit 9742a0d. Additive since, except two the M3 Figma alignment re-mapped:
+ * `background` from Background/Primary #F1F2F4 to Background/Secondary #FAFAFA, and `error` from
+ * the M3 default #B3261E to Content/Negative #E50000.
  */
 const LEGACY_LIGHT: Record<string, string> = {
   '--ohs-color-primary': '#094F9A',
@@ -20,7 +21,7 @@ const LEGACY_LIGHT: Record<string, string> = {
   '--ohs-color-text-muted': '#696969',
   '--ohs-color-border': '#EDEDED',
   '--ohs-color-focus-ring': 'rgba(9, 79, 154, 0.28)',
-  '--ohs-color-error': '#B3261E',
+  '--ohs-color-error': '#E50000',
   '--ohs-color-success': '#006E29',
   '--ohs-font-size-base': '16px',
   '--ohs-text-display': '36px',

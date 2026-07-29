@@ -1,23 +1,21 @@
-import { type ReactNode, useId } from 'react';
-import { IconChevronDown, IconClose, type IconComponent } from '../../components/ui/icons';
+import { type ReactNode, useId, useRef } from 'react';
+import { IconChevronDown, IconClose, IconToday, type IconComponent } from '../../components/ui/icons';
+import { Listbox } from '../../components/ui/Listbox';
 import { useTranslation } from 'ohs-player-web-core';
 import type { Option } from './userFormOptions';
 
 /** Shared controls for the Add User / Edit User drawers (bespoke, token-styled per DESIGN.md). */
 
+/** `icon` is accepted but not rendered — Figma's section header is title-only. */
 export function Section({
-  icon: Icon,
   title,
   children,
-}: Readonly<{ icon: IconComponent; title: string; children: ReactNode }>): React.ReactElement {
+}: Readonly<{ icon?: IconComponent; title: string; children: ReactNode }>): React.ReactElement {
   return (
     <details className="ohs-detail-section" open>
       <summary className="ohs-detail-section__header">
-        <span className="ohs-detail-section__title">
-          <Icon size={20} />
-          {title}
-        </span>
-        <IconChevronDown size={20} className="ohs-detail-section__chevron" aria-hidden="true" />
+        <span className="ohs-detail-section__title">{title}</span>
+        <IconChevronDown size={24} className="ohs-detail-section__chevron" aria-hidden="true" />
       </summary>
       <div className="ohs-detail-section__body">{children}</div>
     </details>
@@ -61,24 +59,39 @@ export function StackedInput({
   /** Native upper bound (e.g. today's date on a `type="date"` field). */
   max?: string;
 }>): React.ReactElement {
+  const { t } = useTranslation();
   const id = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div className={fieldClass(full, error)}>
       <label className="ohs-formfield__label" htmlFor={id}>
         {label}
         {required ? <RequiredMark /> : null}
       </label>
-      <input
-        id={id}
-        className="ohs-formfield__input"
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        max={max}
-        aria-invalid={error ? true : undefined}
-        aria-required={required ? true : undefined}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <span className="ohs-formfield__content">
+        <input
+          ref={inputRef}
+          id={id}
+          className="ohs-formfield__input"
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          max={max}
+          aria-invalid={error ? true : undefined}
+          aria-required={required ? true : undefined}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </span>
+      {type === 'date' ? (
+        <button
+          type="button"
+          className="ohs-formfield__trailing"
+          aria-label={t('openDatePicker')}
+          onClick={() => inputRef.current?.showPicker?.()}
+        >
+          <IconToday size={24} />
+        </button>
+      ) : null}
       {error ? (
         <span className="ohs-formfield__error" role="alert">
           {error}
@@ -109,21 +122,23 @@ export function StackedTextArea({
 }>): React.ReactElement {
   const id = useId();
   return (
-    <div className={fieldClass(full, error)}>
+    <div className={`${fieldClass(full, error)} ohs-formfield--multiline`}>
       <label className="ohs-formfield__label" htmlFor={id}>
         {label}
         {required ? <RequiredMark /> : null}
       </label>
-      <textarea
-        id={id}
-        className="ohs-formfield__input ohs-formfield__textarea"
-        rows={rows}
-        value={value}
-        placeholder={placeholder}
-        aria-invalid={error ? true : undefined}
-        aria-required={required ? true : undefined}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <span className="ohs-formfield__content">
+        <textarea
+          id={id}
+          className="ohs-formfield__input ohs-formfield__textarea"
+          rows={rows}
+          value={value}
+          placeholder={placeholder}
+          aria-invalid={error ? true : undefined}
+          aria-required={required ? true : undefined}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </span>
       {error ? (
         <span className="ohs-formfield__error" role="alert">
           {error}
@@ -152,36 +167,17 @@ export function StackedSelect({
   error?: string;
   disabled?: boolean;
 }>): React.ReactElement {
-  const id = useId();
   return (
-    <div className={fieldClass(full, error)}>
-      <label className="ohs-formfield__label" htmlFor={id}>
-        {label}
-      </label>
-      <div className="ohs-formfield__selectwrap">
-        <select
-          id={id}
-          className="ohs-formfield__select"
-          value={value}
-          disabled={disabled}
-          aria-invalid={error ? true : undefined}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <IconChevronDown size={20} className="ohs-formfield__chevron" aria-hidden="true" />
-      </div>
-      {error ? (
-        <span className="ohs-formfield__error" role="alert">
-          {error}
-        </span>
-      ) : null}
-    </div>
+    <Listbox
+      className={full ? 'ohs-formfield-slot--full' : undefined}
+      label={label}
+      value={value ? [value] : []}
+      onChange={(next) => onChange(next[0] ?? '')}
+      options={options}
+      placeholder={placeholder}
+      disabled={disabled}
+      error={error}
+    />
   );
 }
 
@@ -232,14 +228,18 @@ export function MultiSelect({
   placeholder: string;
 }>): React.ReactElement {
   const { t } = useTranslation();
-  const id = useId();
   const labelFor = (v: string) => options.find((o) => o.value === v)?.label ?? v;
-  const available = options.filter((o) => !value.includes(o.value));
+
   return (
-    <div className="ohs-formfield ohs-formfield--full">
-      <label className="ohs-formfield__label" htmlFor={id}>
-        {label}
-      </label>
+    <Listbox
+      className="ohs-formfield-slot--full"
+      label={label}
+      value={value}
+      onChange={onChange}
+      options={options}
+      placeholder={placeholder}
+      multiple
+    >
       {value.length > 0 ? (
         <div className="ohs-multiselect__chips">
           {value.map((v) => (
@@ -248,34 +248,15 @@ export function MultiSelect({
               <button
                 type="button"
                 className="ohs-multiselect__chip-remove"
-                aria-label={t('removeAssignment')}
+                aria-label={`${t('removeAssignment')} ${labelFor(v)}`}
                 onClick={() => onChange(value.filter((x) => x !== v))}
               >
-                <IconClose size={16} />
+                <IconClose size={18} />
               </button>
             </span>
           ))}
         </div>
       ) : null}
-      <div className="ohs-formfield__selectwrap">
-        <select
-          id={id}
-          className="ohs-formfield__select"
-          value=""
-          onChange={(e) => {
-            if (e.target.value) onChange([...value, e.target.value]);
-          }}
-        >
-          <option value="">{placeholder}</option>
-          {available.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <IconChevronDown size={20} className="ohs-formfield__chevron" aria-hidden="true" />
-      </div>
-    </div>
+    </Listbox>
   );
 }
-

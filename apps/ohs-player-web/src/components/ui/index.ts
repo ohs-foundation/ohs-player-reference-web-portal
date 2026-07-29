@@ -12,6 +12,8 @@ export type { ComboboxProps } from './Combobox';
 export { filterComboboxOptions } from './comboboxFilter';
 export type { ComboboxOption } from './comboboxFilter';
 
+export { Listbox } from './Listbox';
+export type { ListboxOption, ListboxProps } from './Listbox';
 export { SearchField } from './SearchField';
 export type { SearchFieldProps } from './SearchField';
 

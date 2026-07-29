@@ -36,6 +36,7 @@ const ICONS: Record<string, string> = {
   IconCheck: 'check',
   IconCheckCircleFill: 'check_circle-fill',
   IconChevronDown: 'keyboard_arrow_down',
+  IconToday: 'today-fill',
   IconChevronLeft: 'chevron_left',
   IconChevronRight: 'chevron_right',
   IconClose: 'close',

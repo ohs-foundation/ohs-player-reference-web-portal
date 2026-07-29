@@ -100,7 +100,6 @@ export function OrganizationDetailsDrawer({
             {active ? t('statusActive') : t('statusInactive')}
           </StatusBadge>
         </div>
-        {typeLabel ? <p className="ohs-form-drawer__subtitle">{typeLabel}</p> : null}
         {identifierValue ? <span className="ohs-user-drawer__id-chip">{identifierValue}</span> : null}
       </div>
       <IconButton label={t('close')} onClick={onClose}>

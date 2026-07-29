@@ -33,7 +33,6 @@ export function UserCreateEntryDrawer({
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{t('addUser')}</h2>
-        <p className="ohs-form-drawer__subtitle">{t('addUserModeSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
         <IconClose size={24} />
