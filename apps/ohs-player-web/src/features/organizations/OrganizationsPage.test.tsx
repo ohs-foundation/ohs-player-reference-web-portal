@@ -86,7 +86,8 @@ describe('OrganizationsPage', () => {
 
     // Pick a location in the Managed Locations listbox: open the combobox, then choose the option.
     fireEvent.click(within(drawer).getByRole('combobox', { name: /contextLocation/ }));
-    fireEvent.click(within(drawer).getByRole('option', { name: 'Clinic A' }));
+    // The panel portals to <body> to escape the drawer's clipping, so query it from screen.
+    fireEvent.click(screen.getByRole('option', { name: 'Clinic A' }));
 
     fireEvent.click(within(drawer).getByText('save'));
 

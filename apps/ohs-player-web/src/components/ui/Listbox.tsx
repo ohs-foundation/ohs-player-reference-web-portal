@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'ohs-player-web-core';
 import { IconCheck, IconChevronDown } from './icons';
 
@@ -62,22 +63,59 @@ export function Listbox({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLUListElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const typeAhead = useRef({ term: '', at: 0 });
+  const [rect, setRect] = useState<{ top: number; left: number; width: number; maxHeight: number; above: boolean } | null>(null);
+
+  const MAX_PANEL = 320;
+  const GAP = 4;
+
+  /* Fixed-positioned in a portal: the field sits inside three clipping ancestors (the section card's
+     overflow:hidden, the drawer shell, and the scrolling drawer body), so an in-flow panel is cut off. */
+  const measure = useCallback(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom - GAP;
+    const above = r.top - GAP;
+    const flip = below < Math.min(MAX_PANEL, 160) && above > below;
+    setRect({
+      top: flip ? r.top - GAP : r.bottom + GAP,
+      left: r.left,
+      width: r.width,
+      maxHeight: Math.max(96, Math.min(MAX_PANEL, flip ? above : below)),
+      above: flip,
+    });
+  }, []);
 
   const selectedLabels = useMemo(
     () => value.map((v) => options.find((o) => o.value === v)?.label ?? v),
     [value, options],
   );
 
+  useLayoutEffect(() => {
+    if (open) measure();
+  }, [open, measure]);
+
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
     };
+    const reflow = () => measure();
     document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, [open]);
+    window.addEventListener('resize', reflow);
+    // Capture phase so the drawer body's own scroll reaches this too.
+    window.addEventListener('scroll', reflow, true);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('resize', reflow);
+      window.removeEventListener('scroll', reflow, true);
+    };
+  }, [open, measure]);
 
   const close = (returnFocus = true) => {
     setOpen(false);
@@ -218,8 +256,24 @@ export function Listbox({
           <IconChevronDown size={compact ? 20 : 24} />
         </button>
 
-        {open ? (
-          <ul className="ohs-listbox__panel" id={listId} role="listbox" aria-labelledby={`${id}-label`} aria-multiselectable={multiple || undefined}>
+        {open && rect
+          ? createPortal(
+          <ul
+            ref={panelRef}
+            className="ohs-listbox__panel"
+            data-above={rect.above ? 'true' : undefined}
+            style={{
+              top: rect.above ? undefined : rect.top,
+              bottom: rect.above ? window.innerHeight - rect.top : undefined,
+              left: rect.left,
+              width: rect.width,
+              maxHeight: rect.maxHeight,
+            }}
+            id={listId}
+            role="listbox"
+            aria-labelledby={`${id}-label`}
+            aria-multiselectable={multiple || undefined}
+          >
             {options.length === 0 ? (
               <li className="ohs-listbox__empty" role="presentation">
                 {t('comboboxNoResults')}
@@ -252,8 +306,10 @@ export function Listbox({
                 );
               })
             )}
-          </ul>
-        ) : null}
+          </ul>,
+          document.body,
+            )
+          : null}
 
         {error ? (
           <span className="ohs-formfield__error" role="alert">

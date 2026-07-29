@@ -1106,16 +1106,14 @@
 }
 /* Panel geometry is derived — Web Hi-Fi 2 documents no open-menu frame. Built from the file's
    own tokens; the 8px corner sits between the 4px field and the 24px section card. */
+/* Fixed + portalled to <body>: top/left/width/max-height come from the trigger's measured rect,
+   because the field has three clipping ancestors it cannot escape in flow. */
 .ohs-listbox__panel {
-  position: absolute;
-  top: calc(100% + var(--ohs-sys-spacing-1, 4px));
-  left: 0;
-  right: 0;
+  position: fixed;
   z-index: 80;
   margin: 0;
   padding: var(--ohs-sys-spacing-2, 8px) 0;
   list-style: none;
-  max-height: 320px;
   overflow-y: auto;
   background: var(--ohs-color-surface, #fff);
   border: 1px solid var(--ohs-color-border, #ededed);

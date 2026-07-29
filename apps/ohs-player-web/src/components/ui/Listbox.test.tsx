@@ -118,6 +118,37 @@ describe('Listbox', () => {
     expect(screen.getByText('comboboxNoResults')).toBeInTheDocument();
   });
 
+  /**
+   * Regression: the field sits inside the section card's overflow:hidden, the drawer shell and the
+   * scrolling drawer body. An in-flow panel was clipped to nothing — not one option was visible.
+   */
+  it('escapes clipping ancestors by rendering the panel outside them', () => {
+    const { container } = render(
+      <div style={{ overflow: 'hidden', height: 40 }}>
+        <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />
+      </div>,
+    );
+    open();
+
+    const panel = screen.getByRole('listbox');
+    expect(container.contains(panel)).toBe(false);
+    expect(document.body.contains(panel)).toBe(true);
+    expect(screen.getAllByRole('option')).toHaveLength(3);
+  });
+
+  it('keeps click-outside working now that the panel is portalled', () => {
+    render(
+      <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+    );
+    open();
+    // A click inside the portalled panel must not close it.
+    fireEvent.mouseDown(screen.getByRole('listbox'));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
   it('has no serious or critical axe violations when open', async () => {
     const { container } = render(
       <Listbox label="Assignment" value={['a']} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" required />,
