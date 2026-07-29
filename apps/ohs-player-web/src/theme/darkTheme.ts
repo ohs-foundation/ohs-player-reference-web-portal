@@ -23,8 +23,8 @@ export const darkTheme: ThemeConfig = {
     success: '#00E04B', // Positive (Green/400)
   },
   typography: {
-    fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
-    headingFontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
+    fontFamily: '"Google Sans", system-ui, -apple-system, sans-serif',
+    headingFontFamily: '"Google Sans", system-ui, -apple-system, sans-serif',
     baseFontSize: 16,
   },
   borderRadius: { default: 8 },

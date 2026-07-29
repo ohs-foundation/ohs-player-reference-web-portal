@@ -46,7 +46,7 @@ export function GlobalSearch(): React.ReactElement {
   return (
     <div className="app-search" ref={rootRef}>
       <SearchField
-        size="lg"
+        variant="global"
         className="app-topbar__search"
         label={t('globalSearch')}
         placeholder={t('globalSearch')}

@@ -39,7 +39,7 @@ const sys = (mode, role) => {
 
 const LIGHT = {
   surface: '#FFFFFF',
-  background: '#F1F2F4',
+  background: '#FAFAFA',
   textMuted: '#696969',
   text: '#0D0D0D',
   primary: '#094F9A',
@@ -145,6 +145,21 @@ function pairs(mode, t, badges) {
       t.surface,
       'border-tertiary as badge-pill and static panel border',
       'decorative; every remaining use is a non-interactive chip or panel',
+    ),
+    // KNOWN SC 1.4.11 FAILURE, not a true exemption. The M3 Figma spec sets the search-field
+    // borders to Border/Tertiary and Border/Secondary; both are far under the 3:1 a control
+    // boundary needs, and the white fill on #FAFAFA (1.02:1) is not a substitute affordance.
+    dec(
+      t.borderTertiary,
+      t.surface,
+      'border-tertiary as page search-field border',
+      'FAILS SC 1.4.11 (needs 3:1) — design-specified, pending design decision',
+    ),
+    dec(
+      t.borderSecondary,
+      t.background,
+      'border-secondary as top-nav search-field border',
+      'FAILS SC 1.4.11 (needs 3:1) — design-specified, pending design decision',
     ),
     dec(
       t.success,

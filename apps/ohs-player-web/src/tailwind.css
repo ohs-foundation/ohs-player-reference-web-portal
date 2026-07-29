@@ -46,6 +46,8 @@
   --radius: var(--ohs-sys-shape-corner-small);
   --radius-sm: var(--ohs-sys-shape-corner-extra-small);
   --radius-lg: var(--ohs-sys-shape-corner-medium);
+  --radius-card: var(--ohs-sys-shape-corner-extra-large-decreased);
+  --radius-panel: var(--ohs-sys-shape-corner-extra-large);
   --radius-pill: var(--ohs-sys-shape-corner-full);
 
   /* M3 level structure; the ink stays on the reviewed recipes until that is decided. */

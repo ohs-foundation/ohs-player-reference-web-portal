@@ -38,6 +38,39 @@ const SHAPE: Record<string, string> = {
   '--ohs-sys-shape-corner-extra-small': '4px',
   '--ohs-sys-shape-corner-small': '8px',
   '--ohs-sys-shape-corner-medium': '12px',
+  '--ohs-sys-shape-corner-extra-large-decreased': '24px',
+  '--ohs-sys-shape-corner-extra-large': '28px',
+};
+
+/** Figma type ramp steps M3 has no role for. */
+const ADDED_TYPE_SCALE: Record<string, string> = {
+  '--ohs-sys-typescale-heading-5xl-size': '72px',
+  '--ohs-sys-typescale-heading-5xl-line-height': '80px',
+  '--ohs-sys-typescale-heading-4xl-size': '64px',
+  '--ohs-sys-typescale-heading-4xl-line-height': '72px',
+  '--ohs-sys-typescale-heading-3xl-size': '56px',
+  '--ohs-sys-typescale-heading-3xl-line-height': '64px',
+  '--ohs-sys-typescale-heading-2xl-size': '48px',
+  '--ohs-sys-typescale-heading-2xl-line-height': '64px',
+  '--ohs-sys-typescale-heading-l-size': '32px',
+  '--ohs-sys-typescale-heading-l-line-height': '40px',
+  '--ohs-sys-typescale-text-xl-size': '20px',
+  '--ohs-sys-typescale-text-xl-line-height': '28px',
+  '--ohs-sys-typescale-text-xs-size': '10px',
+  '--ohs-sys-typescale-text-xs-line-height': '14px',
+  '--ohs-sys-typescale-text-2xs-size': '8px',
+  '--ohs-sys-typescale-text-2xs-line-height': '12px',
+};
+
+/** Tracking tightens as the step grows: -1.5px at ≥48px, -1px at 32-40px, -0.5px below. */
+const TRACKING: Record<string, string> = {
+  '--ohs-sys-typescale-heading-5xl-letter-spacing': '-1.5px',
+  '--ohs-sys-typescale-heading-2xl-letter-spacing': '-1.5px',
+  '--ohs-sys-typescale-display-small-letter-spacing': '-1px',
+  '--ohs-sys-typescale-heading-l-letter-spacing': '-1px',
+  '--ohs-sys-typescale-headline-medium-letter-spacing': '-0.5px',
+  '--ohs-sys-typescale-body-medium-letter-spacing': '-0.5px',
+  '--ohs-sys-typescale-text-2xs-letter-spacing': '-0.5px',
 };
 
 function emitted(): Record<string, string> {
@@ -61,10 +94,19 @@ describe('scale parity', () => {
     expect(emitted()[token]).toBe(value);
   });
 
+  it.each(Object.entries(ADDED_TYPE_SCALE))('%s is %s', (token, value) => {
+    expect(emitted()[token]).toBe(value);
+  });
+
+  it.each(Object.entries(TRACKING))('%s is %s', (token, value) => {
+    expect(emitted()[token]).toBe(value);
+  });
+
   it('keeps the legacy spacing steps the Tailwind scale does not cover', () => {
     const tokens = emitted();
     expect(tokens['--ohs-sys-spacing-5']).toBe('20px');
     expect(tokens['--ohs-sys-spacing-10']).toBe('40px');
+    expect(tokens['--ohs-sys-spacing-14']).toBe('56px');
     expect(tokens['--ohs-sys-spacing-20']).toBe('80px');
   });
 });

@@ -42,6 +42,8 @@ export const appMessageOverrides = {
   kpiTotalLocations: 'Total Locations',
   kpiTotalOrganizations: 'Total Organisations',
   kpiTotalCareTeams: 'Total Care Teams',
+  kpiTrendIncrease: '{{value}}% Increase from last month',
+  kpiTrendDecrease: '{{value}}% Decrease from last month',
   recentUsersTitle: 'Recently Added Users',
   recentUsersSubtitle: 'Most recently created or updated users.',
   recentLocationsTitle: 'Recently Added Locations',

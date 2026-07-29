@@ -28,7 +28,7 @@ export interface ThemeConfigV2 {
   density?: 0 | -1 | -2;
 }
 
-const DEFAULT_TYPEFACE = '"IBM Plex Sans", system-ui, -apple-system, sans-serif';
+const DEFAULT_TYPEFACE = '"Google Sans", system-ui, -apple-system, sans-serif';
 
 /** Maps a v1 `ThemeConfig`'s colours onto their corresponding sys roles. @public */
 export function upgradeThemeConfig(v1: ThemeConfig): ThemeConfigV2 {

@@ -1,9 +1,11 @@
 import { PermissionGuard, useTranslation } from 'ohs-player-web-core';
 import { Link } from 'react-router-dom';
-import totalUsersIcon from '../assets/illustrations/total-users.svg';
-import totalLocationsIcon from '../assets/illustrations/total-locations.svg';
-import totalOrganisationsIcon from '../assets/illustrations/total-organisations.svg';
-import totalCareTeamsIcon from '../assets/illustrations/total-careteams.svg';
+import {
+  IconAccountCircleFill,
+  IconBriefcaseFill,
+  IconMapPinFill,
+  IconTeamFill,
+} from '../components/ui/icons';
 import {
   Avatar,
   LinearProgress,
@@ -32,6 +34,14 @@ type CareTeamRow = Named & { status?: string };
 
 const ACTIVE_COLOR = 'var(--ohs-sys-color-success)';
 const INACTIVE_COLOR = 'var(--ohs-sys-color-surface-container)';
+
+/* Per-KPI badge fills from the design; decorative, so they sit outside the themed roles. */
+const KPI_BADGE = {
+  users: '#D398E6',
+  locations: '#E89271',
+  organisations: '#70A1E5',
+  careTeams: '#F0C274',
+} as const;
 
 function fullName(p: PractitionerRow): string {
   const n = p.name?.[0];
@@ -139,10 +149,10 @@ export function DashboardPage(): React.ReactElement {
       <PermissionGuard permission="dashboard.view">
         <Stack gap={5}>
           <section aria-label={t('pageDashboard')} className="ohs-kpi-grid">
-            <StatCard label={t('kpiTotalUsers')} value={users.total} loading={users.loading} iconSrc={totalUsersIcon} />
-            <StatCard label={t('kpiTotalLocations')} value={locations.total} loading={locations.loading} iconSrc={totalLocationsIcon} />
-            <StatCard label={t('kpiTotalOrganizations')} value={orgs.total} loading={orgs.loading} iconSrc={totalOrganisationsIcon} />
-            <StatCard label={t('kpiTotalCareTeams')} value={careTeams.total} loading={careTeams.loading} iconSrc={totalCareTeamsIcon} />
+            <StatCard label={t('kpiTotalUsers')} value={users.total} loading={users.loading} badgeColor={KPI_BADGE.users} glyph={IconAccountCircleFill} />
+            <StatCard label={t('kpiTotalLocations')} value={locations.total} loading={locations.loading} badgeColor={KPI_BADGE.locations} glyph={IconMapPinFill} />
+            <StatCard label={t('kpiTotalOrganizations')} value={orgs.total} loading={orgs.loading} badgeColor={KPI_BADGE.organisations} glyph={IconBriefcaseFill} />
+            <StatCard label={t('kpiTotalCareTeams')} value={careTeams.total} loading={careTeams.loading} badgeColor={KPI_BADGE.careTeams} glyph={IconTeamFill} />
           </section>
 
           <div className="ohs-dash-row">

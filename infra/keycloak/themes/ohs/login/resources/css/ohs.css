@@ -11,7 +11,7 @@
 .login-pf body {
   background: #0d0d0d url("../img/login-bg.svg") no-repeat center center fixed;
   background-size: cover;
-  font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 /* Hide Keycloak's realm-name header so the card stands alone like the design. */

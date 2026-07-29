@@ -42,7 +42,7 @@ export function Page({ children, className, ...rest }: Readonly<PageProps>): Rea
   return (
     <div
       className={cn(
-        'flex w-full flex-col box-border bg-transparent gap-10 py-10 px-20',
+        'flex w-full flex-col box-border bg-transparent gap-12 p-10',
         'max-[900px]:gap-6 max-[900px]:p-6',
         className,
       )}

@@ -6,7 +6,8 @@ import { sysTheme } from './sysTheme';
 
 /**
  * Snapshot of every legacy `--ohs-*` value applyTheme produced before the sys layer was introduced.
- * Recorded from commit 9742a0d. Sprint 1 is additive, so these must not move.
+ * Recorded from commit 9742a0d. Additive since, except `background`, which the M3 Figma alignment
+ * re-mapped from Background/Primary #F1F2F4 to Background/Secondary #FAFAFA.
  */
 const LEGACY_LIGHT: Record<string, string> = {
   '--ohs-color-primary': '#094F9A',
@@ -14,7 +15,7 @@ const LEGACY_LIGHT: Record<string, string> = {
   '--ohs-color-primary-contrast': '#FAFAFA',
   '--ohs-color-primary-container': '#DCE5FE',
   '--ohs-color-surface': '#FFFFFF',
-  '--ohs-color-background': '#F1F2F4',
+  '--ohs-color-background': '#FAFAFA',
   '--ohs-color-text': '#0D0D0D',
   '--ohs-color-text-muted': '#696969',
   '--ohs-color-border': '#EDEDED',

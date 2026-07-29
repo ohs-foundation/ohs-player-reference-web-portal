@@ -103,6 +103,11 @@ attribute selectors, so no token is emitted by both.
 
 Theme types: `ThemeConfigV2`, `SysColorRole`, `SysColorScheme`, `TypescaleRole`, `TypescaleMetrics`, `ShapeToken`.
 
+`TypescaleMetrics` carries an optional `letterSpacing` (emitted as
+`--ohs-sys-typescale-<role>-letter-spacing`, `normal` when unset). `TypescaleRole` adds
+`heading-{5xl,4xl,3xl,2xl,l}` and `text-{xl,xs,2xs}` for the scale steps M3 has no role for;
+`ShapeToken` adds `extra-large-decreased` (24px). All three additions are backwards-compatible.
+
 **Removed** (were emitted by `applyTheme` but read by nothing): `ThemeShadow`, and `ThemeConfig`'s
 `shadow` and `spacing` fields; `ThemeColors.secondary`/`.warning`/`.info`. Spacing, elevation and the
 warning/info roles now come from `themeCss` as `--ohs-sys-spacing-*`, `--ohs-sys-elevation-*` and

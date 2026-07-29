@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconAdd, IconChevronDown, IconUpload } from '../../components/ui/icons';
+import { IconAddCircle, IconChevronDown, IconUpload } from '../../components/ui/icons';
 import { PermissionGuard, useRefreshResources, useStatusBar, useTranslation } from 'ohs-player-web-core';
 import {
   Button,
@@ -175,7 +175,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
             {t('locationsExport')}
           </Button>
           <PermissionGuard permission="locations.edit">
-            <Button type="button" variant="secondary" iconLeft={<IconAdd size={18} />} onClick={() => setCreateOpen(true)}>
+            <Button type="button" variant="secondary" iconLeft={<IconAddCircle size={18} />} onClick={() => setCreateOpen(true)}>
               {t('dialogCreateLocation')}
             </Button>
           </PermissionGuard>

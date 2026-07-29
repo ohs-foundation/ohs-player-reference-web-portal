@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconAdd, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
+import { IconAddCircle, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
 import {
   OhsDropdownMenu,
   PermissionGuard,
@@ -149,7 +149,7 @@ export function OrganizationsPage() {
               </Button>
             ) : null}
             <PermissionGuard permission="orgs.create">
-              <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addOrganization')}
               </Button>
             </PermissionGuard>
@@ -191,7 +191,7 @@ export function OrganizationsPage() {
             description={t('organizationsEmptyDescription')}
             action={
               <PermissionGuard permission="orgs.create">
-                <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                   {t('addOrganization')}
                 </Button>
               </PermissionGuard>

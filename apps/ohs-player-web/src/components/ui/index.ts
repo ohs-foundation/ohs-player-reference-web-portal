@@ -17,6 +17,8 @@ export type { SearchFieldProps } from './SearchField';
 
 export { Avatar } from './Avatar';
 export type { AvatarProps } from './Avatar';
+export { KpiBadge } from './KpiBadge';
+export type { KpiBadgeProps } from './KpiBadge';
 
 export { Drawer } from './Drawer';
 export type { DrawerProps } from './Drawer';

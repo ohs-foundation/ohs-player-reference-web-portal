@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconAdd, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
+import { IconAddCircle, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
 import careTeamsEmptyIllustration from '../../assets/illustrations/careteams-empty.svg';
 import {
   OhsDropdownMenu,
@@ -144,7 +144,7 @@ export function CareTeamsPage() {
               </Button>
             ) : null}
             <PermissionGuard permission="careteams.manage">
-              <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addCareTeam')}
               </Button>
             </PermissionGuard>
@@ -192,7 +192,7 @@ export function CareTeamsPage() {
             description={t('careTeamsEmptyDescription')}
             action={
               <PermissionGuard permission="careteams.manage">
-                <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                   {t('addCareTeam')}
                 </Button>
               </PermissionGuard>
