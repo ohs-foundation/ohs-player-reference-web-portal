@@ -290,6 +290,14 @@
   border-color: var(--ohs-color-primary, #1f6feb);
   box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(31, 111, 235, 0.35));
 }
+/* Toolbar variant: matches the page-level SearchField sitting beside it. */
+.ohs-select-trigger--pill {
+  height: 56px;
+  border-width: 0.5px;
+  border-color: var(--ohs-color-border-tertiary, #b8b8b8);
+  border-radius: var(--ohs-radius-pill, 999px);
+  padding: 0 var(--ohs-sys-spacing-6, 24px);
+}
 .ohs-select-trigger--error {
   border-color: var(--ohs-color-error, #b3261e);
 }

@@ -207,6 +207,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-64">
             <SelectField
+              variant="pill"
               label={t('locationsRoot')}
               value={effectiveRoot}
               options={roots}
@@ -223,7 +224,6 @@ export function LocationsHierarchyPage(): React.ReactElement {
             placeholder={t('locationsSearch')}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-84 h-12"
           />
           <ChipSet>
             {LOCATION_STATUS_FILTERS.map((option) => (
