@@ -39,7 +39,7 @@ const sys = (mode, role) => {
 
 const LIGHT = {
   surface: '#FFFFFF',
-  background: '#F1F2F4',
+  background: '#FAFAFA',
   textMuted: '#696969',
   text: '#0D0D0D',
   primary: '#094F9A',
@@ -146,6 +146,31 @@ function pairs(mode, t, badges) {
       'border-tertiary as badge-pill and static panel border',
       'decorative; every remaining use is a non-interactive chip or panel',
     ),
+    // KNOWN SC 1.4.11 FAILURE, not a true exemption. The M3 Figma spec sets the search-field
+    // borders to Border/Tertiary and Border/Secondary; both are far under the 3:1 a control
+    // boundary needs, and the white fill on #FAFAFA (1.02:1) is not a substitute affordance.
+    dec(
+      t.borderTertiary,
+      t.surface,
+      'border-tertiary as page search-field border',
+      'FAILS SC 1.4.11 (needs 3:1) — design-specified, pending design decision',
+    ),
+    dec(
+      t.borderSecondary,
+      t.background,
+      'border-secondary as top-nav search-field border',
+      'FAILS SC 1.4.11 (needs 3:1) — design-specified, pending design decision',
+    ),
+    // Same call as the search fields: the drawer form fields follow their pill treatment. This is
+    // still short of 3:1, but better than the #D4D4D4 (1.48:1) it replaced, and :focus-within
+    // moves the border to text-muted at 5.49:1.
+    dec(
+      t.borderTertiary,
+      t.surface,
+      'border-tertiary as drawer form-field border',
+      'FAILS SC 1.4.11 (needs 3:1) — design-specified, pending design decision',
+    ),
+    ui(t.textMuted, t.surface, 'form-field border on focus-within'),
     dec(
       t.success,
       t.surface,

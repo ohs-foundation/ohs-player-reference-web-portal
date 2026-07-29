@@ -29,8 +29,6 @@ export const appMessageOverrides = {
   activityChanged: 'Changed',
   themeDark: 'Switch to dark mode',
   themeLight: 'Switch to light mode',
-  collapseSidebar: 'Collapse sidebar',
-  expandSidebar: 'Expand sidebar',
 
   pageDashboard: 'Dashboard',
   pageDashboardDescription: 'Overview of your digital health workforce, active locations, and system metrics.',
@@ -42,6 +40,8 @@ export const appMessageOverrides = {
   kpiTotalLocations: 'Total Locations',
   kpiTotalOrganizations: 'Total Organisations',
   kpiTotalCareTeams: 'Total Care Teams',
+  kpiTrendIncrease: '{{value}}% Increase from last month',
+  kpiTrendDecrease: '{{value}}% Decrease from last month',
   recentUsersTitle: 'Recently Added Users',
   recentUsersSubtitle: 'Most recently created or updated users.',
   recentLocationsTitle: 'Recently Added Locations',
@@ -63,7 +63,6 @@ export const appMessageOverrides = {
   pageUsersDescription: 'Search and manage practitioner accounts.',
   createUser: 'Create user',
   addUser: 'Add user',
-  addUserModeSubtitle: 'Choose how you want to add this user.',
   addUserQuickTitle: 'Quick add',
   addUserQuickDescription: 'Fill in all details on one screen — best when you already know the assignments.',
   addUserWizardTitle: 'Guided wizard',
@@ -109,8 +108,6 @@ export const appMessageOverrides = {
 
   pageUserCreate: 'Create user',
   pageUserEdit: 'Edit user',
-  addUserSubtitle: 'Fill in the details to create a new user profile.',
-  editUserSubtitle: 'Update the details for this user profile.',
   userConflictError: 'A user with that email already exists.',
   userCreateError: 'Could not create the user. Please try again.',
   userCreatedAssignmentFailed: 'User created, but role/team assignment failed. Edit the user to retry.',
@@ -128,6 +125,7 @@ export const appMessageOverrides = {
   email: 'Email',
   assignmentsNeedData: 'Create organisations and locations first to assign them here.',
   removeAssignment: 'Remove',
+  openDatePicker: 'Open date picker',
   contextOrganization: 'Organisation',
   contextLocation: 'Location',
   userCreated: 'User created',
@@ -208,6 +206,7 @@ export const appMessageOverrides = {
   clear: 'Clear',
   comboboxNoMatches: 'No matches',
   comboboxShowingLimited: 'Showing {{shown}} of {{total}} — type to narrow',
+  comboboxNoResults: 'No results',
   locationsLatitude: 'Latitude',
   locationsLongitude: 'Longitude',
   locationsSourceId: 'Source ID',
@@ -246,7 +245,6 @@ export const appMessageOverrides = {
   locationsRequestAccess: 'Request access',
   // Import drawer
   locationsImportTitle: 'Import Locations',
-  locationsImportSubtitle: 'Upload a CSV to create or update locations in bulk',
   locationsDropzone: 'Drag a CSV here, or click to browse',
   locationsDropzoneHint: 'One .csv file · field name file',
   done: 'Done',
@@ -370,7 +368,6 @@ export const appMessageOverrides = {
   setupUserStatusSuccess: 'Created',
   setupUserStatusFailed: 'Failed',
   sectionAssignments: 'Assignments',
-  addLocationSubtitle: 'Create a location with an optional parent.',
   locationCreated: 'Location created',
 
   // ─── FHIR Viewer ───────────────────────────────────────────────────────────

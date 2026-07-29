@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'ohs-player-web-core';
 import { IconChevronLeft, IconChevronRight } from './icons';
 import { Checkbox } from './Checkbox';
+import { Listbox } from './Listbox';
 
 export interface DataTableColumn<Row> {
   key: string;
@@ -11,6 +12,8 @@ export interface DataTableColumn<Row> {
   width?: string;
   sortable?: boolean;
   sortValue?: (row: Row) => string | number;
+  /** Render the cell in the code face — for identifiers and other machine-readable values. */
+  mono?: boolean;
 }
 
 export interface DataTableProps<Row> {
@@ -222,7 +225,11 @@ export function DataTable<Row>({
                         </td>
                       ) : null}
                       {columns.map((c) => (
-                        <td key={c.key} style={{ textAlign: c.align ?? 'left' }}>
+                        <td
+                          key={c.key}
+                          style={{ textAlign: c.align ?? 'left' }}
+                          data-mono={c.mono ? 'true' : undefined}
+                        >
                           {c.render(row)}
                         </td>
                       ))}
@@ -239,21 +246,18 @@ export function DataTable<Row>({
               <span>{t('tableShowing', { start, end, total })}</span>
               <div className="ohs-pagination__per-page">
                 <span>{t('tableItemsPerPage')}</span>
-                <select
-                  className="ohs-select ohs-pagination__select"
-                  aria-label={t('tableItemsPerPage')}
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
+                <Listbox
+                  compact
+                  className="ohs-pagination__select"
+                  label={t('tableItemsPerPage')}
+                  placeholder={String(pageSize)}
+                  value={[String(pageSize)]}
+                  options={pageSizeOptions.map((n) => ({ value: String(n), label: String(n) }))}
+                  onChange={(next) => {
+                    setPageSize(Number(next[0]));
                     setPage(1);
                   }}
-                >
-                  {pageSizeOptions.map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div className="ohs-pagination__pages">
                 <button

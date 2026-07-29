@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconAdd, IconChevronDown, IconUpload } from '../../components/ui/icons';
+import { IconAddCircle, IconChevronDown, IconFilterList, IconUpload } from '../../components/ui/icons';
 import { PermissionGuard, useRefreshResources, useStatusBar, useTranslation } from 'ohs-player-web-core';
 import {
   Button,
@@ -91,6 +91,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [filter, setFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<LocationStatusFilter>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [view, setView] = useState<LocationView>('tree');
   const [importOpen, setImportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -175,7 +176,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
             {t('locationsExport')}
           </Button>
           <PermissionGuard permission="locations.edit">
-            <Button type="button" variant="secondary" iconLeft={<IconAdd size={18} />} onClick={() => setCreateOpen(true)}>
+            <Button type="button" variant="secondary" iconLeft={<IconAddCircle size={18} />} onClick={() => setCreateOpen(true)}>
               {t('dialogCreateLocation')}
             </Button>
           </PermissionGuard>
@@ -207,6 +208,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-64">
             <SelectField
+              variant="pill"
               label={t('locationsRoot')}
               value={effectiveRoot}
               options={roots}
@@ -223,21 +225,46 @@ export function LocationsHierarchyPage(): React.ReactElement {
             placeholder={t('locationsSearch')}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-84 h-12"
           />
-          <ChipSet>
-            {LOCATION_STATUS_FILTERS.map((option) => (
-              <FilterChip
-                key={option.value}
-                label={t(option.labelKey)}
-                selected={statusFilter === option.value}
-                onChange={() => setStatusFilter(option.value)}
-              />
-            ))}
-          </ChipSet>
+          <Button
+            variant="secondary"
+            type="button"
+            iconLeft={<IconFilterList size={20} />}
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((v) => !v)}
+          >
+            {statusFilter !== 'all' ? `${t('filterLabel')} (1)` : t('filterLabel')}
+          </Button>
         </div>
         <LocationViewToggle value={view} onChange={setView} />
       </div>
+
+      {filtersOpen ? (
+        <div className="ohs-users-filters">
+          <div className="ohs-formfield ohs-users-filters__field">
+            <span className="ohs-formfield__label">{t('locationsFilterStatus')}</span>
+            <ChipSet>
+              {LOCATION_STATUS_FILTERS.map((option) => (
+                <FilterChip
+                  key={option.value}
+                  label={t(option.labelKey)}
+                  selected={statusFilter === option.value}
+                  onChange={() => setStatusFilter(option.value)}
+                />
+              ))}
+            </ChipSet>
+          </div>
+          {statusFilter !== 'all' ? (
+            <button
+              type="button"
+              className="ohs-users-filters__clear"
+              onClick={() => setStatusFilter('all')}
+            >
+              {t('clearFilters')}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {view === 'tree' ? (
         <div className="flex justify-end gap-2">

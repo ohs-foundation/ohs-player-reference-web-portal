@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconAdd, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
+import { IconAddCircle, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
 import {
   OhsDropdownMenu,
   PermissionGuard,
@@ -57,7 +57,13 @@ export function OrganizationsPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
   const refresh = useRefreshResources();
-  const orgs = useSearch('Organization', { _count: '200' });
+  // `_revinclude` carries each org's managed Locations in the same bundle. Deriving them from the
+  // Location search instead would only ever see its first page, so a link outside that page reads
+  // as "none on record" — `Location.managingOrganization` is the only place the link is stored.
+  const orgs = useSearch('Organization', {
+    _count: '200',
+    _revinclude: 'Location:organization',
+  });
   const locs = useSearch('Location', { _count: '500' });
 
   const [q, setQ] = useState(useInitialSearchTerm());
@@ -68,17 +74,25 @@ export function OrganizationsPage() {
   const [viewId, setViewId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const resourcesOf = <T,>(data: unknown): T[] =>
-    ((data as { entry?: { resource?: T }[] } | undefined)?.entry ?? [])
+  const resourcesOf = <T,>(data: unknown, resourceType?: string): T[] =>
+    ((data as { entry?: { resource?: (T & { resourceType?: string }) | undefined }[] } | undefined)
+      ?.entry ?? [])
       .map((e) => e.resource)
-      .filter((r): r is T => Boolean(r));
+      .filter((r): r is T & { resourceType?: string } => Boolean(r))
+      .filter((r) => !resourceType || r.resourceType === resourceType);
 
-  const locList = useMemo(() => resourcesOf<LocRow>(locs.data), [locs.data]);
+  const locList = useMemo(() => resourcesOf<LocRow>(locs.data, 'Location'), [locs.data]);
+
+  /** The `_revinclude`d Locations — every one carries a `managingOrganization`. */
+  const managedLocList = useMemo(
+    () => resourcesOf<LocRow>(orgs.data, 'Location'),
+    [orgs.data],
+  );
 
   /** Locations grouped by the org they're managed by (`Location.managingOrganization`). */
   const locationsByOrgId = useMemo(() => {
     const m = new Map<string, ManagedLocation[]>();
-    for (const l of locList) {
+    for (const l of managedLocList) {
       const orgId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
       if (!orgId || !l.id) continue;
       const list = m.get(orgId) ?? [];
@@ -86,21 +100,33 @@ export function OrganizationsPage() {
       m.set(orgId, list);
     }
     return m;
-  }, [locList]);
+  }, [managedLocList]);
 
   // Options for an org's location picker: unmanaged Locations plus the ones this org already manages —
   // excludes Locations managed by another org so we don't silently steal them (managingOrganization is 0..1).
-  const locationOptionsFor = (orgId?: string): Option[] =>
-    locList
-      .filter((l) => {
-        if (!l.id) return false;
-        const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
-        return !managerId || managerId === orgId;
-      })
-      .map((l) => ({ value: `Location/${l.id}`, label: l.name ?? (l.id as string) }));
+  // The org's own locations come from the `_revinclude` so they survive falling outside the Location page.
+  const locationOptionsFor = (orgId?: string): Option[] => {
+    const seen = new Set<string>();
+    const options: Option[] = [];
+    const add = (l: LocRow) => {
+      if (!l.id || seen.has(l.id)) return;
+      seen.add(l.id);
+      options.push({ value: `Location/${l.id}`, label: l.name ?? l.id });
+    };
+
+    for (const l of managedLocList) {
+      const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
+      if (managerId && managerId === orgId) add(l);
+    }
+    for (const l of locList) {
+      const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
+      if (!managerId || managerId === orgId) add(l);
+    }
+    return options;
+  };
 
   const orgList = useMemo(() => {
-    const list = resourcesOf<OrgRow>(orgs.data);
+    const list = resourcesOf<OrgRow>(orgs.data, 'Organization');
     return list.map((o) => ({ ...o, managedLocations: o.id ? locationsByOrgId.get(o.id) : undefined }));
   }, [orgs.data, locationsByOrgId]);
 
@@ -149,7 +175,7 @@ export function OrganizationsPage() {
               </Button>
             ) : null}
             <PermissionGuard permission="orgs.create">
-              <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addOrganization')}
               </Button>
             </PermissionGuard>
@@ -191,7 +217,7 @@ export function OrganizationsPage() {
             description={t('organizationsEmptyDescription')}
             action={
               <PermissionGuard permission="orgs.create">
-                <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                   {t('addOrganization')}
                 </Button>
               </PermissionGuard>
@@ -203,7 +229,6 @@ export function OrganizationsPage() {
           toolbar={
             <Stack gap={3}>
               <Inline
-                justify="between"
                 style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}
               >
                 <SearchField
@@ -243,7 +268,7 @@ export function OrganizationsPage() {
             </Stack>
           }
           columns={[
-            { key: 'identifier', header: t('columnIdentifier'), render: (o) => identifierOf(o) || '—' },
+            { key: 'identifier', header: t('columnIdentifier'), mono: true, render: (o) => identifierOf(o) || '—' },
             {
               key: 'name',
               header: t('columnName'),

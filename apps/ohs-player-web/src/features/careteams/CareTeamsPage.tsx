@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconAdd, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
+import { IconAddCircle, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
 import careTeamsEmptyIllustration from '../../assets/illustrations/careteams-empty.svg';
 import {
   OhsDropdownMenu,
@@ -144,7 +144,7 @@ export function CareTeamsPage() {
               </Button>
             ) : null}
             <PermissionGuard permission="careteams.manage">
-              <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addCareTeam')}
               </Button>
             </PermissionGuard>
@@ -192,7 +192,7 @@ export function CareTeamsPage() {
             description={t('careTeamsEmptyDescription')}
             action={
               <PermissionGuard permission="careteams.manage">
-                <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                   {t('addCareTeam')}
                 </Button>
               </PermissionGuard>
@@ -204,7 +204,6 @@ export function CareTeamsPage() {
           toolbar={
             <Stack gap={3}>
               <Inline
-                justify="between"
                 style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}
               >
                 <SearchField
@@ -244,7 +243,7 @@ export function CareTeamsPage() {
             </Stack>
           }
           columns={[
-            { key: 'identifier', header: t('columnIdentifier'), render: (tm) => tm.id ?? '—' },
+            { key: 'identifier', header: t('columnIdentifier'), mono: true, render: (tm) => tm.id ?? '—' },
             {
               key: 'name',
               header: t('columnName'),

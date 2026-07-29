@@ -204,9 +204,8 @@ describe('UserCreateDrawer', () => {
     );
 
     fillDemographics();
-    fireEvent.change(screen.getByLabelText(/contextOrganization/), {
-      target: { value: 'Organization/o1' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /contextOrganization/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'Org One' }));
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
     await waitFor(() => expect(mockTransaction).toHaveBeenCalledTimes(1));
@@ -230,7 +229,8 @@ describe('UserCreateDrawer', () => {
     );
 
     fillDemographics();
-    fireEvent.change(screen.getByLabelText(/contextOrganization/), { target: { value: 'Organization/o1' } });
+    fireEvent.click(screen.getByRole('combobox', { name: /contextOrganization/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'Org One' }));
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
     // The follow-up failure must NOT block create success: drawer closes + list refreshes via onSuccess.
@@ -261,7 +261,6 @@ describe('UserCreateEntryDrawer', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('addUserModeSubtitle')).toBeInTheDocument();
     expect(screen.getByText('addUserQuickTitle')).toBeInTheDocument();
     expect(screen.getByText('addUserWizardTitle')).toBeInTheDocument();
   });
@@ -346,7 +345,7 @@ describe('UsersPage search', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'addUser' }));
-    expect(screen.getByText('addUserModeSubtitle')).toBeInTheDocument();
+    expect(screen.getByText('addUserQuickTitle')).toBeInTheDocument();
   });
 
   it('queries Practitioner with name:contains (server-side) when a term is typed', async () => {

@@ -3,7 +3,7 @@ export const sysTheme = {
   overrides: {
     primary: '#094F9A',
     'primary-container': '#DCE5FE',
-    'surface-container': '#F1F2F4',
+    'surface-container': '#FAFAFA',
     'on-surface': '#0D0D0D',
   },
   darkOverrides: {

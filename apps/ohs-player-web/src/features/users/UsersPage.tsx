@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconAdd, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
+import { IconAddCircle, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
 import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
@@ -227,7 +227,7 @@ export function UsersPage() {
               </Button>
             ) : null}
             <PermissionGuard permission="users.create">
-              <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addUser')}
               </Button>
             </PermissionGuard>
@@ -249,7 +249,7 @@ export function UsersPage() {
             description={t('usersEmptyDescription')}
             action={
               <PermissionGuard permission="users.create">
-                <Button type="button" iconLeft={<IconAdd size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                   {t('addUser')}
                 </Button>
               </PermissionGuard>
@@ -260,7 +260,7 @@ export function UsersPage() {
       <DataTable<PractitionerRow>
         toolbar={
           <Stack gap={3}>
-            <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
+            <Inline style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
               <SearchField
                 label={t('search')}
                 name="userSearch"
@@ -310,6 +310,7 @@ export function UsersPage() {
           {
             key: 'identifier',
             header: t('columnIdentifier'),
+            mono: true,
             render: (p) => identifierOf(p),
           },
           {

@@ -12,8 +12,8 @@ export const lightTheme: ThemeConfig = {
     primaryHover: '#073C75',
     primaryContrast: '#FAFAFA', // Content/Primary Inverse
     primaryContainer: '#DCE5FE', // Brand-subtle surface — selected segment / selected tree row (matches county badge)
-    surface: '#FFFFFF', // Background/Secondary — cards, drawers
-    background: '#F1F2F4', // Background/Primary — grey page fill behind white cards (perceptibly off-white)
+    surface: '#FFFFFF', // Background/Primary — the content card, drawers
+    background: '#FAFAFA', // Background/Secondary — page fill behind the white content card
     text: '#0D0D0D', // Content/Primary (Neutral/950)
     textMuted: '#696969', // Content/Tertiary (Neutral/600)
     border: '#EDEDED', // Border/Primary (Neutral/100)
@@ -21,8 +21,8 @@ export const lightTheme: ThemeConfig = {
     success: '#006E29', // Content/Positive
   },
   typography: {
-    fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
-    headingFontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
+    fontFamily: '"Google Sans", system-ui, -apple-system, sans-serif',
+    headingFontFamily: '"Google Sans", system-ui, -apple-system, sans-serif',
     baseFontSize: 16,
   },
   borderRadius: { default: 8 },

@@ -15,15 +15,28 @@ const OUTPUT = 'apps/ohs-player-web/src/components/ui/icons.tsx';
 
 /** Exported component name -> Material Symbols file stem. */
 const ICONS: Record<string, string> = {
+  IconAccountCircle: 'account_circle',
+  IconAccountCircleFill: 'account_circle-fill',
   IconAdd: 'add',
+  IconAddCircle: 'add_circle',
+  IconArrowOutward: 'arrow_outward',
   IconArrowRight: 'arrow_forward',
+  // Trend arrows: Figma uses Remix arrow-right-up-line / arrow-left-down-line; these are the
+  // geometrically equivalent Material Symbols, so the dashboard keeps one icon dependency.
+  IconArrowUpRight: 'north_east',
+  IconArrowDownLeft: 'south_west',
   IconBriefcase: 'work',
-  IconBuilding: 'domain',
-  IconBuildingFill: 'domain-fill',
+  IconBriefcaseFill: 'work-fill',
+  // Material Symbols has no distinct `domain-fill`; account_balance is the nearest institution
+  // glyph that ships one, which the nav's outlined/filled active state needs.
+  IconBuilding: 'account_balance',
+  IconBuildingFill: 'account_balance-fill',
   IconBuildings: 'apartment',
+  IconCheckboxBlank: 'check_box_outline_blank',
   IconCheck: 'check',
   IconCheckCircleFill: 'check_circle-fill',
   IconChevronDown: 'keyboard_arrow_down',
+  IconToday: 'today-fill',
   IconChevronLeft: 'chevron_left',
   IconChevronRight: 'chevron_right',
   IconClose: 'close',
@@ -49,7 +62,6 @@ const ICONS: Record<string, string> = {
   IconMapPin: 'location_on',
   IconMapPinFill: 'location_on-fill',
   IconMenu: 'menu',
-  IconMenuFold: 'menu_open',
   IconMoon: 'dark_mode',
   IconMore: 'more_vert',
   IconNotification: 'notifications',
@@ -62,6 +74,7 @@ const ICONS: Record<string, string> = {
   IconUpload: 'cloud_upload',
   IconUser: 'person',
   IconUserFill: 'person-fill',
+  IconVisibilityOff: 'visibility_off',
   IconWarning: 'warning',
 };
 

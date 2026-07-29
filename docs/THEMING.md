@@ -40,7 +40,7 @@ import { installThemeCss, type ThemeConfigV2 } from 'ohs-player-web-core';
 const theme: ThemeConfigV2 = {
   overrides: { primary: '#094F9A' },        // light-scheme pins
   darkOverrides: { surface: '#0D0D0D' },    // dark-scheme pins
-  typography: { brandFamily: '"IBM Plex Sans", sans-serif', plainFamily: '"IBM Plex Sans", sans-serif' },
+  typography: { brandFamily: '"Google Sans", sans-serif', plainFamily: '"Google Sans", sans-serif' },
   shape: { small: '8px' },
   density: 0,
 };
@@ -125,14 +125,18 @@ assertions across both schemes.
 
 | Group | Tokens |
 | --- | --- |
-| Type | `--ohs-sys-typescale-<role>-{font,size,line-height,weight}` for `display-small`, `headline-medium`, `title-{large,medium}`, `body-{large,medium,small}`, `label-{large,medium,small}` |
+| Type | `--ohs-sys-typescale-<role>-{font,size,line-height,weight,letter-spacing}` for `display-small`, `headline-medium`, `title-{large,medium}`, `body-{large,medium,small}`, `label-{large,medium,small}`, `heading-{5xl,4xl,3xl,2xl,l}`, `text-{xl,xs,2xs}` |
 | Typefaces | `--ohs-ref-typeface-brand`, `--ohs-ref-typeface-plain` |
-| Shape | `--ohs-sys-shape-corner-{none,extra-small,small,medium,large,extra-large,full}` |
-| Spacing | `--ohs-sys-spacing-N` = N×4px (`1,2,3,4,5,6,8,10,12,16,20`) |
+| Shape | `--ohs-sys-shape-corner-{none,extra-small,small,medium,large,extra-large-decreased,extra-large,full}` |
+| Spacing | `--ohs-sys-spacing-N` = N×4px (`1,2,3,4,5,6,8,10,12,14,16,20`) |
 | Motion | `--ohs-sys-motion-duration-{short2,short4,medium2}`, `--ohs-sys-motion-easing-standard{,-decelerate,-accelerate}` |
 
-Role *names* are M3's; the metrics are this product's existing IBM Plex scale mapped onto them. M3's
-Roboto values are not adopted, which M3 explicitly allows.
+Role *names* are M3's where M3 has one; `heading-*`/`text-*` cover the six Figma steps it does not,
+and `extra-large-decreased` (24px) fills M3's 20 → 28 gap. Metrics are the Google Sans scale from the
+Figma type ramp — M3's Roboto values are not adopted, which M3 explicitly allows.
+
+Tracking is inherited: `body` sets `letter-spacing` from `body-medium` (-0.5px), which every step at
+or below 24px shares. Steps at 32px and above override it at their own rule.
 
 Tailwind utilities and the hand-written CSS share one 4px system: `--spacing` in the Tailwind bridge
 derives from `--ohs-sys-spacing-1`.

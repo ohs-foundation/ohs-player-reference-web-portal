@@ -7,8 +7,8 @@ export type ButtonSize = 'sm' | 'md';
 
 // `ohs-button` keeps the marker class so external selectors still match (e.g. the drawer-footer height override).
 const button = cva(
-  'ohs-button ohs-state-layer inline-flex items-center justify-center gap-2 rounded ' +
-    'border border-transparent h-12 px-6 font-medium whitespace-nowrap cursor-pointer ' +
+  'ohs-button ohs-state-layer inline-flex items-center justify-center gap-2 rounded-pill ' +
+    'border border-transparent h-14 px-6 font-medium whitespace-nowrap cursor-pointer ' +
     'select-none no-underline transition-[background-color,border-color,color] ' +
     'duration-[120ms] ease-out focus-visible:outline-none ' +
     'focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)] aria-busy:cursor-progress',
@@ -16,15 +16,15 @@ const button = cva(
     variants: {
       variant: {
         primary: 'bg-primary text-primary-contrast',
-        secondary: 'bg-transparent border-outline text-text-muted',
+        secondary: 'bg-primary-container text-primary border-transparent',
         outlined: 'bg-transparent border-outline text-text-muted',
-        ghost: 'bg-transparent text-text border-border',
+        ghost: 'bg-transparent text-text border-transparent',
         danger: 'bg-error text-primary-contrast',
         elevated: 'bg-surface text-text shadow-sm',
       },
       size: {
         md: 'text-base/6',
-        sm: 'h-9 px-4 text-sm/5',
+        sm: 'h-10 px-4 text-sm/5',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

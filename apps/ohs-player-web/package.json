@@ -13,7 +13,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "@fontsource/google-sans": "^5.3.1",
+    "@fontsource/google-sans-code": "^5.3.0",
     "@radix-ui/react-checkbox": "^1.1.4",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-progress": "^1.1.2",

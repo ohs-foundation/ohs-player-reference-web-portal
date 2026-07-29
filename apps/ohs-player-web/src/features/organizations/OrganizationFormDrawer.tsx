@@ -191,9 +191,6 @@ export function OrganizationFormDrawer({
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{editing ? t('editOrganization') : t('addOrganization')}</h2>
-        <p className="ohs-form-drawer__subtitle">
-          {editing ? t('editOrganizationSubtitle') : t('addOrganizationSubtitle')}
-        </p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
         <IconClose size={24} />

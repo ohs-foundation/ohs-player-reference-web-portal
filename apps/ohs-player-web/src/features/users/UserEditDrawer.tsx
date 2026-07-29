@@ -230,7 +230,6 @@ export function UserEditDrawer({
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{t('pageUserEdit')}</h2>
-        <p className="ohs-form-drawer__subtitle">{t('editUserSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
         <IconClose size={24} />

@@ -77,7 +77,6 @@ export function LocationCreateDrawer({
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{t('dialogCreateLocation')}</h2>
-        <p className="ohs-form-drawer__subtitle">{t('addLocationSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
         <IconClose size={24} />

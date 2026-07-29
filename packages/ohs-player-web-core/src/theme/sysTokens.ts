@@ -47,7 +47,12 @@ export type SysColorRole =
   | 'info-container'
   | 'on-info-container';
 
-/** Typescale roles emitted as `--ohs-sys-typescale-<role>-{font,size,line-height,weight}`. @public */
+/**
+ * Typescale roles emitted as
+ * `--ohs-sys-typescale-<role>-{font,size,line-height,weight,letter-spacing}`.
+ * `heading-*`/`text-*` are ours — M3 has no role at those steps.
+ * @public
+ */
 export type TypescaleRole =
   | 'display-small'
   | 'headline-medium'
@@ -58,23 +63,38 @@ export type TypescaleRole =
   | 'body-small'
   | 'label-large'
   | 'label-medium'
-  | 'label-small';
+  | 'label-small'
+  | 'heading-5xl'
+  | 'heading-4xl'
+  | 'heading-3xl'
+  | 'heading-2xl'
+  | 'heading-l'
+  | 'text-xl'
+  | 'text-xs'
+  | 'text-2xs';
 
 /** @public */
 export interface TypescaleMetrics {
   size: string;
   lineHeight: string;
   weight: number;
+  /** Tracking; omitted means `normal`. */
+  letterSpacing?: string;
   typeface?: 'brand' | 'plain';
 }
 
-/** Corner-radius scale emitted as `--ohs-sys-shape-corner-*`. @public */
+/**
+ * Corner-radius scale emitted as `--ohs-sys-shape-corner-*`.
+ * `extra-large-decreased` (24px) is ours — M3's scale steps 20 → 28.
+ * @public
+ */
 export type ShapeToken =
   | 'none'
   | 'extra-small'
   | 'small'
   | 'medium'
   | 'large'
+  | 'extra-large-decreased'
   | 'extra-large'
   | 'full';
 
@@ -170,18 +190,25 @@ const DARK_SCHEME: SysColorScheme = {
   'on-info-container': P.primary[90],
 };
 
-/** M3 role names carrying this product's existing IBM Plex metrics. */
 const TYPESCALE: Record<TypescaleRole, TypescaleMetrics> = {
-  'display-small': { size: '40px', lineHeight: '48px', weight: 500, typeface: 'brand' },
-  'headline-medium': { size: '24px', lineHeight: '32px', weight: 600, typeface: 'brand' },
-  'title-large': { size: '20px', lineHeight: '28px', weight: 500, typeface: 'brand' },
-  'title-medium': { size: '16px', lineHeight: '24px', weight: 600, typeface: 'brand' },
-  'body-large': { size: '16px', lineHeight: '24px', weight: 400 },
-  'body-medium': { size: '14px', lineHeight: '20px', weight: 400 },
-  'body-small': { size: '12px', lineHeight: '16px', weight: 400 },
-  'label-large': { size: '16px', lineHeight: '24px', weight: 500 },
-  'label-medium': { size: '14px', lineHeight: '20px', weight: 500 },
-  'label-small': { size: '12px', lineHeight: '16px', weight: 500 },
+  'display-small': { size: '40px', lineHeight: '48px', weight: 500, letterSpacing: '-1px', typeface: 'brand' },
+  'headline-medium': { size: '24px', lineHeight: '32px', weight: 500, letterSpacing: '-0.5px', typeface: 'brand' },
+  'title-large': { size: '20px', lineHeight: '28px', weight: 500, letterSpacing: '-0.5px', typeface: 'brand' },
+  'title-medium': { size: '16px', lineHeight: '24px', weight: 500, letterSpacing: '-0.5px', typeface: 'brand' },
+  'body-large': { size: '16px', lineHeight: '24px', weight: 400, letterSpacing: '-0.5px' },
+  'body-medium': { size: '14px', lineHeight: '20px', weight: 400, letterSpacing: '-0.5px' },
+  'body-small': { size: '12px', lineHeight: '16px', weight: 400, letterSpacing: '-0.5px' },
+  'label-large': { size: '16px', lineHeight: '24px', weight: 500, letterSpacing: '-0.5px' },
+  'label-medium': { size: '14px', lineHeight: '20px', weight: 500, letterSpacing: '-0.5px' },
+  'label-small': { size: '12px', lineHeight: '16px', weight: 500, letterSpacing: '-0.5px' },
+  'heading-5xl': { size: '72px', lineHeight: '80px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
+  'heading-4xl': { size: '64px', lineHeight: '72px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
+  'heading-3xl': { size: '56px', lineHeight: '64px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
+  'heading-2xl': { size: '48px', lineHeight: '64px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
+  'heading-l': { size: '32px', lineHeight: '40px', weight: 500, letterSpacing: '-1px', typeface: 'brand' },
+  'text-xl': { size: '20px', lineHeight: '28px', weight: 400, letterSpacing: '-0.5px' },
+  'text-xs': { size: '10px', lineHeight: '14px', weight: 400, letterSpacing: '-0.5px' },
+  'text-2xs': { size: '8px', lineHeight: '12px', weight: 400, letterSpacing: '-0.5px' },
 };
 
 const SHAPE: Record<ShapeToken, string> = {
@@ -190,6 +217,7 @@ const SHAPE: Record<ShapeToken, string> = {
   small: '8px',
   medium: '12px',
   large: '16px',
+  'extra-large-decreased': '24px',
   'extra-large': '28px',
   full: '9999px',
 };
@@ -223,7 +251,7 @@ const MOTION = {
 };
 
 
-const SPACING_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20];
+const SPACING_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20];
 
 export const sysColorSchemes = { light: LIGHT_SCHEME, dark: DARK_SCHEME };
 export const sysTypescale = TYPESCALE;
@@ -248,6 +276,7 @@ export function staticSysTokens(
     out[`${prefix}-size`] = m.size;
     out[`${prefix}-line-height`] = m.lineHeight;
     out[`${prefix}-weight`] = String(m.weight);
+    out[`${prefix}-letter-spacing`] = m.letterSpacing ?? 'normal';
   }
   for (const [token, value] of Object.entries(shape)) {
     out[`--ohs-sys-shape-corner-${token}`] = value;

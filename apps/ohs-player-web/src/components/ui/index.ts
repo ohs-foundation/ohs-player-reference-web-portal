@@ -12,11 +12,15 @@ export type { ComboboxProps } from './Combobox';
 export { filterComboboxOptions } from './comboboxFilter';
 export type { ComboboxOption } from './comboboxFilter';
 
+export { Listbox } from './Listbox';
+export type { ListboxOption, ListboxProps } from './Listbox';
 export { SearchField } from './SearchField';
 export type { SearchFieldProps } from './SearchField';
 
 export { Avatar } from './Avatar';
 export type { AvatarProps } from './Avatar';
+export { KpiBadge } from './KpiBadge';
+export type { KpiBadgeProps } from './KpiBadge';
 
 export { Drawer } from './Drawer';
 export type { DrawerProps } from './Drawer';

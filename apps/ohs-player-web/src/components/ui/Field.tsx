@@ -146,10 +146,12 @@ export interface SelectFieldProps extends Omit<SelectHTMLAttributes<HTMLSelectEl
   error?: ReactNode;
   options: readonly SelectFieldOption[];
   placeholder?: string;
+  /** `form` = 44px stacked field; `pill` = 56px toolbar control matching `SearchField`. */
+  variant?: 'form' | 'pill';
 }
 
 export const SelectField = forwardRef<HTMLButtonElement, SelectFieldProps>(function SelectField(
-  { label, instructions, error, required, id, options, placeholder, value, defaultValue, disabled, onChange, className, name },
+  { label, instructions, error, required, id, options, placeholder, value, defaultValue, disabled, onChange, className, name, variant = 'form' },
   ref,
 ) {
   const { t } = useTranslation();
@@ -172,7 +174,7 @@ export const SelectField = forwardRef<HTMLButtonElement, SelectFieldProps>(funct
         <Select.Trigger
           ref={ref}
           id={inputId}
-          className={['ohs-select-trigger', error ? 'ohs-select-trigger--error' : '', className ?? ''].filter(Boolean).join(' ')}
+          className={['ohs-select-trigger', variant === 'pill' ? 'ohs-select-trigger--pill' : '', error ? 'ohs-select-trigger--error' : '', className ?? ''].filter(Boolean).join(' ')}
           aria-invalid={error ? true : undefined}
         >
           <Select.Value placeholder={ph} />

@@ -74,6 +74,27 @@ vi.mock('./LocationImportDrawer', () => ({
 
 const { LocationsHierarchyPage } = await import('./LocationsHierarchyPage');
 
+describe('LocationsHierarchyPage status filter', () => {
+  it('keeps the status chips behind the Filter button, as on the other resource pages', () => {
+    render(<LocationsHierarchyPage />);
+    expect(screen.queryByRole('option', { name: 'locationStatusActive' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /filterLabel/ }));
+    expect(screen.getByRole('option', { name: 'locationStatusActive' })).toBeInTheDocument();
+  });
+
+  it('reports the active filter count on the toggle and clears back to all', () => {
+    render(<LocationsHierarchyPage />);
+    fireEvent.click(screen.getByRole('button', { name: /filterLabel/ }));
+
+    fireEvent.click(screen.getByRole('option', { name: 'locationStatusActive' }));
+    expect(screen.getByRole('button', { name: 'filterLabel (1)' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'clearFilters' }));
+    expect(screen.getByRole('button', { name: 'filterLabel' })).toBeInTheDocument();
+  });
+});
+
 describe('LocationsHierarchyPage import completion', () => {
   // Regression: the import bypasses TanStack mutations, so the dropdown search needs explicit invalidation
   // and the tree needs an authoritative (cache-evicting) refresh so imported roots survive a reload.

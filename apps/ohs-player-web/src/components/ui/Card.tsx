@@ -2,7 +2,7 @@ import { type HTMLAttributes, type ReactNode } from 'react';
 import { cva } from 'class-variance-authority';
 import { cn } from '../../lib/cn';
 
-const card = cva('ohs-card bg-surface border border-border rounded shadow-sm', {
+const card = cva('ohs-card bg-surface border border-border-secondary rounded-card', {
   variants: { flush: { true: 'p-0', false: 'p-6' } },
   defaultVariants: { flush: false },
 });
