@@ -61,7 +61,6 @@ const ICONS: Record<string, string> = {
   IconMapPin: 'location_on',
   IconMapPinFill: 'location_on-fill',
   IconMenu: 'menu',
-  IconMenuFold: 'menu_open',
   IconMoon: 'dark_mode',
   IconMore: 'more_vert',
   IconNotification: 'notifications',

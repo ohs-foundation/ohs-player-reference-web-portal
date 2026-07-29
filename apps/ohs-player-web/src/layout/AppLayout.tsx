@@ -1,6 +1,5 @@
 import {
   OhsDropdownMenu,
-  OhsTooltip,
   useAuth,
   useFlag,
   usePermission,
@@ -19,7 +18,6 @@ import {
   IconMapPin,
   IconMapPinFill,
   IconMenu,
-  IconMenuFold,
   IconMoon,
   IconSun,
   IconTeam,
@@ -61,7 +59,6 @@ const NAV_DEFS = [
 export function AppLayout() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const { t } = useTranslation();
   const { mode, toggle } = useThemeMode();
   useSetupWizardAutoRedirect();
@@ -77,11 +74,7 @@ export function AppLayout() {
   }
 
   return (
-    <div
-      className="app-shell"
-      data-sidebar-open={open ? 'true' : undefined}
-      data-sidebar-collapsed={collapsed ? 'true' : undefined}
-    >
+    <div className="app-shell" data-sidebar-open={open ? 'true' : undefined}>
       <a className="app-skip-link" href="#main-content">
         {t('skipToContent')}
       </a>
@@ -98,13 +91,6 @@ export function AppLayout() {
             <BrandMark size={40} />
             <span className="app-topbar__title">{t('appTopbarTitle')}</span>
           </span>
-          <IconButton
-            label={t(collapsed ? 'expandSidebar' : 'collapseSidebar')}
-            className="app-topbar__collapse"
-            onClick={() => setCollapsed((v) => !v)}
-          >
-            <IconMenuFold size={24} />
-          </IconButton>
         </div>
         <div className="app-topbar__actions">
           <GlobalSearch />
@@ -125,30 +111,23 @@ export function AppLayout() {
         </div>
       </header>
 
-      <aside
-        className="app-sidebar"
-        aria-label="Primary navigation"
-        data-collapsed={collapsed ? 'true' : undefined}
-      >
+      <aside className="app-sidebar" aria-label="Primary navigation">
         <nav>
-          <OhsTooltip.Provider delayDuration={200}>
-            <ul className="app-sidebar__list">
-              {NAV_DEFS.map((def) => (
-                <NavRow
-                  key={def.to}
-                  collapsed={collapsed}
-                  item={{
-                    to: def.to,
-                    label: t(def.labelKey),
-                    permission: def.permission,
-                    flag: def.flag,
-                    LineIcon: def.LineIcon,
-                    FillIcon: def.FillIcon,
-                  }}
-                />
-              ))}
-            </ul>
-          </OhsTooltip.Provider>
+          <ul className="app-sidebar__list">
+            {NAV_DEFS.map((def) => (
+              <NavRow
+                key={def.to}
+                item={{
+                  to: def.to,
+                  label: t(def.labelKey),
+                  permission: def.permission,
+                  flag: def.flag,
+                  LineIcon: def.LineIcon,
+                  FillIcon: def.FillIcon,
+                }}
+              />
+            ))}
+          </ul>
         </nav>
       </aside>
 
@@ -159,46 +138,27 @@ export function AppLayout() {
   );
 }
 
-function NavRow({
-  item,
-  collapsed,
-}: Readonly<{ item: NavItem; collapsed: boolean }>): React.ReactElement | null {
+function NavRow({ item }: Readonly<{ item: NavItem }>): React.ReactElement | null {
   const flagOn = useFlag(item.flag ?? '__always_on__');
   const enabled = item.flag ? flagOn : true;
   const { can } = usePermission(item.permission);
-  // Resolved here rather than via NavLink's render props: Radix's `asChild` stringifies a function
-  // `className`, which silently strips the link's styling when railed.
   const isActive = Boolean(useMatch({ path: item.to, end: item.to === '/' }));
   if (!enabled || !can) return null;
 
   const Icon = isActive ? item.FillIcon : item.LineIcon;
-  const link = (
-    <NavLink
-      to={item.to}
-      end={item.to === '/'}
-      className={isActive ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'}
-    >
-      <span className="app-sidebar__icon" aria-hidden="true">
-        <Icon size={ICON_SIZE} />
-      </span>
-      <span className="app-sidebar__label">{item.label}</span>
-    </NavLink>
-  );
 
   return (
     <li>
-      {collapsed ? (
-        <OhsTooltip.Root>
-          <OhsTooltip.Trigger asChild>{link}</OhsTooltip.Trigger>
-          <OhsTooltip.Portal>
-            <OhsTooltip.Content className="ohs-tooltip-content" side="right" sideOffset={8}>
-              {item.label}
-            </OhsTooltip.Content>
-          </OhsTooltip.Portal>
-        </OhsTooltip.Root>
-      ) : (
-        link
-      )}
+      <NavLink
+        to={item.to}
+        end={item.to === '/'}
+        className={isActive ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'}
+      >
+        <span className="app-sidebar__icon" aria-hidden="true">
+          <Icon size={ICON_SIZE} />
+        </span>
+        <span className="app-sidebar__label">{item.label}</span>
+      </NavLink>
     </li>
   );
 }

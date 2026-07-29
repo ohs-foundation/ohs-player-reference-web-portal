@@ -41,7 +41,6 @@ body {
 }
 
 /* Reference app shell — layout + top bar user control (avatar + name must not visually merge) */
-/* Longhand rather than the `grid-template` shorthand so the column width can transition. */
 .app-shell {
   display: grid;
   height: 100%;
@@ -49,15 +48,8 @@ body {
     'top top'
     'side main';
   grid-template-rows: auto 1fr;
-  grid-template-columns: var(--app-sidebar-width, 134px) minmax(0, 1fr);
+  grid-template-columns: 134px minmax(0, 1fr);
   background: var(--ohs-color-background, #fafafa);
-  transition: grid-template-columns var(--ohs-sys-motion-duration-short4, 200ms)
-    var(--ohs-sys-motion-easing-standard, ease);
-}
-
-/* Collapsed drops the labels; the icon pill plus the rail's 24px gutters set the width. */
-.app-shell[data-sidebar-collapsed='true'] {
-  --app-sidebar-width: 104px;
 }
 
 .app-topbar {
@@ -86,9 +78,6 @@ body {
   gap: var(--ohs-sys-spacing-2, 8px);
   min-width: 0;
 }
-.app-topbar__collapse {
-  flex-shrink: 0;
-}
 .app-topbar__title {
   font-weight: 600;
   font-size: var(--ohs-text-title, 18px);
@@ -98,16 +87,14 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Mobile-only drawer toggle (desktop uses the collapse toggle) */
+/* Mobile-only drawer toggle */
 .app-topbar__menu-toggle {
   display: none;
 }
-/* Desktop sidebar collapse toggle + notification bell */
-.app-topbar__collapse,
+/* Notification bell */
 .app-topbar__bell {
   color: var(--ohs-color-text-muted, #696969);
 }
-.app-topbar__collapse:hover,
 .app-topbar__bell:hover {
   background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   background: rgb(
@@ -123,7 +110,7 @@ body {
   flex: 1 1 auto;
   min-width: 0;
 }
-/* Search shrinks (basis 360, no grow) so it never pushes the brand/collapse; icons stay fixed. */
+/* Search shrinks (basis 360, no grow) so it never pushes the brand; icons stay fixed. */
 .app-topbar__search {
   width: auto;
   flex: 0 1 360px;
@@ -397,25 +384,6 @@ body {
   transition: background 120ms ease;
 }
 
-/* Label stays in the DOM when railed so each link keeps its accessible name. */
-.app-sidebar[data-collapsed='true'] .app-sidebar__link {
-  min-height: 32px;
-}
-.app-sidebar[data-collapsed='true'] .app-sidebar__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-.app-shell[data-sidebar-collapsed='true'] .app-topbar__collapse svg {
-  transform: scaleX(-1);
-}
-
 /* The floating panel: rounded on all four corners so it reads as overlapping the rail/top-bar corner. */
 .app-shell__main {
   grid-area: main;
@@ -449,8 +417,7 @@ body {
     height: auto;
     padding: var(--ohs-sys-spacing-4, 16px);
   }
-  .app-search,
-  .app-topbar__collapse {
+  .app-search {
     display: none;
   }
   .app-topbar__user {

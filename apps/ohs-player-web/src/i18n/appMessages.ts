@@ -29,8 +29,6 @@ export const appMessageOverrides = {
   activityChanged: 'Changed',
   themeDark: 'Switch to dark mode',
   themeLight: 'Switch to light mode',
-  collapseSidebar: 'Collapse sidebar',
-  expandSidebar: 'Expand sidebar',
 
   pageDashboard: 'Dashboard',
   pageDashboardDescription: 'Overview of your digital health workforce, active locations, and system metrics.',
