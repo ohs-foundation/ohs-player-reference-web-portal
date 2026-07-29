@@ -885,10 +885,16 @@
   min-height: 72px;
   box-sizing: border-box;
   justify-content: center;
-  padding: var(--ohs-sys-spacing-4, 16px) 20px;
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
-  border-radius: var(--ohs-radius-default, 8px);
+  padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-6, 24px);
+  border: 0.5px solid var(--ohs-color-border-tertiary, #b8b8b8);
+  border-radius: var(--ohs-radius-pill, 999px);
   background: var(--ohs-color-surface, #fff);
+}
+/* Textarea and multi-select grow with their content; a pill would stretch into a stadium, so hold
+   the corner the 56px search field actually renders. */
+.ohs-formfield:has(.ohs-formfield__textarea),
+.ohs-formfield:has(.ohs-multiselect__chips) {
+  border-radius: var(--ohs-sys-shape-corner-extra-large, 28px);
 }
 .ohs-formfield--error {
   border-color: var(--ohs-color-error, #b3261e);

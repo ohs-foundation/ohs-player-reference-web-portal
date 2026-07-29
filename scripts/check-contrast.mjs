@@ -161,6 +161,16 @@ function pairs(mode, t, badges) {
       'border-secondary as top-nav search-field border',
       'FAILS SC 1.4.11 (needs 3:1) — design-specified, pending design decision',
     ),
+    // Same call as the search fields: the drawer form fields follow their pill treatment. This is
+    // still short of 3:1, but better than the #D4D4D4 (1.48:1) it replaced, and :focus-within
+    // moves the border to text-muted at 5.49:1.
+    dec(
+      t.borderTertiary,
+      t.surface,
+      'border-tertiary as drawer form-field border',
+      'FAILS SC 1.4.11 (needs 3:1) — design-specified, pending design decision',
+    ),
+    ui(t.textMuted, t.surface, 'form-field border on focus-within'),
     dec(
       t.success,
       t.surface,
