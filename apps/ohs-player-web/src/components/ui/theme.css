@@ -408,9 +408,13 @@
   --ohs-sys-density-scale: -2;
 }
 
-/* Horizontal scroll for the table only — toolbar and pagination stay full-width. */
+/* Horizontal scroll for the table only — toolbar and pagination stay full-width.
+   `overflow-y` must be stated: leaving it `visible` next to a non-visible `overflow-x` computes to
+   `auto` per CSS Overflow, so the 0.5px row borders round into a 1-2px phantom vertical scroll.
+   Height stays auto, so a tall table still grows and the page scrolls it. */
 .ohs-table__scroll {
   overflow-x: auto;
+  overflow-y: hidden;
 }
 .ohs-table {
   width: 100%;
