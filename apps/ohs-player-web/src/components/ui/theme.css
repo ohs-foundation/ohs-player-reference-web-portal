@@ -723,9 +723,10 @@
   gap: 40px;
   padding: 40px;
 }
+/* Panel corner, shared with the dashboard cards so a drawer section reads as the same kind of box. */
 .ohs-detail-section {
   border: 1px solid var(--ohs-color-border, #ededed);
-  border-radius: var(--ohs-radius-default, 8px);
+  border-radius: var(--ohs-sys-shape-corner-extra-large-decreased, 24px);
   overflow: hidden;
 }
 .ohs-detail-section__header {
@@ -1360,7 +1361,7 @@
   width: 100%;
   padding: var(--ohs-sys-spacing-6, 24px);
   border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
-  border-radius: var(--ohs-radius-default, 8px);
+  border-radius: var(--ohs-sys-shape-corner-extra-large-decreased, 24px);
   background: var(--ohs-color-surface, #fff);
   text-align: left;
   cursor: pointer;
