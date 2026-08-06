@@ -54,7 +54,9 @@ export function ResourcePager({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
-      <p className="m-0 text-sm text-text-muted">{summary}</p>
+      <p className="m-0 text-sm text-text-muted" role="status">
+        {summary}
+      </p>
 
       <div className="flex flex-wrap items-center gap-4">
         <label className="flex items-center gap-2 text-sm text-text-muted">

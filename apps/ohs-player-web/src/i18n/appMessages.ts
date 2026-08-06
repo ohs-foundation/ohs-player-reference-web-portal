@@ -31,7 +31,8 @@ export const appMessageOverrides = {
   themeLight: 'Switch to light mode',
 
   pageDashboard: 'Dashboard',
-  pageDashboardDescription: 'Overview of your digital health workforce, active locations, and system metrics.',
+  pageDashboardDescription:
+    'Overview of your digital health workforce, active locations, and system metrics.',
   countActivePractitioners: 'Active practitioners',
   countActiveLocations: 'Active locations',
   countActiveCareTeams: 'Active care teams',
@@ -64,9 +65,11 @@ export const appMessageOverrides = {
   createUser: 'Create user',
   addUser: 'Add user',
   addUserQuickTitle: 'Quick add',
-  addUserQuickDescription: 'Fill in all details on one screen — best when you already know the assignments.',
+  addUserQuickDescription:
+    'Fill in all details on one screen — best when you already know the assignments.',
   addUserWizardTitle: 'Guided wizard',
-  addUserWizardDescription: 'Step through basic info, role, and assignments with a review before creating.',
+  addUserWizardDescription:
+    'Step through basic info, role, and assignments with a review before creating.',
   wizardProgress: 'Onboarding progress',
   wizardStepBasic: 'Basic information',
   wizardStepRole: 'Role and status',
@@ -80,14 +83,15 @@ export const appMessageOverrides = {
   exportLabel: 'Export',
   exportComingSoon: 'Export isn’t available yet.',
   searchByNameOrId: 'Search by name or identifier',
-  filterLabel: 'Filter',
   filterStatus: 'Status',
   filterStatusAll: 'All statuses',
   filterStatusActive: 'Active',
   filterStatusInactive: 'Inactive',
-  filterRole: 'Role / assignment',
+  filterRole: 'Role/Assignment',
   filterRoleAll: 'All roles',
-  clearFilters: 'Clear filters',
+  filtersGroupLabel: 'Filters',
+  filterClearAll: 'Clear all',
+  filterApply: 'Apply',
   columnName: 'Name',
   columnActive: 'Active',
   columnIdentifier: 'Identifier',
@@ -110,7 +114,8 @@ export const appMessageOverrides = {
   pageUserEdit: 'Edit user',
   userConflictError: 'A user with that email already exists.',
   userCreateError: 'Could not create the user. Please try again.',
-  userCreatedAssignmentFailed: 'User created, but role/team assignment failed. Edit the user to retry.',
+  userCreatedAssignmentFailed:
+    'User created, but role/team assignment failed. Edit the user to retry.',
   userSaveError: 'Could not save the user. Please try again.',
   validationRequiredGiven: 'Given name is required.',
   validationRequiredFamily: 'Family name is required.',
@@ -119,7 +124,8 @@ export const appMessageOverrides = {
   validationInvalidPhone: 'Enter a valid phone number.',
   validationInvalidDob: 'Enter a valid date (YYYY-MM-DD).',
   validationFutureDob: 'Date of birth cannot be in the future.',
-  validationEmailUsernameLength: 'Email must have at least 3 characters before the “@” (it becomes the username).',
+  validationEmailUsernameLength:
+    'Email must have at least 3 characters before the “@” (it becomes the username).',
   givenName: 'Given name',
   familyName: 'Family name',
   email: 'Email',
@@ -167,10 +173,8 @@ export const appMessageOverrides = {
   locationsRoot: 'Root location',
   locationsRootPlaceholder: 'Select a root location',
   locationsSearch: 'Search by name or identifier',
-  locationsFilterButton: 'Filter',
   locationsFilterStatus: 'Status',
   locationsFilterAll: 'All statuses',
-  locationsFilter: 'Filter locations',
   locationsExpandAll: 'Expand All',
   locationsExpandAllLimited:
     'Expanded the first {{count}} branches. Use search or re-root on a child for the rest.',
@@ -250,7 +254,8 @@ export const appMessageOverrides = {
   done: 'Done',
   locationsUploadFile: 'Upload File',
   locationsExpectedColumns: 'Expected columns',
-  locationsTemplateHint: 'Start from the template — column names must match exactly. Only name is required.',
+  locationsTemplateHint:
+    'Start from the template — column names must match exactly. Only name is required.',
   locationsDownloadTemplate: 'Download Template',
   locationsStartImport: 'Start Import',
   locationsImportProgress: 'Processing {{processed}} of {{total}} ({{pct}}%)',
@@ -259,7 +264,8 @@ export const appMessageOverrides = {
   locationsImportTotal: 'Total rows',
   locationsImportProcessed: 'Processed',
   locationsImportFailed: 'Failed',
-  locationsImportFailedNotice: '{{failed}} row(s) failed to import. Check the CSV and retry those rows.',
+  locationsImportFailedNotice:
+    '{{failed}} row(s) failed to import. Check the CSV and retry those rows.',
 
   pageOrganizations: 'Organisations',
   pageOrganizationsDescription: 'Organisations available in your environment',
@@ -276,7 +282,8 @@ export const appMessageOverrides = {
   organizationDeactivated: 'Organisation deactivated',
   deactivateOrganization: 'Deactivate Organisation',
   confirmDeactivateOrgTitle: 'Deactivate organisation',
-  confirmDeactivateOrgBody: 'This will set the organisation to inactive (it can be reactivated later). Continue?',
+  confirmDeactivateOrgBody:
+    'This will set the organisation to inactive (it can be reactivated later). Continue?',
   sectionManagedLocations: 'Managed Locations',
 
   pageCareTeams: 'Care Teams',
@@ -298,7 +305,8 @@ export const appMessageOverrides = {
   removeParticipant: 'Remove participant',
   deleteCareTeam: 'Delete Care Team',
   confirmRetireTitle: 'Delete care team',
-  confirmRetireBody: 'This will set the care team to inactive (it can be reactivated later). Continue?',
+  confirmRetireBody:
+    'This will set the care team to inactive (it can be reactivated later). Continue?',
   retire: 'Retire',
   careTeamRetired: 'Care team set to inactive',
   organizationForTeam: 'Organisation',
@@ -319,18 +327,23 @@ export const appMessageOverrides = {
   questionnaireRequiredFields: 'Please complete all required fields.',
 
   pageSetupWizard: 'Setup Wizard',
-  pageSetupWizardDescription: 'Create locations, organisations, care teams, and users for a fresh deployment.',
+  pageSetupWizardDescription:
+    'Create locations, organisations, care teams, and users for a fresh deployment.',
   setupWizardProgress: 'Setup progress',
   setupStepLocations: 'Locations',
   setupStepOrganizations: 'Organisations',
   setupStepCareTeams: 'Care teams',
   setupStepUsers: 'Users',
   setupStepReview: 'Review',
-  setupLocationsIntro: 'Add the locations that form your hierarchy. Choose a parent from draft or existing locations.',
-  setupOrganizationsIntro: 'Create organisations and link them to locations from the previous step.',
+  setupLocationsIntro:
+    'Add the locations that form your hierarchy. Choose a parent from draft or existing locations.',
+  setupOrganizationsIntro:
+    'Create organisations and link them to locations from the previous step.',
   setupCareTeamsIntro: 'Add care teams under organisations created in this wizard.',
-  setupUsersIntro: 'Queue users to create after the structure is committed. Assignments may reference draft resources.',
-  setupReviewIntro: 'Review the planned resource graph, then submit. Non-user resources commit atomically; users are created one by one.',
+  setupUsersIntro:
+    'Queue users to create after the structure is committed. Assignments may reference draft resources.',
+  setupReviewIntro:
+    'Review the planned resource graph, then submit. Non-user resources commit atomically; users are created one by one.',
   setupAddLocation: 'Add location to draft',
   setupAddOrganization: 'Add organisation to draft',
   setupAddCareTeam: 'Add care team to draft',
@@ -382,11 +395,9 @@ export const appMessageOverrides = {
   fhirViewerSearchByName: 'Search by name',
   fhirViewerSearchByIdentifier: 'Search by identifier',
   fhirViewerSearchById: 'Search by ID',
-  fhirViewerFilter: 'Filter',
   fhirViewerFilterStatus: 'Status',
   fhirViewerFilterStatusHint: 'Exact FHIR status code (e.g. active, completed).',
   fhirViewerFilterUpdated: 'Last updated',
-  fhirViewerFilterClear: 'Clear filters',
   fhirViewerActive_all: 'All',
   fhirViewerActive_active: 'Active',
   fhirViewerActive_inactive: 'Inactive',
@@ -406,7 +417,8 @@ export const appMessageOverrides = {
   fhirViewerAddSubtitle: 'Paste a FHIR resource as JSON, or generate a template to start from.',
   fhirViewerAddSubmit: 'Add',
   fhirViewerQuickAdd: 'Quick resource add',
-  fhirViewerQuickAddHint: 'Fills the field with a valid {{type}} template and a new unique id. Review it, then click Add.',
+  fhirViewerQuickAddHint:
+    'Fills the field with a valid {{type}} template and a new unique id. Review it, then click Add.',
   fhirViewerAddPlaceholder: 'Paste a FHIR {{type}} resource as JSON',
   fhirViewerAddIdHint:
     'With an id, the resource is created at that id and replaces any existing one. Without an id, the server assigns one.',

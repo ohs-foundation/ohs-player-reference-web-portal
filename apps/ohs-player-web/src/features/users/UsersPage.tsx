@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconAddCircle, IconChevronDown, IconFilterList, IconMore } from '../../components/ui/icons';
+import { IconAddCircle, IconChevronDown, IconMore } from '../../components/ui/icons';
 import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
@@ -10,12 +10,27 @@ import {
   useStatusBar,
   useTranslation,
 } from 'ohs-player-web-core';
-import { Avatar, Button, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, IconButton, Inline, LinearProgress, Page, PageHeader, SearchField, Stack, StatusBadge } from '../../components/ui';
+import {
+  Avatar,
+  Button,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  FilterChip,
+  FilterChipBar,
+  IconButton,
+  Inline,
+  LinearProgress,
+  Page,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+} from '../../components/ui';
 import { UserCreateEntryDrawer } from './UserCreateEntryDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
-import { StackedSelect } from './userFormControls';
 import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
+import { useFilterParam, useClearFilterParams } from '../search/useFilterParam';
 import { useDebounced } from '../search/useGlobalSearch';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
@@ -41,6 +56,14 @@ function identifierOf(p: PractitionerRow): string {
 function practitionerIdFromReference(ref: string | undefined): string | undefined {
   if (!ref) return undefined;
   return ref.replace(/^Practitioner\//, '');
+}
+
+const STATUS_VALUES = ['active', 'inactive'] as const;
+const FILTER_PARAMS = ['status', 'role'] as const;
+
+/** Live data returns raw lowercase codes (`nurse`); the chip displays Title Case, the filter keeps the code. */
+function humaniseRoleCode(code: string): string {
+  return code.replace(/[_-]+/g, ' ').replace(/\b\p{L}/gu, (c) => c.toUpperCase());
 }
 
 function buildPractitionerRoleMap(
@@ -98,9 +121,9 @@ export function UsersPage() {
   const refresh = useRefreshResources();
   const insert = useOptimisticInsert();
   const [q, setQ] = useState(useInitialSearchTerm());
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useFilterParam('status', STATUS_VALUES);
+  const [roleFilter, setRoleFilter] = useFilterParam('role');
+  const clearChipFilters = useClearFilterParams(FILTER_PARAMS);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   // One drawer at a time: details OR edit, never both (avoids the two-drawer overlay).
@@ -109,12 +132,7 @@ export function UsersPage() {
   const openEdit = (id: string) => setViewer({ mode: 'edit', id });
   const closeViewer = () => setViewer(null);
 
-  const activeFilterCount = (statusFilter === 'all' ? 0 : 1) + (roleFilter ? 1 : 0);
-
-  const clearFilters = (): void => {
-    setStatusFilter('all');
-    setRoleFilter('');
-  };
+  const hasChipFilters = statusFilter !== null || roleFilter !== null;
 
   // Server-side name search (debounced so each keystroke doesn't refire the query): `name:contains`
   // matches given/family on the server, so the search runs against the full dataset rather than only
@@ -133,8 +151,7 @@ export function UsersPage() {
 
   const bundle = search.data as Bundle | undefined;
   const rawRows = useMemo(
-    () =>
-      (bundle?.entry?.map((e) => e.resource).filter(Boolean) ?? []) as PractitionerRow[],
+    () => (bundle?.entry?.map((e) => e.resource).filter(Boolean) ?? []) as PractitionerRow[],
     [bundle?.entry],
   );
 
@@ -155,7 +172,10 @@ export function UsersPage() {
   );
 
   const orgNameById = useMemo(
-    () => buildOrgNameMap(orgSearch.data as { entry?: { resource?: { id?: string; name?: string } }[] }),
+    () =>
+      buildOrgNameMap(
+        orgSearch.data as { entry?: { resource?: { id?: string; name?: string } }[] },
+      ),
     [orgSearch.data],
   );
 
@@ -165,7 +185,7 @@ export function UsersPage() {
       for (const c of s) codes.add(c);
     }
     const sorted = [...codes].sort((a, b) => a.localeCompare(b));
-    return sorted.map((code) => ({ value: code, label: code }));
+    return sorted.map((code) => ({ value: code, label: humaniseRoleCode(code) }));
   }, [roleMap]);
 
   // Name matching is done server-side via `name:contains`; here we only apply the status/role filters
@@ -205,7 +225,7 @@ export function UsersPage() {
     else refetchUsers();
   };
 
-  const isFiltering = q.trim() !== '' || statusFilter !== 'all' || roleFilter !== '';
+  const isFiltering = q.trim() !== '' || hasChipFilters;
   // Only the genuine "no users at all" case hides the toolbar; a no-match search keeps it.
   const noUsers = !search.isLoading && !searchError && rawRows.length === 0 && !isFiltering;
 
@@ -257,10 +277,9 @@ export function UsersPage() {
           />
         </div>
       ) : (
-      <DataTable<PractitionerRow>
-        toolbar={
-          <Stack gap={3}>
-            <Inline style={{ flexWrap: 'wrap', gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
+        <DataTable<PractitionerRow>
+          toolbar={
+            <Inline>
               <SearchField
                 label={t('search')}
                 name="userSearch"
@@ -268,172 +287,184 @@ export function UsersPage() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={t('searchByNameOrId')}
               />
-              <Button
-                variant="secondary"
-                type="button"
-                iconLeft={<IconFilterList size={20} />}
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen((v) => !v)}
+              <FilterChipBar
+                align="end"
+                clearVisible={hasChipFilters}
+                onClearAll={clearChipFilters}
               >
-                {activeFilterCount > 0 ? `${t('filterLabel')} (${activeFilterCount})` : t('filterLabel')}
-              </Button>
+                <FilterChip
+                  label={t('filterRole')}
+                  allLabel={t('filterRoleAll')}
+                  options={roleOptions}
+                  value={roleFilter}
+                  onChange={setRoleFilter}
+                  disabled={roleSearch.isLoading}
+                />
+                <FilterChip
+                  label={t('filterStatus')}
+                  allLabel={t('filterStatusAll')}
+                  options={[
+                    { value: 'active', label: t('filterStatusActive') },
+                    { value: 'inactive', label: t('filterStatusInactive') },
+                  ]}
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                />
+              </FilterChipBar>
             </Inline>
-            {filtersOpen ? (
-              <div className="ohs-users-filters">
-                <div className="ohs-formfield ohs-users-filters__field">
-                  <span className="ohs-formfield__label">{t('filterStatus')}</span>
-                  <ChipSet>
-                    <FilterChip label={t('filterStatusAll')} selected={statusFilter === 'all'} onChange={() => setStatusFilter('all')} />
-                    <FilterChip label={t('filterStatusActive')} selected={statusFilter === 'active'} onChange={() => setStatusFilter('active')} />
-                    <FilterChip label={t('filterStatusInactive')} selected={statusFilter === 'inactive'} onChange={() => setStatusFilter('inactive')} />
-                  </ChipSet>
-                </div>
-                <div className="ohs-users-filters__field ohs-users-filters__field--role">
-                  <StackedSelect
-                    label={t('filterRole')}
-                    value={roleFilter}
-                    onChange={setRoleFilter}
-                    options={roleOptions}
-                    placeholder={t('filterRoleAll')}
-                  />
-                </div>
-                {activeFilterCount > 0 ? (
-                  <button type="button" className="ohs-users-filters__clear" onClick={clearFilters}>
-                    {t('clearFilters')}
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </Stack>
-        }
-        columns={[
-          {
-            key: 'identifier',
-            header: t('columnIdentifier'),
-            mono: true,
-            render: (p) => identifierOf(p),
-          },
-          {
-            key: 'name',
-            header: t('columnName'),
-            sortable: true,
-            sortValue: (p) => fullName(p).toLowerCase(),
-            render: (p) => {
-              const name = fullName(p) || (p.id ?? '');
-              const email = emailOf(p);
-              return (
-                <Inline justify="start" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}>
-                  <Avatar name={name} />
-                  <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <button
-                      type="button"
-                      className="ohs-rowlink"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (p.id) openDetails(p.id);
-                      }}
+          }
+          columns={[
+            {
+              key: 'identifier',
+              header: t('columnIdentifier'),
+              mono: true,
+              render: (p) => identifierOf(p),
+            },
+            {
+              key: 'name',
+              header: t('columnName'),
+              sortable: true,
+              sortValue: (p) => fullName(p).toLowerCase(),
+              render: (p) => {
+                const name = fullName(p) || (p.id ?? '');
+                const email = emailOf(p);
+                return (
+                  <Inline
+                    justify="start"
+                    style={{ gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}
+                  >
+                    <Avatar name={name} />
+                    <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      <button
+                        type="button"
+                        className="ohs-rowlink"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (p.id) openDetails(p.id);
+                        }}
+                      >
+                        {name}
+                      </button>
+                      {email ? (
+                        <span
+                          style={{
+                            fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)',
+                            color: 'var(--ohs-color-text-muted, #696969)',
+                          }}
+                        >
+                          {email}
+                        </span>
+                      ) : null}
+                    </span>
+                  </Inline>
+                );
+              },
+            },
+            {
+              key: 'role',
+              header: t('columnRole'),
+              render: (p) => {
+                const codes = p.id
+                  ? [...(roleMap.get(p.id) ?? [])].sort((a, b) => a.localeCompare(b)).join(', ')
+                  : '';
+                return codes || '—';
+              },
+            },
+            {
+              key: 'organisation',
+              header: t('columnOrganisation'),
+              render: (p) => {
+                const orgId = p.id ? orgIdByPractitioner.get(p.id) : undefined;
+                return (orgId ? orgNameById.get(orgId) : undefined) ?? '—';
+              },
+            },
+            {
+              key: 'status',
+              header: t('columnStatus'),
+              sortable: true,
+              sortValue: (p) => (p.active === false ? 0 : 1),
+              render: (p) =>
+                p.active === false ? (
+                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>
+                    {t('statusInactive')}
+                  </StatusBadge>
+                ) : (
+                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>
+                    {t('statusActive')}
+                  </StatusBadge>
+                ),
+            },
+            {
+              key: 'actions',
+              header: '',
+              align: 'right',
+              render: (p) => (
+                <OhsDropdownMenu.Root>
+                  <OhsDropdownMenu.Trigger asChild>
+                    <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
+                      <IconMore size={20} />
+                    </IconButton>
+                  </OhsDropdownMenu.Trigger>
+                  <OhsDropdownMenu.Portal>
+                    <OhsDropdownMenu.Content
+                      className="ohs-dropdown-content"
+                      align="end"
+                      sideOffset={4}
                     >
-                      {name}
-                    </button>
-                    {email ? (
-                      <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
-                        {email}
-                      </span>
-                    ) : null}
-                  </span>
-                </Inline>
-              );
-            },
-          },
-          {
-            key: 'role',
-            header: t('columnRole'),
-            render: (p) => {
-              const codes = p.id
-                ? [...(roleMap.get(p.id) ?? [])].sort((a, b) => a.localeCompare(b)).join(', ')
-                : '';
-              return codes || '—';
-            },
-          },
-          {
-            key: 'organisation',
-            header: t('columnOrganisation'),
-            render: (p) => {
-              const orgId = p.id ? orgIdByPractitioner.get(p.id) : undefined;
-              return (orgId ? orgNameById.get(orgId) : undefined) ?? '—';
-            },
-          },
-          {
-            key: 'status',
-            header: t('columnStatus'),
-            sortable: true,
-            sortValue: (p) => (p.active === false ? 0 : 1),
-            render: (p) =>
-              p.active === false ? (
-                <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>{t('statusInactive')}</StatusBadge>
-              ) : (
-                <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>{t('statusActive')}</StatusBadge>
-              ),
-          },
-          {
-            key: 'actions',
-            header: '',
-            align: 'right',
-            render: (p) => (
-              <OhsDropdownMenu.Root>
-                <OhsDropdownMenu.Trigger asChild>
-                  <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
-                    <IconMore size={20} />
-                  </IconButton>
-                </OhsDropdownMenu.Trigger>
-                <OhsDropdownMenu.Portal>
-                  <OhsDropdownMenu.Content className="ohs-dropdown-content" align="end" sideOffset={4}>
-                    <OhsDropdownMenu.Item
-                      className="ohs-dropdown-item"
-                      onSelect={() => {
-                        if (p.id) openDetails(p.id);
-                      }}
-                    >
-                      {t('viewDetails')}
-                    </OhsDropdownMenu.Item>
-                    <PermissionGuard permission="users.edit">
                       <OhsDropdownMenu.Item
                         className="ohs-dropdown-item"
                         onSelect={() => {
-                          if (p.id) openEdit(p.id);
+                          if (p.id) openDetails(p.id);
                         }}
                       >
-                        {t('edit')}
+                        {t('viewDetails')}
                       </OhsDropdownMenu.Item>
-                    </PermissionGuard>
-                  </OhsDropdownMenu.Content>
-                </OhsDropdownMenu.Portal>
-              </OhsDropdownMenu.Root>
-            ),
-          },
-        ]}
-        rows={filteredRows}
-        rowKey={(p) => p.id ?? ''}
-        loading={search.isLoading}
-        selectable
-        selectedKeys={selectedIds}
-        onSelectionChange={setSelectedIds}
-        onRowClick={(p) => {
-          // Functional update (reads latest state) so the stray click fired as a kebab menu closes
-          // can't override the edit/details the menu item just set — only opens when nothing is open.
-          const id = p.id;
-          if (id) setViewer((cur) => cur ?? { mode: 'details', id });
-        }}
-        pagination
-        initialPageSize={10}
-        errorState={searchError ? <ErrorState description={searchError} /> : undefined}
-        emptyState={
-          <EmptyState
-            title={t('emptyTitle')}
-            description={isFiltering ? t('filterEmpty') : t('emptyDescription')}
-          />
-        }
-      />
+                      <PermissionGuard permission="users.edit">
+                        <OhsDropdownMenu.Item
+                          className="ohs-dropdown-item"
+                          onSelect={() => {
+                            if (p.id) openEdit(p.id);
+                          }}
+                        >
+                          {t('edit')}
+                        </OhsDropdownMenu.Item>
+                      </PermissionGuard>
+                    </OhsDropdownMenu.Content>
+                  </OhsDropdownMenu.Portal>
+                </OhsDropdownMenu.Root>
+              ),
+            },
+          ]}
+          rows={filteredRows}
+          rowKey={(p) => p.id ?? ''}
+          loading={search.isLoading}
+          selectable
+          selectedKeys={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onRowClick={(p) => {
+            // Functional update (reads latest state) so the stray click fired as a kebab menu closes
+            // can't override the edit/details the menu item just set — only opens when nothing is open.
+            const id = p.id;
+            if (id) setViewer((cur) => cur ?? { mode: 'details', id });
+          }}
+          pagination
+          initialPageSize={10}
+          pageResetKey={`${statusFilter ?? ''}|${roleFilter ?? ''}`}
+          errorState={searchError ? <ErrorState description={searchError} /> : undefined}
+          emptyState={
+            <EmptyState
+              title={t('emptyTitle')}
+              description={isFiltering ? t('filterEmpty') : t('emptyDescription')}
+              action={
+                hasChipFilters ? (
+                  <Button variant="ghost" type="button" onClick={clearChipFilters}>
+                    {t('filterClearAll')}
+                  </Button>
+                ) : undefined
+              }
+            />
+          }
+        />
       )}
 
       {viewer?.mode === 'details' ? (

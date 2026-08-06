@@ -5,7 +5,13 @@ export { Card, CardHeader } from './Card';
 export type { CardHeaderProps, CardProps } from './Card';
 
 export { Field, TextField, TextAreaField, SelectField } from './Field';
-export type { FieldRootProps, SelectFieldOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './Field';
+export type {
+  FieldRootProps,
+  SelectFieldOption,
+  SelectFieldProps,
+  TextAreaFieldProps,
+  TextFieldProps,
+} from './Field';
 
 export { Combobox } from './Combobox';
 export type { ComboboxProps } from './Combobox';
@@ -35,7 +41,13 @@ export { DonutChart } from './DonutChart';
 export type { DonutChartProps, DonutSegment } from './DonutChart';
 
 export { EmptyState, ErrorState, LinearProgress, Spinner, StatusBadge } from './States';
-export type { EmptyStateProps, ErrorStateProps, LinearProgressProps, StatusBadgeProps, StatusTone } from './States';
+export type {
+  EmptyStateProps,
+  ErrorStateProps,
+  LinearProgressProps,
+  StatusBadgeProps,
+  StatusTone,
+} from './States';
 
 export { Switch } from './Switch';
 export type { SwitchProps } from './Switch';
@@ -43,5 +55,5 @@ export type { SwitchProps } from './Switch';
 export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 
-export { ChipSet, FilterChip } from './Chips';
-export type { ChipSetProps, FilterChipProps } from './Chips';
+export { FilterChip, FilterChipBar } from './Chips';
+export type { FilterChipBarProps, FilterChipOption, FilterChipProps } from './Chips';

@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react';
-import { IconAddCircle, IconChevronDown, IconFilterList, IconUpload } from '../../components/ui/icons';
-import { PermissionGuard, useRefreshResources, useStatusBar, useTranslation } from 'ohs-player-web-core';
+import { IconAddCircle, IconChevronDown, IconUpload } from '../../components/ui/icons';
+import {
+  PermissionGuard,
+  useRefreshResources,
+  useStatusBar,
+  useTranslation,
+} from 'ohs-player-web-core';
 import {
   Button,
-  ChipSet,
+  EmptyState,
   FilterChip,
+  FilterChipBar,
   Page,
   PageHeader,
   SearchField,
@@ -14,19 +20,29 @@ import { collectExpandableIdsLimited, EXPAND_ALL_MAX, filterTree } from './expan
 import { nodeChain, type LocationNode } from './hierarchy';
 import type { HierarchyError } from './useLocationHierarchy';
 import { relativeTimeFrom } from './relativeTime';
-import { useApplyHierarchyEdit, useLocationHierarchy, useRefreshHierarchy } from './useLocationHierarchy';
+import {
+  useApplyHierarchyEdit,
+  useLocationHierarchy,
+  useRefreshHierarchy,
+} from './useLocationHierarchy';
 import { useLocationRoots } from './useLocationRoots';
 import { LocationTree } from './LocationTree';
 import { LocationColumnTable } from './LocationColumnTable';
 import { LocationViewToggle, type LocationView } from './LocationViewToggle';
 import { LOCATION_STATUS_FILTERS, type LocationStatusFilter } from './locationStatusFilter';
+import { useFilterParam } from '../search/useFilterParam';
 import { LocationBreadcrumb } from './LocationBreadcrumb';
 import { LocationDetailPanel } from './LocationDetailPanel';
 import { LocationCreateDrawer } from './LocationCreateDrawer';
 import { LocationEditDrawer } from './LocationEditDrawer';
 import { LocationImportDrawer } from './LocationImportDrawer';
 import { LocationsNoAccess } from './LocationsNoAccess';
-import { HierarchyEmpty, HierarchyErrorState, HierarchySkeleton, TruncatedNotice } from './LocationStates';
+import {
+  HierarchyEmpty,
+  HierarchyErrorState,
+  HierarchySkeleton,
+  TruncatedNotice,
+} from './LocationStates';
 
 interface BodyArgs {
   loading: boolean;
@@ -43,7 +59,11 @@ interface BodyArgs {
   onRetry: () => void;
   onImport: () => void;
   onEdit: (id: string) => void;
+  /** Shown instead of the import prompt when active filters (not an empty store) emptied the tree. */
+  filteredEmpty?: React.ReactNode;
 }
+
+const STATUS_VALUES = LOCATION_STATUS_FILTERS.filter((o) => o.value !== 'all').map((o) => o.value);
 
 function renderEmptyImport(onImport: () => void): React.ReactElement {
   return (
@@ -65,6 +85,7 @@ function renderBody(a: BodyArgs): React.ReactElement | null {
   if (!a.tree) return a.emptyStore ? renderEmptyImport(a.onImport) : null;
   const isEmpty = a.tree.children.length === 0 && !a.tree.hasMoreChildren;
   if (isEmpty) {
+    if (a.filteredEmpty) return <>{a.filteredEmpty}</>;
     return renderEmptyImport(a.onImport);
   }
   if (a.view === 'column') {
@@ -90,8 +111,9 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [filter, setFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState<LocationStatusFilter>('all');
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [statusParam, setStatusParam] = useFilterParam('status', STATUS_VALUES);
+  const statusFilter: LocationStatusFilter =
+    LOCATION_STATUS_FILTERS.find((o) => o.value === statusParam)?.value ?? 'all';
   const [view, setView] = useState<LocationView>('tree');
   const [importOpen, setImportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -129,7 +151,9 @@ export function LocationsHierarchyPage(): React.ReactElement {
     setSelectedId(id);
     const root = query.data?.root;
     if (!root) return;
-    const ancestors = nodeChain(root, id).slice(0, -1).map((n) => n.id);
+    const ancestors = nodeChain(root, id)
+      .slice(0, -1)
+      .map((n) => n.id);
     setExpanded((prev) => new Set([...prev, ...ancestors]));
   };
 
@@ -176,12 +200,21 @@ export function LocationsHierarchyPage(): React.ReactElement {
             {t('locationsExport')}
           </Button>
           <PermissionGuard permission="locations.edit">
-            <Button type="button" variant="secondary" iconLeft={<IconAddCircle size={18} />} onClick={() => setCreateOpen(true)}>
+            <Button
+              type="button"
+              variant="secondary"
+              iconLeft={<IconAddCircle size={18} />}
+              onClick={() => setCreateOpen(true)}
+            >
               {t('dialogCreateLocation')}
             </Button>
           </PermissionGuard>
           <PermissionGuard permission="bulk-import.manage">
-            <Button type="button" iconLeft={<IconUpload size={18} />} onClick={() => setImportOpen(true)}>
+            <Button
+              type="button"
+              iconLeft={<IconUpload size={18} />}
+              onClick={() => setImportOpen(true)}
+            >
               {t('locationsImport')}
             </Button>
           </PermissionGuard>
@@ -226,59 +259,56 @@ export function LocationsHierarchyPage(): React.ReactElement {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
-          <Button
-            variant="secondary"
-            type="button"
-            iconLeft={<IconFilterList size={20} />}
-            aria-expanded={filtersOpen}
-            onClick={() => setFiltersOpen((v) => !v)}
+          {/* mb-3 optically centres the 32px chips against the 56px search pill in this items-end row. */}
+          <FilterChipBar
+            className="mb-3"
+            clearVisible={statusParam !== null}
+            onClearAll={() => setStatusParam(null)}
           >
-            {statusFilter !== 'all' ? `${t('filterLabel')} (1)` : t('filterLabel')}
-          </Button>
+            <FilterChip
+              label={t('locationsFilterStatus')}
+              allLabel={t('locationsFilterAll')}
+              options={LOCATION_STATUS_FILTERS.filter((o) => o.value !== 'all').map((o) => ({
+                value: o.value,
+                label: t(o.labelKey),
+              }))}
+              value={statusParam}
+              onChange={setStatusParam}
+            />
+          </FilterChipBar>
         </div>
         <LocationViewToggle value={view} onChange={setView} />
       </div>
 
-      {filtersOpen ? (
-        <div className="ohs-users-filters">
-          <div className="ohs-formfield ohs-users-filters__field">
-            <span className="ohs-formfield__label">{t('locationsFilterStatus')}</span>
-            <ChipSet>
-              {LOCATION_STATUS_FILTERS.map((option) => (
-                <FilterChip
-                  key={option.value}
-                  label={t(option.labelKey)}
-                  selected={statusFilter === option.value}
-                  onChange={() => setStatusFilter(option.value)}
-                />
-              ))}
-            </ChipSet>
-          </div>
-          {statusFilter !== 'all' ? (
-            <button
-              type="button"
-              className="ohs-users-filters__clear"
-              onClick={() => setStatusFilter('all')}
-            >
-              {t('clearFilters')}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
       {view === 'tree' ? (
         <div className="flex justify-end gap-2">
-          <Button variant="outlined" size="sm" type="button" className="rounded-pill" onClick={collapseAll}>
+          <Button
+            variant="outlined"
+            size="sm"
+            type="button"
+            className="rounded-pill"
+            onClick={collapseAll}
+          >
             {t('locationsCollapseAll')}
           </Button>
-          <Button variant="outlined" size="sm" type="button" className="rounded-pill" onClick={expandAll}>
+          <Button
+            variant="outlined"
+            size="sm"
+            type="button"
+            className="rounded-pill"
+            onClick={expandAll}
+          >
             {t('locationsExpandAll')}
           </Button>
         </div>
       ) : null}
 
-      {query.data ? <LocationBreadcrumb root={query.data.root} selectedId={selectedId} onSelect={select} /> : null}
-      {meta?.truncated ? <TruncatedNotice nodeCount={meta.nodeCount} builtAtLabel={builtAtLabel} /> : null}
+      {query.data ? (
+        <LocationBreadcrumb root={query.data.root} selectedId={selectedId} onSelect={select} />
+      ) : null}
+      {meta?.truncated ? (
+        <TruncatedNotice nodeCount={meta.nodeCount} builtAtLabel={builtAtLabel} />
+      ) : null}
 
       <div className="min-h-80 overflow-hidden rounded border border-border">
         {renderBody({
@@ -295,6 +325,19 @@ export function LocationsHierarchyPage(): React.ReactElement {
           onRetry: refetch,
           onImport: () => setImportOpen(true),
           onEdit: setEditId,
+          filteredEmpty: filtering ? (
+            <EmptyState
+              title={t('emptyTitle')}
+              description={t('filterEmptyGeneric')}
+              action={
+                statusParam !== null ? (
+                  <Button variant="ghost" type="button" onClick={() => setStatusParam(null)}>
+                    {t('filterClearAll')}
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : undefined,
         })}
       </div>
 

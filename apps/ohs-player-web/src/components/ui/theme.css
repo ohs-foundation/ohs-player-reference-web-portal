@@ -1323,47 +1323,219 @@
   color: var(--ohs-color-text, #0d0d0d);
 }
 
-/* ---- Users table: expanded filter panel ---- */
-/* Each filter is a stacked field box (reuses .ohs-formfield) so Status + Role line up by their tops. */
-.ohs-users-filters {
+/* ---- Filter chips: M3 filter chip as a menu anchor (list toolbars) ---- */
+/* Chip row: sits beside search in the toolbar row; wraps under it below 900px; below 600px it
+   becomes one horizontally scrollable snap line instead of wrapping. */
+.ohs-filter-chipbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: var(--ohs-sys-spacing-4, 16px);
-  padding-top: var(--ohs-sys-spacing-4, 16px);
-  border-top: 1px solid var(--ohs-color-border, #ededed);
+  align-items: center;
+  gap: var(--ohs-sys-spacing-2, 8px);
 }
-.ohs-users-filters__field {
-  flex: 0 0 auto;
-  min-width: 280px;
-}
-.ohs-users-filters__field--role {
-  flex: 0 1 280px;
-  min-width: 220px;
-}
-/* The status box holds chips instead of a single input; let it grow to fit them. */
-.ohs-users-filters__field .ohs-chip-set {
-  margin-top: var(--ohs-sys-spacing-1, 4px);
-}
-.ohs-users-filters__clear {
-  align-self: center;
+.ohs-filter-chipbar--end {
   margin-left: auto;
-  padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-3, 12px);
-  background: none;
-  border: none;
-  border-radius: var(--ohs-radius-default, 8px);
-  font: inherit;
-  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-  font-weight: var(--ohs-font-weight-medium, 500);
-  color: var(--ohs-color-primary, #094f9a);
+}
+@media (max-width: 900px) {
+  .ohs-filter-chipbar {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+  .ohs-filter-chipbar--end {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 600px) {
+  .ohs-filter-chipbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .ohs-filter-chipbar::-webkit-scrollbar {
+    display: none;
+  }
+  .ohs-filter-chipbar > * {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
+}
+
+.ohs-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-2, 8px);
+  height: 32px;
+  padding: 0 var(--ohs-sys-spacing-2, 8px) 0 var(--ohs-sys-spacing-4, 16px);
+  background: transparent;
+  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-sys-shape-corner-small, 8px);
+  color: var(--ohs-sys-color-on-surface-variant, #44474e);
+  font-family: var(--ohs-sys-typescale-label-medium-font, inherit);
+  font-size: var(--ohs-sys-typescale-label-medium-size, 14px);
+  line-height: var(--ohs-sys-typescale-label-medium-line-height, 20px);
+  font-weight: var(--ohs-sys-typescale-label-medium-weight, 500);
+  letter-spacing: var(--ohs-sys-typescale-label-medium-letter-spacing, -0.5px);
+  white-space: nowrap;
+  user-select: none;
   cursor: pointer;
 }
-.ohs-users-filters__clear:hover {
-  text-decoration: underline;
+/* Selected = M3 filled chip: value label, leading check, tighter left padding for the icon. */
+.ohs-filter-chip[data-selected='true'] {
+  padding-left: var(--ohs-sys-spacing-2, 8px);
+  background: var(--ohs-sys-color-secondary-container, #d9e3f9);
+  border-color: var(--ohs-sys-color-secondary-container, #d9e3f9);
+  color: var(--ohs-sys-color-on-secondary-container, #121c2b);
 }
-.ohs-users-filters__clear:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
+.ohs-filter-chip:disabled {
+  opacity: var(--ohs-sys-state-disabled-content-opacity, 0.38);
+  pointer-events: none;
+}
+.ohs-filter-chip[aria-expanded='true']::after {
+  opacity: var(--ohs-sys-state-pressed-opacity, 0.12);
+}
+.ohs-filter-chip__label {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ohs-filter-chip__check {
+  flex-shrink: 0;
+}
+.ohs-filter-chip__arrow {
+  flex-shrink: 0;
+  transition: transform 150ms var(--ohs-sys-motion-easing-standard, ease);
+}
+.ohs-filter-chip[aria-expanded='true'] .ohs-filter-chip__arrow {
+  transform: rotate(180deg);
+}
+
+/* Option menu: portalled + fixed (see FilterChip); 4px offset below the chip, 4px corner, level-2. */
+.ohs-filter-chip__panel {
+  position: fixed;
+  z-index: 80;
+  margin: 0;
+  padding: var(--ohs-sys-spacing-2, 8px) 0;
+  list-style: none;
+  overflow-y: auto;
+  background: var(--ohs-color-surface, #fff);
+  border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
+  box-shadow: var(--ohs-sys-elevation-level2, 0 4px 12px rgba(15, 23, 42, 0.08));
+}
+.ohs-filter-chip__option {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 var(--ohs-sys-spacing-4, 16px);
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
+  line-height: var(--ohs-sys-typescale-body-large-line-height, 24px);
+  letter-spacing: var(--ohs-sys-typescale-body-large-letter-spacing, -0.5px);
+  color: var(--ohs-color-text-secondary, #363636);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ohs-filter-chip__option[data-active='true'] {
+  background: rgb(
+    from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
+  );
+}
+.ohs-filter-chip__option[data-selected='true'] {
+  background: rgb(from var(--ohs-color-primary, #094f9a) r g b / 0.12);
+  color: var(--ohs-color-primary, #094f9a);
+}
+
+/* Free-text variant popover (FHIR viewer coded-status filter). Portalled outside [data-ohs-root],
+   so it owns its own box-sizing and focus styles. */
+.ohs-filter-chip__popover,
+.ohs-filter-chip__popover * {
+  box-sizing: border-box;
+}
+.ohs-filter-chip__popover {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-sys-spacing-2, 8px);
+  width: 280px;
+  padding: var(--ohs-sys-spacing-4, 16px);
+  background: var(--ohs-color-surface, #fff);
+  border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
+  box-shadow: var(--ohs-sys-elevation-level2, 0 4px 12px rgba(15, 23, 42, 0.08));
+  font-family: var(--ohs-ref-typeface-plain, system-ui, sans-serif);
+}
+.ohs-filter-chip__popover-label {
+  font-size: var(--ohs-sys-typescale-label-medium-size, 14px);
+  font-weight: var(--ohs-sys-typescale-label-medium-weight, 500);
+  color: var(--ohs-color-text-secondary, #363636);
+}
+.ohs-filter-chip__input {
+  height: 40px;
+  padding: 0 var(--ohs-sys-spacing-3, 12px);
+  border: 1px solid var(--ohs-color-border-tertiary, #b8b8b8);
+  border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
+  background: var(--ohs-color-surface, #fff);
+  color: var(--ohs-color-text, #1f2933);
+  font: inherit;
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+}
+.ohs-filter-chip__input:focus-visible {
+  outline: 2px solid var(--ohs-color-primary, #094f9a);
+  outline-offset: 1px;
+}
+.ohs-filter-chip__hint {
+  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
+  color: var(--ohs-color-text-muted, #696969);
+}
+.ohs-filter-chip__popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ohs-sys-spacing-2, 8px);
+  margin-top: var(--ohs-sys-spacing-1, 4px);
+}
+.ohs-filter-chip__popover-btn {
+  height: 36px;
+  padding: 0 var(--ohs-sys-spacing-3, 12px);
+  border: none;
+  border-radius: var(--ohs-radius-pill, 9999px);
+  background: none;
+  color: var(--ohs-color-primary, #094f9a);
+  font: inherit;
+  font-size: var(--ohs-sys-typescale-label-medium-size, 14px);
+  font-weight: var(--ohs-sys-typescale-label-medium-weight, 500);
+  cursor: pointer;
+}
+.ohs-filter-chip__popover-btn:hover {
+  background: rgb(
+    from var(--ohs-color-primary, #094f9a) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
+  );
+}
+.ohs-filter-chip__popover-btn:focus-visible {
+  outline: 2px solid var(--ohs-color-primary, #094f9a);
+  outline-offset: 2px;
+}
+.ohs-filter-chip__popover-btn--primary {
+  background: var(--ohs-color-primary, #094f9a);
+  color: var(--ohs-color-primary-contrast, #fff);
+}
+.ohs-filter-chip__popover-btn--primary:hover {
+  background: var(--ohs-color-primary-hover, #0a58ac);
+}
+
+/* Clear-all text button at the end of the chip row. */
+.ohs-filter-chipbar__clear {
+  height: 32px;
+  padding: 0 var(--ohs-sys-spacing-2, 8px);
+  background: none;
+  border: none;
+  border-radius: var(--ohs-sys-shape-corner-small, 8px);
+  font: inherit;
+  font-size: var(--ohs-sys-typescale-label-medium-size, 14px);
+  font-weight: var(--ohs-sys-typescale-label-medium-weight, 500);
+  color: var(--ohs-color-primary, #094f9a);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ohs-filter-chipbar__clear:hover {
+  text-decoration: underline;
 }
 
 /* Table name cell: link-styled button that opens the details drawer */
