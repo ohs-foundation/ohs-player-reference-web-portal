@@ -357,7 +357,7 @@ export function UserEditDrawer({
               options={orgOptions}
               value={orgs}
               onChange={setOrgs}
-              placeholder={orgOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedData')}
+              placeholder={orgOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedOrgs')}
             />
           </Section>
 
@@ -367,7 +367,9 @@ export function UserEditDrawer({
               options={locOptions}
               value={locations}
               onChange={setLocations}
-              placeholder={locOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedData')}
+              placeholder={
+                locOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedLocations')
+              }
             />
           </Section>
 
