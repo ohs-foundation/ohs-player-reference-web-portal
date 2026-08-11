@@ -166,7 +166,7 @@ export function UserOrganizationFields({ form }: Readonly<{ form: Form }>): Reac
         options={form.orgOptions}
         value={form.orgs}
         onChange={form.setOrgs}
-        placeholder={form.orgOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedData')}
+        placeholder={form.orgOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedOrgs')}
       />
     </Section>
   );
@@ -182,7 +182,9 @@ export function UserLocationFields({ form }: Readonly<{ form: Form }>): React.Re
         options={form.locOptions}
         value={form.locations}
         onChange={form.setLocations}
-        placeholder={form.locOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedData')}
+        placeholder={
+          form.locOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedLocations')
+        }
       />
     </Section>
   );

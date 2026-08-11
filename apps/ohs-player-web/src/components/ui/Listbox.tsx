@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'ohs-player-web-core';
 import { IconCheck, IconChevronDown } from './icons';
@@ -65,8 +74,15 @@ export function Listbox({
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLUListElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const portalRef = useRef<HTMLElement | null>(null);
   const typeAhead = useRef({ term: '', at: 0 });
-  const [rect, setRect] = useState<{ top: number; left: number; width: number; maxHeight: number; above: boolean } | null>(null);
+  const [rect, setRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+    above: boolean;
+  } | null>(null);
 
   const MAX_PANEL = 320;
   const GAP = 4;
@@ -139,6 +155,10 @@ export function Listbox({
   // Opens on the current value, else the first *enabled* option: `commit` ignores disabled ones, so
   // landing on one would make Enter a no-op. `nextIndex(-1, …)` returns -1 when there are none.
   const openAt = () => {
+    // Inside a modal drawer the panel must portal into the drawer, not <body>: Radix disables
+    // pointer events outside its content, so a body-level panel is click-through and unselectable.
+    // `position: fixed` still resolves against the viewport — .ohs-drawer has no resting transform.
+    portalRef.current = rootRef.current?.closest<HTMLElement>('.ohs-drawer') ?? null;
     const selected = options.findIndex((o) => value.includes(o.value) && !o.disabled);
     setActive(selected >= 0 ? selected : nextIndex(-1, 1, options));
     setOpen(true);
@@ -241,7 +261,11 @@ export function Listbox({
           onClick={() => (open ? close(false) : openAt())}
           onKeyDown={onKeyDown}
         >
-          <span className={selectedLabels.length > 0 && !multiple ? undefined : 'ohs-listbox__placeholder'}>
+          <span
+            className={
+              selectedLabels.length > 0 && !multiple ? undefined : 'ohs-listbox__placeholder'
+            }
+          >
             {summary}
           </span>
         </button>
@@ -260,56 +284,56 @@ export function Listbox({
 
         {open && rect
           ? createPortal(
-          <ul
-            ref={panelRef}
-            className="ohs-listbox__panel"
-            data-above={rect.above ? 'true' : undefined}
-            style={{
-              top: rect.above ? undefined : rect.top,
-              bottom: rect.above ? window.innerHeight - rect.top : undefined,
-              left: rect.left,
-              width: rect.width,
-              maxHeight: rect.maxHeight,
-            }}
-            id={listId}
-            role="listbox"
-            aria-labelledby={`${id}-label`}
-            aria-multiselectable={multiple || undefined}
-          >
-            {options.length === 0 ? (
-              <li className="ohs-listbox__empty" role="presentation">
-                {t('comboboxNoResults')}
-              </li>
-            ) : (
-              options.map((o, i) => {
-                const selected = value.includes(o.value);
-                return (
-                  <li
-                    key={o.value}
-                    id={`${id}-opt-${i}`}
-                    role="option"
-                    aria-selected={selected}
-                    aria-disabled={o.disabled || undefined}
-                    className="ohs-listbox__option"
-                    data-active={i === active ? 'true' : undefined}
-                    data-selected={selected ? 'true' : undefined}
-                    onMouseEnter={() => setActive(i)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => commit(o)}
-                  >
-                    {multiple ? (
-                      <span className="ohs-listbox__check" aria-hidden="true">
-                        {selected ? <IconCheck size={14} /> : null}
-                      </span>
-                    ) : null}
-                    <span className="ohs-listbox__option-label">{o.label}</span>
-                    {selected && !multiple ? <IconCheck size={20} aria-hidden="true" /> : null}
+              <ul
+                ref={panelRef}
+                className="ohs-listbox__panel"
+                data-above={rect.above ? 'true' : undefined}
+                style={{
+                  top: rect.above ? undefined : rect.top,
+                  bottom: rect.above ? window.innerHeight - rect.top : undefined,
+                  left: rect.left,
+                  width: rect.width,
+                  maxHeight: rect.maxHeight,
+                }}
+                id={listId}
+                role="listbox"
+                aria-labelledby={`${id}-label`}
+                aria-multiselectable={multiple || undefined}
+              >
+                {options.length === 0 ? (
+                  <li className="ohs-listbox__empty" role="presentation">
+                    {t('comboboxNoResults')}
                   </li>
-                );
-              })
-            )}
-          </ul>,
-          document.body,
+                ) : (
+                  options.map((o, i) => {
+                    const selected = value.includes(o.value);
+                    return (
+                      <li
+                        key={o.value}
+                        id={`${id}-opt-${i}`}
+                        role="option"
+                        aria-selected={selected}
+                        aria-disabled={o.disabled || undefined}
+                        className="ohs-listbox__option"
+                        data-active={i === active ? 'true' : undefined}
+                        data-selected={selected ? 'true' : undefined}
+                        onMouseEnter={() => setActive(i)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => commit(o)}
+                      >
+                        {multiple ? (
+                          <span className="ohs-listbox__check" aria-hidden="true">
+                            {selected ? <IconCheck size={14} /> : null}
+                          </span>
+                        ) : null}
+                        <span className="ohs-listbox__option-label">{o.label}</span>
+                        {selected && !multiple ? <IconCheck size={20} aria-hidden="true" /> : null}
+                      </li>
+                    );
+                  })
+                )}
+              </ul>,
+              portalRef.current ?? document.body,
             )
           : null}
 

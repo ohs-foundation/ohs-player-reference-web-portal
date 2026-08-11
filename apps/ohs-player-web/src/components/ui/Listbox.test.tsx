@@ -11,6 +11,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
 });
 
 const { Listbox } = await import('./Listbox');
+const { Drawer } = await import('./Drawer');
 
 const OPTIONS = [
   { value: 'a', label: 'Alpha' },
@@ -25,7 +26,13 @@ function open(name = /Assignment/) {
 describe('Listbox', () => {
   it('keeps the option list closed until the trigger is used', () => {
     render(
-      <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={vi.fn()}
+        options={OPTIONS}
+        placeholder="Pick one"
+      />,
     );
     expect(screen.queryByRole('listbox')).toBeNull();
     open();
@@ -35,7 +42,13 @@ describe('Listbox', () => {
 
   it('reports expanded state and the active option to assistive tech', () => {
     render(
-      <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={vi.fn()}
+        options={OPTIONS}
+        placeholder="Pick one"
+      />,
     );
     const trigger = screen.getByRole('combobox', { name: /Assignment/ });
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
@@ -46,7 +59,13 @@ describe('Listbox', () => {
 
   it('moves the active option with Arrow, Home and End', () => {
     render(
-      <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={vi.fn()}
+        options={OPTIONS}
+        placeholder="Pick one"
+      />,
     );
     const trigger = screen.getByRole('combobox', { name: /Assignment/ });
     open();
@@ -63,7 +82,13 @@ describe('Listbox', () => {
   it('selects with Enter and closes, single-select', () => {
     const onChange = vi.fn();
     render(
-      <Listbox label="Assignment" value={[]} onChange={onChange} options={OPTIONS} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={onChange}
+        options={OPTIONS}
+        placeholder="Pick one"
+      />,
     );
     const trigger = screen.getByRole('combobox', { name: /Assignment/ });
     open();
@@ -77,7 +102,14 @@ describe('Listbox', () => {
   it('toggles values and stays open when multiple', () => {
     const onChange = vi.fn();
     render(
-      <Listbox label="Assignment" value={['a']} onChange={onChange} options={OPTIONS} placeholder="Pick" multiple />,
+      <Listbox
+        label="Assignment"
+        value={['a']}
+        onChange={onChange}
+        options={OPTIONS}
+        placeholder="Pick"
+        multiple
+      />,
     );
     open();
     fireEvent.click(screen.getByRole('option', { name: 'Bravo' }));
@@ -90,20 +122,29 @@ describe('Listbox', () => {
 
   it('jumps to an option by type-ahead', () => {
     render(
-      <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={vi.fn()}
+        options={OPTIONS}
+        placeholder="Pick one"
+      />,
     );
     const trigger = screen.getByRole('combobox', { name: /Assignment/ });
     open();
     fireEvent.keyDown(trigger, { key: 'c' });
-    expect(trigger).toHaveAttribute(
-      'aria-activedescendant',
-      screen.getAllByRole('option')[2].id,
-    );
+    expect(trigger).toHaveAttribute('aria-activedescendant', screen.getAllByRole('option')[2].id);
   });
 
   it('closes on Escape and returns focus to the trigger', () => {
     render(
-      <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={vi.fn()}
+        options={OPTIONS}
+        placeholder="Pick one"
+      />,
     );
     const trigger = screen.getByRole('combobox', { name: /Assignment/ });
     open();
@@ -116,7 +157,13 @@ describe('Listbox', () => {
     const withDisabledFirst = [{ value: 'a', label: 'Alpha', disabled: true }, ...OPTIONS.slice(1)];
     const onChange = vi.fn();
     render(
-      <Listbox label="Assignment" value={[]} onChange={onChange} options={withDisabledFirst} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={onChange}
+        options={withDisabledFirst}
+        placeholder="Pick one"
+      />,
     );
     const trigger = screen.getByRole('combobox', { name: /Assignment/ });
     open();
@@ -129,7 +176,13 @@ describe('Listbox', () => {
 
   it('opens on the selected option rather than the one after it', () => {
     render(
-      <Listbox label="Assignment" value={['b']} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={['b']}
+        onChange={vi.fn()}
+        options={OPTIONS}
+        placeholder="Pick one"
+      />,
     );
     const trigger = screen.getByRole('combobox', { name: /Assignment/ });
     open();
@@ -137,7 +190,15 @@ describe('Listbox', () => {
   });
 
   it('renders an empty state rather than a bare panel', () => {
-    render(<Listbox label="Assignment" value={[]} onChange={vi.fn()} options={[]} placeholder="Pick one" />);
+    render(
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={vi.fn()}
+        options={[]}
+        placeholder="Pick one"
+      />,
+    );
     open();
     expect(screen.getByText('comboboxNoResults')).toBeInTheDocument();
   });
@@ -149,7 +210,13 @@ describe('Listbox', () => {
   it('escapes clipping ancestors by rendering the panel outside them', () => {
     const { container } = render(
       <div style={{ overflow: 'hidden', height: 40 }}>
-        <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />
+        <Listbox
+          label="Assignment"
+          value={[]}
+          onChange={vi.fn()}
+          options={OPTIONS}
+          placeholder="Pick one"
+        />
       </div>,
     );
     open();
@@ -160,9 +227,43 @@ describe('Listbox', () => {
     expect(screen.getAllByRole('option')).toHaveLength(3);
   });
 
+  /**
+   * Regression: inside the modal drawer (Radix Dialog) a body-portalled panel is pointer-transparent
+   * — Radix disables pointer events outside its content — so clicking an option fell through to the
+   * drawer and only closed the panel. The panel must portal into the drawer content instead.
+   */
+  it('portals the panel into the enclosing drawer so options stay selectable', () => {
+    const onChange = vi.fn();
+    render(
+      <Drawer open onClose={vi.fn()} title="Edit user">
+        <Listbox
+          label="Assignment"
+          value={[]}
+          onChange={onChange}
+          options={OPTIONS}
+          placeholder="Pick one"
+        />
+      </Drawer>,
+    );
+    open();
+
+    const panel = screen.getByRole('listbox');
+    expect(panel.closest('.ohs-drawer')).not.toBeNull();
+
+    fireEvent.click(screen.getByRole('option', { name: 'Bravo' }));
+    expect(onChange).toHaveBeenCalledWith(['b']);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
   it('keeps click-outside working now that the panel is portalled', () => {
     render(
-      <Listbox label="Assignment" value={[]} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" />,
+      <Listbox
+        label="Assignment"
+        value={[]}
+        onChange={vi.fn()}
+        options={OPTIONS}
+        placeholder="Pick one"
+      />,
     );
     open();
     // A click inside the portalled panel must not close it.
@@ -175,7 +276,14 @@ describe('Listbox', () => {
 
   it('has no serious or critical axe violations when open', async () => {
     const { container } = render(
-      <Listbox label="Assignment" value={['a']} onChange={vi.fn()} options={OPTIONS} placeholder="Pick one" required />,
+      <Listbox
+        label="Assignment"
+        value={['a']}
+        onChange={vi.fn()}
+        options={OPTIONS}
+        placeholder="Pick one"
+        required
+      />,
     );
     open();
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });

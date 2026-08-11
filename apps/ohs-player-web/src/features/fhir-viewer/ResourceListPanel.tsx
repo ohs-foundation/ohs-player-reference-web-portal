@@ -5,13 +5,14 @@ import {
   usePagedSearch,
   useTranslation,
 } from 'ohs-player-web-core';
-import { IconFilterList } from '../../components/ui/icons';
 import {
   Button,
   DataTable,
   type DataTableColumn,
   EmptyState,
   ErrorState,
+  FilterChip,
+  FilterChipBar,
   SearchField,
   StatusBadge,
 } from '../../components/ui';
@@ -24,11 +25,21 @@ import {
   searchPlaceholderKey,
 } from './registry';
 import { ResourcePager } from './ResourcePager';
-import { ResourceFilterPanel } from './ResourceFilterPanel';
-import { type ActiveFilter, type SincePreset, sinceParam } from './filterParams';
+import { useFilterParam, useClearFilterParams } from '../search/useFilterParam';
+import { type ActiveFilter, type SincePreset, SINCE_PRESETS, sinceParam } from './filterParams';
 
 /** HTTP statuses that mean "this backend won't serve this type" rather than a genuine failure. */
 const UNSUPPORTED_STATUSES = new Set([401, 403, 404, 405, 501]);
+
+const FILTER_PARAMS = ['status', 'lastUpdated'] as const;
+const SINCE_VALUES = SINCE_PRESETS.filter((p) => p !== 'any');
+
+const SINCE_LABEL_KEY: Record<SincePreset, string> = {
+  any: 'fhirViewerSinceAny',
+  '24h': 'fhirViewerSince24h',
+  '7d': 'fhirViewerSince7d',
+  '30d': 'fhirViewerSince30d',
+};
 
 type ErrorClass = { kind: 'unsupported' } | { kind: 'error'; message?: string } | null;
 
@@ -36,7 +47,10 @@ function classifyError(error: unknown): ErrorClass {
   if (!error) return null;
   if (error instanceof FhirError) {
     if (UNSUPPORTED_STATUSES.has(error.status)) return { kind: 'unsupported' };
-    return { kind: 'error', message: formatOperationOutcomeMessage(error.outcome) || error.message };
+    return {
+      kind: 'error',
+      message: formatOperationOutcomeMessage(error.outcome) || error.message,
+    };
   }
   return { kind: 'error', message: error instanceof Error ? error.message : undefined };
 }
@@ -61,12 +75,17 @@ export function ResourceListPanel({
   const { t } = useTranslation();
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [active, setActive] = useState<ActiveFilter>('all');
-  const [statusText, setStatusText] = useState('');
-  const [since, setSince] = useState<SincePreset>('any');
+  const [statusValue, setStatusValue] = useFilterParam('status');
+  const [sinceValue, setSinceValue] = useFilterParam('lastUpdated', SINCE_VALUES);
+  const clearChipFilters = useClearFilterParams(FILTER_PARAMS);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
+  // The `status` param serves both facets: active/inactive for boolean-`active` types, a raw FHIR
+  // status code for coded-status types.
+  const active: ActiveFilter =
+    statusValue === 'active' || statusValue === 'inactive' ? statusValue : 'all';
+  const since: SincePreset = SINCE_PRESETS.find((p) => p === sinceValue) ?? 'any';
 
   useEffect(() => {
     const id = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
@@ -75,7 +94,7 @@ export function ResourceListPanel({
 
   useEffect(() => {
     setPage(0);
-  }, [searchQuery, active, statusText, since, pageSize]);
+  }, [searchQuery, statusValue, sinceValue, pageSize]);
 
   const params = useMemo(() => {
     const p: Record<string, string> = {};
@@ -85,13 +104,13 @@ export function ResourceListPanel({
     if (def.statusFacet === 'active' && active !== 'all') {
       p.active = active === 'active' ? 'true' : 'false';
     }
-    if (def.statusFacet === 'status' && statusText.trim()) {
-      p.status = statusText.trim();
+    if (def.statusFacet === 'status' && statusValue) {
+      p.status = statusValue;
     }
     const updated = sinceParam(since);
     if (updated) p._lastUpdated = updated;
     return p;
-  }, [def, searchQuery, active, statusText, since]);
+  }, [def, searchQuery, active, statusValue, since]);
 
   const { rows, total, hasNext, hasPrev, paginationMode, isLoading, error } =
     usePagedSearch<FhirRecord>(def.resourceType, { page, pageSize, params });
@@ -161,48 +180,55 @@ export function ResourceListPanel({
       <ErrorState description={classified.message ?? t('fhirViewerErrorDescription')} />
     ) : undefined;
 
-  const clearFilters = (): void => {
-    setActive('all');
-    setStatusText('');
-    setSince('any');
-  };
+  const hasChipFilters = statusValue !== null || sinceValue !== null;
 
   const placeholder = t(searchPlaceholderKey(def));
   const toolbar = (
-    <div className="flex flex-col gap-4 w-full">
-      <div className="flex flex-wrap items-center gap-3">
-        <SearchField
-          label={placeholder}
-          placeholder={placeholder}
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+    <div className="flex flex-wrap items-center gap-3 w-full">
+      <SearchField
+        label={placeholder}
+        placeholder={placeholder}
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+      />
+      <FilterChipBar align="end" clearVisible={hasChipFilters} onClearAll={clearChipFilters}>
+        {def.statusFacet === 'active' ? (
+          <FilterChip
+            label={t('fhirViewerFilterStatus')}
+            allLabel={t('fhirViewerActive_all')}
+            options={[
+              { value: 'active', label: t('fhirViewerActive_active') },
+              { value: 'inactive', label: t('fhirViewerActive_inactive') },
+            ]}
+            value={active === 'all' ? null : active}
+            onChange={setStatusValue}
+          />
+        ) : null}
+        {def.statusFacet === 'status' ? (
+          <FilterChip
+            variant="text"
+            label={t('fhirViewerFilterStatus')}
+            hint={t('fhirViewerFilterStatusHint')}
+            value={statusValue}
+            onChange={setStatusValue}
+          />
+        ) : null}
+        <FilterChip
+          label={t('fhirViewerFilterUpdated')}
+          allLabel={t('fhirViewerSinceAny')}
+          options={SINCE_VALUES.map((p) => ({ value: p, label: t(SINCE_LABEL_KEY[p]) }))}
+          value={since === 'any' ? null : since}
+          onChange={setSinceValue}
         />
-        <Button
-          variant={filtersOpen ? 'primary' : 'outlined'}
-          iconLeft={<IconFilterList size={16} />}
-          aria-expanded={filtersOpen}
-          onClick={() => setFiltersOpen((v) => !v)}
-        >
-          {t('fhirViewerFilter')}
-        </Button>
-      </div>
-      {filtersOpen ? (
-        <ResourceFilterPanel
-          def={def}
-          active={active}
-          onActive={setActive}
-          statusText={statusText}
-          onStatusText={setStatusText}
-          since={since}
-          onSince={setSince}
-          onClear={clearFilters}
-        />
-      ) : null}
+      </FilterChipBar>
     </div>
   );
 
   return (
-    <section className="flex-1 min-w-0 flex flex-col gap-5" aria-labelledby="fhir-viewer-panel-heading">
+    <section
+      className="flex-1 min-w-0 flex flex-col gap-5"
+      aria-labelledby="fhir-viewer-panel-heading"
+    >
       <h3 id="fhir-viewer-panel-heading" className="m-0 text-2xl font-medium text-text">
         {t('fhirViewerTypeResources', { type: typeLabel })}
       </h3>
@@ -217,6 +243,13 @@ export function ResourceListPanel({
           <EmptyState
             title={t('fhirViewerEmptyTitle', { type: typeLabel })}
             description={t('fhirViewerEmptyDescription', { type: typeLabel })}
+            action={
+              hasChipFilters ? (
+                <Button variant="ghost" type="button" onClick={clearChipFilters}>
+                  {t('filterClearAll')}
+                </Button>
+              ) : undefined
+            }
           />
         }
         errorState={errorNode}

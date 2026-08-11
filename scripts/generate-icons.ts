@@ -25,6 +25,7 @@ const ICONS: Record<string, string> = {
   // geometrically equivalent Material Symbols, so the dashboard keeps one icon dependency.
   IconArrowUpRight: 'north_east',
   IconArrowDownLeft: 'south_west',
+  IconArrowDropDown: 'arrow_drop_down',
   IconBriefcase: 'work',
   IconBriefcaseFill: 'work-fill',
   // Material Symbols has no distinct `domain-fill`; account_balance is the nearest institution
@@ -50,8 +51,6 @@ const ICONS: Record<string, string> = {
   IconEdit: 'edit',
   IconErrorFill: 'error-fill',
   IconFileList: 'list_alt',
-  IconFilter: 'filter_alt',
-  IconFilterList: 'filter_list',
   IconFlash: 'bolt',
   IconGroup: 'group',
   IconGuide: 'menu_book',
@@ -94,15 +93,14 @@ const missing = Object.entries(ICONS).filter(([, stem]) => {
   }
 });
 if (missing.length > 0) {
-  console.error(`Material Symbols has no icon for:\n${missing.map(([n, s]) => `  ${n} -> ${s}`).join('\n')}`);
+  console.error(
+    `Material Symbols has no icon for:\n${missing.map(([n, s]) => `  ${n} -> ${s}`).join('\n')}`,
+  );
   process.exit(1);
 }
 
 const components = Object.entries(ICONS)
-  .map(
-    ([name, stem]) =>
-      `export const ${name} = makeIcon(\n  '${pathData(stem)}',\n);`,
-  )
+  .map(([name, stem]) => `export const ${name} = makeIcon(\n  '${pathData(stem)}',\n);`)
   .join('\n\n');
 
 writeFileSync(

@@ -16,8 +16,25 @@ const mockFhirClient = { transaction: mockTransaction, baseUrl: '' };
 const searchBundles: Record<string, { entry: { resource: Record<string, unknown> }[] }> = {
   Organization: {
     entry: [
-      { resource: { resourceType: 'Organization', id: 'o1', name: 'Ministry of Health', active: true } },
-      { resource: { resourceType: 'Organization', id: 'o2', name: 'Addis Ababa Health Bureau', active: true } },
+      {
+        resource: {
+          resourceType: 'Organization',
+          id: 'o1',
+          name: 'Ministry of Health',
+          active: true,
+        },
+      },
+      {
+        resource: {
+          resourceType: 'Organization',
+          id: 'o2',
+          name: 'Addis Ababa Health Bureau',
+          active: true,
+        },
+      },
+      {
+        resource: { resourceType: 'Organization', id: 'o3', name: 'Retired Bureau', active: false },
+      },
       {
         resource: {
           resourceType: 'Location',
@@ -41,7 +58,12 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
   return {
     ...actual,
-    useTranslation: () => ({ t: (key: string, vars?: Record<string, unknown>) => (vars ? `${key} ${JSON.stringify(vars)}` : key), dir: 'ltr', locale: 'en' }),
+    useTranslation: () => ({
+      t: (key: string, vars?: Record<string, unknown>) =>
+        vars ? `${key} ${JSON.stringify(vars)}` : key,
+      dir: 'ltr',
+      locale: 'en',
+    }),
     useFhirClient: () => mockFhirClient,
     useAuth: () => ({ status: 'authenticated', user: { preferred_username: 'tester' } }),
     useRefreshResources: () => mockRefresh,
@@ -66,7 +88,9 @@ const renderPage = () => render(<OrganizationsPage />, { wrapper: MemoryRouter }
 beforeEach(() => {
   vi.clearAllMocks();
   // transaction returns the created Organization location for id extraction
-  mockTransaction.mockResolvedValue({ entry: [{ response: { location: 'Organization/o9/_history/1' } }] });
+  mockTransaction.mockResolvedValue({
+    entry: [{ response: { location: 'Organization/o9/_history/1' } }],
+  });
 });
 
 describe('OrganizationsPage', () => {
@@ -82,7 +106,9 @@ describe('OrganizationsPage', () => {
     fireEvent.click(screen.getByText('addOrganization'));
 
     const drawer = await screen.findByRole('dialog');
-    fireEvent.change(within(drawer).getByLabelText(/organizationName/i), { target: { value: 'New Org' } });
+    fireEvent.change(within(drawer).getByLabelText(/organizationName/i), {
+      target: { value: 'New Org' },
+    });
 
     // Pick a location in the Managed Locations listbox: open the combobox, then choose the option.
     fireEvent.click(within(drawer).getByRole('combobox', { name: /contextLocation/ }));
@@ -93,7 +119,11 @@ describe('OrganizationsPage', () => {
 
     await waitFor(() => expect(mockTransaction).toHaveBeenCalledTimes(1));
     const bundle = mockTransaction.mock.calls[0][0] as {
-      entry: { fullUrl?: string; resource: Record<string, unknown>; request: { method: string; url: string } }[];
+      entry: {
+        fullUrl?: string;
+        resource: Record<string, unknown>;
+        request: { method: string; url: string };
+      }[];
     };
     // entry 0 = POST Organization with a urn fullUrl
     expect(bundle.entry[0].request).toEqual({ method: 'POST', url: 'Organization' });
@@ -101,8 +131,13 @@ describe('OrganizationsPage', () => {
     // entry 1 = PATCH the picked Location, linking it to the urn org via delete+add
     const patch = bundle.entry[1];
     expect(patch.request).toEqual({ method: 'PATCH', url: 'Location/l1' });
-    const ops = (patch.resource.parameter as { part: { name: string; valueCode?: string; valueReference?: { reference?: string } }[] }[]);
-    expect(ops.map((o) => o.part.find((p) => p.name === 'type')?.valueCode)).toEqual(['delete', 'add']);
+    const ops = patch.resource.parameter as {
+      part: { name: string; valueCode?: string; valueReference?: { reference?: string } }[];
+    }[];
+    expect(ops.map((o) => o.part.find((p) => p.name === 'type')?.valueCode)).toEqual([
+      'delete',
+      'add',
+    ]);
     const addValue = ops[1].part.find((p) => p.name === 'value')?.valueReference?.reference;
     expect(addValue).toBe(bundle.entry[0].fullUrl);
   });
@@ -116,6 +151,21 @@ describe('OrganizationsPage', () => {
     const drawer = await screen.findByRole('dialog');
     expect(within(drawer).getByText('Addis Ababa')).toBeInTheDocument();
     expect(within(drawer).queryByText('detailNone')).toBeNull();
+  });
+
+  it('narrows the table when the Status chip is applied and restores via Clear all', async () => {
+    renderPage();
+    expect(await screen.findByText('Ministry of Health')).toBeInTheDocument();
+    expect(screen.getByText('Retired Bureau')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'filterStatus' }));
+    fireEvent.click(screen.getByRole('option', { name: 'filterStatusActive' }));
+
+    expect(screen.getByText('Ministry of Health')).toBeInTheDocument();
+    expect(screen.queryByText('Retired Bureau')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'filterClearAll' }));
+    expect(screen.getByText('Retired Bureau')).toBeInTheDocument();
   });
 
   it('does not render a revincluded Location as an organisation row', async () => {

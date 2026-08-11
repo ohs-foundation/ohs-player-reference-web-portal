@@ -35,6 +35,8 @@ export interface DataTableProps<Row> {
   pagination?: boolean;
   initialPageSize?: number;
   pageSizeOptions?: readonly number[];
+  /** Snaps back to page 1 whenever this changes — pass the page's applied filter state. */
+  pageResetKey?: string;
   /** Drop the wrapper's border/shadow/background and the min-width — for embedding inside a Card. */
   flush?: boolean;
   /** M3 density: each step down removes 4px of row height. Interactive targets stay >= 44px. */
@@ -46,17 +48,37 @@ type SortDir = 'asc' | 'desc';
 function SortIcon({ dir }: Readonly<{ dir?: SortDir }>): React.ReactElement {
   if (!dir) {
     return (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.35, flexShrink: 0 }}>
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        style={{ opacity: 0.35, flexShrink: 0 }}
+      >
         <polyline points="8 15 12 19 16 15" />
         <polyline points="8 9 12 5 16 9" />
       </svg>
     );
   }
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
-      {dir === 'asc'
-        ? <polyline points="8 9 12 5 16 9" />
-        : <polyline points="8 15 12 19 16 15" />}
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ flexShrink: 0 }}
+    >
+      {dir === 'asc' ? <polyline points="8 9 12 5 16 9" /> : <polyline points="8 15 12 19 16 15" />}
     </svg>
   );
 }
@@ -85,6 +107,7 @@ export function DataTable<Row>({
   density,
   initialPageSize = 10,
   pageSizeOptions = [10, 25, 50],
+  pageResetKey,
   flush,
 }: Readonly<DataTableProps<Row>>): React.ReactElement {
   const { t } = useTranslation();
@@ -112,6 +135,10 @@ export function DataTable<Row>({
     if (page > totalPages) setPage(1);
   }, [page, totalPages]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [pageResetKey]);
+
   const visibleRows = useMemo(() => {
     if (!pagination) return sortedRows;
     const sliceStart = (page - 1) * pageSize;
@@ -128,7 +155,8 @@ export function DataTable<Row>({
   };
 
   const allKeys = useMemo(() => new Set(rows.map(rowKey)), [rows, rowKey]);
-  const isAllSelected = selectedKeys != null && allKeys.size > 0 && allKeys.size === selectedKeys.size;
+  const isAllSelected =
+    selectedKeys != null && allKeys.size > 0 && allKeys.size === selectedKeys.size;
   const isSomeSelected = selectedKeys != null && selectedKeys.size > 0 && !isAllSelected;
 
   const toggleAll = (): void => {
@@ -158,6 +186,12 @@ export function DataTable<Row>({
     >
       {toolbar ? <div className="ohs-table__toolbar">{toolbar}</div> : null}
 
+      {pagination && !loading && !errorState ? (
+        <span className="sr-only" role="status">
+          {t('tableShowing', { start, end, total })}
+        </span>
+      ) : null}
+
       {errorState ? (
         errorState
       ) : showEmpty ? (
@@ -165,80 +199,90 @@ export function DataTable<Row>({
       ) : (
         <>
           <div className="ohs-table__scroll">
-          <table className="ohs-table">
-            {caption ? <caption>{caption}</caption> : null}
-            <thead>
-              <tr>
-                {selectable ? (
-                  <th style={{ width: '40px' }}>
-                    <Checkbox
-                      checked={isAllSelected}
-                      indeterminate={isSomeSelected}
-                      ariaLabel={t('selectAll')}
-                      onChange={toggleAll}
-                    />
-                  </th>
-                ) : null}
-                {columns.map((c) => (
-                  <th
-                    key={c.key}
-                    style={{ width: c.width, textAlign: c.align ?? 'left' }}
-                    aria-sort={
-                      c.sortable
-                        ? sortKey === c.key
-                          ? sortDir === 'asc' ? 'ascending' : 'descending'
-                          : 'none'
-                        : undefined
-                    }
-                  >
-                    {c.sortable ? (
-                      <button type="button" className="ohs-table__sort-btn" onClick={() => handleSortClick(c.key)}>
-                        {c.header}
-                        <SortIcon dir={sortKey === c.key ? sortDir : undefined} />
-                      </button>
-                    ) : (
-                      c.header
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+            <table className="ohs-table">
+              {caption ? <caption>{caption}</caption> : null}
+              <thead>
                 <tr>
-                  <td colSpan={columns.length + (selectable ? 1 : 0)}>{t('loading')}</td>
-                </tr>
-              ) : (
-                visibleRows.map((row) => {
-                  const key = rowKey(row);
-                  const isSelected = selectedKeys?.has(key) ?? false;
-                  return (
-                    <tr
-                      key={key}
-                      data-selected={isSelected || undefined}
-                      onClick={onRowClick ? () => onRowClick(row) : undefined}
-                      style={onRowClick ? { cursor: 'pointer' } : undefined}
+                  {selectable ? (
+                    <th style={{ width: '40px' }}>
+                      <Checkbox
+                        checked={isAllSelected}
+                        indeterminate={isSomeSelected}
+                        ariaLabel={t('selectAll')}
+                        onChange={toggleAll}
+                      />
+                    </th>
+                  ) : null}
+                  {columns.map((c) => (
+                    <th
+                      key={c.key}
+                      style={{ width: c.width, textAlign: c.align ?? 'left' }}
+                      aria-sort={
+                        c.sortable
+                          ? sortKey === c.key
+                            ? sortDir === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                          : undefined
+                      }
                     >
-                      {selectable ? (
-                        <td style={{ width: '40px' }} onClick={(e) => e.stopPropagation()}>
-                          <Checkbox checked={isSelected} ariaLabel={t('selectRow')} onChange={() => toggleRow(key)} />
-                        </td>
-                      ) : null}
-                      {columns.map((c) => (
-                        <td
-                          key={c.key}
-                          style={{ textAlign: c.align ?? 'left' }}
-                          data-mono={c.mono ? 'true' : undefined}
+                      {c.sortable ? (
+                        <button
+                          type="button"
+                          className="ohs-table__sort-btn"
+                          onClick={() => handleSortClick(c.key)}
                         >
-                          {c.render(row)}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                          {c.header}
+                          <SortIcon dir={sortKey === c.key ? sortDir : undefined} />
+                        </button>
+                      ) : (
+                        c.header
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={columns.length + (selectable ? 1 : 0)}>{t('loading')}</td>
+                  </tr>
+                ) : (
+                  visibleRows.map((row) => {
+                    const key = rowKey(row);
+                    const isSelected = selectedKeys?.has(key) ?? false;
+                    return (
+                      <tr
+                        key={key}
+                        data-selected={isSelected || undefined}
+                        onClick={onRowClick ? () => onRowClick(row) : undefined}
+                        style={onRowClick ? { cursor: 'pointer' } : undefined}
+                      >
+                        {selectable ? (
+                          <td style={{ width: '40px' }} onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={isSelected}
+                              ariaLabel={t('selectRow')}
+                              onChange={() => toggleRow(key)}
+                            />
+                          </td>
+                        ) : null}
+                        {columns.map((c) => (
+                          <td
+                            key={c.key}
+                            style={{ textAlign: c.align ?? 'left' }}
+                            data-mono={c.mono ? 'true' : undefined}
+                          >
+                            {c.render(row)}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
 
           {pagination && total > 0 ? (

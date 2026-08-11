@@ -16,9 +16,28 @@ const mockFhirClient = { transaction: mockTransaction, baseUrl: '', customGet: m
 
 const searchBundles: Record<string, { entry: { resource: Record<string, unknown> }[] }> = {
   Practitioner: {
-    entry: [{ resource: { resourceType: 'Practitioner', id: 'p1', active: true, name: [{ family: 'Smith', given: ['Jane'] }] } }],
+    entry: [
+      {
+        resource: {
+          resourceType: 'Practitioner',
+          id: 'p1',
+          active: true,
+          name: [{ family: 'Smith', given: ['Jane'] }],
+        },
+      },
+      {
+        resource: {
+          resourceType: 'Practitioner',
+          id: 'p2',
+          active: false,
+          name: [{ family: 'Doe', given: ['John'] }],
+        },
+      },
+    ],
   },
-  Organization: { entry: [{ resource: { resourceType: 'Organization', id: 'o1', name: 'Org One' } }] },
+  Organization: {
+    entry: [{ resource: { resourceType: 'Organization', id: 'o1', name: 'Org One' } }],
+  },
   Location: { entry: [{ resource: { resourceType: 'Location', id: 'l1', name: 'Loc One' } }] },
 };
 
@@ -147,7 +166,9 @@ describe('UserCreateDrawer', () => {
   function fillDemographics() {
     fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
     fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
-    fireEvent.change(screen.getByLabelText(/emailAddress/), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), {
+      target: { value: 'jane@example.com' },
+    });
   }
 
   it('blocks submit when required fields are missing', async () => {
@@ -210,7 +231,10 @@ describe('UserCreateDrawer', () => {
 
     await waitFor(() => expect(mockTransaction).toHaveBeenCalledTimes(1));
     const bundle = mockTransaction.mock.calls[0][0] as {
-      entry?: { resource?: { organization?: { reference?: string } }; request?: { method?: string; url?: string } }[];
+      entry?: {
+        resource?: { organization?: { reference?: string } };
+        request?: { method?: string; url?: string };
+      }[];
     };
     const urls = (bundle.entry ?? []).map((e) => `${e.request?.method} ${e.request?.url}`);
     expect(urls).toContain('POST PractitionerRole');
@@ -236,7 +260,10 @@ describe('UserCreateDrawer', () => {
     // The follow-up failure must NOT block create success: drawer closes + list refreshes via onSuccess.
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
     // ...but the user is warned the assignment didn't land, not told the whole create failed.
-    expect(mockNotify).toHaveBeenCalledWith({ tone: 'warning', title: 'userCreatedAssignmentFailed' });
+    expect(mockNotify).toHaveBeenCalledWith({
+      tone: 'warning',
+      title: 'userCreatedAssignmentFailed',
+    });
     // The audit still records the create.
     await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
   });
@@ -276,7 +303,9 @@ describe('UserCreateEntryDrawer', () => {
     fireEvent.click(screen.getByRole('button', { name: /addUserQuickTitle/i }));
     fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
     fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
-    fireEvent.change(screen.getByLabelText(/emailAddress/), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), {
+      target: { value: 'jane@example.com' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
     await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
@@ -319,7 +348,9 @@ describe('UserCreateWizard', () => {
 
     fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
     fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
-    fireEvent.change(screen.getByLabelText(/emailAddress/), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), {
+      target: { value: 'jane@example.com' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'next' }));
     fireEvent.click(screen.getByRole('button', { name: 'next' }));
     fireEvent.click(screen.getByRole('button', { name: 'next' }));
@@ -348,6 +379,28 @@ describe('UsersPage search', () => {
     expect(screen.getByText('addUserQuickTitle')).toBeInTheDocument();
   });
 
+  it('narrows the table when a Status chip value is applied and restores via Clear all', () => {
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'filterStatus' }));
+    fireEvent.click(screen.getByRole('option', { name: 'filterStatusInactive' }));
+
+    expect(screen.queryByText('Jane Smith')).toBeNull();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'filterStatus: filterStatusInactive' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'filterClearAll' }));
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+  });
+
   it('queries Practitioner with name:contains (server-side) when a term is typed', async () => {
     render(
       <MemoryRouter>
@@ -358,12 +411,16 @@ describe('UsersPage search', () => {
     const initial = mockUseSearch.mock.calls.find((c) => c[0] === 'Practitioner');
     expect(initial?.[1]).not.toHaveProperty('name:contains');
 
-    fireEvent.change(screen.getByPlaceholderText('searchByNameOrId'), { target: { value: 'jane' } });
+    fireEvent.change(screen.getByPlaceholderText('searchByNameOrId'), {
+      target: { value: 'jane' },
+    });
 
     // debounced (300ms) → eventually a Practitioner search carries name:contains
     await waitFor(() => {
       const withTerm = mockUseSearch.mock.calls.find(
-        (c) => c[0] === 'Practitioner' && (c[1] as Record<string, string> | undefined)?.['name:contains'] === 'jane',
+        (c) =>
+          c[0] === 'Practitioner' &&
+          (c[1] as Record<string, string> | undefined)?.['name:contains'] === 'jane',
       );
       expect(withTerm).toBeDefined();
     });
