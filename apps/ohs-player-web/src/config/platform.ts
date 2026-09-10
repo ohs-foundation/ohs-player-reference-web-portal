@@ -51,5 +51,6 @@ export const platformConfig: CorePlatformConfig = {
     users: '/api/users',
     groups: '/api/groups',
     roles: '/api/roles',
+    practitionerDetails: '/api/practitioner-details',
   },
 };

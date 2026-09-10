@@ -59,6 +59,7 @@ export { FhirError, isOperationOutcome } from './client/FhirError';
 export {
   useCreateResource,
   useCustomEndpoint,
+  useCustomResource,
   useFhirCapabilities,
   useRefreshResources,
   useResource,
