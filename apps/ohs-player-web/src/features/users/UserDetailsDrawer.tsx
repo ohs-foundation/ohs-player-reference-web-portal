@@ -172,11 +172,11 @@ export function UserDetailsDrawer({
     <>
     <Drawer open onClose={onClose} title={details.fullName} header={header} footer={footer}>
       {isLoading ? (
-        <div style={{ padding: 'var(--ohs-sys-spacing-8)' }}>
+        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
           <Spinner label={t('loading')} />
         </div>
       ) : error ? (
-        <div style={{ padding: 'var(--ohs-sys-spacing-8)' }}>
+        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
           <ErrorState description={toErrorMessage(error)} />
         </div>
       ) : (

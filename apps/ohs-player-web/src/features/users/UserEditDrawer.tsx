@@ -226,7 +226,7 @@ export function UserEditDrawer({
   return (
     <Drawer open onClose={onClose} title={t('pageUserEdit')} header={header} footer={footer}>
       {isLoading || !hydrated ? (
-        <div style={{ padding: 'var(--ohs-sys-spacing-8)' }}>
+        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
           {loadError ? (
             <ErrorState description={toErrorMessage(loadError)} />
           ) : (
