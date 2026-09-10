@@ -80,6 +80,42 @@ The app never sees a raw path, never constructs a FHIR query for practitioner co
 
 ---
 
+## Decisions as implemented
+
+| # | Decision | Outcome |
+| --- | --- | --- |
+| D1 | Read hook | **Option B.** `useCustomResource` added to the library. `@tanstack/react-query` is a library dependency and the `QueryClientProvider` lives in `CorePlatformProvider`, so an app-layer `useQuery` would have meant adding the package to the app and depending on pnpm resolving one module instance. |
+| D2 | Care teams (F1) | Endpoint first; `CareTeam?participant=Practitioner/{id}` runs **only when the endpoint attaches none**. Self-disabling: once the backend matches Practitioner members, the search stops firing and the drawer is one request. |
+| D3 | Role-less 404 (F2) | Endpoint first; a `FhirError` with `status === 404` falls back to a direct `Practitioner` read. |
+| D4 | Cache invalidation | None added. Drawers unmount on close and React Query's default `staleTime: 0` refetches on remount. Key is `['custom', alias, params]`. |
+| D5 | Multi-role display | Unchanged: the first role drives Role and Organisation. Locations now render as a list. Multi-role layout is a follow-up. |
+
+Both fallbacks live in `usePractitionerDetails` alone, so each is one edit to remove.
+
+## Verification against the live local stack
+
+Run against HAPI on `:8080`, Keycloak on `:8090` and the gateway on `:8180`, with `pnpm seed` demo data.
+
+| Check | Result |
+| --- | --- |
+| `GET /api/practitioner-details` unauthenticated | `401` — servlet registered, endpoint present in the running gateway |
+| Exact query the backend builds for a seeded practitioner | `total: 0`, no entries → `mapEntries` returns null → servlet answers `404` (**F2 confirmed**) |
+| Seeded `CareTeam.participant.member` | `Practitioner/seed-practitioner-1`, never `PractitionerRole/...` (**F1 confirmed**) |
+| Fallback `CareTeam?participant=Practitioner/{id}` | returns `seed-careteam-1` |
+| Fallback `Practitioner/{id}` read | returns the resource |
+| Realm roles in running Keycloak | `admin`, `care-team-manager` — no `practitioner-details.view` (**F5 confirmed**) |
+
+F1 and F2 are not edge cases on this data: the seed script creates ten Practitioners and **zero** PractitionerRoles, so every seeded user 404s from the endpoint, and every seeded care team is invisible to it. Both fallbacks are load-bearing today.
+
+### Blocked: browser-level manual verification
+
+Two Keycloak changes are needed and both are confirm-first, so they were not made:
+
+1. **No dev user can obtain a token.** Keycloak's declarative user profile requires `firstName` and `lastName`, and `infra/keycloak/ohs-realm.json` creates `admin-user` and `manager-user` without either, so the password grant fails with `invalid_grant: Account is not fully set up`. This is a pre-existing local-dev bug, unrelated to this ticket.
+2. **`practitioner-details.view` does not exist** in the realm, so the `?practitioner-id=` form the drawers use would answer `403`.
+
+A third, non-blocking gap: `scripts/seed.ts` creates no PractitionerRole, so even after login the happy path has no data to show. Seeding one role per practitioner would exercise the inline organisation and locations.
+
 ## Sprint 0 — Decisions and backend alignment (no code)
 
 **Goal:** remove the two blockers before anything is built on the wrong contract.
