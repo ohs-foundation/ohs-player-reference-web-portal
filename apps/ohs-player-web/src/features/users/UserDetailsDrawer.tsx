@@ -13,30 +13,22 @@ import {
   OhsDialog,
   PermissionGuard,
   useFhirClient,
-  useResource,
-  useSearch,
   useStatusBar,
   useTranslation,
   writeAuditEvent,
 } from 'ohs-player-web-core';
-import type { Bundle } from '@medplum/fhirtypes';
-import { Avatar, Button, Drawer, IconButton, Spinner, StatusBadge } from '../../components/ui';
+import {
+  Avatar,
+  Button,
+  Drawer,
+  ErrorState,
+  IconButton,
+  Spinner,
+  StatusBadge,
+} from '../../components/ui';
 import { buildDeactivateBundle, NATIONAL_ID_IDENTIFIER_SYSTEM } from '../sdc/resourceFromAnswers';
-
-function refName(reference: string | undefined, byId: Map<string, string>): string | undefined {
-  if (!reference) return undefined;
-  const id = reference.split('/').pop() ?? '';
-  return byId.get(id);
-}
-
-function nameMap(bundle: Bundle | undefined): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const ent of bundle?.entry ?? []) {
-    const r = ent.resource as { id?: string; name?: string } | undefined;
-    if (r?.id) map.set(r.id, r.name ?? r.id);
-  }
-  return map;
-}
+import { toErrorMessage } from '../sdc/toErrorMessage';
+import { usePractitionerDetails } from './usePractitionerDetails';
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
   return (
@@ -77,50 +69,34 @@ export function UserDetailsDrawer({
   const status = useStatusBar();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
-  const read = useResource('Practitioner', id);
-  const roleSearch = useSearch('PractitionerRole', { practitioner: `Practitioner/${id}`, _count: '50' });
-  const careTeamSearch = useSearch('CareTeam', { participant: `Practitioner/${id}`, _count: '100' });
-  const orgSearch = useSearch('Organization', { _count: '500' });
-  const locSearch = useSearch('Location', { _count: '500' });
-
-  const pract = read.data as Record<string, unknown> | undefined;
-  const orgNames = useMemo(() => nameMap(orgSearch.data as Bundle | undefined), [orgSearch.data]);
-  const locNames = useMemo(() => nameMap(locSearch.data as Bundle | undefined), [locSearch.data]);
+  const { practitioner, roleDetails, roles, careTeams, isLoading, error } =
+    usePractitionerDetails(id);
 
   const details = useMemo(() => {
-    const name = (pract?.name as { family?: string; given?: string[] }[] | undefined)?.[0];
+    const name = practitioner?.name?.[0];
     const given = name?.given?.join(' ') ?? '';
     const family = name?.family ?? '';
-    const telecom = (pract?.telecom as { system?: string; value?: string }[] | undefined) ?? [];
-    const role = (roleSearch.data as Bundle | undefined)?.entry?.[0]?.resource as
-      | { code?: { coding?: { display?: string; code?: string }[] }[]; organization?: { reference?: string }; location?: { reference?: string }[] }
-      | undefined;
-    const roleCode = role?.code?.[0]?.coding?.[0];
-    const careTeams = ((careTeamSearch.data as Bundle | undefined)?.entry ?? [])
-      .map((e) => e.resource as { id?: string; name?: string; participant?: unknown[] } | undefined)
-      .filter((r): r is { id?: string; name?: string; participant?: unknown[] } => Boolean(r?.id));
+    const telecom = practitioner?.telecom ?? [];
+    const primaryRole = roleDetails[0];
+    const roleCode = primaryRole?.practitionerRole?.code?.[0]?.coding?.[0];
     return {
       given,
       family,
       fullName: `${given} ${family}`.trim() || id,
       email: telecom.find((tc) => tc.system === 'email')?.value ?? '',
       phone: telecom.find((tc) => tc.system === 'phone')?.value ?? '',
-      gender: typeof pract?.gender === 'string' ? pract.gender : '',
+      gender: practitioner?.gender ?? '',
       identifier: id,
-      dob: typeof pract?.birthDate === 'string' ? pract.birthDate : '',
+      dob: practitioner?.birthDate ?? '',
       nationalId:
-        (pract?.identifier as { system?: string; value?: string }[] | undefined)?.find(
-          (i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM,
-        )?.value ?? '',
-      active: (pract?.active as boolean | undefined) !== false,
+        practitioner?.identifier?.find((i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM)?.value ??
+        '',
+      active: practitioner?.active !== false,
       role: roleCode?.display ?? roleCode?.code ?? '',
-      orgName: refName(role?.organization?.reference, orgNames),
-      locName: refName(role?.location?.[0]?.reference, locNames),
-      careTeams,
+      orgName: primaryRole?.organization?.name ?? '',
+      locations: primaryRole?.locations ?? [],
     };
-  }, [pract, roleSearch.data, careTeamSearch.data, orgNames, locNames, id]);
-
-  const titleText = details.fullName;
+  }, [practitioner, roleDetails, id]);
 
   const header = (
     <div className="ohs-user-drawer__head">
@@ -144,20 +120,14 @@ export function UserDetailsDrawer({
   );
 
   const onConfirmDeactivate = (): void => {
-    if (!pract) return;
-    const roles = ((roleSearch.data as Bundle | undefined)?.entry ?? [])
-      .map((e) => e.resource as Record<string, unknown> | undefined)
-      .filter((r): r is Record<string, unknown> => Boolean(r));
-    const careTeams = ((careTeamSearch.data as Bundle | undefined)?.entry ?? [])
-      .map((e) => e.resource as Record<string, unknown> | undefined)
-      .filter((r): r is Record<string, unknown> => Boolean(r));
+    if (!practitioner) return;
     void (async () => {
       setDeactivating(true);
       try {
         const { bundle, endedRoleCount, removedCareTeamCount } = buildDeactivateBundle(
-          pract,
-          roles,
-          careTeams,
+          practitioner as unknown as Record<string, unknown>,
+          roles as unknown as Record<string, unknown>[],
+          careTeams as unknown as Record<string, unknown>[],
           new Date().toISOString(),
         );
         await client.transaction(bundle);
@@ -179,14 +149,14 @@ export function UserDetailsDrawer({
 
   const footer = (
     <div className="ohs-user-drawer__foot">
-      {details.active ? (
+      {practitioner && details.active ? (
         <PermissionGuard permission="users.deactivate">
           <Button
             variant="outlined"
             className="ohs-btn-danger"
             type="button"
             onClick={() => setConfirmOpen(true)}
-            disabled={deactivating || read.isLoading || roleSearch.isLoading || careTeamSearch.isLoading}
+            disabled={deactivating || isLoading}
           >
             {t('deactivateUser')}
           </Button>
@@ -200,10 +170,14 @@ export function UserDetailsDrawer({
 
   return (
     <>
-    <Drawer open onClose={onClose} title={titleText} header={header} footer={footer}>
-      {read.isLoading ? (
-        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
+    <Drawer open onClose={onClose} title={details.fullName} header={header} footer={footer}>
+      {isLoading ? (
+        <div style={{ padding: 'var(--ohs-sys-spacing-8)' }}>
           <Spinner label={t('loading')} />
+        </div>
+      ) : error ? (
+        <div style={{ padding: 'var(--ohs-sys-spacing-8)' }}>
+          <ErrorState description={toErrorMessage(error)} />
         </div>
       ) : (
         <div className="ohs-detail-body">
@@ -239,10 +213,14 @@ export function UserDetailsDrawer({
           </Section>
 
           <Section icon={RiMapPinLine} title={t('sectionLocation')}>
-            {details.locName ? (
-              <div className="ohs-detail-rel">
-                <RiMapPinLine size={20} className="ohs-detail-rel__icon" />
-                <span className="ohs-detail-rel__title">{details.locName}</span>
+            {details.locations.length > 0 ? (
+              <div className="ohs-detail-list">
+                {details.locations.map((loc) => (
+                  <div className="ohs-detail-rel" key={loc.id}>
+                    <RiMapPinLine size={20} className="ohs-detail-rel__icon" />
+                    <span className="ohs-detail-rel__title">{loc.name ?? loc.id}</span>
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="ohs-detail-empty">{t('detailNone')}</p>
@@ -250,9 +228,9 @@ export function UserDetailsDrawer({
           </Section>
 
           <Section icon={RiTeamLine} title={t('sectionCareTeams')}>
-            {details.careTeams.length > 0 ? (
+            {careTeams.length > 0 ? (
               <div className="ohs-detail-list">
-                {details.careTeams.map((ct) => (
+                {careTeams.map((ct) => (
                   <div className="ohs-detail-rel" key={ct.id}>
                     <RiTeamLine size={20} className="ohs-detail-rel__icon" />
                     <span>
