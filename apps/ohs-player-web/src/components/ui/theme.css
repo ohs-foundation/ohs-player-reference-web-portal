@@ -2406,6 +2406,15 @@
   width: 100%;
   justify-content: center;
 }
+.ohs-login__redirecting {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-2, 8px);
+}
+.ohs-login__redirecting .ohs-spinner {
+  border-color: currentColor;
+  border-top-color: transparent;
+}
 .ohs-login__brand {
   display: flex;
   align-items: center;

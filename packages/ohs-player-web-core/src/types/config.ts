@@ -29,6 +29,8 @@ export interface AuthConfig {
   issuer: string;
   clientId: string;
   redirectUri?: string;
+  /** Where the provider returns the browser after RP-initiated logout. Defaults to `{origin}/logout`. */
+  postLogoutRedirectUri?: string;
   scopes?: readonly string[];
   tokenStore?: TokenStore;
   onTokenRefreshFailure?: () => void | Promise<void>;

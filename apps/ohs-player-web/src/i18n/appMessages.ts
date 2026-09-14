@@ -6,6 +6,8 @@ import type { MessageCatalog } from 'ohs-player-web-core';
 export const appMessageOverrides = {
   loginHeading: 'Sign in to continue',
   loginSubtitle: 'You’ll be redirected to your identity provider to sign in securely.',
+  logoutHeading: 'You have been signed out',
+  logoutRedirecting: 'Taking you back to sign in…',
 
   navDashboard: 'Dashboard',
   navSetup: 'Setup Wizard',
