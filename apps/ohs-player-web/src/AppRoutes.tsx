@@ -6,6 +6,7 @@ import { AppLayout } from './layout/AppLayout';
 import { CallbackPage } from './pages/CallbackPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
+import { LogoutPage } from './pages/LogoutPage';
 import { UsersPage } from './features/users/UsersPage';
 import { LocationsPage } from './features/locations/LocationsPage';
 import { LocationsNoAccess } from './features/locations/LocationsNoAccess';
@@ -31,6 +32,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/logout" element={<LogoutPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route element={<AppLayout />}>

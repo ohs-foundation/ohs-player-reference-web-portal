@@ -34,7 +34,7 @@ Confirm these are deployed and get their URLs **before** building, because two o
 Notes:
 
 - The SPA talks to FHIR **via the gateway** (`VITE_FHIR_BASE_URL` points at the gateway, not HAPI directly). The gateway runs the access-checker and owns the `/custom/*` transactional routes. `FhirClient` derives the gateway root by stripping a trailing `/fhir` from `VITE_FHIR_BASE_URL`, so **keep that URL ending in `/fhir`**.
-- Keycloak must have a client registered for the app (default id `ohs-player-web`) with the deployed web origin in its **Valid redirect URIs** and **Web origins** (OIDC Authorization Code + PKCE). Coordinate this with whoever owns Keycloak.
+- Keycloak must have a client registered for the app (default id `ohs-player-web`) with the deployed web origin in its **Valid redirect URIs**, **Valid post logout redirect URIs** (the app returns to `{origin}/logout` after sign-out) and **Web origins** (OIDC Authorization Code + PKCE). Coordinate this with whoever owns Keycloak.
 
 ---
 

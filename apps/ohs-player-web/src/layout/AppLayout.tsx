@@ -28,6 +28,7 @@ import {
 } from '../components/ui/icons';
 import { Avatar, IconButton } from '../components/ui';
 import { NavLink, Outlet, useMatch } from 'react-router-dom';
+import { useSignOut } from './useSignOut';
 import { useState } from 'react';
 import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
@@ -60,6 +61,7 @@ export function AppLayout() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
+  const onSignOut = useSignOut();
   const { mode, toggle } = useThemeMode();
   useSetupWizardAutoRedirect();
 
@@ -105,7 +107,7 @@ export function AppLayout() {
           <UserMenu
             name={auth.user?.preferred_username ?? auth.user?.name ?? auth.user?.sub ?? ''}
             email={auth.user?.email}
-            onSignOut={() => void auth.logout()}
+            onSignOut={onSignOut}
             signOutLabel={t('signOut')}
           />
         </div>

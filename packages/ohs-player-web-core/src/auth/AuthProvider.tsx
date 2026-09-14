@@ -37,6 +37,8 @@ export function AuthProvider({
 }): React.ReactElement {
   const redirectUri =
     config.redirectUri ?? `${globalThis.window?.location?.origin ?? ''}/callback`;
+  const postLogoutRedirectUri =
+    config.postLogoutRedirectUri ?? `${globalThis.window?.location?.origin ?? ''}/logout`;
   const scopes = config.scopes ?? ['openid', 'profile', 'email'];
 
   const userManager = useMemo(
@@ -45,12 +47,13 @@ export function AuthProvider({
         authority: config.issuer.replace(/\/$/, ''),
         client_id: config.clientId,
         redirect_uri: redirectUri,
+        post_logout_redirect_uri: postLogoutRedirectUri,
         response_type: 'code',
         scope: scopes.join(' '),
         automaticSilentRenew: true,
         includeIdTokenInSilentRenew: true,
       }),
-    [config.clientId, config.issuer, redirectUri, scopes],
+    [config.clientId, config.issuer, redirectUri, postLogoutRedirectUri, scopes],
   );
 
   const [user, setUser] = useState<User | null>(null);
