@@ -81,6 +81,7 @@ export type {
 export {
   useCreateResource,
   useCustomEndpoint,
+  useCustomResource,
   useDeleteResource,
   useFhirCapabilities,
   useOptimisticInsert,

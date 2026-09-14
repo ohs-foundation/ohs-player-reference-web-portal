@@ -5,6 +5,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type UseQueryResult,
 } from '@tanstack/react-query';
 import { useFhirClient } from '../providers/FhirClientProvider';
 
@@ -375,6 +376,34 @@ export function useOptimisticInsert(): (
     },
     [qc],
   );
+}
+
+/**
+ * Declarative GET of a host-defined custom endpoint (`customEndpoints[alias]`), cached by TanStack
+ * Query under `['custom', alias, params]`. Use this for read-only gateway routes a component needs
+ * during render; `useCustomEndpoint(alias).get` stays the imperative (mutation) form for
+ * event-driven reads. Params with an `undefined` value are dropped from the query string by
+ * `FhirClient.customGet`, so an optional filter can be passed straight through.
+ *
+ * The resolved value is `unknown` — narrow it at the call site.
+ *
+ * @example
+ * const q = useCustomResource('practitionerDetails', { 'practitioner-id': id }, { enabled: Boolean(id) });
+ * const details = q.data as PractitionerDetails | undefined;
+ *
+ * @public
+ */
+export function useCustomResource(
+  alias: string,
+  params?: Record<string, string | number | boolean | undefined>,
+  options?: { enabled?: boolean },
+): UseQueryResult<unknown> {
+  const client = useFhirClient();
+  return useQuery({
+    queryKey: ['custom', alias, params],
+    enabled: options?.enabled ?? true,
+    queryFn: async () => client.customGet(alias, params),
+  });
 }
 
 export function useCustomEndpoint(alias: string) {

@@ -11,7 +11,6 @@ import {
   commitBundle,
   useCustomEndpoint,
   useFhirClient,
-  useResource,
   useSearch,
   useStatusBar,
   useTranslation,
@@ -36,16 +35,11 @@ import {
 } from './userFormControls';
 import { type Option, referenceOptions } from './userFormOptions';
 import { todayIso, type UserFormErrors, validateUserForm } from './userFormSchema';
+import { usePractitionerDetails } from './usePractitionerDetails';
 
 interface SearchBundle {
   entry?: { resource?: Record<string, unknown> }[];
 }
-type PractitionerRoleRes = {
-  id?: string;
-  organization?: { reference?: string };
-  location?: { reference?: string }[];
-  code?: { coding?: { code?: string }[] }[];
-};
 
 function unique(values: string[]): string[] {
   return [...new Set(values)];
@@ -68,14 +62,16 @@ export function UserEditDrawer({
   const status = useStatusBar();
   const { put } = useCustomEndpoint('users');
 
-  const read = useResource('Practitioner', id);
-  const roleSearch = useSearch('PractitionerRole', { practitioner: `Practitioner/${id}`, _count: '50' });
-  const membershipSearch = useSearch('CareTeam', { participant: `Practitioner/${id}`, _count: '100' });
+  const {
+    practitioner,
+    roles,
+    careTeams,
+    isLoading,
+    error: loadError,
+  } = usePractitionerDetails(id);
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
   const locSearch = useSearch('Location', { _count: '500' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
-
-  const pract = read.data as Record<string, unknown> | undefined;
 
   const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
   const locOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
@@ -95,20 +91,13 @@ export function UserEditDrawer({
     return map;
   }, [careTeamSearch.data]);
 
-  const existingRoles = useMemo(
-    () => resourcesOf(roleSearch.data) as PractitionerRoleRes[],
-    [roleSearch.data],
-  );
   const existingRoleIds = useMemo(
-    () => existingRoles.map((r) => r.id).filter((x): x is string => Boolean(x)),
-    [existingRoles],
+    () => roles.map((r) => r.id).filter((x): x is string => Boolean(x)),
+    [roles],
   );
   const originalCareTeamIds = useMemo(
-    () =>
-      resourcesOf(membershipSearch.data)
-        .map((r) => (typeof r.id === 'string' ? r.id : ''))
-        .filter(Boolean),
-    [membershipSearch.data],
+    () => careTeams.map((ct) => ct.id).filter((x): x is string => Boolean(x)),
+    [careTeams],
   );
 
   const [given, setGiven] = useState('');
@@ -139,36 +128,35 @@ export function UserEditDrawer({
     submit();
   };
 
-  const relationsLoading = roleSearch.isLoading || membershipSearch.isLoading;
-
   // Populate the form once the practitioner and its relations have loaded.
   useEffect(() => {
-    if (hydrated || !pract || relationsLoading) return;
-    const name = (pract.name as { family?: string; given?: string[] }[] | undefined)?.[0];
-    const telecom = (pract.telecom as { system?: string; value?: string }[] | undefined) ?? [];
+    if (hydrated || !practitioner || isLoading) return;
+    const name = practitioner.name?.[0];
+    const telecom = practitioner.telecom ?? [];
     const email = telecom.find((c) => c.system === 'email')?.value ?? '';
-    const identifiers = (pract.identifier as { system?: string; value?: string }[] | undefined) ?? [];
     setGiven(name?.given?.join(' ') ?? '');
     setFamily(name?.family ?? '');
     setEmail(email);
     setOriginalUsername(usernameFromEmail(email));
     setPhone(telecom.find((c) => c.system === 'phone')?.value ?? '');
-    setGender(typeof pract.gender === 'string' ? pract.gender : '');
-    setDob(typeof pract.birthDate === 'string' ? pract.birthDate : '');
-    setNationalId(identifiers.find((i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM)?.value ?? '');
-    setStatusActive((pract.active as boolean | undefined) === false ? 'inactive' : 'active');
-    setRole(existingRoles[0]?.code?.[0]?.coding?.[0]?.code ?? '');
-    setOrgs(unique(existingRoles.map((r) => r.organization?.reference ?? '').filter(Boolean)));
+    setGender(practitioner.gender ?? '');
+    setDob(practitioner.birthDate ?? '');
+    setNationalId(
+      practitioner.identifier?.find((i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM)?.value ?? '',
+    );
+    setStatusActive(practitioner.active === false ? 'inactive' : 'active');
+    setRole(roles[0]?.code?.[0]?.coding?.[0]?.code ?? '');
+    setOrgs(unique(roles.map((r) => r.organization?.reference ?? '').filter(Boolean)));
     setLocations(
-      unique(existingRoles.flatMap((r) => (r.location ?? []).map((l) => l.reference ?? '')).filter(Boolean)),
+      unique(roles.flatMap((r) => (r.location ?? []).map((l) => l.reference ?? '')).filter(Boolean)),
     );
     setCareTeamIds(originalCareTeamIds);
     setHydrated(true);
-  }, [hydrated, pract, relationsLoading, existingRoles, originalCareTeamIds]);
+  }, [hydrated, practitioner, isLoading, roles, originalCareTeamIds]);
 
   const submit = (): void => {
     setError(null);
-    if (!pract) return;
+    if (!practitioner) return;
     const errors = validateUserForm(
       {
         givenName: given,
@@ -242,7 +230,7 @@ export function UserEditDrawer({
       <Button variant="outlined" type="button" onClick={onClose} disabled={submitting}>
         {t('cancel')}
       </Button>
-      <Button type="button" onClick={submit} loading={submitting} disabled={submitting || !pract}>
+      <Button type="button" onClick={submit} loading={submitting} disabled={submitting || !practitioner}>
         {t('save')}
       </Button>
     </div>
@@ -250,9 +238,13 @@ export function UserEditDrawer({
 
   return (
     <Drawer open onClose={onClose} title={t('pageUserEdit')} header={header} footer={footer}>
-      {read.isLoading || relationsLoading || !hydrated ? (
+      {isLoading || !hydrated ? (
         <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
-          {read.error ? <ErrorState description={toErrorMessage(read.error)} /> : <Spinner label={t('loading')} />}
+          {loadError ? (
+            <ErrorState description={toErrorMessage(loadError)} />
+          ) : (
+            <Spinner label={t('loading')} />
+          )}
         </div>
       ) : (
         <form className="ohs-detail-body" onSubmit={onFormSubmit}>
