@@ -53,7 +53,11 @@ const schedules: PortalExtension = {
 
 function renderHostAt(path: string) {
   window.history.pushState({}, '', path);
-  const host = createPortalHost({ defaults: testPortalDefaults, extensions: [schedules] });
+  const host = createPortalHost({
+    defaults: testPortalDefaults,
+    extensions: [schedules],
+    development: true,
+  });
   return render(<PortalHost host={host} />);
 }
 

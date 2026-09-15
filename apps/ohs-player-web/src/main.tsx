@@ -21,6 +21,7 @@ void loadPortalConfig().then(({ document: configDocument, error }) => {
     document: configDocument,
     extensions,
     routes: appRoutes,
+    development: import.meta.env.DEV,
   });
   if (error) host.portal.platform.onError?.(new Error(error));
 

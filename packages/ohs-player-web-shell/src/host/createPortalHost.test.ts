@@ -23,16 +23,16 @@ const appRoutes: PortalRoute[] = [{ id: 'users', path: '/users', load }];
 describe('createPortalHost', () => {
   it('resolves to the plain configuration when there are no extensions', () => {
     const document = { product: { name: 'County Health' } };
+    const host = createPortalHost({ defaults: testPortalDefaults, document, development: true });
 
-    expect(createPortalHost({ defaults: testPortalDefaults, document }).portal).toEqual(
-      resolvePortalConfig(testPortalDefaults, document),
-    );
+    expect(host.portal).toEqual(resolvePortalConfig(testPortalDefaults, document));
   });
 
   it("merges an extension's messages, flag defaults, permissions and endpoints", () => {
     const { platform } = createPortalHost({
       defaults: testPortalDefaults,
       extensions: [schedules],
+      development: true,
     }).portal;
 
     expect(platform.i18n?.messages).toMatchObject({ navSchedules: 'Schedules' });
@@ -45,6 +45,7 @@ describe('createPortalHost', () => {
     const { platform } = createPortalHost({
       defaults: testPortalDefaults,
       extensions: [schedules],
+      development: true,
     }).portal;
     const defaults = testPortalDefaults.platform;
 
@@ -63,6 +64,7 @@ describe('createPortalHost', () => {
         messages: { navSchedules: 'Rotas' },
       },
       extensions: [schedules],
+      development: true,
     }).portal;
 
     expect(platform.flags?.flags?.schedules).toBe(false);
@@ -74,6 +76,7 @@ describe('createPortalHost', () => {
     const { contributions } = createPortalHost({
       defaults: testPortalDefaults,
       extensions: [schedules],
+      development: true,
     });
 
     expect(contributions.questionnaires).toEqual({
@@ -86,6 +89,7 @@ describe('createPortalHost', () => {
       defaults: testPortalDefaults,
       extensions: [schedules],
       routes: appRoutes,
+      development: true,
     });
 
     expect(host.routes.map((route) => route.path)).toEqual(['/users', '/schedules']);
