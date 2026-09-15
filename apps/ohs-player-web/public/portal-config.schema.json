@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "product": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "fhirBaseUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fhirVersion": {
+      "type": "string",
+      "enum": [
+        "R4",
+        "R5",
+        "STU3"
+      ]
+    },
+    "oidcIssuer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "clientId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "brand": {
+      "type": "object",
+      "properties": {
+        "overrides": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "on-primary",
+              "primary-container",
+              "on-primary-container",
+              "secondary",
+              "on-secondary",
+              "secondary-container",
+              "on-secondary-container",
+              "tertiary",
+              "on-tertiary",
+              "error",
+              "on-error",
+              "error-container",
+              "on-error-container",
+              "surface",
+              "on-surface",
+              "on-surface-variant",
+              "surface-container-lowest",
+              "surface-container-low",
+              "surface-container",
+              "surface-container-high",
+              "surface-container-highest",
+              "surface-dim",
+              "surface-bright",
+              "outline",
+              "outline-variant",
+              "inverse-surface",
+              "inverse-on-surface",
+              "inverse-primary",
+              "scrim",
+              "shadow",
+              "success",
+              "success-container",
+              "on-success-container",
+              "warning",
+              "warning-container",
+              "on-warning-container",
+              "info",
+              "info-container",
+              "on-info-container"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "darkOverrides": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "on-primary",
+              "primary-container",
+              "on-primary-container",
+              "secondary",
+              "on-secondary",
+              "secondary-container",
+              "on-secondary-container",
+              "tertiary",
+              "on-tertiary",
+              "error",
+              "on-error",
+              "error-container",
+              "on-error-container",
+              "surface",
+              "on-surface",
+              "on-surface-variant",
+              "surface-container-lowest",
+              "surface-container-low",
+              "surface-container",
+              "surface-container-high",
+              "surface-container-highest",
+              "surface-dim",
+              "surface-bright",
+              "outline",
+              "outline-variant",
+              "inverse-surface",
+              "inverse-on-surface",
+              "inverse-primary",
+              "scrim",
+              "shadow",
+              "success",
+              "success-container",
+              "on-success-container",
+              "warning",
+              "warning-container",
+              "on-warning-container",
+              "info",
+              "info-container",
+              "on-info-container"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "flags": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "userMgmt",
+          "locationMgmt",
+          "careTeams",
+          "dashboard",
+          "orgMgmt",
+          "setupWizard",
+          "fhirViewer"
+        ]
+      },
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "navigation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "dashboard",
+              "users",
+              "locations",
+              "organizations",
+              "careTeams",
+              "fhirViewer",
+              "setup"
+            ]
+          },
+          "to": {
+            "type": "string",
+            "pattern": "^\\/.*"
+          },
+          "labelKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "requires": {
+            "type": "object",
+            "properties": {
+              "flag": {
+                "type": "string",
+                "enum": [
+                  "userMgmt",
+                  "locationMgmt",
+                  "careTeams",
+                  "dashboard",
+                  "orgMgmt",
+                  "setupWizard",
+                  "fhirViewer"
+                ]
+              },
+              "permission": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "to",
+          "labelKey",
+          "order"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "permissionMap": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "locale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "messages": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "customEndpoints": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^\\/.*"
+      }
+    },
+    "questionnaireVariant": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

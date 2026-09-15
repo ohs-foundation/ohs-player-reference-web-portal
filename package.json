@@ -16,6 +16,7 @@
     "contrast:check": "tsx scripts/check-contrast.mjs",
     "clean": "turbo run clean && rm -rf node_modules",
     "scheme:generate": "tsx scripts/generate-scheme.ts",
+    "config-schema:generate": "tsx scripts/generate-portal-config-schema.ts",
     "icons:generate": "tsx scripts/generate-icons.ts"
   },
   "devDependencies": {
