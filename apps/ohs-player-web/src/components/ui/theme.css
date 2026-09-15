@@ -27,10 +27,7 @@
 [data-ohs-root] {
   /* Neutral scale */
   /* Semantic colours beyond the managed set */
-  --ohs-color-border-secondary: #d4d4d4; /* Border/Secondary */
-  --ohs-color-border-tertiary: #b8b8b8; /* Border/Tertiary */
   --ohs-color-focus-ring-destructive: rgba(229, 0, 0, 0.28); /* Content/Negative at 28% */
-  --ohs-color-outline-variant: #cac4d0; /* M3 carry-over: chip + outline-button border */
   /* Location administrative-level badges (bg / border / text). Root uses the brand fill. */
   --ohs-color-level-root-bg: #094f9a;
   --ohs-color-level-root-border: #094f9a;
@@ -134,11 +131,11 @@
   box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
 }
 .ohs-formfield--disabled {
-  border-color: var(--ohs-color-border, #ededed);
+  border-color: var(--ohs-sys-color-outline-variant, #ededed);
 }
 .ohs-formfield--disabled .ohs-formfield__input,
 .ohs-formfield--disabled .ohs-formfield__label {
-  color: var(--ohs-color-border-tertiary, #b8b8b8);
+  color: var(--ohs-sys-color-outline-tertiary, #b8b8b8);
 }
 .ohs-formfield:has(:focus-visible) {
   box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(27, 110, 243, 0.28));
@@ -308,7 +305,7 @@
 .ohs-select-trigger--pill {
   height: 56px;
   border-width: 0.5px;
-  border-color: var(--ohs-color-border-tertiary, #b8b8b8);
+  border-color: var(--ohs-sys-color-outline-tertiary, #b8b8b8);
   border-radius: var(--ohs-radius-pill, 999px);
   padding: 0 var(--ohs-sys-spacing-6, 24px);
 }
@@ -330,7 +327,7 @@
   z-index: 80;
   overflow: hidden;
   background: var(--ohs-sys-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border, #cdd7e1);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #cdd7e1);
   border-radius: var(--ohs-radius-default, 8px);
   box-shadow: var(
     --ohs-sys-elevation-level2,
@@ -393,7 +390,7 @@
 /* Flush: embedded edge-to-edge in a Card, which supplies the perimeter. A single top border forms
    the divider under the card header. */
 .ohs-table-wrapper[data-flush='true'] {
-  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-top: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
 }
 .ohs-table-wrapper[data-flush='true'] .ohs-table {
   min-width: 0;
@@ -421,7 +418,7 @@
 /* Header is a fixed 56px band over a full-weight rule; data rows hug their content over a hairline. */
 .ohs-table thead th {
   height: 56px;
-  border-bottom: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-bottom: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   background: transparent;
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
@@ -432,7 +429,7 @@
 .ohs-table td {
   padding-top: calc(var(--ohs-sys-spacing-6, 24px) + var(--ohs-sys-density-scale, 0) * 2px);
   padding-bottom: calc(var(--ohs-sys-spacing-6, 24px) + var(--ohs-sys-density-scale, 0) * 2px);
-  border-bottom: 0.5px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-bottom: 0.5px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
 }
@@ -507,7 +504,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-radius-pill, 999px);
   background: var(--ohs-sys-color-surface, #fff);
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
@@ -643,7 +640,7 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--ohs-sys-color-surface, #fff);
-  border-left: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-left: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   box-shadow:
     0 0 6px 0 rgba(0, 0, 0, 0.08),
     0 8px 16px 0 rgba(0, 0, 0, 0.1);
@@ -701,7 +698,7 @@
   height: 104px;
   box-sizing: border-box;
   padding: 32px 40px;
-  border-bottom: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-bottom: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
 }
 .ohs-user-drawer__identity {
   display: flex;
@@ -731,7 +728,7 @@
   display: inline-block;
   margin-top: var(--ohs-sys-spacing-2, 8px);
   padding: 2px var(--ohs-sys-spacing-3, 12px);
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-radius-pill, 999px);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   color: var(--ohs-sys-color-on-surface-variant, #696969);
@@ -749,7 +746,7 @@
 }
 /* Panel corner, shared with the dashboard cards so a drawer section reads as the same kind of box. */
 .ohs-detail-section {
-  border: 2px solid var(--ohs-color-border, #ededed);
+  border: 2px solid var(--ohs-sys-color-outline-variant, #ededed);
   border-radius: var(--ohs-sys-shape-corner-extra-large-decreased, 24px);
   overflow: hidden;
 }
@@ -762,7 +759,7 @@
   box-sizing: border-box;
   padding: var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-8, 32px);
   background: var(--ohs-sys-color-surface-container, #fafafa);
-  border-bottom: 2px solid var(--ohs-color-border, #ededed);
+  border-bottom: 2px solid var(--ohs-sys-color-outline-variant, #ededed);
   cursor: pointer;
   list-style: none;
   font-size: var(--ohs-sys-typescale-title-large-size, 20px);
@@ -854,7 +851,7 @@
   padding: var(--ohs-sys-spacing-3, 12px) 0;
 }
 .ohs-detail-list .ohs-detail-rel + .ohs-detail-rel {
-  border-top: 1px solid var(--ohs-color-border, #ededed);
+  border-top: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
 }
 .ohs-detail-empty {
   color: var(--ohs-sys-color-on-surface-variant, #696969);
@@ -894,7 +891,7 @@
   height: 104px;
   box-sizing: border-box;
   padding: 32px 40px;
-  border-bottom: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-bottom: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
 }
 .ohs-form-drawer__title {
   margin: 0;
@@ -915,7 +912,7 @@
   box-sizing: border-box;
   padding: var(--ohs-sys-spacing-1, 4px) 0 var(--ohs-sys-spacing-1, 4px)
     var(--ohs-sys-spacing-4, 16px);
-  border: 1px solid var(--ohs-color-border-tertiary, #b8b8b8);
+  border: 1px solid var(--ohs-sys-color-outline-tertiary, #b8b8b8);
   border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
   background: var(--ohs-sys-color-surface, #fff);
 }
@@ -1111,7 +1108,7 @@
   list-style: none;
   overflow-y: auto;
   background: var(--ohs-sys-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border, #ededed);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
   border-radius: var(--ohs-sys-shape-corner-small, 8px);
   box-shadow:
     0 0 6px 0 rgba(0, 0, 0, 0.08),
@@ -1144,7 +1141,7 @@
   color: var(--ohs-sys-color-primary, #094f9a);
 }
 .ohs-listbox__option[aria-disabled='true'] {
-  color: var(--ohs-color-border-tertiary, #b8b8b8);
+  color: var(--ohs-sys-color-outline-tertiary, #b8b8b8);
   cursor: not-allowed;
 }
 .ohs-listbox__check {
@@ -1207,7 +1204,7 @@
   margin: 0;
   padding: var(--ohs-sys-spacing-1, 4px) 0;
   list-style: none;
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-sys-color-surface, #fff);
   box-shadow: var(
@@ -1292,7 +1289,7 @@
   height: 32px;
   box-sizing: border-box;
   padding: 6px var(--ohs-sys-spacing-2, 8px) 6px var(--ohs-sys-spacing-3, 12px);
-  border: 1px solid var(--ohs-color-outline-variant, #cac4d0);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #cac4d0);
   border-radius: var(--ohs-sys-shape-corner-small, 8px);
   background: transparent;
   font-size: var(--ohs-sys-typescale-label-medium-size, 14px);
@@ -1358,7 +1355,7 @@
   height: 32px;
   padding: 0 var(--ohs-sys-spacing-2, 8px) 0 var(--ohs-sys-spacing-4, 16px);
   background: transparent;
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-sys-shape-corner-small, 8px);
   color: var(--ohs-sys-color-on-surface-variant, #44474e);
   font-family: var(--ohs-sys-typescale-label-medium-font, inherit);
@@ -1461,7 +1458,7 @@
 .ohs-filter-chip__input {
   height: 40px;
   padding: 0 var(--ohs-sys-spacing-3, 12px);
-  border: 1px solid var(--ohs-color-border-tertiary, #b8b8b8);
+  border: 1px solid var(--ohs-sys-color-outline-tertiary, #b8b8b8);
   border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
   background: var(--ohs-sys-color-surface, #fff);
   color: var(--ohs-sys-color-on-surface, #1f2933);
@@ -1567,7 +1564,7 @@
 .ohs-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid var(--ohs-color-border, #cdd7e1);
+  border: 2px solid var(--ohs-sys-color-outline-variant, #cdd7e1);
   border-top-color: var(--ohs-sys-color-primary, #1b6ef3);
   border-radius: 50%;
   animation: ohs-spin 0.8s linear infinite;
@@ -1618,7 +1615,7 @@
 .ohs-dropdown-content,
 .ohs-tooltip-content {
   background: var(--ohs-sys-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border, #cdd7e1);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #cdd7e1);
   border-radius: var(--ohs-radius-sm, 8px);
   box-shadow: var(
     --ohs-sys-elevation-level2,
@@ -1663,7 +1660,7 @@
 .ohs-toast-root {
   position: relative;
   background: var(--ohs-sys-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border, #cdd7e1);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #cdd7e1);
   border-left: 4px solid var(--ohs-sys-color-primary, #1b6ef3);
   border-radius: var(--ohs-radius-sm, 8px);
   box-shadow: var(
@@ -1756,7 +1753,7 @@
   gap: var(--ohs-sys-spacing-4, 16px);
   width: 100%;
   padding: var(--ohs-sys-spacing-6, 24px);
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-sys-shape-corner-extra-large-decreased, 24px);
   background: var(--ohs-sys-color-surface, #fff);
   text-align: left;
@@ -1817,7 +1814,7 @@
   gap: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-4, 16px);
   margin-bottom: var(--ohs-sys-spacing-6, 24px);
   padding-bottom: var(--ohs-sys-spacing-6, 24px);
-  border-bottom: 1px solid var(--ohs-color-border, #ededed);
+  border-bottom: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
 }
 .ohs-wizard-stepper__item {
   display: inline-flex;
@@ -1842,7 +1839,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   background: var(--ohs-sys-color-surface, #fff);
 }
@@ -1871,7 +1868,7 @@
   grid-template-columns: minmax(120px, 40%) 1fr;
   gap: var(--ohs-sys-spacing-3, 12px);
   padding: var(--ohs-sys-spacing-3, 12px) 0;
-  border-bottom: 0.5px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-bottom: 0.5px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
 }
 .ohs-wizard-review__row:last-child {
   border-bottom: none;
@@ -1921,7 +1918,7 @@
   margin: 0 calc(-1 * var(--ohs-sys-spacing-8, 32px));
   padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-8, 32px);
   background: color-mix(in srgb, var(--ohs-sys-color-surface, #fff) 92%, transparent);
-  border-top: 1px solid var(--ohs-color-border, #ededed);
+  border-top: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
   backdrop-filter: blur(8px);
 }
 .ohs-setup-wizard__footer-nav {
@@ -1966,7 +1963,7 @@
 }
 .ohs-setup-form--panel {
   padding: var(--ohs-sys-spacing-8, 32px);
-  border: 1px solid var(--ohs-color-border, #ededed);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
   border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-sys-color-surface, #fff);
   box-sizing: border-box;
@@ -2008,7 +2005,7 @@
 
 .ohs-setup-draft-empty {
   padding: var(--ohs-sys-spacing-6, 24px);
-  border: 1px dashed var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px dashed var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-radius-default, 8px);
   text-align: center;
 }
@@ -2029,7 +2026,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--ohs-color-border, #ededed);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
   border-radius: var(--ohs-radius-default, 8px);
   overflow: hidden;
 }
@@ -2038,7 +2035,7 @@
   align-items: center;
   gap: var(--ohs-sys-spacing-3, 12px);
   padding: var(--ohs-sys-spacing-3, 12px) var(--ohs-sys-spacing-4, 16px);
-  border-bottom: 1px solid var(--ohs-color-border, #ededed);
+  border-bottom: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
   background: var(--ohs-sys-color-surface, #fff);
 }
 .ohs-setup-draft-list__item:last-child {
@@ -2094,7 +2091,7 @@
   flex-direction: column;
   gap: 2px;
   padding: var(--ohs-sys-spacing-4, 16px);
-  border: 1px solid var(--ohs-color-border, #ededed);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
   border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-sys-color-surface, #fff);
 }
@@ -2430,9 +2427,6 @@
    outside [data-ohs-root]); the [data-ohs-root] selector overrides the light static values it sets itself. */
 [data-theme='dark'],
 [data-theme='dark'] [data-ohs-root] {
-  --ohs-color-border-secondary: #4f4f4f; /* Border/Secondary (Neutral/700) */
-  --ohs-color-border-tertiary: #696969; /* Border/Tertiary (Neutral/600) */
-  --ohs-color-outline-variant: #4f4f4f;
   /* Location level badges — desaturated tints on dark so text stays legible. */
   --ohs-color-level-root-bg: #094f9a;
   --ohs-color-level-root-border: #3a7bc8;

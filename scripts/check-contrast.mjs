@@ -46,8 +46,8 @@ const LIGHT = {
   primaryContrast: '#FAFAFA',
   primaryContainer: '#DCE5FE',
   border: '#EDEDED',
-  borderSecondary: '#D4D4D4',
-  borderTertiary: '#B8B8B8',
+  borderSecondary: sys('light', 'outline-secondary'),
+  borderTertiary: sys('light', 'outline-tertiary'),
   error: '#B3261E',
   success: '#006E29',
 };
@@ -62,8 +62,8 @@ const DARK = {
   primaryContrast: '#003063',
   primaryContainer: '#04366D',
   border: '#363636',
-  borderSecondary: '#4F4F4F',
-  borderTertiary: '#696969',
+  borderSecondary: sys('dark', 'outline-secondary'),
+  borderTertiary: sys('dark', 'outline-tertiary'),
   error: '#FF8F8F',
   success: '#00E04B',
 };
@@ -341,19 +341,8 @@ const SOURCES = [
     'apps/ohs-player-web/src/components/ui/theme.css#light',
     'css',
     {
-      'color-border-secondary': LIGHT.borderSecondary,
-      'color-border-tertiary': LIGHT.borderTertiary,
-
       'color-level-subcounty-text': LIGHT_BADGES[3][1],
       'color-level-facility-text': LIGHT_BADGES[5][1],
-    },
-  ],
-  [
-    'apps/ohs-player-web/src/components/ui/theme.css#dark',
-    'css',
-    {
-      'color-border-secondary': DARK.borderSecondary,
-      'color-border-tertiary': DARK.borderTertiary,
     },
   ],
 ];

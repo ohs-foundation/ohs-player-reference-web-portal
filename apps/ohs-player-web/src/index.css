@@ -25,7 +25,7 @@ body {
   left: var(--ohs-sys-spacing-2, 8px);
   z-index: 100;
   padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-4, 16px);
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-radius-default, 8px);
   background: var(--ohs-sys-color-surface, #fff);
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
@@ -140,7 +140,7 @@ body {
   overflow-y: auto;
   padding: var(--ohs-sys-spacing-2, 8px);
   background: var(--ohs-sys-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-radius-default, 8px);
   box-shadow: var(
     --ohs-sys-elevation-level2,
@@ -158,7 +158,7 @@ body {
 .app-search__group + .app-search__group {
   margin-top: var(--ohs-sys-spacing-2, 8px);
   padding-top: var(--ohs-sys-spacing-2, 8px);
-  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-top: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
 }
 .app-search__group-title {
   margin: 0 0 var(--ohs-sys-spacing-1, 4px);
@@ -229,7 +229,7 @@ body {
   border-radius: var(--ohs-radius-sm, 6px);
 }
 .app-activity__item + .app-activity__item {
-  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-top: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
 }
 .app-activity__text {
   margin: 0;
@@ -391,7 +391,7 @@ body {
   overflow: auto;
   min-height: 0;
   margin: 0 var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-6, 24px) 0;
-  border-top: 0.5px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-top: 0.5px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-sys-shape-corner-extra-large, 28px);
   background: var(--ohs-sys-color-surface, #fff);
 }

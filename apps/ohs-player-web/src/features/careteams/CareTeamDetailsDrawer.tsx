@@ -155,7 +155,7 @@ export function CareTeamDetailsDrawer({
                       alignItems: 'center',
                       gap: 'var(--ohs-sys-spacing-3, 12px)',
                       padding: 'var(--ohs-sys-spacing-3, 12px) 0',
-                      borderBottom: i < members.length - 1 ? '1px solid var(--ohs-color-border, #ededed)' : 'none',
+                      borderBottom: i < members.length - 1 ? '1px solid var(--ohs-sys-color-outline-variant, #ededed)' : 'none',
                     }}
                   >
                     <Avatar name={m.name} size="sm" />

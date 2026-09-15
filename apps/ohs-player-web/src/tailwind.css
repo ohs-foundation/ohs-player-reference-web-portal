@@ -33,9 +33,9 @@
   --color-surface-container-high: var(--ohs-sys-color-surface-container-high);
   --color-text-muted: var(--ohs-sys-color-on-surface-variant);
   --color-text-quaternary: var(--ohs-sys-color-on-surface-variant);
-  --color-border: var(--ohs-color-border);
-  --color-border-secondary: var(--ohs-color-border-secondary);
-  --color-border-tertiary: var(--ohs-color-border-tertiary);
+  --color-border: var(--ohs-sys-color-outline-variant);
+  --color-border-secondary: var(--ohs-sys-color-outline-secondary);
+  --color-border-tertiary: var(--ohs-sys-color-outline-tertiary);
   --color-neutral-surface: var(--ohs-sys-color-surface-container-high);
   --color-focus: var(--ohs-color-focus-ring);
 
