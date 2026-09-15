@@ -20,7 +20,7 @@ Dependencies point one way. The library never imports the shell or an app, and t
 | --- | --- | --- |
 | Library | `packages/ohs-player-web-core` | Behaviour only: providers, auth, the FHIR client and hooks, RBAC, flags, i18n, the theme engine, audit, SDC, Radix wrappers, and the `ExtensionManifest` types. No routes and no presentational UI. |
 | Shell | `packages/ohs-player-web-shell` | The portal frame: the route table, layout, `ProtectedRoute`, the sign-in, logout, callback and unauthorized pages, the dashboard, global search, the activity feed, light and dark mode, the primitive kit and its CSS, the portal config resolver and context, the navigation defaults, and the extension host. |
-| App | `apps/ohs-player-web` | Its feature folders, `public/portal-config.json` and its schema, `config/env.ts`, `loadPortalConfig.ts`, its message catalogue, its theme pins (`sysTheme.ts`), its bundled questionnaires, and the list of extensions it installs. |
+| App | `apps/ohs-player-web`, `apps/ohs-player-web-example` | Its feature folders, `public/portal-config.json` and its schema, `config/env.ts`, `loadPortalConfig.ts`, its message catalogue, its theme pins (`sysTheme.ts`), its bundled questionnaires, and the list of extensions it installs. |
 
 ## `ohs-player-web-core`
 
@@ -53,7 +53,7 @@ Decisions of note: `outcome` is **not** recorded (the call rejects on failure, s
 
 ## `ohs-player-web-shell`
 
-- **Route table** — the sign-in, logout, callback and unauthorized pages, the dashboard at `/`, the host app's own routes, and extension routes, all under one portal frame. Every page is a `React.lazy` import, and the frame's outlet sits in `Suspense` with the `Spinner` primitive as its fallback. Each route is gated through `ProtectedRoute` from its `requires: { flag, permission }`.
+- **Route table** — the sign-in, logout, callback and unauthorized pages, the dashboard at `/`, the host app's own routes, and extension routes, all under one portal frame. Every page is a `React.lazy` import, and the frame's outlet sits in `Suspense` with the `Spinner` primitive as its fallback. Each route is gated through `ProtectedRoute` from its `requires: { flag, permission }`, in a fixed order: a switched-off flag renders nothing, then a signed-out visitor goes to sign-in, then the permission is checked.
 - **Primitive kit** — the presentational components in `src/components/ui/`, their icons and `cn`, exported from the package entry. The styles ship as source CSS: `ohs-player-web-shell/theme.css`, `ohs-player-web-shell/index.css` (the frame), and `ohs-player-web-shell/tailwind.css` (the utility-to-token bridge, which the host app compiles with its own Tailwind build).
 - **Configuration** — `resolvePortalConfig(defaults, document)` merges a configuration document over the host app's build-time values. `PortalConfigContext` and `usePortalConfig` expose the result, and `DEFAULT_NAVIGATION` is the sidebar a document can replace.
 
@@ -63,12 +63,16 @@ Decisions of note: `outcome` is **not** recorded (the call rejects on failure, s
 
 - **Merge order** is the app's defaults, then the extensions, then the configuration document. An extension cannot displace an app's message, flag, permission or endpoint alias, and a deployment can still override an extension's flag default, roles or copy.
 - **Namespacing.** Route, nav, widget and slot contribution ids become `<manifestId>.<id>`. Message keys, flags, permission keys and endpoint aliases stay flat.
-- **Startup validation.** A manifest fails when its id is taken, when it declares a key, id or route path another manifest or the host already declares, or when a `requires.permission` on one of its routes, nav entries or widgets is missing from the merged permission map. In development the error is thrown and the app does not render. In production it goes to the platform `onError` callback and that manifest is dropped, while the shell and every valid extension still render.
+- **Startup validation.** Each manifest first passes the library's `validateExtensionManifest`, with the shell's regions and slot names. It then fails when its id is taken, when it declares a key, id or route path another manifest or the host already declares, or when a `requires.permission` on one of its routes, nav entries or widgets is missing from the merged permission map. In development the error is thrown and the app does not render. In production it goes to the platform `onError` callback and that manifest is dropped, while the shell and every valid extension still render.
 - **Navigation.** Extension nav entries join the sidebar, sorted by `order` among the shell's entries, which are spaced ten apart.
 - **Dashboard regions.** `DashboardRegion` is `'kpi' | 'main' | 'side'`. The built-in cards sit at orders 10 to 40, and a `main` and a `side` widget with the same order share a row.
 - **Slots.** `Slot` renders the contributions registered for a slot name, in order, each given that slot's typed context. The first slot is `users.rowActions`, in the users table's row menu, with `{ practitioner }` as its context.
 - **Isolation.** Each widget and each slot contribution sits behind an error boundary. One that throws renders the `ErrorState` primitive in its own place and reports through `onError`, and the rest of the screen carries on.
 - **Questionnaires** an extension registers are kept under its manifest id and read with `useExtensionQuestionnaire(manifestId, key)`.
+
+## Example application
+
+[`apps/ohs-player-web-example`](../apps/ohs-player-web-example) is a second application built on the shell, and proves the extension model. It has its own configuration document (a teal brand pin, with Users listed before Dashboard), a trimmed copy of the reference app's env, loader and message catalogue, and one screen of its own: a users table whose row menu hosts the `users.rowActions` slot. Its `schedules` extension lives in `src/extensions/schedules` and uses every registration point. Outside that folder, its only change is its line in `src/extensions.ts`. See [EXTENDING.md](./EXTENDING.md).
 
 ## Reference application
 
