@@ -13,7 +13,7 @@ Evaluation order is **flag → authenticated user → permission**.
 
 ## 2. Override theme tokens
 
-Pass `theme` into `CorePlatformConfig` (from `platform.ts`). The reference app also supports `VITE_THEME_ALT=true` to load [`apps/ohs-player-web/src/theme/altTheme.ts`](apps/ohs-player-web/src/theme/altTheme.ts) (alternate branding). Theme values map to CSS variables such as `--ohs-color-primary`.
+Edit the `ThemeConfigV2` in [`apps/ohs-player-web/src/theme/sysTheme.ts`](../apps/ohs-player-web/src/theme/sysTheme.ts), which `main.tsx` passes to `installThemeCss` before render. Pins in `overrides` and `darkOverrides` map to CSS variables such as `--ohs-sys-color-primary`; feature colours go in `extraColors`. See [THEMING.md](./THEMING.md).
 
 ## 3. Register and call a custom gateway endpoint
 

@@ -14,13 +14,13 @@ flowchart LR
 
 ## `ohs-player-web-core`
 
-- **`CorePlatformProvider`** — Single composition root: TanStack Query, FHIR base URL, OIDC `AuthConfig`, optional `RbacConfig`, `FlagsConfig`, `I18nConfig`, `ThemeConfig`, `customEndpoints`, `onError`.
+- **`CorePlatformProvider`** — Single composition root: TanStack Query, FHIR base URL, OIDC `AuthConfig`, optional `RbacConfig`, `FlagsConfig`, `I18nConfig`, `customEndpoints`, `onError`.
 - **Auth** — `oidc-client-ts` `UserManager`, Authorization Code + PKCE, silent renew; `useAuth()` exposes login/logout/`handleRedirectCallback` for `/callback`.
 - **RBAC** — Roles from JWT (`claimPath`, default `roles`) mapped through host-supplied `permissionMap`; `usePermission`, `PermissionGuard`, `RoleGuard`.
 - **Feature flags** — Build-time booleans (`FlagsConfig.flags`), `useFlag`, `FeatureGuard`; evaluate **flag → auth → permission** when composing routes.
 - **FHIR** — `FhirClient` (fetch + 401 retry): CRUD, `transaction`, `capabilities`, **`postOperation`** for FHIR `$` operations (e.g. `Questionnaire/$extract`), plus `customGet` / `customPost` for gateway aliases. TanStack Query hooks: `useResource`, `useSearch`, `useCreateResource`, `useUpdateResource`, `useCustomEndpoint`, `useFhirCapabilities`.
 - **Structured Data Capture (SDC)** — Reusable Questionnaire capture: `QuestionnaireFields`, `QuestionnaireForm`, `useQuestionnaireFormState`, `buildQuestionnaireResponse`, `validateRequiredAnswers`, `formatQuestionnaireCanonical`, plus FHIR-lite types for `Questionnaire` / `QuestionnaireResponse`. Questionnaire **definitions** are expected to be supplied by the host app (bundled JSON); the core renders items and builds responses. See [CORE_PUBLIC_API.md](./CORE_PUBLIC_API.md).
-- **Theming** — Design tokens applied as CSS custom properties (`--ohs-*`) via `applyTheme()`; see **UI primitives & theming** below.
+- **Theming** — Design tokens emitted as one stylesheet of CSS custom properties (`--ohs-sys-*`, `--ohs-ref-*`) by `installThemeCss()`; see **UI primitives & theming** below and [THEMING.md](./THEMING.md).
 - **i18n** — Typed default English catalog; `useTranslation` with `{{interpolation}}`.
 - **Audit** — `writeAuditEvent()` creates `AuditEvent` resources for mutating flows. See [AuditEvent shape](#auditevent-shape) for the recorded fields and decisions.
 
@@ -59,7 +59,7 @@ Location and organization editing uses FHIR `Questionnaire` JSON **bundled in th
 
 ### Layer split
 
-- **Library (`ohs-player-web-core`)** ships only **behavior + Radix wrappers** and the theme engine — `OhsDialog`, `OhsDropdownMenu`, `OhsTabs`, `OhsToast`, `OhsTooltip`, `StatusBar`, the SDC `QuestionnaireForm`/`QuestionnaireFields`, and `applyTheme`/`mergeTheme`/`defaultTheme`. It does **not** export `Button`, `Card`, `TextField`, etc.
+- **Library (`ohs-player-web-core`)** ships only **behavior + Radix wrappers** and the theme engine — `OhsDialog`, `OhsDropdownMenu`, `OhsTabs`, `OhsToast`, `OhsTooltip`, `StatusBar`, the SDC `QuestionnaireForm`/`QuestionnaireFields`, and `themeCss`/`installThemeCss`. It does **not** export `Button`, `Card`, `TextField`, etc.
 - **App (`apps/ohs-player-web/src/components/ui/`)** owns the **presentational primitives**: `Button`, `Card`, `Field`/`TextField`/`SelectField`/`TextAreaField`, `DataTable`, `Drawer`, `Layout` (`Page`/`PageHeader`/`Stack`/`Inline`), `States` (`EmptyState`/`ErrorState`/`Spinner`/`LinearProgress`/`StatusBadge`), `Switch`, `Checkbox`, `Chips`, `DonutChart`.
 
 The library must never import from the app; feature code imports primitives from `'../../components/ui'`.
@@ -75,4 +75,4 @@ The library must never import from the app; feature code imports primitives from
 
 ### Theming
 
-`applyTheme(themeConfig, element)` sets the managed `--ohs-*` colour/typography/radius tokens as CSS custom properties on the element (the app applies it to `[data-ohs-root]` and to `<html>` so Radix portals inherit it). The remaining static tokens (neutral scale, secondary/tertiary borders, the granular type scale, dark-mode overrides) live in `apps/ohs-player-web/src/components/ui/theme.css`. Downstream consumers reskin by supplying a different `ThemeConfig` (see `lightTheme`/`darkTheme`/`altTheme` in the reference app; `VITE_THEME_ALT=true` swaps in the alternate theme) — **no component forking required**.
+`installThemeCss(themeConfigV2)` runs once in `main.tsx`, before render, and writes every `--ohs-sys-*` and `--ohs-ref-*` token as a single stylesheet on `:root`, so Radix portals rendered outside `[data-ohs-root]` inherit them. It carries both colour schemes; `ThemeModeProvider` switches between them by setting `data-theme` on `<html>`. Nothing else writes tokens, and `apps/ohs-player-web/src/components/ui/theme.css` only consumes them. Downstream consumers reskin by supplying a different `ThemeConfigV2` (see `sysTheme` in the reference app) — **no component forking required**. See [THEMING.md](./THEMING.md).

@@ -16,7 +16,7 @@ Types-only exports are listed under **Exported types**; runtime values are group
 
 ## Exported types (`./types/config` and `./sdc`)
 
-Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
+Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
 
 Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`, `SelectFieldOption`.
 
@@ -30,9 +30,9 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types โ
 
 | Export | Role |
 | --- | --- |
-| `CorePlatformProvider` | Top-level provider: composes QueryClient, OIDC `AuthProvider`, `CoreConfigProvider`, `FhirClientProvider`, `FlagsProvider`, `I18nProvider`, theme injection. Accepts `CorePlatformConfig`. |
+| `CorePlatformProvider` | Top-level provider: composes QueryClient, OIDC `AuthProvider`, `CoreConfigProvider`, `FhirClientProvider`, `FlagsProvider`, `I18nProvider`, and the `[data-ohs-root]` element the theme stylesheet scopes to. It writes no tokens; call `installThemeCss` before render. Accepts `CorePlatformConfig`. |
 | `AuthProvider` | OIDC session (`oidc-client-ts`), exposes auth API via context. |
-| `CoreConfigProvider` | Host config (`fhirBaseUrl`, RBAC, theme, flags, i18n, `customEndpoints`, `onError`). |
+| `CoreConfigProvider` | Host config (`fhirBaseUrl`, RBAC, flags, i18n, `customEndpoints`, `onError`). |
 | `FhirClientProvider` | Instantiates `FhirClient` from config + token accessor. |
 | `FlagsProvider` | Feature-flag booleans from `FlagsConfig`. |
 | `I18nProvider` | Locale + message catalog merge for `useTranslation`. |
@@ -91,28 +91,34 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types โ
 
 | Export | Description |
 | --- | --- |
-| `applyTheme(theme, element)` | Writes the legacy `--ohs-*` tokens as inline style properties (`ThemeConfig`). |
-| `defaultTheme` | Baseline theme object. |
-| `mergeTheme(base, patch)` | Deep-merge themes for overrides. |
-| `themeCss(config?)` | Serialises a `ThemeConfigV2` to a stylesheet: `:root` for light plus mode-independent tokens, `[data-theme='dark']` for the dark scheme. |
-| `installThemeCss(config?, doc?)` | Installs or replaces that stylesheet in `document.head`. Idempotent; call once at startup. |
-| `upgradeThemeConfig(v1)` | Maps a v1 `ThemeConfig`'s colours onto their `ThemeConfigV2` sys roles. |
+| `themeCss(config?)` | Serialises a `ThemeConfigV2` to a stylesheet: `:root` for light plus mode-independent tokens, `[data-theme='dark']` for the dark scheme, and `[data-density]` rules that scope `--ohs-sys-density-scale` to a subtree. |
+| `installThemeCss(config?, doc?)` | Installs or replaces that stylesheet in `document.head`. Idempotent; call once at startup, before render. |
 
-The two layers are disjoint by design: `applyTheme` owns the legacy `--ohs-color-*`/`--ohs-spacing-*`/`--ohs-radius-*`
-names as inline styles, `themeCss` owns `--ohs-sys-*` and `--ohs-ref-*` as CSS rules. Inline styles beat
-attribute selectors, so no token is emitted by both.
+`installThemeCss` is the only writer of tokens: nothing in the library sets `--ohs-*` properties inline,
+and `CorePlatformProvider` applies no theme. See [THEMING.md](./THEMING.md).
 
 Theme types: `ThemeConfigV2`, `SysColorRole`, `SysColorScheme`, `TypescaleRole`, `TypescaleMetrics`, `ShapeToken`.
 
 `TypescaleMetrics` carries an optional `letterSpacing` (emitted as
 `--ohs-sys-typescale-<role>-letter-spacing`, `normal` when unset). `TypescaleRole` adds
-`heading-{5xl,4xl,3xl,2xl,l}` and `text-{xl,xs,2xs}` for the scale steps M3 has no role for;
-`ShapeToken` adds `extra-large-decreased` (24px). All three additions are backwards-compatible.
+`heading-{5xl,4xl,3xl,2xl,xl,l}` and `text-{xl,l,xs,2xs}` for the scale steps M3 has no role for;
+`ShapeToken` adds `extra-large-decreased` (24px).
 
-**Removed** (were emitted by `applyTheme` but read by nothing): `ThemeShadow`, and `ThemeConfig`'s
-`shadow` and `spacing` fields; `ThemeColors.secondary`/`.warning`/`.info`. Spacing, elevation and the
-warning/info roles now come from `themeCss` as `--ohs-sys-spacing-*`, `--ohs-sys-elevation-*` and
-`--ohs-sys-color-{warning,info}*`. Consumers passing the removed fields should move to `ThemeConfigV2`.
+`SysColorRole` adds `primary-hover`, `on-surface-secondary`, `outline-secondary`, `outline-tertiary`,
+`focus-ring` and `focus-ring-error`. `ThemeConfigV2` adds `extraColors` (a light and a dark value per
+name, emitted as `--ohs-sys-color-<name>`) and `typography.monoFamily` (emitted as
+`--ohs-ref-typeface-mono`). `themeCss` also emits `--ohs-ref-typeface-weight-{regular,medium}`. These
+additions are backwards-compatible.
+
+**Removed:** `applyTheme`, `mergeTheme`, `defaultTheme`, `upgradeThemeConfig`, the `ThemeConfig` and
+`ThemeColors` types, and `CorePlatformConfig.theme`. They made up the inline legacy token layer, which
+is gone. Move a v1 config's values to `ThemeConfigV2` `overrides` and `darkOverrides` and call
+`installThemeCss` before render; THEMING.md ยง9 maps each v1 field and retired token name.
+
+**Removed earlier** (were emitted by `applyTheme` but read by nothing): `ThemeShadow`, and
+`ThemeConfig`'s `shadow` and `spacing` fields; `ThemeColors.secondary`/`.warning`/`.info`. Spacing,
+elevation and the warning/info roles come from `themeCss` as `--ohs-sys-spacing-*`,
+`--ohs-sys-elevation-*` and `--ohs-sys-color-{warning,info}*`.
 
 ---
 
