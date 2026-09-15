@@ -53,7 +53,6 @@ export interface PortalRoutesProps {
   layoutChildren?: ReactNode;
 }
 
-/** The shell's route table: sign-in pages, the dashboard, then `routes` under the portal frame. */
 export function PortalRoutes({
   routes,
   layoutChildren,
