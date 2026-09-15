@@ -1,12 +1,24 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { checkPortalConfigFile } from './portalConfigCheck';
 
 const appDir = path.dirname(fileURLToPath(import.meta.url));
 const coreRoot = path.resolve(appDir, '../../packages/ohs-player-web-core');
 const envDir = path.resolve(appDir, '../..');
+
+function portalConfigCheck(): Plugin {
+  return {
+    name: 'portal-config-check',
+    apply: 'build',
+    buildStart() {
+      const problem = checkPortalConfigFile();
+      if (problem) this.error(problem);
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, envDir, '');
@@ -17,7 +29,7 @@ export default defineConfig(({ mode }) => {
   return {
   // Load `.env` from the monorepo root (where QUICKSTART/`.env.example` live), not the app dir.
   envDir,
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), portalConfigCheck()],
   resolve: {
     alias: [
       // Workspace lib is consumed from source so dev/build work without a prebuilt `dist/` (see package `exports` pointing at dist).

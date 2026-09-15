@@ -29,33 +29,35 @@ import {
 import { Avatar, IconButton } from '../components/ui';
 import { NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useSignOut } from './useSignOut';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
 import { GlobalSearch } from '../features/search/GlobalSearch';
 import { NotificationsBell } from '../features/activity/NotificationsBell';
 import { useSetupWizardAutoRedirect } from '../features/setup-wizard/useSetupWizardAutoRedirect';
+import type { NavId } from '../config/navigation';
+import { usePortalConfig } from '../config/portalConfigContext';
 
 const ICON_SIZE = 20;
 
 interface NavItem {
   to: string;
   label: string;
-  permission: string;
+  permission?: string;
   flag?: string;
   LineIcon: IconComponent;
   FillIcon: IconComponent;
 }
 
-const NAV_DEFS = [
-  { to: '/', labelKey: 'navDashboard', permission: 'dashboard.view', flag: 'dashboard', LineIcon: IconDashboard, FillIcon: IconDashboardFill },
-  { to: '/users', labelKey: 'navUsers', permission: 'users.view', flag: 'userMgmt', LineIcon: IconUser, FillIcon: IconUserFill },
-  { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: IconMapPin, FillIcon: IconMapPinFill },
-  { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: IconBuilding, FillIcon: IconBuildingFill },
-  { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: IconTeam, FillIcon: IconTeamFill },
-  { to: '/resources', labelKey: 'navFhirViewer', permission: 'fhir-viewer.view', flag: 'fhirViewer', LineIcon: IconDatabase, FillIcon: IconDatabaseFill },
-  { to: '/setup', labelKey: 'navSetup', permission: 'setup.view', flag: 'setupWizard', LineIcon: IconMagic, FillIcon: IconMagicFill },
-] as const;
+const NAV_ICONS: Record<NavId, Pick<NavItem, 'LineIcon' | 'FillIcon'>> = {
+  dashboard: { LineIcon: IconDashboard, FillIcon: IconDashboardFill },
+  users: { LineIcon: IconUser, FillIcon: IconUserFill },
+  locations: { LineIcon: IconMapPin, FillIcon: IconMapPinFill },
+  organizations: { LineIcon: IconBuilding, FillIcon: IconBuildingFill },
+  careTeams: { LineIcon: IconTeam, FillIcon: IconTeamFill },
+  fhirViewer: { LineIcon: IconDatabase, FillIcon: IconDatabaseFill },
+  setup: { LineIcon: IconMagic, FillIcon: IconMagicFill },
+};
 
 export function AppLayout() {
   const auth = useAuth();
@@ -63,6 +65,8 @@ export function AppLayout() {
   const { t } = useTranslation();
   const onSignOut = useSignOut();
   const { mode, toggle } = useThemeMode();
+  const { navigation } = usePortalConfig();
+  const entries = useMemo(() => [...navigation].sort((a, b) => a.order - b.order), [navigation]);
   useSetupWizardAutoRedirect();
 
   if (auth.status !== 'authenticated') {
@@ -116,16 +120,15 @@ export function AppLayout() {
       <aside className="app-sidebar" aria-label="Primary navigation">
         <nav>
           <ul className="app-sidebar__list">
-            {NAV_DEFS.map((def) => (
+            {entries.map((entry) => (
               <NavRow
-                key={def.to}
+                key={entry.id}
                 item={{
-                  to: def.to,
-                  label: t(def.labelKey),
-                  permission: def.permission,
-                  flag: def.flag,
-                  LineIcon: def.LineIcon,
-                  FillIcon: def.FillIcon,
+                  to: entry.to,
+                  label: t(entry.labelKey),
+                  permission: entry.requires?.permission,
+                  flag: entry.requires?.flag,
+                  ...NAV_ICONS[entry.id],
                 }}
               />
             ))}
@@ -143,9 +146,10 @@ export function AppLayout() {
 function NavRow({ item }: Readonly<{ item: NavItem }>): React.ReactElement | null {
   const flagOn = useFlag(item.flag ?? '__always_on__');
   const enabled = item.flag ? flagOn : true;
-  const { can } = usePermission(item.permission);
+  const { can } = usePermission(item.permission ?? '__always_allowed__');
+  const permitted = item.permission ? can : true;
   const isActive = Boolean(useMatch({ path: item.to, end: item.to === '/' }));
-  if (!enabled || !can) return null;
+  if (!enabled || !permitted) return null;
 
   const Icon = isActive ? item.FillIcon : item.LineIcon;
 

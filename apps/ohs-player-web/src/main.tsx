@@ -2,7 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { installThemeCss } from 'ohs-player-web-core';
 import App from './App';
-import { sysTheme } from './theme/sysTheme';
+import { loadPortalConfig } from './config/loadPortalConfig';
+import { resolvePortalConfig } from './config/resolvePortalConfig';
 import '@fontsource/google-sans/400.css';
 import '@fontsource/google-sans/500.css';
 import '@fontsource/google-sans-code/400.css';
@@ -11,11 +12,16 @@ import './components/ui/theme.css';
 import './index.css';
 import './tailwind.css';
 
-// Before render, not in an effect: utilities and hand CSS read these tokens on the first paint.
-installThemeCss(sysTheme);
+void loadPortalConfig().then(({ document: configDocument, error }) => {
+  const portal = resolvePortalConfig(configDocument);
+  if (error) portal.platform.onError?.(new Error(error));
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+  // Before render, not in an effect: utilities and hand CSS read these tokens on the first paint.
+  installThemeCss(portal.theme);
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App portal={portal} configError={import.meta.env.DEV ? error : undefined} />
+    </StrictMode>,
+  );
+});

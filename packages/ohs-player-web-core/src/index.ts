@@ -24,6 +24,7 @@ export type {
   UsePermissionResult,
   UserProfile,
 } from './types/config';
+export type { PortalConfigDocument, PortalNavigationEntry } from './types/portalConfig';
 
 export { CorePlatformProvider } from './providers/CorePlatformProvider';
 export { AuthProvider, useAuth, useAuthContext } from './auth/AuthProvider';

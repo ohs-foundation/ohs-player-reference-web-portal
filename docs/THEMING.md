@@ -103,6 +103,11 @@ should be revisited.
 
 Dark `primary` needs no pin: generated primary tone 70 is exactly the `#7BACFD` the brand wants.
 
+A deployment can also set pins at runtime, without a rebuild, in the `brand` section of
+`public/portal-config.json` ([DEPLOYMENT.md](./DEPLOYMENT.md) section 4). The app merges them over
+these, role by role, before it installs the stylesheet. The reference document repeats these seventeen
+pins.
+
 **Pin as little as possible.** Every pin is a value that no longer moves when the seed changes, and a
 pair that must be contrast-checked by hand. Pin brand identity; let the generator handle the rest.
 

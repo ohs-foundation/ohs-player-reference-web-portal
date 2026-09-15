@@ -10,6 +10,7 @@ import {
 } from 'ohs-player-web-core';
 import type { Location } from '@medplum/fhirtypes';
 import { Button, Combobox, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
+import { usePortalConfig } from '../../config/portalConfigContext';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { toErrorMessage } from '../sdc/toErrorMessage';
@@ -59,7 +60,8 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const questionnaire = getBundledQuestionnaires().location;
+  const { questionnaireVariant } = usePortalConfig();
+  const questionnaire = getBundledQuestionnaires(questionnaireVariant).location;
 
   const initialAnswers = useMemo((): Record<string, string> | undefined => {
     if (!current) return undefined;
