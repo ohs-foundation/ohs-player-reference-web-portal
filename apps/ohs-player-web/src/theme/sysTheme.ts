@@ -1,19 +1,53 @@
 import type { ThemeConfigV2 } from 'ohs-player-web-core';
 
 const TYPEFACE = '"Google Sans", system-ui, -apple-system, sans-serif';
+const MONO_TYPEFACE = '"Google Sans Code", ui-monospace, "SF Mono", "Menlo", monospace';
 
 /** Brand pins over the generated scheme; every unpinned role takes its generated value. */
 export const sysTheme: ThemeConfigV2 = {
   overrides: {
     primary: '#094F9A',
+    'on-primary': '#FAFAFA',
     'primary-container': '#DCE5FE',
     'surface-container': '#FAFAFA',
     'on-surface': '#0D0D0D',
+    'on-surface-variant': '#696969',
+    'outline-variant': '#EDEDED',
+    error: '#E50000',
   },
   darkOverrides: {
+    'primary-container': '#04366D',
     surface: '#0D0D0D',
-    'on-surface': '#FAFAFA',
+    'surface-container': '#0D0D0D',
+    'surface-container-lowest': '#1A1A1A',
     'surface-container-low': '#1A1A1A',
+    'on-surface': '#FAFAFA',
+    'on-surface-variant': '#9E9E9E',
+    'outline-variant': '#363636',
+    error: '#FF8F8F',
   },
-  typography: { brandFamily: TYPEFACE, plainFamily: TYPEFACE },
+  extraColors: {
+    'level-root-bg': { light: '#094f9a', dark: '#094f9a' },
+    'level-root-border': { light: '#094f9a', dark: '#3a7bc8' },
+    'level-root-text': { light: '#fafafa', dark: '#fafafa' },
+    'level-country-bg': { light: '#ccd4ff', dark: 'rgba(153, 169, 255, 0.16)' },
+    'level-country-border': { light: '#99a9ff', dark: '#4d5fb3' },
+    'level-country-text': { light: '#001066', dark: '#b8c2ff' },
+    'level-county-bg': { light: '#dce5fe', dark: 'rgba(149, 181, 253, 0.16)' },
+    'level-county-border': { light: '#95b5fd', dark: '#3a6bb0' },
+    'level-county-text': { light: '#094f9a', dark: '#a9c5ff' },
+    'level-subcounty-bg': { light: '#ffeb99', dark: 'rgba(255, 219, 77, 0.16)' },
+    'level-subcounty-border': { light: '#ffdb4d', dark: '#99820d' },
+    'level-subcounty-text': { light: '#755d00', dark: '#ffdb4d' },
+    'level-ward-bg': { light: '#ededed', dark: 'rgba(255, 255, 255, 0.08)' },
+    'level-ward-border': { light: '#d4d4d4', dark: '#4f4f4f' },
+    'level-ward-text': { light: '#696969', dark: '#b8b8b8' },
+    'level-facility-bg': { light: '#b8ffcf', dark: 'rgba(41, 255, 112, 0.16)' },
+    'level-facility-border': { light: '#29ff70', dark: '#128a3c' },
+    'level-facility-text': { light: '#006e29', dark: '#29ff70' },
+    'level-unit-bg': { light: 'transparent', dark: 'transparent' },
+    'level-unit-border': { light: '#d4d4d4', dark: '#4f4f4f' },
+    'level-unit-text': { light: '#696969', dark: '#b8b8b8' },
+  },
+  typography: { brandFamily: TYPEFACE, plainFamily: TYPEFACE, monoFamily: MONO_TYPEFACE },
 };

@@ -7,12 +7,9 @@
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 /*
- * Token bridge — maps utility names to the `--ohs-*` design tokens. Utility names are stable; the
- * source they point at moves to `--ohs-sys-*` role by role, only once a role's value is identical to
- * the legacy token it replaces. Roles still on a legacy token are marked below with why.
+ * Token bridge — maps utility names to the `--ohs-*` design tokens. Utility names are stable.
  * NEVER hardcode hex/px here — every value points at a token (the portable contract).
- * MUST stay `@theme inline`: plain `@theme` resolves vars on :root, where the unmanaged
- * `--ohs-*` tokens don't exist, and those utilities silently compute to nothing.
+ * MUST stay `@theme inline`.
  */
 @theme inline {
   --color-primary: var(--ohs-sys-color-primary);
@@ -26,21 +23,17 @@
   --color-warning: var(--ohs-sys-color-warning);
   --color-positive: var(--ohs-sys-color-success);
   --color-positive-surface: var(--ohs-sys-color-success-container);
-
-  /* on-primary is #ffffff vs the brand #FAFAFA; awaiting design sign-off. */
-  --color-primary-contrast: var(--ohs-color-primary-contrast);
-  /* No sys role — M3 expresses hover as a state layer, not a colour. */
-  --color-primary-hover: var(--ohs-color-primary-hover);
+  --color-primary-contrast: var(--ohs-sys-color-on-primary);
+  --color-primary-hover: var(--ohs-sys-color-primary-hover);
   --color-surface-variant: var(--ohs-sys-color-surface-container-low);
   --color-surface-container-high: var(--ohs-sys-color-surface-container-high);
-  /* on-surface-variant and outline-variant are darker than these; a deliberate restyle, not a rename. */
-  --color-text-muted: var(--ohs-color-text-muted, #696969);
-  --color-text-quaternary: var(--ohs-color-text-muted, #696969);
-  --color-border: var(--ohs-color-border);
-  --color-border-secondary: var(--ohs-color-border-secondary);
-  --color-border-tertiary: var(--ohs-color-border-tertiary);
+  --color-text-muted: var(--ohs-sys-color-on-surface-variant);
+  --color-text-quaternary: var(--ohs-sys-color-on-surface-variant);
+  --color-border: var(--ohs-sys-color-outline-variant);
+  --color-border-secondary: var(--ohs-sys-color-outline-secondary);
+  --color-border-tertiary: var(--ohs-sys-color-outline-tertiary);
   --color-neutral-surface: var(--ohs-sys-color-surface-container-high);
-  --color-focus: var(--ohs-color-focus-ring);
+  --color-focus: var(--ohs-sys-color-focus-ring);
 
   /* `--radius` backs the bare `rounded` utility (v4). */
   --radius: var(--ohs-sys-shape-corner-small);
@@ -59,7 +52,7 @@
   --font-body: var(--ohs-ref-typeface-plain);
   /* Without this the `font-mono` utilities keep Tailwind's own stack, diverging from the token the
      hand-written CSS and the library's JSON viewer resolve. */
-  --font-mono: var(--ohs-font-mono);
+  --font-mono: var(--ohs-ref-typeface-mono);
 
   /* One 4px system: Tailwind's spacing scale and `--ohs-sys-spacing-*` share a base step. */
   --spacing: var(--ohs-sys-spacing-1);

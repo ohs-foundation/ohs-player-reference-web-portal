@@ -10,6 +10,7 @@ export type SysColorRole =
   | 'on-primary'
   | 'primary-container'
   | 'on-primary-container'
+  | 'primary-hover'
   | 'secondary'
   | 'on-secondary'
   | 'secondary-container'
@@ -23,6 +24,7 @@ export type SysColorRole =
   | 'surface'
   | 'on-surface'
   | 'on-surface-variant'
+  | 'on-surface-secondary'
   | 'surface-container-lowest'
   | 'surface-container-low'
   | 'surface-container'
@@ -32,6 +34,8 @@ export type SysColorRole =
   | 'surface-bright'
   | 'outline'
   | 'outline-variant'
+  | 'outline-secondary'
+  | 'outline-tertiary'
   | 'inverse-surface'
   | 'inverse-on-surface'
   | 'inverse-primary'
@@ -45,7 +49,9 @@ export type SysColorRole =
   | 'on-warning-container'
   | 'info'
   | 'info-container'
-  | 'on-info-container';
+  | 'on-info-container'
+  | 'focus-ring'
+  | 'focus-ring-error';
 
 /**
  * Typescale roles emitted as
@@ -68,8 +74,10 @@ export type TypescaleRole =
   | 'heading-4xl'
   | 'heading-3xl'
   | 'heading-2xl'
+  | 'heading-xl'
   | 'heading-l'
   | 'text-xl'
+  | 'text-l'
   | 'text-xs'
   | 'text-2xs';
 
@@ -108,6 +116,7 @@ const LIGHT_SCHEME: SysColorScheme = {
   'on-primary': '#ffffff',
   'primary-container': P.primary[90],
   'on-primary-container': P.primary[10],
+  'primary-hover': '#073c75',
   secondary: P.secondary[40],
   'on-secondary': '#ffffff',
   'secondary-container': P.secondary[90],
@@ -121,6 +130,7 @@ const LIGHT_SCHEME: SysColorScheme = {
   surface: '#ffffff',
   'on-surface': P.neutral[10],
   'on-surface-variant': P.neutralVariant[30],
+  'on-surface-secondary': '#363636',
   'surface-container-lowest': P.neutral[100],
   'surface-container-low': P.neutral[96],
   'surface-container': P.neutral[94],
@@ -130,6 +140,8 @@ const LIGHT_SCHEME: SysColorScheme = {
   'surface-bright': P.neutral[98],
   outline: P.neutralVariant[50],
   'outline-variant': P.neutralVariant[80],
+  'outline-secondary': '#d4d4d4',
+  'outline-tertiary': '#b8b8b8',
   'inverse-surface': P.neutral[20],
   'inverse-on-surface': P.neutral[96],
   'inverse-primary': P.primary[80],
@@ -144,6 +156,8 @@ const LIGHT_SCHEME: SysColorScheme = {
   info: P.primary[40],
   'info-container': P.primary[90],
   'on-info-container': P.primary[10],
+  'focus-ring': 'rgba(9, 79, 154, 0.28)',
+  'focus-ring-error': 'rgba(229, 0, 0, 0.28)',
 };
 
 /** Dark scheme; unpinned roles come from the generated palettes. */
@@ -152,6 +166,7 @@ const DARK_SCHEME: SysColorScheme = {
   'on-primary': P.primary[20],
   'primary-container': P.primary[30],
   'on-primary-container': P.primary[90],
+  'primary-hover': P.primary[80],
   secondary: P.secondary[80],
   'on-secondary': P.secondary[20],
   'secondary-container': P.secondary[30],
@@ -165,6 +180,7 @@ const DARK_SCHEME: SysColorScheme = {
   surface: P.neutral[10],
   'on-surface': P.neutral[90],
   'on-surface-variant': P.neutralVariant[80],
+  'on-surface-secondary': '#d4d4d4',
   'surface-container-lowest': P.neutral[4],
   'surface-container-low': P.neutral[10],
   'surface-container': P.neutral[12],
@@ -174,6 +190,8 @@ const DARK_SCHEME: SysColorScheme = {
   'surface-bright': P.neutral[24],
   outline: P.neutralVariant[60],
   'outline-variant': P.neutralVariant[30],
+  'outline-secondary': '#4f4f4f',
+  'outline-tertiary': '#696969',
   'inverse-surface': P.neutral[90],
   'inverse-on-surface': P.neutral[20],
   'inverse-primary': P.primary[40],
@@ -188,6 +206,8 @@ const DARK_SCHEME: SysColorScheme = {
   info: P.primary[70],
   'info-container': P.primary[30],
   'on-info-container': P.primary[90],
+  'focus-ring': 'rgba(31, 135, 252, 0.4)',
+  'focus-ring-error': 'rgba(229, 0, 0, 0.28)',
 };
 
 const TYPESCALE: Record<TypescaleRole, TypescaleMetrics> = {
@@ -205,8 +225,10 @@ const TYPESCALE: Record<TypescaleRole, TypescaleMetrics> = {
   'heading-4xl': { size: '64px', lineHeight: '72px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
   'heading-3xl': { size: '56px', lineHeight: '64px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
   'heading-2xl': { size: '48px', lineHeight: '64px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
+  'heading-xl': { size: '36px', lineHeight: '44px', weight: 500, letterSpacing: '-1px', typeface: 'brand' },
   'heading-l': { size: '32px', lineHeight: '40px', weight: 500, letterSpacing: '-1px', typeface: 'brand' },
   'text-xl': { size: '20px', lineHeight: '28px', weight: 400, letterSpacing: '-0.5px' },
+  'text-l': { size: '18px', lineHeight: '26px', weight: 400, letterSpacing: '-0.5px' },
   'text-xs': { size: '10px', lineHeight: '14px', weight: 400, letterSpacing: '-0.5px' },
   'text-2xs': { size: '8px', lineHeight: '12px', weight: 400, letterSpacing: '-0.5px' },
 };
@@ -250,6 +272,10 @@ const MOTION = {
   'easing-standard-accelerate': 'cubic-bezier(0.3, 0, 1, 1)',
 };
 
+const TYPEFACE_WEIGHT = {
+  regular: '400',
+  medium: '500',
+};
 
 const SPACING_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20];
 
@@ -259,7 +285,7 @@ export const sysShape = SHAPE;
 
 /** Mode-independent sys tokens: typescale, shape, state, elevation, motion, spacing. */
 export function staticSysTokens(
-  typography: { brandFamily: string; plainFamily: string },
+  typography: { brandFamily: string; plainFamily: string; monoFamily: string },
   typescale: Record<TypescaleRole, TypescaleMetrics> = TYPESCALE,
   shape: Record<ShapeToken, string> = SHAPE,
   density: 0 | -1 | -2 = 0,
@@ -267,8 +293,13 @@ export function staticSysTokens(
   const out: Record<string, string> = {
     '--ohs-ref-typeface-brand': typography.brandFamily,
     '--ohs-ref-typeface-plain': typography.plainFamily,
+    '--ohs-ref-typeface-mono': typography.monoFamily,
     '--ohs-sys-density-scale': String(density),
   };
+
+  for (const [weight, value] of Object.entries(TYPEFACE_WEIGHT)) {
+    out[`--ohs-ref-typeface-weight-${weight}`] = value;
+  }
 
   for (const [role, m] of Object.entries(typescale) as Array<[TypescaleRole, TypescaleMetrics]>) {
     const prefix = `--ohs-sys-typescale-${role}`;

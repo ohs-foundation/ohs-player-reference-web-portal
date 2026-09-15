@@ -43,46 +43,6 @@ export interface FlagsConfig {
   defaultValue?: boolean;
 }
 
-export interface ThemeColors {
-  primary?: string;
-  /** Hover/active state for primary surfaces. Material 3: a darker tone of primary. */
-  primaryHover?: string;
-  /** Foreground colour rendered on top of `primary` (M3 `onPrimary`). */
-  primaryContrast?: string;
-  /** Tonal container variant of primary (M3 `primaryContainer`). */
-  primaryContainer?: string;
-  /** Card/panel background (M3 `surface`). */
-  surface?: string;
-  /** Page-level background (M3 `surfaceVariant`). */
-  background?: string;
-  /** Default body text colour (M3 `onSurface`). */
-  text?: string;
-  /** Secondary/muted text colour (M3 `onSurfaceVariant`). */
-  textMuted?: string;
-  /** Borders, dividers, outlines (M3 `outline`). */
-  border?: string;
-  /** Focus-ring colour, typically a translucent primary. */
-  focusRing?: string;
-  error?: string;
-  success?: string;
-}
-
-export interface ThemeTypography {
-  fontFamily?: string;
-  headingFontFamily?: string;
-  baseFontSize?: number;
-}
-
-export interface ThemeBorderRadius {
-  default?: number;
-}
-
-export interface ThemeConfig {
-  colors?: ThemeColors;
-  typography?: ThemeTypography;
-  borderRadius?: ThemeBorderRadius;
-}
-
 export type MessageCatalog = Record<
   string,
   string | ((...args: unknown[]) => string)
@@ -103,7 +63,6 @@ export interface CorePlatformConfig {
   fhirVersion?: FhirVersion;
   auth: AuthConfig;
   rbac?: RbacConfig;
-  theme?: ThemeConfig;
   flags?: FlagsConfig;
   i18n?: I18nConfig;
   customEndpoints?: CustomEndpoints;

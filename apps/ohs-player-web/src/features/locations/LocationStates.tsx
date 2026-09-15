@@ -69,7 +69,7 @@ export function TruncatedNotice({
   return (
     <div
       role="status"
-      className="rounded border px-4 py-3 text-sm bg-[var(--ohs-color-level-subcounty-bg)] border-[var(--ohs-color-level-subcounty-border)] text-[var(--ohs-color-level-subcounty-text)]"
+      className="rounded border px-4 py-3 text-sm bg-[var(--ohs-sys-color-level-subcounty-bg)] border-[var(--ohs-sys-color-level-subcounty-border)] text-[var(--ohs-sys-color-level-subcounty-text)]"
     >
       {t('locationsTruncatedNotice', { count: nodeCount, builtAt: builtAtLabel })}
     </div>

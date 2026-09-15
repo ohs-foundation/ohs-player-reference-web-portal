@@ -7,10 +7,10 @@ body,
 }
 
 body {
-  background: var(--ohs-color-background, #f4f7fb);
-  color: var(--ohs-color-text, #1f2933);
-  font-family: var(--ohs-font-body, system-ui, sans-serif);
-  font-size: var(--ohs-font-size-base, 16px);
+  background: var(--ohs-sys-color-surface-container, #f4f7fb);
+  color: var(--ohs-sys-color-on-surface, #1f2933);
+  font-family: var(--ohs-ref-typeface-plain, system-ui, sans-serif);
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   /* Inherited: every step at or below 24px tracks -0.5px. Larger steps override at their own rule. */
@@ -25,13 +25,13 @@ body {
   left: var(--ohs-sys-spacing-2, 8px);
   z-index: 100;
   padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-4, 16px);
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
-  border-radius: var(--ohs-radius-default, 8px);
-  background: var(--ohs-color-surface, #fff);
-  color: var(--ohs-color-text, #0d0d0d);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
+  border-radius: var(--ohs-sys-shape-corner-small, 8px);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
-  font-weight: var(--ohs-font-weight-medium, 500);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
   text-decoration: none;
   transform: translateY(calc(-100% - var(--ohs-sys-spacing-4, 16px)));
   transition: transform 120ms ease;
@@ -49,7 +49,7 @@ body {
     'side main';
   grid-template-rows: auto 1fr;
   grid-template-columns: 134px minmax(0, 1fr);
-  background: var(--ohs-color-background, #fafafa);
+  background: var(--ohs-sys-color-surface-container, #fafafa);
 }
 
 .app-topbar {
@@ -80,8 +80,8 @@ body {
 }
 .app-topbar__title {
   font-weight: 600;
-  font-size: var(--ohs-text-title, 18px);
-  color: var(--ohs-color-text, #0d0d0d);
+  font-size: var(--ohs-sys-typescale-text-l-size, 18px);
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -93,7 +93,7 @@ body {
 }
 /* Notification bell */
 .app-topbar__bell {
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
 }
 .app-topbar__bell:hover {
   background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
@@ -139,9 +139,9 @@ body {
   max-height: min(60vh, 420px);
   overflow-y: auto;
   padding: var(--ohs-sys-spacing-2, 8px);
-  background: var(--ohs-color-surface, #fff);
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
-  border-radius: var(--ohs-radius-default, 8px);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
+  border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
+  border-radius: var(--ohs-sys-shape-corner-small, 8px);
   box-shadow: var(
     --ohs-sys-elevation-level2,
     0 4px 12px rgba(15, 23, 42, 0.08),
@@ -150,7 +150,7 @@ body {
 }
 .app-search__status {
   padding: var(--ohs-sys-spacing-3, 12px);
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   text-align: center;
   margin: 0;
@@ -158,14 +158,14 @@ body {
 .app-search__group + .app-search__group {
   margin-top: var(--ohs-sys-spacing-2, 8px);
   padding-top: var(--ohs-sys-spacing-2, 8px);
-  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-top: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
 }
 .app-search__group-title {
   margin: 0 0 var(--ohs-sys-spacing-1, 4px);
   padding: 0 var(--ohs-sys-spacing-2, 8px);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
-  font-weight: var(--ohs-font-weight-medium, 500);
-  color: var(--ohs-color-text-muted, #696969);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -178,10 +178,10 @@ body {
   padding: var(--ohs-sys-spacing-2, 8px);
   border: none;
   background: none;
-  border-radius: var(--ohs-radius-sm, 6px);
+  border-radius: var(--ohs-sys-shape-corner-extra-small, 6px);
   text-align: left;
   cursor: pointer;
-  color: var(--ohs-color-text, #0d0d0d);
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
 }
 .app-search__hit:hover,
 .app-search__hit:focus-visible {
@@ -198,7 +198,7 @@ body {
 }
 .app-search__hit-id {
   flex-shrink: 0;
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
 }
 
@@ -210,8 +210,8 @@ body {
 .app-activity__title {
   margin: 0;
   padding: var(--ohs-sys-spacing-2, 8px);
-  font-weight: var(--ohs-font-weight-medium, 500);
-  color: var(--ohs-color-text, #0d0d0d);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
 }
 .app-activity__list {
   max-height: min(60vh, 420px);
@@ -220,31 +220,31 @@ body {
 .app-activity__status {
   padding: var(--ohs-sys-spacing-4, 16px);
   text-align: center;
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   margin: 0;
 }
 .app-activity__item {
   padding: var(--ohs-sys-spacing-2, 8px);
-  border-radius: var(--ohs-radius-sm, 6px);
+  border-radius: var(--ohs-sys-shape-corner-extra-small, 6px);
 }
 .app-activity__item + .app-activity__item {
-  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-top: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
 }
 .app-activity__text {
   margin: 0;
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-  color: var(--ohs-color-text, #0d0d0d);
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
 }
 .app-activity__meta {
   margin: 2px 0 0;
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
 }
 .app-activity__desc {
   margin: 2px 0 0;
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
 }
 
 .app-topbar__user {
@@ -257,7 +257,7 @@ body {
   padding: 0 var(--ohs-sys-spacing-4, 16px) 0 var(--ohs-sys-spacing-2, 8px);
   margin: 0;
   border: 1px solid var(--ohs-sys-color-outline, #74777f);
-  border-radius: var(--ohs-radius-pill, 999px);
+  border-radius: var(--ohs-sys-shape-corner-full, 999px);
   background: transparent;
   font: inherit;
   color: inherit;
@@ -284,8 +284,8 @@ body {
 .app-topbar__user-name {
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
-  font-weight: var(--ohs-font-weight-medium, 500);
-  color: var(--ohs-color-text, #0d0d0d);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -294,7 +294,7 @@ body {
 .app-topbar__user-email-inline {
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -302,14 +302,14 @@ body {
 }
 .app-topbar__user-chevron {
   flex-shrink: 0;
-  color: var(--ohs-color-text-muted, #696969);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
 }
 
 .app-sidebar {
   grid-area: side;
   /* Brand + inverse for the active item; token-driven so it flips with light/dark. */
-  --sidebar-active-bg: var(--ohs-color-primary, #094f9a);
-  --sidebar-active-fg: var(--ohs-color-primary-contrast, #ffffff);
+  --sidebar-active-bg: var(--ohs-sys-color-primary, #094f9a);
+  --sidebar-active-fg: var(--ohs-sys-color-on-primary, #ffffff);
   display: flex;
   flex-direction: column;
   padding: var(--ohs-sys-spacing-12, 48px) var(--ohs-sys-spacing-6, 24px)
@@ -339,11 +339,11 @@ body {
   width: 100%;
   min-height: 72px;
   padding: 0;
-  color: var(--ohs-color-text-muted, #696969);
-  font-family: var(--ohs-font-body, 'Google Sans', sans-serif);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
+  font-family: var(--ohs-ref-typeface-plain, 'Google Sans', sans-serif);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
-  font-weight: var(--ohs-font-weight-medium, 500);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
   text-align: center;
   text-decoration: none;
   box-sizing: border-box;
@@ -362,11 +362,11 @@ body {
 .app-sidebar .app-sidebar__link:focus-visible {
   outline: none;
   border-radius: var(--ohs-sys-shape-corner-medium, 12px);
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(31, 111, 235, 0.35));
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(31, 111, 235, 0.35));
 }
 
 .app-sidebar .app-sidebar__link--active {
-  color: var(--ohs-color-text, #0d0d0d);
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
 }
 .app-sidebar .app-sidebar__link--active .app-sidebar__icon {
   background: var(--sidebar-active-bg);
@@ -380,7 +380,7 @@ body {
   flex-shrink: 0;
   width: 56px;
   height: 32px;
-  border-radius: var(--ohs-radius-pill, 999px);
+  border-radius: var(--ohs-sys-shape-corner-full, 999px);
   transition: background 120ms ease;
 }
 
@@ -391,9 +391,9 @@ body {
   overflow: auto;
   min-height: 0;
   margin: 0 var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-6, 24px) 0;
-  border-top: 0.5px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-top: 0.5px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-sys-shape-corner-extra-large, 28px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
 }
 
 /* Full-width main when no chrome (login / callback) */

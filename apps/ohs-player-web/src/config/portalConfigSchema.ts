@@ -16,6 +16,7 @@ export const SYS_COLOR_ROLES = [
   'on-primary',
   'primary-container',
   'on-primary-container',
+  'primary-hover',
   'secondary',
   'on-secondary',
   'secondary-container',
@@ -29,6 +30,7 @@ export const SYS_COLOR_ROLES = [
   'surface',
   'on-surface',
   'on-surface-variant',
+  'on-surface-secondary',
   'surface-container-lowest',
   'surface-container-low',
   'surface-container',
@@ -38,6 +40,8 @@ export const SYS_COLOR_ROLES = [
   'surface-bright',
   'outline',
   'outline-variant',
+  'outline-secondary',
+  'outline-tertiary',
   'inverse-surface',
   'inverse-on-surface',
   'inverse-primary',
@@ -52,6 +56,8 @@ export const SYS_COLOR_ROLES = [
   'info',
   'info-container',
   'on-info-container',
+  'focus-ring',
+  'focus-ring-error',
 ] as const;
 
 const colorPins = z.partialRecord(z.enum(SYS_COLOR_ROLES), z.string().min(1));

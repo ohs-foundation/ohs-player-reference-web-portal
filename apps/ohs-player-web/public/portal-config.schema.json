@@ -47,6 +47,7 @@
               "on-primary",
               "primary-container",
               "on-primary-container",
+              "primary-hover",
               "secondary",
               "on-secondary",
               "secondary-container",
@@ -60,6 +61,7 @@
               "surface",
               "on-surface",
               "on-surface-variant",
+              "on-surface-secondary",
               "surface-container-lowest",
               "surface-container-low",
               "surface-container",
@@ -69,6 +71,8 @@
               "surface-bright",
               "outline",
               "outline-variant",
+              "outline-secondary",
+              "outline-tertiary",
               "inverse-surface",
               "inverse-on-surface",
               "inverse-primary",
@@ -82,7 +86,9 @@
               "on-warning-container",
               "info",
               "info-container",
-              "on-info-container"
+              "on-info-container",
+              "focus-ring",
+              "focus-ring-error"
             ]
           },
           "additionalProperties": {
@@ -99,6 +105,7 @@
               "on-primary",
               "primary-container",
               "on-primary-container",
+              "primary-hover",
               "secondary",
               "on-secondary",
               "secondary-container",
@@ -112,6 +119,7 @@
               "surface",
               "on-surface",
               "on-surface-variant",
+              "on-surface-secondary",
               "surface-container-lowest",
               "surface-container-low",
               "surface-container",
@@ -121,6 +129,8 @@
               "surface-bright",
               "outline",
               "outline-variant",
+              "outline-secondary",
+              "outline-tertiary",
               "inverse-surface",
               "inverse-on-surface",
               "inverse-primary",
@@ -134,7 +144,9 @@
               "on-warning-container",
               "info",
               "info-container",
-              "on-info-container"
+              "on-info-container",
+              "focus-ring",
+              "focus-ring-error"
             ]
           },
           "additionalProperties": {

@@ -7,7 +7,7 @@ export const ADMIN_LEVEL_SYSTEM = 'http://ohs.dev/codes/administrative-level';
 export const LOCATION_PHYSICAL_TYPE_SYSTEM =
   'http://terminology.hl7.org/CodeSystem/location-physical-type';
 
-/** Maps to the `--ohs-color-level-*` tokens. Level comes from the inline `type` coding — never tree depth. */
+/** Maps to the `--ohs-sys-color-level-*` tokens. Level comes from the inline `type` coding — never tree depth. */
 export type LevelTone = 'root' | 'country' | 'county' | 'subcounty' | 'ward' | 'facility' | 'unit';
 
 interface LevelMeta {
