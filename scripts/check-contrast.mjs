@@ -36,7 +36,7 @@ const sys = (mode, role) => {
 };
 
 const scheme = (mode) => ({
-  surface: sys(mode, 'surface'),
+  surface: sys(mode, 'surface-container-lowest'),
   background: sys(mode, 'surface-container'),
   textMuted: sys(mode, 'on-surface-variant'),
   text: sys(mode, 'on-surface'),

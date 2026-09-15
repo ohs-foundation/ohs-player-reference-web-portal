@@ -17,8 +17,9 @@ export const sysTheme: ThemeConfigV2 = {
   },
   darkOverrides: {
     'primary-container': '#04366D',
-    surface: '#1A1A1A',
+    surface: '#0D0D0D',
     'surface-container': '#0D0D0D',
+    'surface-container-lowest': '#1A1A1A',
     'surface-container-low': '#1A1A1A',
     'on-surface': '#FAFAFA',
     'on-surface-variant': '#9E9E9E',

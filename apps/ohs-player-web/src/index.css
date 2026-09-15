@@ -27,7 +27,7 @@ body {
   padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-4, 16px);
   border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-sys-shape-corner-small, 8px);
-  background: var(--ohs-sys-color-surface, #fff);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
@@ -139,7 +139,7 @@ body {
   max-height: min(60vh, 420px);
   overflow-y: auto;
   padding: var(--ohs-sys-spacing-2, 8px);
-  background: var(--ohs-sys-color-surface, #fff);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
   border: 1px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-sys-shape-corner-small, 8px);
   box-shadow: var(
@@ -393,7 +393,7 @@ body {
   margin: 0 var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-6, 24px) 0;
   border-top: 0.5px solid var(--ohs-sys-color-outline-secondary, #d4d4d4);
   border-radius: var(--ohs-sys-shape-corner-extra-large, 28px);
-  background: var(--ohs-sys-color-surface, #fff);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
 }
 
 /* Full-width main when no chrome (login / callback) */

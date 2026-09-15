@@ -72,7 +72,7 @@ seed and that check is skipped, as it should be.
 
 ### What the reference app pins, and why
 
-Sixteen roles, all in `apps/ohs-player-web/src/theme/sysTheme.ts`. Everything else is generated.
+Seventeen roles, all in `apps/ohs-player-web/src/theme/sysTheme.ts`. Everything else is generated.
 
 | Scheme | Role | Pinned to | Why |
 | --- | --- | --- | --- |
@@ -85,17 +85,21 @@ Sixteen roles, all in `apps/ohs-player-web/src/theme/sysTheme.ts`. Everything el
 | light | `outline-variant` | `#EDEDED` | established card and table border; generated is `#c4c6cf` |
 | light | `error` | `#E50000` | established negative red; generated is `#ba1a1a` |
 | dark | `primary-container` | `#04366D` | brand; generated is `#00468c` |
-| dark | `surface` | `#1A1A1A` | card and drawer fill |
+| dark | `surface` | `#0D0D0D` | brand |
 | dark | `surface-container` | `#0D0D0D` | page |
+| dark | `surface-container-lowest` | `#1A1A1A` | drawer, dialog and panel fill; generated is `#0d0e11` |
 | dark | `surface-container-low` | `#1A1A1A` | brand card fill |
 | dark | `on-surface` | `#FAFAFA` | brand |
 | dark | `on-surface-variant` | `#9E9E9E` | established muted text; generated is `#c4c6cf` |
 | dark | `outline-variant` | `#363636` | established border; generated is `#44474e` |
 | dark | `error` | `#FF8F8F` | established negative red; generated is `#ffb4ab` |
 
-Ten of these (nine added, and dark `surface` moved from `#0D0D0D`) hold the values the retired legacy
-tokens rendered, so moving every reference onto the sys layer changed nothing on screen. Aligning the
-palette to the Figma tokens is where most of them should be revisited.
+Ten of these hold the values the retired legacy tokens rendered, so moving every reference onto the
+sys layer changed nothing on screen. The retired `--ohs-color-surface` moved to
+`surface-container-lowest` rather than `surface`, because in dark mode the two had diverged: the
+Tailwind cards and controls paint `surface` (`#0D0D0D`) while drawers, dialogs and panels painted the
+legacy `#1A1A1A`. Aligning the palette to the Figma tokens is where most of these pins, and that split,
+should be revisited.
 
 Dark `primary` needs no pin: generated primary tone 70 is exactly the `#7BACFD` the brand wants.
 
@@ -273,7 +277,7 @@ and every name below is gone from source. A test fails if any returns.
 | --- | --- |
 | `--ohs-color-primary`, `-primary-container`, `-primary-hover` | `--ohs-sys-color-primary`, `-primary-container`, `-primary-hover` |
 | `--ohs-color-primary-contrast` | `--ohs-sys-color-on-primary` |
-| `--ohs-color-surface`, `--ohs-color-background` | `--ohs-sys-color-surface`, `--ohs-sys-color-surface-container` |
+| `--ohs-color-surface`, `--ohs-color-background` | `--ohs-sys-color-surface-container-lowest`, `--ohs-sys-color-surface-container` |
 | `--ohs-color-text`, `-text-muted`, `-text-secondary` | `--ohs-sys-color-on-surface`, `-on-surface-variant`, `-on-surface-secondary` |
 | `--ohs-color-on-surface-variant` | `--ohs-sys-color-on-surface-variant` |
 | `--ohs-color-border`, `-border-secondary`, `-border-tertiary` | `--ohs-sys-color-outline-variant`, `-outline-secondary`, `-outline-tertiary` |
@@ -306,7 +310,7 @@ and calls `installThemeCss` once before render. Put light values in `overrides` 
 | --- | --- |
 | `colors.primary`, `.primaryHover`, `.primaryContainer` | `primary`, `primary-hover`, `primary-container` |
 | `colors.primaryContrast` | `on-primary` |
-| `colors.surface`, `.background` | `surface`, `surface-container` |
+| `colors.surface`, `.background` | `surface-container-lowest`, `surface-container` |
 | `colors.text`, `.textMuted` | `on-surface`, `on-surface-variant` |
 | `colors.border` | `outline-variant` |
 | `colors.focusRing` | `focus-ring` |
