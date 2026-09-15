@@ -7,12 +7,9 @@
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 /*
- * Token bridge — maps utility names to the `--ohs-*` design tokens. Utility names are stable; the
- * source they point at moves to `--ohs-sys-*` role by role, only once a role's value is identical to
- * the legacy token it replaces. Roles still on a legacy token are marked below with why.
+ * Token bridge — maps utility names to the `--ohs-*` design tokens. Utility names are stable.
  * NEVER hardcode hex/px here — every value points at a token (the portable contract).
- * MUST stay `@theme inline`: plain `@theme` resolves vars on :root, where the unmanaged
- * `--ohs-*` tokens don't exist, and those utilities silently compute to nothing.
+ * MUST stay `@theme inline`.
  */
 @theme inline {
   --color-primary: var(--ohs-sys-color-primary);
@@ -26,7 +23,6 @@
   --color-warning: var(--ohs-sys-color-warning);
   --color-positive: var(--ohs-sys-color-success);
   --color-positive-surface: var(--ohs-sys-color-success-container);
-
   --color-primary-contrast: var(--ohs-sys-color-on-primary);
   --color-primary-hover: var(--ohs-sys-color-primary-hover);
   --color-surface-variant: var(--ohs-sys-color-surface-container-low);
