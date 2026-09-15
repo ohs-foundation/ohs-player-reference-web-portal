@@ -19,6 +19,7 @@ export const appMessageOverrides = {
   navToggle: 'Toggle navigation',
   skipToContent: 'Skip to main content',
   appTopbarTitle: 'Open Health Stack',
+  configDocumentInvalid: 'The configuration document is invalid, so the app is using its built-in settings.',
   globalSearch: 'Global Search',
   searchNoResults: 'No matches found.',
   notifications: 'Notifications',

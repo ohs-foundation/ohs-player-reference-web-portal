@@ -2,7 +2,6 @@ import locationQuestionnaire from './location.questionnaire.json';
 import careTeamQuestionnaire from './careteam.questionnaire.json';
 import userQuestionnaire from './user.questionnaire.json';
 import userEditQuestionnaire from './user-edit.questionnaire.json';
-import { env } from '../config/env';
 
 /** Canonical URLs — keep in sync with bundled JSON `url` fields. */
 export const LOCATION_QUESTIONNAIRE_CANONICAL =
@@ -25,12 +24,12 @@ const variants = {
 
 export type QuestionnaireVariant = keyof typeof variants;
 
-export function getQuestionnaireVariant(): QuestionnaireVariant {
-  const v = env.questionnaireVariant as QuestionnaireVariant | undefined;
+export function getQuestionnaireVariant(requested?: string): QuestionnaireVariant {
+  const v = requested as QuestionnaireVariant | undefined;
   if (v && v in variants) return v;
   return 'default';
 }
 
-export function getBundledQuestionnaires(): (typeof variants)['default'] {
-  return variants[getQuestionnaireVariant()];
+export function getBundledQuestionnaires(requested?: string): (typeof variants)['default'] {
+  return variants[getQuestionnaireVariant(requested)];
 }
