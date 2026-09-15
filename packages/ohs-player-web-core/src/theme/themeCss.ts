@@ -19,6 +19,7 @@ export interface ThemeConfigV2 {
   /** Role pins that win over the generated palette values. */
   overrides?: Partial<Record<SysColorRole, string>>;
   darkOverrides?: Partial<Record<SysColorRole, string>>;
+  extraColors?: Record<string, { light: string; dark: string }>;
   typography?: {
     brandFamily?: string;
     plainFamily?: string;
@@ -60,6 +61,15 @@ export function upgradeThemeConfig(v1: ThemeConfig): ThemeConfigV2 {
   };
 }
 
+function extraColorTokens(
+  colors: ThemeConfigV2['extraColors'] = {},
+  mode: 'light' | 'dark',
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [name, values] of Object.entries(colors)) out[`--ohs-sys-color-${name}`] = values[mode];
+  return out;
+}
+
 function declarations(tokens: Record<string, string>, indent = '  '): string {
   return Object.entries(tokens)
     .map(([name, value]) => `${indent}${name}: ${value};`)
@@ -89,8 +99,12 @@ export function themeCss(config: ThemeConfigV2 = {}): string {
   const light = {
     ...staticSysTokens(typography, scale, shape, config.density ?? 0),
     ...sysColorTokens('light', config.overrides),
+    ...extraColorTokens(config.extraColors, 'light'),
   };
-  const dark = sysColorTokens('dark', config.darkOverrides);
+  const dark = {
+    ...sysColorTokens('dark', config.darkOverrides),
+    ...extraColorTokens(config.extraColors, 'dark'),
+  };
 
   return [
     ':root,',

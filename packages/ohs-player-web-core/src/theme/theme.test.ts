@@ -79,6 +79,14 @@ describe('themeCss', () => {
     expect(refPalettes.primary[40]).not.toBe('#094F9A');
   });
 
+  it('emits extra colours as sys colour tokens in each scheme', () => {
+    const css = themeCss({
+      extraColors: { 'level-root-bg': { light: '#094f9a', dark: '#0a2540' } },
+    });
+    expect(varsOf(css, ':root,')['--ohs-sys-color-level-root-bg']).toBe('#094f9a');
+    expect(varsOf(css, "[data-theme='dark'],")['--ohs-sys-color-level-root-bg']).toBe('#0a2540');
+  });
+
   it('emits typescale, shape, state, elevation and motion tokens', () => {
     const light = varsOf(themeCss(), ':root,');
     expect(light['--ohs-sys-typescale-display-small-size']).toBe('40px');
