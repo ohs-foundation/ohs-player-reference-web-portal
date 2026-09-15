@@ -2,17 +2,17 @@ import { useTranslation } from 'ohs-player-web-core';
 import type { LevelTone } from './locationLevel';
 
 const TONE_STYLE: Record<LevelTone, string> = {
-  root: 'bg-[var(--ohs-color-level-root-bg)] border-[var(--ohs-color-level-root-border)] text-[var(--ohs-color-level-root-text)]',
+  root: 'bg-[var(--ohs-sys-color-level-root-bg)] border-[var(--ohs-sys-color-level-root-border)] text-[var(--ohs-sys-color-level-root-text)]',
   country:
-    'bg-[var(--ohs-color-level-country-bg)] border-[var(--ohs-color-level-country-border)] text-[var(--ohs-color-level-country-text)]',
+    'bg-[var(--ohs-sys-color-level-country-bg)] border-[var(--ohs-sys-color-level-country-border)] text-[var(--ohs-sys-color-level-country-text)]',
   county:
-    'bg-[var(--ohs-color-level-county-bg)] border-[var(--ohs-color-level-county-border)] text-[var(--ohs-color-level-county-text)]',
+    'bg-[var(--ohs-sys-color-level-county-bg)] border-[var(--ohs-sys-color-level-county-border)] text-[var(--ohs-sys-color-level-county-text)]',
   subcounty:
-    'bg-[var(--ohs-color-level-subcounty-bg)] border-[var(--ohs-color-level-subcounty-border)] text-[var(--ohs-color-level-subcounty-text)]',
-  ward: 'bg-[var(--ohs-color-level-ward-bg)] border-[var(--ohs-color-level-ward-border)] text-[var(--ohs-color-level-ward-text)]',
+    'bg-[var(--ohs-sys-color-level-subcounty-bg)] border-[var(--ohs-sys-color-level-subcounty-border)] text-[var(--ohs-sys-color-level-subcounty-text)]',
+  ward: 'bg-[var(--ohs-sys-color-level-ward-bg)] border-[var(--ohs-sys-color-level-ward-border)] text-[var(--ohs-sys-color-level-ward-text)]',
   facility:
-    'bg-[var(--ohs-color-level-facility-bg)] border-[var(--ohs-color-level-facility-border)] text-[var(--ohs-color-level-facility-text)]',
-  unit: 'bg-[var(--ohs-color-level-unit-bg)] border-[var(--ohs-color-level-unit-border)] text-[var(--ohs-color-level-unit-text)]',
+    'bg-[var(--ohs-sys-color-level-facility-bg)] border-[var(--ohs-sys-color-level-facility-border)] text-[var(--ohs-sys-color-level-facility-text)]',
+  unit: 'bg-[var(--ohs-sys-color-level-unit-bg)] border-[var(--ohs-sys-color-level-unit-border)] text-[var(--ohs-sys-color-level-unit-text)]',
 };
 
 export interface LocationLevelBadgeProps {

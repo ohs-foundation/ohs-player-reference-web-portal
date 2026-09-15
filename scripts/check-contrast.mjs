@@ -68,26 +68,16 @@ const DARK = {
   success: '#00E04B',
 };
 
-/** Location administrative-level badges: [name, text, background] per mode. */
-const LIGHT_BADGES = [
-  ['root', '#FAFAFA', '#094F9A'],
-  ['country', '#001066', '#CCD4FF'],
-  ['county', '#094F9A', '#DCE5FE'],
-  ['subcounty', '#755D00', '#FFEB99'],
-  ['ward', '#696969', '#EDEDED'],
-  ['facility', '#006E29', '#B8FFCF'],
-  ['unit', '#696969', LIGHT.surface],
-];
+const BADGE_LEVELS = ['root', 'country', 'county', 'subcounty', 'ward', 'facility', 'unit'];
 
-const DARK_BADGES = [
-  ['root', '#FAFAFA', '#094F9A'],
-  ['country', '#B8C2FF', 'rgba(153, 169, 255, 0.16)'],
-  ['county', '#A9C5FF', 'rgba(149, 181, 253, 0.16)'],
-  ['subcounty', '#FFDB4D', 'rgba(255, 219, 77, 0.16)'],
-  ['ward', '#B8B8B8', 'rgba(255, 255, 255, 0.08)'],
-  ['facility', '#29FF70', 'rgba(41, 255, 112, 0.16)'],
-  ['unit', '#B8B8B8', 'rgba(255, 255, 255, 0.08)'],
-];
+const badges = (mode, surface) =>
+  BADGE_LEVELS.map((name) => {
+    const bg = sys(mode, `level-${name}-bg`);
+    return [name, sys(mode, `level-${name}-text`), bg === 'transparent' ? surface : bg];
+  });
+
+const LIGHT_BADGES = badges('light', LIGHT.surface);
+const DARK_BADGES = badges('dark', DARK.surface);
 
 /** StatusBadge warning tint is a hardcoded rgba in States.tsx. */
 const WARNING_TINT = 'rgba(224, 140, 0, 0.14)';
@@ -335,14 +325,6 @@ const SOURCES = [
       error: DARK.error,
      
       success: DARK.success,
-    },
-  ],
-  [
-    'apps/ohs-player-web/src/components/ui/theme.css#light',
-    'css',
-    {
-      'color-level-subcounty-text': LIGHT_BADGES[3][1],
-      'color-level-facility-text': LIGHT_BADGES[5][1],
     },
   ],
 ];
