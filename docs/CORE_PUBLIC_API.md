@@ -14,9 +14,11 @@ Types-only exports are listed under **Exported types**; runtime values are group
 
 ---
 
-## Exported types (`./types/config` and `./sdc`)
+## Exported types (`./types/config`, `./types/portalConfig` and `./sdc`)
 
 Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
+
+Runtime configuration document: `PortalConfigDocument`, `PortalNavigationEntry`. These describe the JSON document a deployment serves next to the bundle, holding product identity, connection settings, brand pins, flags, navigation, the permission map, locale and messages, custom endpoint aliases and the questionnaire variant. Every field is optional, and the host app falls back to its build-time values for any field left out. They are types only; the library ships no validator, and the host app validates the document ([DEPLOYMENT.md](./DEPLOYMENT.md)).
 
 Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`, `SelectFieldOption`.
 
