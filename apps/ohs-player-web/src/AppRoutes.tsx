@@ -1,12 +1,16 @@
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useTranslation } from 'ohs-player-web-core';
-import { Page, PageHeader } from 'ohs-player-web-shell';
-import { ProtectedRoute } from './auth/ProtectedRoute';
+import {
+  Page,
+  PageHeader,
+  ProtectedRoute,
+  CallbackPage,
+  LoginPage,
+  LogoutPage,
+  UnauthorizedPage,
+} from 'ohs-player-web-shell';
 import { AppLayout } from './layout/AppLayout';
-import { CallbackPage } from './pages/CallbackPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { LoginPage } from './pages/LoginPage';
-import { LogoutPage } from './pages/LogoutPage';
 import { UsersPage } from './features/users/UsersPage';
 import { LocationsPage } from './features/locations/LocationsPage';
 import { LocationsNoAccess } from './features/locations/LocationsNoAccess';
@@ -14,7 +18,6 @@ import { OrganizationsPage } from './features/organizations/OrganizationsPage';
 import { CareTeamsPage } from './features/careteams/CareTeamsPage';
 import { SetupWizardPage } from './features/setup-wizard/SetupWizardPage';
 import { FhirViewerPage } from './features/fhir-viewer/FhirViewerPage';
-import { UnauthorizedPage } from './pages/UnauthorizedPage';
 
 function OrganizationsPermissionFallback() {
   const { t } = useTranslation();

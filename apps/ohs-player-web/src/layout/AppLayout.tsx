@@ -27,11 +27,11 @@ import {
   type IconComponent,
   Avatar,
   IconButton,
+  BrandMark,
 } from 'ohs-player-web-shell';
 import { NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useSignOut } from './useSignOut';
 import { useMemo, useState } from 'react';
-import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
 import { GlobalSearch } from '../features/search/GlobalSearch';
 import { NotificationsBell } from '../features/activity/NotificationsBell';

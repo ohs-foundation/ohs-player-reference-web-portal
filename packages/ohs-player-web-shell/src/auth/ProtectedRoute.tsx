@@ -4,7 +4,7 @@ import {
   useAuth,
   useTranslation,
 } from 'ohs-player-web-core';
-import { Page, Spinner } from 'ohs-player-web-shell';
+import { Page, Spinner } from '../components/ui';
 import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 

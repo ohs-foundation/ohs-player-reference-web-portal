@@ -3,13 +3,13 @@ import { act } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CorePlatformProvider } from 'ohs-player-web-core';
-import { platformConfig } from '../config/platform';
+import { testPlatformConfig } from '../test/testPlatformConfig';
 import { LOGOUT_REDIRECT_MS, LogoutPage } from './LogoutPage';
 
 function renderLogout(state?: { signingOut: boolean }) {
   return render(
     <MemoryRouter initialEntries={[{ pathname: '/logout', state }]}>
-      <CorePlatformProvider config={platformConfig}>
+      <CorePlatformProvider config={testPlatformConfig}>
         <Routes>
           <Route path="/logout" element={<LogoutPage />} />
           <Route path="/login" element={<div>login page</div>} />

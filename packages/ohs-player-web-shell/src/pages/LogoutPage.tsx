@@ -1,7 +1,7 @@
 import { useTranslation } from 'ohs-player-web-core';
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Card, Stack } from 'ohs-player-web-shell';
+import { Card, Stack } from '../components/ui';
 import { BrandMark } from '../layout/BrandMark';
 import loginBackground from '../assets/illustrations/login-bg.svg';
 

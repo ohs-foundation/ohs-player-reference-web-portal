@@ -1,6 +1,6 @@
 import { useAuth, useTranslation } from 'ohs-player-web-core';
 import { useState } from 'react';
-import { Button, Card, Stack } from 'ohs-player-web-shell';
+import { Button, Card, Stack } from '../components/ui';
 import { BrandMark } from '../layout/BrandMark';
 import loginBackground from '../assets/illustrations/login-bg.svg';
 

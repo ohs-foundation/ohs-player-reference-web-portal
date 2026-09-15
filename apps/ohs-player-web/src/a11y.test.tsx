@@ -42,7 +42,7 @@ vi.mock('./features/setup-wizard/useSetupWizardAutoRedirect', () => ({
 
 const { CorePlatformProvider } = await import('ohs-player-web-core');
 const { platformConfig } = await import('./config/platform');
-const { LoginPage } = await import('./pages/LoginPage');
+const { LoginPage } = await import('ohs-player-web-shell');
 const { AppLayout } = await import('./layout/AppLayout');
 
 function renderShell() {
