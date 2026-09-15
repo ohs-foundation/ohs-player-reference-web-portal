@@ -9,8 +9,8 @@ import {
   LogoutPage,
   UnauthorizedPage,
   AppLayout,
+  DashboardPage,
 } from 'ohs-player-web-shell';
-import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './features/users/UsersPage';
 import { LocationsPage } from './features/locations/LocationsPage';
 import { LocationsNoAccess } from './features/locations/LocationsNoAccess';

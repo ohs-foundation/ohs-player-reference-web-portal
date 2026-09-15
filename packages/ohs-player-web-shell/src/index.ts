@@ -21,6 +21,7 @@ export { ProtectedRoute } from './auth/ProtectedRoute';
 export { AppLayout } from './layout/AppLayout';
 export { BrandMark } from './layout/BrandMark';
 export { CallbackPage } from './pages/CallbackPage';
+export { DashboardPage } from './pages/DashboardPage';
 export { LoginPage } from './pages/LoginPage';
 export { LogoutPage } from './pages/LogoutPage';
 export { UnauthorizedPage } from './pages/UnauthorizedPage';

@@ -1,4 +1,4 @@
-import { Card, DonutChart, EmptyState, Spinner, type DonutSegment } from 'ohs-player-web-shell';
+import { Card, DonutChart, EmptyState, Spinner, type DonutSegment } from '../../components/ui';
 import { useTranslation } from 'ohs-player-web-core';
 
 export interface DistributionCardProps {

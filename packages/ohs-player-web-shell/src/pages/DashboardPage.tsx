@@ -1,6 +1,12 @@
 import { PermissionGuard, useTranslation } from 'ohs-player-web-core';
 import { Link } from 'react-router-dom';
 import {
+  IconAccountCircleFill,
+  IconBriefcaseFill,
+  IconMapPinFill,
+  IconTeamFill,
+} from '../components/ui/icons';
+import {
   Avatar,
   LinearProgress,
   Page,
@@ -9,11 +15,7 @@ import {
   StatusBadge,
   type DataTableColumn,
   type DonutSegment,
-  IconAccountCircleFill,
-  IconBriefcaseFill,
-  IconMapPinFill,
-  IconTeamFill,
-} from 'ohs-player-web-shell';
+} from '../components/ui';
 import { StatCard } from '../features/dashboard/StatCard';
 import { RecentCard } from '../features/dashboard/RecentCard';
 import { DistributionCard } from '../features/dashboard/DistributionCard';
