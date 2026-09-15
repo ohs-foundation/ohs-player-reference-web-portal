@@ -1,4 +1,3 @@
-import type { ThemeConfig } from '../types/config';
 import {
   staticSysTokens,
   sysColorTokens,
@@ -11,8 +10,7 @@ import {
 } from './sysTokens';
 
 /**
- * M3-shaped theme configuration. `applyTheme` still accepts v1 `ThemeConfig`; `upgradeThemeConfig`
- * converts one to this shape.
+ * M3-shaped theme configuration.
  * @public
  */
 export interface ThemeConfigV2 {
@@ -34,34 +32,6 @@ const DEFAULT_TYPEFACE = '"Google Sans", system-ui, -apple-system, sans-serif';
 const DEFAULT_MONO_TYPEFACE = '"Google Sans Code", ui-monospace, "SF Mono", "Menlo", monospace';
 const SCOPED_DENSITIES = [-1, -2] as const;
 
-/** Maps a v1 `ThemeConfig`'s colours onto their corresponding sys roles. @public */
-export function upgradeThemeConfig(v1: ThemeConfig): ThemeConfigV2 {
-  const c = v1.colors ?? {};
-  const overrides: Partial<Record<SysColorRole, string>> = {};
-  const pin = (role: SysColorRole, value?: string): void => {
-    if (value) overrides[role] = value;
-  };
-
-  pin('primary', c.primary);
-  pin('on-primary', c.primaryContrast);
-  pin('primary-container', c.primaryContainer);
-  pin('surface', c.surface);
-  pin('surface-container', c.background);
-  pin('on-surface', c.text);
-  pin('on-surface-variant', c.textMuted);
-  pin('outline-variant', c.border);
-  pin('error', c.error);
-  pin('success', c.success);
-
-  return {
-    overrides,
-    typography: {
-      brandFamily: v1.typography?.headingFontFamily ?? v1.typography?.fontFamily,
-      plainFamily: v1.typography?.fontFamily,
-    },
-  };
-}
-
 function extraColorTokens(
   colors: ThemeConfigV2['extraColors'] = {},
   mode: 'light' | 'dark',
@@ -82,7 +52,7 @@ function declarations(tokens: Record<string, string>, indent = '  '): string {
  * `[data-theme='dark']` carries the dark colour overrides.
  *
  * CSS rather than inline style properties, because inline styles beat attribute selectors and so
- * cannot express two schemes. Legacy `--ohs-*` names remain with `applyTheme`.
+ * cannot express two schemes.
  * @public
  */
 export function themeCss(config: ThemeConfigV2 = {}): string {

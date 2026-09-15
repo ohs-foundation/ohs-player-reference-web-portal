@@ -1,22 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { applyTheme, defaultTheme, mergeTheme } from './theme';
-import { installThemeCss, themeCss, upgradeThemeConfig } from './themeCss';
+import { installThemeCss, themeCss } from './themeCss';
 import { refPalettes } from './palettes';
 import { sysColorSchemes, type SysColorRole } from './sysTokens';
-
-const brandLight = {
-  colors: {
-    primary: '#094F9A',
-    primaryContrast: '#FAFAFA',
-    primaryContainer: '#DCE5FE',
-    surface: '#FFFFFF',
-    background: '#F1F2F4',
-    text: '#0D0D0D',
-    textMuted: '#696969',
-    border: '#EDEDED',
-  },
-  typography: { fontFamily: 'Plain', headingFontFamily: 'Brand' },
-};
 
 function varsOf(css: string, selector: string): Record<string, string> {
   const start = css.indexOf(selector);
@@ -105,7 +90,7 @@ describe('themeCss', () => {
     expect(light['--ohs-sys-motion-easing-standard']).toBe('cubic-bezier(0.2, 0, 0, 1)');
   });
 
-  it('never emits a legacy --ohs-* name that applyTheme owns', () => {
+  it('emits only sys and ref names', () => {
     const css = themeCss();
     const emitted = { ...varsOf(css, ':root,'), ...varsOf(css, "[data-theme='dark'],") };
     const legacy = Object.keys(emitted).filter(
@@ -140,34 +125,6 @@ describe('themeCss', () => {
   });
 });
 
-describe('upgradeThemeConfig', () => {
-  it('maps v1 colours onto their sys roles', () => {
-    const v2 = upgradeThemeConfig(brandLight);
-    expect(v2.overrides).toMatchObject({
-      primary: '#094F9A',
-      'on-primary': '#FAFAFA',
-      'primary-container': '#DCE5FE',
-      surface: '#FFFFFF',
-      'surface-container': '#F1F2F4',
-      'on-surface': '#0D0D0D',
-      'on-surface-variant': '#696969',
-      'outline-variant': '#EDEDED',
-    });
-    expect(v2.typography).toEqual({ brandFamily: 'Brand', plainFamily: 'Plain' });
-  });
-
-  it('omits roles the v1 config never set', () => {
-    const v2 = upgradeThemeConfig({ colors: { primary: '#000000' } });
-    expect(v2.overrides).toEqual({ primary: '#000000' });
-  });
-
-  it('feeds themeCss so an upgraded v1 config pins its brand values', () => {
-    const light = varsOf(themeCss(upgradeThemeConfig(brandLight)), ':root,');
-    expect(light['--ohs-sys-color-primary']).toBe('#094F9A');
-    expect(light['--ohs-sys-color-surface-container']).toBe('#F1F2F4');
-  });
-});
-
 describe('installThemeCss', () => {
   it('creates one style element and updates it in place', () => {
     installThemeCss();
@@ -176,36 +133,5 @@ describe('installThemeCss', () => {
     const styles = document.querySelectorAll('#ohs-theme-tokens');
     expect(styles).toHaveLength(1);
     expect(styles[0].textContent).toContain('--ohs-sys-color-primary: #123456;');
-  });
-});
-
-describe('applyTheme legacy contract', () => {
-  it('still writes the legacy names as inline styles', () => {
-    const el = document.createElement('div');
-    applyTheme(mergeTheme(defaultTheme, brandLight), el);
-
-    expect(el.style.getPropertyValue('--ohs-color-primary')).toBe('#094F9A');
-    expect(el.style.getPropertyValue('--ohs-color-text-muted')).toBe('#696969');
-    expect(el.style.getPropertyValue('--ohs-radius-default')).toBe('12px');
-  });
-
-  it('no longer emits the retired spacing, shadow and colour tokens', () => {
-    const el = document.createElement('div');
-    applyTheme(mergeTheme(defaultTheme, brandLight), el);
-    const names = Array.from({ length: el.style.length }, (_, i) => el.style.item(i));
-
-    expect(names.filter((n) => n.startsWith('--ohs-spacing-'))).toEqual([]);
-    expect(names.filter((n) => n.startsWith('--ohs-shadow-'))).toEqual([]);
-    for (const retired of ['--ohs-color-secondary', '--ohs-color-warning', '--ohs-color-info']) {
-      expect(names).not.toContain(retired);
-    }
-  });
-
-  it('emits no --ohs-sys-* name, so the two layers cannot collide', () => {
-    const el = document.createElement('div');
-    applyTheme(mergeTheme(defaultTheme, brandLight), el);
-
-    const names = Array.from({ length: el.style.length }, (_, i) => el.style.item(i));
-    expect(names.filter((n) => n.startsWith('--ohs-sys-'))).toEqual([]);
   });
 });
