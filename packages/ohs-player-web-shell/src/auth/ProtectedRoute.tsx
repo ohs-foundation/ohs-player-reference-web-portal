@@ -8,21 +8,14 @@ import { Page, Spinner } from '../components/ui';
 import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
-/**
- * Gate order: feature flag → authenticated session → RBAC permission.
- */
-export function ProtectedRoute({
-  flag,
-  permission,
-  permissionFallback,
-  children,
-}: {
-  flag?: string;
+interface SessionGateProps {
   permission?: string;
   /** Rendered when authenticated but `permission` is denied (defaults to PermissionGuard hide behaviour). */
   permissionFallback?: ReactNode;
   children: ReactNode;
-}): ReactNode {
+}
+
+function SessionGate({ permission, permissionFallback, children }: SessionGateProps): ReactNode {
   const auth = useAuth();
   const location = useLocation();
   const { t } = useTranslation();
@@ -41,17 +34,19 @@ export function ProtectedRoute({
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  const inner = permission ? (
+  return permission ? (
     <PermissionGuard permission={permission} fallback={permissionFallback}>
       {children}
     </PermissionGuard>
   ) : (
     children
   );
+}
 
-  if (flag) {
-    return <FeatureGuard flag={flag}>{inner}</FeatureGuard>;
-  }
-
-  return inner;
+/**
+ * Gate order: feature flag → authenticated session → RBAC permission.
+ */
+export function ProtectedRoute({ flag, ...session }: SessionGateProps & { flag?: string }): ReactNode {
+  const gated = <SessionGate {...session} />;
+  return flag ? <FeatureGuard flag={flag}>{gated}</FeatureGuard> : gated;
 }
