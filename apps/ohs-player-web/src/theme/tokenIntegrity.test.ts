@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { applyTheme, defaultTheme, mergeTheme, themeCss } from 'ohs-player-web-core';
+import { themeCss } from 'ohs-player-web-core';
 import { describe, expect, it } from 'vitest';
-import { lightTheme } from './lightTheme';
 import { sysTheme } from './sysTheme';
 
 const STYLESHEETS = [
@@ -15,10 +14,6 @@ function declaredNames(): Set<string> {
   const names = new Set<string>();
 
   for (const m of themeCss(sysTheme).matchAll(/(--ohs-[a-z0-9-]+)\s*:/g)) names.add(m[1]);
-
-  const el = document.createElement('div');
-  applyTheme(mergeTheme(defaultTheme, lightTheme), el);
-  for (let i = 0; i < el.style.length; i += 1) names.add(el.style.item(i));
 
   for (const path of STYLESHEETS) {
     for (const m of readFileSync(path, 'utf8').matchAll(/(--ohs-[a-z0-9-]+)\s*:/g)) names.add(m[1]);

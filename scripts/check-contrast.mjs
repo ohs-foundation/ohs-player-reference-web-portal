@@ -9,11 +9,9 @@
  *   boundary    3.0:1  — anything needed to identify a control (input borders, focus rings) per SC 1.4.11
  *   decorative  exempt — requires a `reason`, so every waiver is reviewable
  *
- * Sys values come from the built library's `themeCss`, so they are never restated here. The remaining
- * legacy values are restated below and `SOURCES` re-reads their files to fail on drift.
+ * Sys values come from the built library's `themeCss`, so they are never restated here.
  */
 
-import { readFileSync } from 'node:fs';
 import { themeCss } from '../packages/ohs-player-web-core/src/theme/themeCss.ts';
 import { sysTheme } from './sysThemeForCheck.mjs';
 
@@ -37,21 +35,6 @@ const sys = (mode, role) => {
   return value;
 };
 
-const LIGHT = {
-  surface: '#FFFFFF',
-  background: '#FAFAFA',
-  textMuted: '#696969',
-  text: '#0D0D0D',
-  primary: '#094F9A',
-  primaryContrast: '#FAFAFA',
-  primaryContainer: '#DCE5FE',
-  border: '#EDEDED',
-  borderSecondary: sys('light', 'outline-secondary'),
-  borderTertiary: sys('light', 'outline-tertiary'),
-  error: '#B3261E',
-  success: '#006E29',
-};
-
 const scheme = (mode) => ({
   surface: sys(mode, 'surface'),
   background: sys(mode, 'surface-container'),
@@ -68,6 +51,7 @@ const scheme = (mode) => ({
   success: sys(mode, 'success'),
 });
 
+const LIGHT = scheme('light');
 const DARK = scheme('dark');
 
 const BADGE_LEVELS = ['root', 'country', 'county', 'subcounty', 'ward', 'facility', 'unit'];
@@ -287,66 +271,6 @@ function minimumFor(pair) {
   return MINIMUMS[pair.kind];
 }
 
-/**
- * The tables above restate values that live in source. Without this guard the gate would silently
- * drift the first time someone edits a token, so every declared value must still be findable at its
- * origin: `<file, regex-name, expected>`. A rename fails the gate loudly rather than passing blind.
- */
-const SOURCES = [
-  [
-    'apps/ohs-player-web/src/theme/lightTheme.ts',
-    'ts',
-    {
-      primary: LIGHT.primary,
-    textMuted: LIGHT.textMuted,
-      primaryContrast: LIGHT.primaryContrast,
-      primaryContainer: LIGHT.primaryContainer,
-      surface: LIGHT.surface,
-      background: LIGHT.background,
-      text: LIGHT.text,
-
-      border: LIGHT.border,
-      success: LIGHT.success,
-     
-    },
-  ],
-];
-
-const DARK_BLOCK_MARKER = "[data-theme='dark'],";
-
-const drift = [];
-for (const [target, kind, expectations] of SOURCES) {
-  const [path, section] = target.split('#');
-  let body;
-  try {
-    body = readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
-  } catch {
-    drift.push(`${path} — cannot be read; token values cannot be verified`);
-    continue;
-  }
-  if (section) {
-    const cut = body.indexOf(DARK_BLOCK_MARKER);
-    if (cut < 0) {
-      drift.push(`${path} — no ${DARK_BLOCK_MARKER} block; cannot split light from dark`);
-      continue;
-    }
-    body = section === 'light' ? body.slice(0, cut) : body.slice(cut);
-  }
-
-  for (const [name, expected] of Object.entries(expectations)) {
-    const pattern =
-      kind === 'ts'
-        ? new RegExp(`\\b${name}\\s*:\\s*'([^']+)'`)
-        : new RegExp(`--ohs-${name}\\s*:\\s*([^;]+);`);
-    const found = pattern.exec(body)?.[1]?.trim();
-    if (!found) {
-      drift.push(`${target} — ${name} not found (renamed or removed?)`);
-    } else if (found.toLowerCase() !== expected.toLowerCase()) {
-      drift.push(`${target} — ${name} is ${found}, this script asserts ${expected}`);
-    }
-  }
-}
-
 const failures = [];
 const exemptions = [];
 let checked = 0;
@@ -376,20 +300,13 @@ for (const pair of PAIRS) {
 
 for (const line of exemptions) console.log(`EXEMPT ${line}`);
 
-if (drift.length > 0 || failures.length > 0) {
-  if (drift.length > 0) {
-    console.error(`\n${drift.length} token(s) drifted from source:`);
-    for (const line of drift) console.error(`  DRIFT ${line}`);
-  }
-  if (failures.length > 0) {
-    console.error(`\n${failures.length} contrast failure(s):`);
-    for (const line of failures) console.error(`  FAIL ${line}`);
-  }
+if (failures.length > 0) {
+  console.error(`\n${failures.length} contrast failure(s):`);
+  for (const line of failures) console.error(`  FAIL ${line}`);
   console.error(`\n${checked} pair(s) enforced, ${exemptions.length} documented exemption(s).`);
   process.exit(1);
 }
 
 console.log(
-  `\nAll ${checked} enforced contrast pair(s) pass; ${exemptions.length} documented exemption(s); ` +
-    `${SOURCES.length} source file section(s) verified against these values.`,
+  `\nAll ${checked} enforced contrast pair(s) pass; ${exemptions.length} documented exemption(s).`,
 );
