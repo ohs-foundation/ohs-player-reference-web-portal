@@ -144,7 +144,7 @@ docker build \
   .
 ```
 
-The build context is the **repo root** (`.`), not the app folder — the Dockerfile copies the workspace (`packages/ohs-player-web-core` + `apps/ohs-player-web`) and installs with the frozen lockfile.
+The build context is the **repo root** (`.`), not the app folder — the Dockerfile copies the workspace (`packages/ohs-player-web-core`, `packages/ohs-player-web-shell` and `apps/ohs-player-web`) and installs with the frozen lockfile.
 
 > **Image tag.** The `-t ohs-player-web:<tag>` part is just a label you choose; the repo doesn't fix one. Pick a scheme and stick to it so you can roll back to a known tag — e.g. the release version `ohs-player-web:1.0.0`, or the git short SHA `ohs-player-web:$(git rev-parse --short HEAD)`. Avoid `latest` for deploys (it makes rollbacks ambiguous). The examples below use `1.0.0`.
 

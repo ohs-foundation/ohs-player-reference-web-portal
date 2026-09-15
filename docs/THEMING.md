@@ -333,8 +333,8 @@ and calls `installThemeCss` once before render. Put light values in `overrides` 
 | `packages/ohs-player-web-core/src/theme/palettes.ts` | generated tonal palettes — do not hand-edit |
 | `packages/ohs-player-web-core/src/theme/themeCss.ts` | `ThemeConfigV2`, `themeCss`, `installThemeCss` |
 | `apps/ohs-player-web/src/theme/sysTheme.ts` | this deployment's brand pins and feature colours |
-| `apps/ohs-player-web/src/tailwind.css` | utility → token bridge; must stay `@theme inline` |
-| `apps/ohs-player-web/src/components/ui/theme.css` | primitive-kit CSS and the state layer; declares no tokens |
+| `packages/ohs-player-web-shell/src/tailwind.css` | utility → token bridge; must stay `@theme inline` |
+| `packages/ohs-player-web-shell/src/components/ui/theme.css` | primitive-kit CSS and the state layer; declares no tokens |
 | `scripts/generate-scheme.ts` · `scripts/check-contrast.mjs` | palette generation · contrast gate |
 
 ### Adding a token

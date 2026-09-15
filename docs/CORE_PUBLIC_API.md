@@ -26,7 +26,7 @@ Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAns
 
 FHIR data-access option shapes: `SearchAllOptions`, `PagedSearchParams`, `PagedSearchResult`, `OptimisticInsertOptions`.
 
-UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, etc. — are **app**-level, in `apps/ohs-player-web/src/components/ui/`, not library exports.)
+UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, etc. — belong to the shell package, `ohs-player-web-shell`, not the library.)
 
 ---
 
@@ -211,7 +211,7 @@ Supported item types for rendering include `string`, `text`, `integer`, `decimal
 
 ## UI exports
 
-The library ships **behavior + Radix wrappers only** — it does **not** export presentational primitives (`Button`, `Card`, `TextField`, `DataTable`, etc.); those live in the app (`apps/ohs-player-web/src/components/ui/`). See **UI primitives & theming** in [ARCHITECTURE.md](./ARCHITECTURE.md).
+The library ships **behavior + Radix wrappers only** — it does **not** export presentational primitives (`Button`, `Card`, `TextField`, `DataTable`, etc.); those live in the shell package (`packages/ohs-player-web-shell/src/components/ui/`). See **UI primitives & theming** in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 | Export | Description |
 | --- | --- |
