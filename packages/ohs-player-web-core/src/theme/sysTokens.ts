@@ -74,8 +74,10 @@ export type TypescaleRole =
   | 'heading-4xl'
   | 'heading-3xl'
   | 'heading-2xl'
+  | 'heading-xl'
   | 'heading-l'
   | 'text-xl'
+  | 'text-l'
   | 'text-xs'
   | 'text-2xs';
 
@@ -223,8 +225,10 @@ const TYPESCALE: Record<TypescaleRole, TypescaleMetrics> = {
   'heading-4xl': { size: '64px', lineHeight: '72px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
   'heading-3xl': { size: '56px', lineHeight: '64px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
   'heading-2xl': { size: '48px', lineHeight: '64px', weight: 500, letterSpacing: '-1.5px', typeface: 'brand' },
+  'heading-xl': { size: '36px', lineHeight: '44px', weight: 500, letterSpacing: '-1px', typeface: 'brand' },
   'heading-l': { size: '32px', lineHeight: '40px', weight: 500, letterSpacing: '-1px', typeface: 'brand' },
   'text-xl': { size: '20px', lineHeight: '28px', weight: 400, letterSpacing: '-0.5px' },
+  'text-l': { size: '18px', lineHeight: '26px', weight: 400, letterSpacing: '-0.5px' },
   'text-xs': { size: '10px', lineHeight: '14px', weight: 400, letterSpacing: '-0.5px' },
   'text-2xs': { size: '8px', lineHeight: '12px', weight: 400, letterSpacing: '-0.5px' },
 };
@@ -268,6 +272,10 @@ const MOTION = {
   'easing-standard-accelerate': 'cubic-bezier(0.3, 0, 1, 1)',
 };
 
+const TYPEFACE_WEIGHT = {
+  regular: '400',
+  medium: '500',
+};
 
 const SPACING_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20];
 
@@ -277,7 +285,7 @@ export const sysShape = SHAPE;
 
 /** Mode-independent sys tokens: typescale, shape, state, elevation, motion, spacing. */
 export function staticSysTokens(
-  typography: { brandFamily: string; plainFamily: string },
+  typography: { brandFamily: string; plainFamily: string; monoFamily: string },
   typescale: Record<TypescaleRole, TypescaleMetrics> = TYPESCALE,
   shape: Record<ShapeToken, string> = SHAPE,
   density: 0 | -1 | -2 = 0,
@@ -285,8 +293,13 @@ export function staticSysTokens(
   const out: Record<string, string> = {
     '--ohs-ref-typeface-brand': typography.brandFamily,
     '--ohs-ref-typeface-plain': typography.plainFamily,
+    '--ohs-ref-typeface-mono': typography.monoFamily,
     '--ohs-sys-density-scale': String(density),
   };
+
+  for (const [weight, value] of Object.entries(TYPEFACE_WEIGHT)) {
+    out[`--ohs-ref-typeface-weight-${weight}`] = value;
+  }
 
   for (const [role, m] of Object.entries(typescale) as Array<[TypescaleRole, TypescaleMetrics]>) {
     const prefix = `--ohs-sys-typescale-${role}`;

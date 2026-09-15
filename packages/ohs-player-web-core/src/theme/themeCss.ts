@@ -22,6 +22,7 @@ export interface ThemeConfigV2 {
   typography?: {
     brandFamily?: string;
     plainFamily?: string;
+    monoFamily?: string;
     scale?: Partial<Record<TypescaleRole, TypescaleMetrics>>;
   };
   shape?: Partial<Record<ShapeToken, string>>;
@@ -29,6 +30,7 @@ export interface ThemeConfigV2 {
 }
 
 const DEFAULT_TYPEFACE = '"Google Sans", system-ui, -apple-system, sans-serif';
+const DEFAULT_MONO_TYPEFACE = '"Google Sans Code", ui-monospace, "SF Mono", "Menlo", monospace';
 
 /** Maps a v1 `ThemeConfig`'s colours onto their corresponding sys roles. @public */
 export function upgradeThemeConfig(v1: ThemeConfig): ThemeConfigV2 {
@@ -76,6 +78,7 @@ export function themeCss(config: ThemeConfigV2 = {}): string {
   const typography = {
     brandFamily: config.typography?.brandFamily ?? DEFAULT_TYPEFACE,
     plainFamily: config.typography?.plainFamily ?? DEFAULT_TYPEFACE,
+    monoFamily: config.typography?.monoFamily ?? DEFAULT_MONO_TYPEFACE,
   };
   const scale = { ...sysTypescale, ...config.typography?.scale } as Record<
     TypescaleRole,

@@ -101,12 +101,27 @@ describe('themeCss', () => {
 
   it('honours a typography and density config', () => {
     const light = varsOf(
-      themeCss({ typography: { brandFamily: 'B', plainFamily: 'P' }, density: -2 }),
+      themeCss({
+        typography: { brandFamily: 'B', plainFamily: 'P', monoFamily: 'M' },
+        density: -2,
+      }),
       ':root,',
     );
     expect(light['--ohs-ref-typeface-brand']).toBe('B');
     expect(light['--ohs-ref-typeface-plain']).toBe('P');
+    expect(light['--ohs-ref-typeface-mono']).toBe('M');
     expect(light['--ohs-sys-density-scale']).toBe('-2');
+  });
+
+  it('emits the typeface weights, a default mono face and the 36px and 18px steps', () => {
+    const light = varsOf(themeCss(), ':root,');
+    expect(light['--ohs-ref-typeface-weight-regular']).toBe('400');
+    expect(light['--ohs-ref-typeface-weight-medium']).toBe('500');
+    expect(light['--ohs-ref-typeface-mono']).toContain('"Google Sans Code"');
+    expect(light['--ohs-sys-typescale-heading-xl-size']).toBe('36px');
+    expect(light['--ohs-sys-typescale-heading-xl-font']).toBe('var(--ohs-ref-typeface-brand)');
+    expect(light['--ohs-sys-typescale-text-l-size']).toBe('18px');
+    expect(light['--ohs-sys-typescale-text-l-font']).toBe('var(--ohs-ref-typeface-plain)');
   });
 });
 
