@@ -9,8 +9,8 @@ body,
 body {
   background: var(--ohs-sys-color-surface-container, #f4f7fb);
   color: var(--ohs-sys-color-on-surface, #1f2933);
-  font-family: var(--ohs-font-body, system-ui, sans-serif);
-  font-size: var(--ohs-font-size-base, 16px);
+  font-family: var(--ohs-ref-typeface-plain, system-ui, sans-serif);
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   /* Inherited: every step at or below 24px tracks -0.5px. Larger steps override at their own rule. */
@@ -31,7 +31,7 @@ body {
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
-  font-weight: var(--ohs-font-weight-medium, 500);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
   text-decoration: none;
   transform: translateY(calc(-100% - var(--ohs-sys-spacing-4, 16px)));
   transition: transform 120ms ease;
@@ -80,7 +80,7 @@ body {
 }
 .app-topbar__title {
   font-weight: 600;
-  font-size: var(--ohs-text-title, 18px);
+  font-size: var(--ohs-sys-typescale-text-l-size, 18px);
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
   white-space: nowrap;
   overflow: hidden;
@@ -164,7 +164,7 @@ body {
   margin: 0 0 var(--ohs-sys-spacing-1, 4px);
   padding: 0 var(--ohs-sys-spacing-2, 8px);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
-  font-weight: var(--ohs-font-weight-medium, 500);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
   color: var(--ohs-sys-color-on-surface-variant, #696969);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -210,7 +210,7 @@ body {
 .app-activity__title {
   margin: 0;
   padding: var(--ohs-sys-spacing-2, 8px);
-  font-weight: var(--ohs-font-weight-medium, 500);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
 }
 .app-activity__list {
@@ -284,7 +284,7 @@ body {
 .app-topbar__user-name {
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
-  font-weight: var(--ohs-font-weight-medium, 500);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -340,10 +340,10 @@ body {
   min-height: 72px;
   padding: 0;
   color: var(--ohs-sys-color-on-surface-variant, #696969);
-  font-family: var(--ohs-font-body, 'Google Sans', sans-serif);
+  font-family: var(--ohs-ref-typeface-plain, 'Google Sans', sans-serif);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
-  font-weight: var(--ohs-font-weight-medium, 500);
+  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
   text-align: center;
   text-decoration: none;
   box-sizing: border-box;
