@@ -52,21 +52,23 @@ const LIGHT = {
   success: '#006E29',
 };
 
-const DARK = {
-  surface: '#1A1A1A',
-  background: '#0D0D0D',
-  textMuted: '#9E9E9E',
-  text: '#FAFAFA',
-  primary: '#7BACFD',
-  primaryHover: '#A9C7FF',
-  primaryContrast: '#003063',
-  primaryContainer: '#04366D',
-  border: '#363636',
-  borderSecondary: sys('dark', 'outline-secondary'),
-  borderTertiary: sys('dark', 'outline-tertiary'),
-  error: '#FF8F8F',
-  success: '#00E04B',
-};
+const scheme = (mode) => ({
+  surface: sys(mode, 'surface'),
+  background: sys(mode, 'surface-container'),
+  textMuted: sys(mode, 'on-surface-variant'),
+  text: sys(mode, 'on-surface'),
+  primary: sys(mode, 'primary'),
+  primaryHover: sys(mode, 'primary-hover'),
+  primaryContrast: sys(mode, 'on-primary'),
+  primaryContainer: sys(mode, 'primary-container'),
+  border: sys(mode, 'outline-variant'),
+  borderSecondary: sys(mode, 'outline-secondary'),
+  borderTertiary: sys(mode, 'outline-tertiary'),
+  error: sys(mode, 'error'),
+  success: sys(mode, 'success'),
+});
+
+const DARK = scheme('dark');
 
 const BADGE_LEVELS = ['root', 'country', 'county', 'subcounty', 'ward', 'facility', 'unit'];
 
@@ -306,25 +308,6 @@ const SOURCES = [
       border: LIGHT.border,
       success: LIGHT.success,
      
-    },
-  ],
-  [
-    'apps/ohs-player-web/src/theme/darkTheme.ts',
-    'ts',
-    {
-      primary: DARK.primary,
-    textMuted: DARK.textMuted,
-      primaryHover: DARK.primaryHover,
-      primaryContrast: DARK.primaryContrast,
-      primaryContainer: DARK.primaryContainer,
-      surface: DARK.surface,
-      background: DARK.background,
-      text: DARK.text,
-
-      border: DARK.border,
-      error: DARK.error,
-     
-      success: DARK.success,
     },
   ],
 ];
