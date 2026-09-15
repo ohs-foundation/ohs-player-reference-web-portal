@@ -14,11 +14,13 @@ Types-only exports are listed under **Exported types**; runtime values are group
 
 ---
 
-## Exported types (`./types/config`, `./types/portalConfig` and `./sdc`)
+## Exported types (`./types/config`, `./types/portalConfig`, `./types/extension` and `./sdc`)
 
 Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
 
 Runtime configuration document: `PortalConfigDocument`, `PortalNavigationEntry`. These describe the JSON document a deployment serves next to the bundle, holding product identity, connection settings, brand pins, flags, navigation, the permission map, locale and messages, custom endpoint aliases and the questionnaire variant. Every field is optional, and the host app falls back to its build-time values for any field left out. They are types only; the library ships no validator, and the host app validates the document ([DEPLOYMENT.md](./DEPLOYMENT.md)).
+
+Extension manifest: `ExtensionManifest`, `ExtensionRoute`, `ExtensionNavEntry`, `ExtensionWidget`, `ExtensionSlotContribution`, `ExtensionRequirements`. This is the contract an extension writes against: its routes, sidebar entries, dashboard widgets, slot contributions, messages, flag defaults, permission mappings, custom endpoint aliases and questionnaires. Routes, nav entries and widgets can carry `requires: { flag, permission }`, evaluated flag first, then session, then permission. Pages and widgets are loaded lazily through `load`, which resolves a module whose default export is the component. Slot contributions are plain components that receive the slot's context. `ExtensionManifest` is generic over the host's dashboard region names and slot contexts, so the library never names them; the host binds both, and a region or slot the host does not declare is a type error. There is no version field, because the library version carries the contract.
 
 Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`, `SelectFieldOption`.
 
