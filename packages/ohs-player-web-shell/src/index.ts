@@ -17,11 +17,7 @@ export { useClearFilterParams, useFilterParam } from './features/search/useFilte
 export { useDebounced } from './features/search/useGlobalSearch';
 export { useInitialSearchTerm } from './features/search/useInitialSearchTerm';
 
-export { ProtectedRoute } from './auth/ProtectedRoute';
 export { AppLayout } from './layout/AppLayout';
-export { BrandMark } from './layout/BrandMark';
-export { CallbackPage } from './pages/CallbackPage';
-export { DashboardPage } from './pages/DashboardPage';
 export { LoginPage } from './pages/LoginPage';
-export { LogoutPage } from './pages/LogoutPage';
-export { UnauthorizedPage } from './pages/UnauthorizedPage';
+export { PortalRoutes, type PortalRoutesProps } from './routes/PortalRoutes';
+export type { PortalRoute } from './routes/types';

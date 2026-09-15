@@ -29,13 +29,14 @@ import {
 import { Avatar, IconButton } from '../components/ui';
 import { NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useSignOut } from './useSignOut';
-import { useMemo, useState, type ReactNode } from 'react';
+import { Suspense, useMemo, useState, type ReactNode } from 'react';
 import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
 import { GlobalSearch } from '../features/search/GlobalSearch';
 import { NotificationsBell } from '../features/activity/NotificationsBell';
 import type { NavId } from '../config/navigation';
 import { usePortalConfig } from '../config/portalConfigContext';
+import { RouteFallback } from '../routes/RouteFallback';
 
 const ICON_SIZE = 20;
 
@@ -72,7 +73,9 @@ export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
     return (
       <div className="app-shell app-shell--bare-root">
         <main className="app-shell__main app-shell__main--bare">
-          <Outlet />
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     );
@@ -136,7 +139,9 @@ export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
       </aside>
 
       <main className="app-shell__main" id="main-content" tabIndex={-1}>
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
       {children}
     </div>
