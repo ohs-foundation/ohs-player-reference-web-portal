@@ -2,8 +2,7 @@ import { CorePlatformProvider } from 'ohs-player-web-core';
 import { BrowserRouter } from 'react-router-dom';
 import { AppRoutes } from './AppRoutes';
 import { ConfigErrorNotice } from './config/ConfigErrorNotice';
-import { PortalConfigContext } from './config/portalConfigContext';
-import type { ResolvedPortalConfig } from './config/resolvePortalConfig';
+import { PortalConfigContext, type ResolvedPortalConfig } from 'ohs-player-web-shell';
 import { ThemeModeProvider } from './theme/ThemeModeProvider';
 
 interface AppProps {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NAV_IDS } from './navigation';
+import { NAV_IDS } from 'ohs-player-web-shell';
 
 export const FLAG_NAMES = [
   'userMgmt',
@@ -95,7 +95,6 @@ export const portalConfigSchema = z.strictObject({
 });
 
 export type PortalConfig = z.infer<typeof portalConfigSchema>;
-export type NavEntry = z.infer<typeof navEntrySchema>;
 
 export type PortalConfigValidation =
   | { success: true; data: PortalConfig }

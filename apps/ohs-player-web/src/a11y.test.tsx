@@ -41,8 +41,8 @@ vi.mock('./features/setup-wizard/useSetupWizardAutoRedirect', () => ({
 }));
 
 const { CorePlatformProvider } = await import('ohs-player-web-core');
-const { platformConfig } = await import('./config/platform');
-const { LoginPage } = await import('ohs-player-web-shell');
+const { platformConfig, portalDefaults } = await import('./config/platform');
+const { LoginPage, PortalConfigContext, resolvePortalConfig } = await import('ohs-player-web-shell');
 const { AppLayout } = await import('./layout/AppLayout');
 
 function renderShell() {
@@ -50,7 +50,9 @@ function renderShell() {
   return render(
     <MemoryRouter>
       <CorePlatformProvider config={platformConfig}>
-        <AppLayout />
+        <PortalConfigContext.Provider value={resolvePortalConfig(portalDefaults)}>
+          <AppLayout />
+        </PortalConfigContext.Provider>
       </CorePlatformProvider>
     </MemoryRouter>,
   );

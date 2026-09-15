@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { NavEntry } from '../config/portalConfigSchema';
+import type { NavEntry } from 'ohs-player-web-shell';
 
 let flagsOff = new Set<string>();
 let deniedPermissions = new Set<string>();
@@ -35,17 +35,19 @@ vi.mock('../features/setup-wizard/useSetupWizardAutoRedirect', () => ({
 }));
 
 const { CorePlatformProvider } = await import('ohs-player-web-core');
-const { platformConfig } = await import('../config/platform');
-const { DEFAULT_NAVIGATION } = await import('../config/navigation');
-const { PortalConfigContext } = await import('../config/portalConfigContext');
-const { resolvePortalConfig } = await import('../config/resolvePortalConfig');
+const { platformConfig, portalDefaults } = await import('../config/platform');
+const { DEFAULT_NAVIGATION, PortalConfigContext, resolvePortalConfig } = await import(
+  'ohs-player-web-shell'
+);
 const { AppLayout } = await import('./AppLayout');
 
 function sidebarLinks(navigation?: NavEntry[]): (string | null)[] {
   render(
     <MemoryRouter>
       <CorePlatformProvider config={platformConfig}>
-        <PortalConfigContext.Provider value={resolvePortalConfig(navigation ? { navigation } : {})}>
+        <PortalConfigContext.Provider
+          value={resolvePortalConfig(portalDefaults, navigation ? { navigation } : {})}
+        >
           <AppLayout />
         </PortalConfigContext.Provider>
       </CorePlatformProvider>

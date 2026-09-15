@@ -28,6 +28,8 @@ import {
   Avatar,
   IconButton,
   BrandMark,
+  type NavId,
+  usePortalConfig,
 } from 'ohs-player-web-shell';
 import { NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useSignOut } from './useSignOut';
@@ -36,8 +38,6 @@ import { useThemeMode } from '../theme/themeModeContext';
 import { GlobalSearch } from '../features/search/GlobalSearch';
 import { NotificationsBell } from '../features/activity/NotificationsBell';
 import { useSetupWizardAutoRedirect } from '../features/setup-wizard/useSetupWizardAutoRedirect';
-import type { NavId } from '../config/navigation';
-import { usePortalConfig } from '../config/portalConfigContext';
 
 const ICON_SIZE = 20;
 

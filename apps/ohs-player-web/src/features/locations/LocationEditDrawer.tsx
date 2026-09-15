@@ -18,8 +18,8 @@ import {
   Stack,
   IconClose,
   IconInfo,
+  usePortalConfig,
 } from 'ohs-player-web-shell';
-import { usePortalConfig } from '../../config/portalConfigContext';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { toErrorMessage } from '../sdc/toErrorMessage';

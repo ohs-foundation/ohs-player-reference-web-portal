@@ -1,4 +1,4 @@
-import type { NavEntry } from './portalConfigSchema';
+import type { PortalNavigationEntry } from 'ohs-player-web-core';
 
 export const NAV_IDS = [
   'dashboard',
@@ -11,6 +11,9 @@ export const NAV_IDS = [
 ] as const;
 
 export type NavId = (typeof NAV_IDS)[number];
+
+/** A sidebar entry for one of the shell's own screens. */
+export type NavEntry = PortalNavigationEntry & { id: NavId };
 
 export const DEFAULT_NAVIGATION: readonly NavEntry[] = [
   {
