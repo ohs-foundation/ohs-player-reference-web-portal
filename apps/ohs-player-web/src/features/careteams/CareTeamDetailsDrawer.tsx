@@ -144,7 +144,7 @@ export function CareTeamDetailsDrawer({
 
           <Section icon={IconGroup} title={t('sectionMembers')}>
             {members.length === 0 ? (
-              <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
+              <span style={{ color: 'var(--ohs-sys-color-on-surface-variant, #696969)' }}>{t('detailNone')}</span>
             ) : (
               <div>
                 {members.map((m, i) => (
@@ -155,14 +155,14 @@ export function CareTeamDetailsDrawer({
                       alignItems: 'center',
                       gap: 'var(--ohs-sys-spacing-3, 12px)',
                       padding: 'var(--ohs-sys-spacing-3, 12px) 0',
-                      borderBottom: i < members.length - 1 ? '1px solid var(--ohs-color-border, #ededed)' : 'none',
+                      borderBottom: i < members.length - 1 ? '1px solid var(--ohs-sys-color-outline-variant, #ededed)' : 'none',
                     }}
                   >
                     <Avatar name={m.name} size="sm" />
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                       <span>{m.name}</span>
                       {m.role ? (
-                        <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                        <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-sys-color-on-surface-variant, #696969)' }}>
                           {m.role}
                         </span>
                       ) : null}
@@ -182,7 +182,7 @@ export function CareTeamDetailsDrawer({
         minWidth="min(96vw, 420px)"
       >
         <Stack gap={4}>
-          <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmRetireBody')}</p>
+          <p style={{ margin: 0, color: 'var(--ohs-sys-color-on-surface-variant, #696969)' }}>{t('confirmRetireBody')}</p>
           <Inline justify="end" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}

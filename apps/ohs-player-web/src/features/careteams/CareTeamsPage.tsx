@@ -279,7 +279,7 @@ export function CareTeamsPage() {
                       <span
                         style={{
                           fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)',
-                          color: 'var(--ohs-color-text-muted, #696969)',
+                          color: 'var(--ohs-sys-color-on-surface-variant, #696969)',
                         }}
                       >
                         {t('membersCount', { count: members.length })}

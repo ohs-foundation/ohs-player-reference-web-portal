@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Names removed during the M3 migration. Each maps to a sys token or a live legacy token; see
+ * Names removed during the M3 migration. Each maps to a sys token; see
  * docs/THEMING.md §9. Referencing one again silently resolves to a `var()` fallback.
  */
 const RETIRED = [
@@ -40,6 +40,34 @@ const RETIRED = [
   '--ohs-font-text-l-size',
   '--ohs-font-text-m-size',
   '--ohs-font-text-s-size',
+  ...[
+    'primary',
+    'primary-hover',
+    'primary-contrast',
+    'primary-container',
+    'surface',
+    'background',
+    'text',
+    'text-muted',
+    'text-secondary',
+    'on-surface-variant',
+    'border',
+    'border-secondary',
+    'border-tertiary',
+    'outline-variant',
+    'focus-ring',
+    'focus-ring-destructive',
+    'error',
+    'success',
+  ].map((name) => `--ohs-color-${name}`),
+  ...['root', 'country', 'county', 'subcounty', 'ward', 'facility', 'unit'].flatMap((level) =>
+    ['bg', 'border', 'text'].map((part) => `--ohs-color-level-${level}-${part}`),
+  ),
+  ...['body', 'heading', 'mono', 'size-base', 'weight-regular', 'weight-medium'].map(
+    (name) => `--ohs-font-${name}`,
+  ),
+  ...['display', 'headline', 'title', 'body', 'label'].map((name) => `--ohs-text-${name}`),
+  ...['default', 'sm', 'lg', 'pill'].map((name) => `--ohs-radius-${name}`),
 ];
 
 const ROOTS = ['src', '../../packages/ohs-player-web-core/src'];

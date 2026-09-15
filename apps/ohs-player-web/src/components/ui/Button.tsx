@@ -11,7 +11,7 @@ const button = cva(
     'border border-transparent h-14 px-6 font-medium whitespace-nowrap cursor-pointer ' +
     'select-none no-underline transition-[background-color,border-color,color] ' +
     'duration-[120ms] ease-out focus-visible:outline-none ' +
-    'focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)] aria-busy:cursor-progress',
+    'focus-visible:shadow-[0_0_0_3px_var(--ohs-sys-color-focus-ring)] aria-busy:cursor-progress',
   {
     variants: {
       variant: {

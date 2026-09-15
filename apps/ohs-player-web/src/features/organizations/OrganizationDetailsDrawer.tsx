@@ -140,7 +140,7 @@ export function OrganizationDetailsDrawer({
 
           <Section icon={IconMapPin} title={t('sectionManagedLocations')}>
             {locations.length === 0 ? (
-              <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
+              <span style={{ color: 'var(--ohs-sys-color-on-surface-variant, #696969)' }}>{t('detailNone')}</span>
             ) : (
               <Stack gap={3}>
                 {locations.map((l) => (
@@ -162,7 +162,7 @@ export function OrganizationDetailsDrawer({
         minWidth="min(96vw, 420px)"
       >
         <Stack gap={4}>
-          <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmDeactivateOrgBody')}</p>
+          <p style={{ margin: 0, color: 'var(--ohs-sys-color-on-surface-variant, #696969)' }}>{t('confirmDeactivateOrgBody')}</p>
           <Inline justify="end" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}

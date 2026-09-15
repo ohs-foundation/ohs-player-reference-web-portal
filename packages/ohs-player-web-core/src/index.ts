@@ -18,8 +18,6 @@ export type {
   PermissionMap,
   RbacAdapter,
   RbacConfig,
-  ThemeColors,
-  ThemeConfig,
   TokenStore,
   UnauthorizedBehaviour,
   UseAuthResult,
@@ -50,8 +48,7 @@ export { I18nProvider, useTranslation } from './i18n/I18nProvider';
 export { defaultMessageCatalog } from './i18n/locales/en';
 export { swMessageCatalogStub } from './i18n/locales/sw';
 
-export { applyTheme, defaultTheme, mergeTheme } from './theme/theme';
-export { installThemeCss, themeCss, upgradeThemeConfig } from './theme/themeCss';
+export { installThemeCss, themeCss } from './theme/themeCss';
 export type { ThemeConfigV2 } from './theme/themeCss';
 export type {
   ShapeToken,
