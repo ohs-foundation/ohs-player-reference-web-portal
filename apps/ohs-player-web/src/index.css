@@ -362,7 +362,7 @@ body {
 .app-sidebar .app-sidebar__link:focus-visible {
   outline: none;
   border-radius: var(--ohs-sys-shape-corner-medium, 12px);
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(31, 111, 235, 0.35));
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(31, 111, 235, 0.35));
 }
 
 .app-sidebar .app-sidebar__link--active {

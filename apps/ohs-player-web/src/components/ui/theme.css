@@ -27,7 +27,6 @@
 [data-ohs-root] {
   /* Neutral scale */
   /* Semantic colours beyond the managed set */
-  --ohs-color-focus-ring-destructive: rgba(229, 0, 0, 0.28); /* Content/Negative at 28% */
   /* Location administrative-level badges (bg / border / text). Root uses the brand fill. */
   --ohs-color-level-root-bg: #094f9a;
   --ohs-color-level-root-border: #094f9a;
@@ -100,7 +99,7 @@
 [data-ohs-root] textarea:focus-visible {
   outline: 2px solid var(--ohs-sys-color-primary, #1b6ef3);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px var(--ohs-color-focus-ring, rgba(27, 110, 243, 0.28));
+  box-shadow: 0 0 0 4px var(--ohs-sys-color-focus-ring, rgba(27, 110, 243, 0.28));
 }
 /* Search fields own their focus affordance on the wrapper (see .ohs-searchfield), so the
    input itself never draws the global blue ring. */
@@ -112,7 +111,7 @@
   border-color: var(--ohs-sys-color-on-surface-variant, #696969);
 }
 .ohs-searchfield:has(input:focus-visible) {
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(27, 110, 243, 0.28));
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(27, 110, 243, 0.28));
 }
 
 /* Stacked form fields (Setup wizard, drawers): focus ring lives on the outer box — never on the
@@ -128,7 +127,7 @@
 }
 .ohs-formfield:focus-within {
   border-color: var(--ohs-sys-color-primary, #094f9a);
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(9, 79, 154, 0.28));
 }
 .ohs-formfield--disabled {
   border-color: var(--ohs-sys-color-outline-variant, #ededed);
@@ -138,12 +137,12 @@
   color: var(--ohs-sys-color-outline-tertiary, #b8b8b8);
 }
 .ohs-formfield:has(:focus-visible) {
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(27, 110, 243, 0.28));
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(27, 110, 243, 0.28));
 }
 .ohs-formfield--error:focus-within,
 .ohs-formfield--error:has(:focus-visible) {
-  border-color: var(--ohs-color-error, #e50000);
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring-destructive, rgba(229, 0, 0, 0.28));
+  border-color: var(--ohs-sys-color-error, #e50000);
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring-error, rgba(229, 0, 0, 0.28));
 }
 
 /* ---------- Typography ---------- */
@@ -269,7 +268,7 @@
   border-color: var(--ohs-sys-color-on-surface-variant, #696969);
 }
 .ohs-select[aria-invalid='true'] {
-  border-color: var(--ohs-color-error, #b3261e);
+  border-color: var(--ohs-sys-color-error, #b3261e);
 }
 
 /* ---------- Select (Radix) ---------- */
@@ -299,7 +298,7 @@
 }
 .ohs-select-trigger:focus-visible {
   border-color: var(--ohs-sys-color-primary, #1f6feb);
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(31, 111, 235, 0.35));
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(31, 111, 235, 0.35));
 }
 /* Toolbar variant: matches the page-level SearchField sitting beside it. */
 .ohs-select-trigger--pill {
@@ -310,7 +309,7 @@
   padding: 0 var(--ohs-sys-spacing-6, 24px);
 }
 .ohs-select-trigger--error {
-  border-color: var(--ohs-color-error, #b3261e);
+  border-color: var(--ohs-sys-color-error, #b3261e);
 }
 .ohs-select-trigger[data-placeholder] {
   color: var(--ohs-sys-color-on-surface-variant, #696969);
@@ -569,7 +568,7 @@
 }
 .ohs-error-state__icon {
   background: rgba(179, 38, 30, 0.1);
-  color: var(--ohs-color-error, #b3261e);
+  color: var(--ohs-sys-color-error, #b3261e);
 }
 .ohs-empty {
   padding: 64px var(--ohs-sys-spacing-6, 24px);
@@ -874,8 +873,8 @@
 }
 .ohs-btn-danger {
   background: transparent;
-  border-color: var(--ohs-color-error, #b3261e);
-  color: var(--ohs-color-error, #b3261e);
+  border-color: var(--ohs-sys-color-error, #b3261e);
+  color: var(--ohs-sys-color-error, #b3261e);
 }
 .ohs-btn-danger:hover:not([disabled]) {
   background: rgba(179, 38, 30, 0.06);
@@ -924,7 +923,7 @@
   padding-right: var(--ohs-sys-spacing-4, 16px);
 }
 .ohs-formfield--error {
-  border-color: var(--ohs-color-error, #e50000);
+  border-color: var(--ohs-sys-color-error, #e50000);
 }
 /* Error and supporting text sit below the field, aligned to the input's 16px inset. */
 .ohs-formfield__error,
@@ -935,7 +934,7 @@
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
   letter-spacing: var(--ohs-sys-typescale-body-small-letter-spacing, -0.5px);
-  color: var(--ohs-color-error, #e50000);
+  color: var(--ohs-sys-color-error, #e50000);
 }
 .ohs-formfield__support {
   color: var(--ohs-sys-color-on-surface-variant, #696969);
@@ -977,7 +976,7 @@
   flex: 1 1 auto;
 }
 .ohs-formfield__required {
-  color: var(--ohs-color-error, #b3261e);
+  color: var(--ohs-sys-color-error, #b3261e);
 }
 .ohs-formfield__input {
   border: none;
@@ -1060,7 +1059,7 @@
 }
 .ohs-formfield__trailing:focus-visible::after {
   opacity: var(--ohs-sys-state-focus-opacity, 0.12);
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(9, 79, 154, 0.28));
 }
 .ohs-formfield__trailing svg {
   position: relative;
@@ -1545,7 +1544,7 @@
 }
 .ohs-rowlink:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(9, 79, 154, 0.28));
+  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(9, 79, 154, 0.28));
   border-radius: 4px;
 }
 
@@ -1700,10 +1699,10 @@
   color: var(--ohs-sys-color-on-surface, #0d0d0d);
 }
 .ohs-toast-root[data-tone='success'] {
-  border-left-color: var(--ohs-color-success, #137333);
+  border-left-color: var(--ohs-sys-color-success, #137333);
 }
 .ohs-toast-root[data-tone='error'] {
-  border-left-color: var(--ohs-color-error, #b3261e);
+  border-left-color: var(--ohs-sys-color-error, #b3261e);
 }
 .ohs-toast-title {
   font-weight: 600;
@@ -2129,7 +2128,7 @@
 }
 .ohs-setup-commit-error {
   margin: 0;
-  color: var(--ohs-color-error, #b3261e);
+  color: var(--ohs-sys-color-error, #b3261e);
 }
 
 /* ---------- Dashboard ---------- */

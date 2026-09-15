@@ -37,7 +37,7 @@
   --color-border-secondary: var(--ohs-sys-color-outline-secondary);
   --color-border-tertiary: var(--ohs-sys-color-outline-tertiary);
   --color-neutral-surface: var(--ohs-sys-color-surface-container-high);
-  --color-focus: var(--ohs-color-focus-ring);
+  --color-focus: var(--ohs-sys-color-focus-ring);
 
   /* `--radius` backs the bare `rounded` utility (v4). */
   --radius: var(--ohs-sys-shape-corner-small);

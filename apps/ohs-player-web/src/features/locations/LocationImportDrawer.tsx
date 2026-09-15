@@ -178,7 +178,7 @@ export function LocationImportDrawer({ open, onClose, onComplete }: Readonly<Loc
                   onDragLeave={() => setDragging(false)}
                   onDrop={onDrop}
                   className={`flex w-full flex-col items-center gap-2 rounded border-2 border-dashed p-8 text-center outline-none
-                    focus-visible:shadow-[0_0_0_3px_var(--ohs-color-focus-ring)]
+                    focus-visible:shadow-[0_0_0_3px_var(--ohs-sys-color-focus-ring)]
                     ${dragging ? 'border-primary bg-primary-container' : 'border-outline hover:border-text-muted'}`}
                 >
                   <IconUpload size={32} className="text-text-muted" />
