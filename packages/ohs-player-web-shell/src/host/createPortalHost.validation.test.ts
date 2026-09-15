@@ -37,6 +37,39 @@ function reportedMessages(onError: ReturnType<typeof vi.fn>): string[] {
 }
 
 describe('createPortalHost startup validation', () => {
+  it('fails a manifest whose shape is invalid, naming it, the field and what was expected', () => {
+    const broken = {
+      id: 'broken',
+      widgets: [{ id: 'count', region: 'sidebar', order: 1, load }],
+    } as unknown as PortalExtension;
+
+    expect(inDevelopment({ extensions: [broken] })).toThrow(
+      'Extension "broken" is invalid: widgets[0].region must be one of "kpi", "main", "side".',
+    );
+  });
+
+  it('names a manifest by its position when its id is missing', () => {
+    const anonymous = { routes: [] } as unknown as PortalExtension;
+
+    expect(inDevelopment({ extensions: [reports, anonymous] })).toThrow(
+      'Extension at position 1 is invalid: id must be a non-empty string.',
+    );
+  });
+
+  it('in production drops a manifest with an invalid shape and keeps the rest', () => {
+    const broken = {
+      id: 'broken',
+      routes: [{ id: 'list', path: 'broken' }],
+    } as unknown as PortalExtension;
+
+    const { host, onError } = inProduction({ extensions: [broken, reports] });
+
+    expect(reportedMessages(onError)).toEqual([
+      'Extension "broken" is invalid: routes[0].path must be a path starting with "/"; routes[0].load must be a function that imports the page.',
+    ]);
+    expect(host.routes.map((route) => route.id)).toEqual(['reports.list']);
+  });
+
   it('prefixes every contributed id with the manifest id', () => {
     const { contributions } = inDevelopment({ extensions: [reports] })();
 

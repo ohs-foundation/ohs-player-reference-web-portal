@@ -1,7 +1,11 @@
-import { defaultMessageCatalog, type PermissionMap } from 'ohs-player-web-core';
+import {
+  defaultMessageCatalog,
+  validateExtensionManifest,
+  type PermissionMap,
+} from 'ohs-player-web-core';
 import type { PortalDefaults } from '../config/resolvePortalConfig';
 import type { PortalRoute } from '../routes/types';
-import type { PortalExtension } from './types';
+import { DASHBOARD_REGIONS, SLOT_NAMES, type PortalExtension } from './types';
 
 const HOST_PATHS = ['/', '/login', '/logout', '/callback', '/unauthorized'];
 
@@ -75,7 +79,21 @@ function clashMessage(
   return `Extension "${manifest.id}" declares ${claim.kind} "${claim.key}", which ${other} already declares.`;
 }
 
-export function withoutClashes(
+function shapeProblem(manifest: PortalExtension, index: number): string | undefined {
+  const result = validateExtensionManifest(manifest, {
+    regions: DASHBOARD_REGIONS,
+    slots: SLOT_NAMES,
+  });
+  if (result.success) return undefined;
+  const name =
+    typeof manifest.id === 'string' && manifest.id.trim()
+      ? `Extension "${manifest.id}"`
+      : `Extension at position ${index}`;
+  const details = result.errors.map(({ path, message }) => `${path || 'manifest'} ${message}`);
+  return `${name} is invalid: ${details.join('; ')}.`;
+}
+
+export function validManifests(
   defaults: PortalDefaults,
   routes: readonly PortalRoute[],
   manifests: readonly PortalExtension[],
@@ -85,6 +103,11 @@ export function withoutClashes(
   hostClaims(defaults, routes).forEach((claim) => owners.set(slotOf(claim), { id: 'host' }));
 
   return manifests.filter((manifest, index) => {
+    const problem = shapeProblem(manifest, index);
+    if (problem) {
+      report(problem);
+      return false;
+    }
     const own = new Map<string, Owner>();
     for (const claim of claimsOf(manifest)) {
       const owner = owners.get(slotOf(claim)) ?? own.get(slotOf(claim));
