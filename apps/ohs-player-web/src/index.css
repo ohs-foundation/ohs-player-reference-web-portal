@@ -308,8 +308,8 @@ body {
 .app-sidebar {
   grid-area: side;
   /* Brand + inverse for the active item; token-driven so it flips with light/dark. */
-  --sidebar-active-bg: var(--ohs-color-primary, #094f9a);
-  --sidebar-active-fg: var(--ohs-color-primary-contrast, #ffffff);
+  --sidebar-active-bg: var(--ohs-sys-color-primary, #094f9a);
+  --sidebar-active-fg: var(--ohs-sys-color-on-primary, #ffffff);
   display: flex;
   flex-direction: column;
   padding: var(--ohs-sys-spacing-12, 48px) var(--ohs-sys-spacing-6, 24px)

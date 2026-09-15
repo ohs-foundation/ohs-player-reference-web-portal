@@ -27,10 +27,8 @@
   --color-positive: var(--ohs-sys-color-success);
   --color-positive-surface: var(--ohs-sys-color-success-container);
 
-  /* on-primary is #ffffff vs the brand #FAFAFA; awaiting design sign-off. */
-  --color-primary-contrast: var(--ohs-color-primary-contrast);
-  /* No sys role — M3 expresses hover as a state layer, not a colour. */
-  --color-primary-hover: var(--ohs-color-primary-hover);
+  --color-primary-contrast: var(--ohs-sys-color-on-primary);
+  --color-primary-hover: var(--ohs-sys-color-primary-hover);
   --color-surface-variant: var(--ohs-sys-color-surface-container-low);
   --color-surface-container-high: var(--ohs-sys-color-surface-container-high);
   /* on-surface-variant and outline-variant are darker than these; a deliberate restyle, not a rename. */
