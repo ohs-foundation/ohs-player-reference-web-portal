@@ -1,6 +1,6 @@
 import { IconNotification } from '../../components/ui/icons';
-import { IconButton } from '../../components/ui';
 import { OhsDropdownMenu, useTranslation } from 'ohs-player-web-core';
+import { IconButton } from '../../components/ui';
 import { ActivityList } from './ActivityList';
 import { useRecentActivity } from './useRecentActivity';
 
