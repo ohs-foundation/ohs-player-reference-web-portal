@@ -1,7 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
+import type { ExtensionWidget } from 'ohs-player-web-core';
+import type { ComponentType } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'vitest-axe';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DashboardRegion } from '../host/types';
 
 const counts: Record<string, { total: number; active: number }> = {
   Practitioner: { total: 10, active: 7 },
@@ -50,6 +53,9 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   };
 });
 
+const { CorePlatformProvider } = await import('ohs-player-web-core');
+const { ExtensionsContext } = await import('../host/extensionsContext');
+const { testPlatformConfig } = await import('../test/testPlatformConfig');
 const { DashboardPage } = await import('./DashboardPage');
 
 function renderPage() {
@@ -91,5 +97,64 @@ describe('DashboardPage', () => {
     await screen.findByText('Jane Smith');
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
+  });
+});
+
+function Broken(): React.ReactElement {
+  throw new Error('widget exploded');
+}
+
+const loads = (component: ComponentType) => () => Promise.resolve({ default: component });
+
+const widgets: ExtensionWidget<DashboardRegion>[] = [
+  { id: 'reports.count', region: 'kpi', order: 50, load: loads(() => <p>Reports KPI</p>) },
+  { id: 'reports.broken', region: 'main', order: 15, load: loads(Broken) },
+  { id: 'reports.trend', region: 'side', order: 15, load: loads(() => <p>Reports trend</p>) },
+];
+
+function renderWithWidgets() {
+  return render(
+    <MemoryRouter>
+      <CorePlatformProvider config={testPlatformConfig}>
+        <ExtensionsContext.Provider
+          value={{ nav: [], routes: [], slots: [], questionnaires: {}, widgets }}
+        >
+          <DashboardPage />
+        </ExtensionsContext.Provider>
+      </CorePlatformProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('DashboardPage regions', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('renders contributed widgets in their declared region, sorted by order', async () => {
+    const { container } = renderWithWidgets();
+
+    const kpi = container.querySelector('.ohs-kpi-grid') as HTMLElement;
+    expect(await within(kpi).findByText('Reports KPI')).toBeInTheDocument();
+    expect(kpi.lastElementChild).toHaveTextContent('Reports KPI');
+
+    const rows = container.querySelectorAll<HTMLElement>('.ohs-dash-row');
+    expect(rows).toHaveLength(5);
+    expect(await within(rows[1]).findByText('Reports trend')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('recentUsersTitle')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('recentLocationsTitle')).toBeInTheDocument();
+  });
+
+  it('shows a failed tile for a widget that throws while the rest of the dashboard renders', async () => {
+    renderWithWidgets();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('errorTitle');
+    expect(screen.getByText('kpiTotalUsers')).toBeInTheDocument();
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    expect(await screen.findByText('Reports trend')).toBeInTheDocument();
   });
 });

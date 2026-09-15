@@ -20,6 +20,10 @@ import { StatCard } from '../features/dashboard/StatCard';
 import { RecentCard } from '../features/dashboard/RecentCard';
 import { DistributionCard } from '../features/dashboard/DistributionCard';
 import { useRecent, useResourceStats } from '../features/dashboard/useDashboardData';
+import { DashboardRows, RegionItems, type RegionItem } from '../features/dashboard/DashboardRegions';
+import { ExtensionWidgetTile } from '../features/dashboard/ExtensionWidgetTile';
+import { useExtensions } from '../host/extensionsContext';
+import type { DashboardRegion } from '../host/types';
 
 type Named = { id?: string; name?: string };
 type PractitionerRow = {
@@ -72,6 +76,7 @@ function activeSplit(
 
 export function DashboardPage(): React.ReactElement {
   const { t } = useTranslation();
+  const { widgets } = useExtensions();
 
   const users = useResourceStats('Practitioner', { active: 'true' });
   const locations = useResourceStats('Location', { status: 'active' });
@@ -141,6 +146,95 @@ export function DashboardPage(): React.ReactElement {
     { key: 'status', header: t('columnStatus'), render: (c) => statusBadge(c.status === 'active', t) },
   ];
 
+  const contributed = (region: DashboardRegion): RegionItem[] =>
+    widgets
+      .filter((widget) => widget.region === region)
+      .map((widget) => ({ key: widget.id, order: widget.order, node: <ExtensionWidgetTile widget={widget} /> }));
+
+  const kpi: RegionItem[] = [
+    { key: 'users', order: 10, node: <StatCard label={t('kpiTotalUsers')} value={users.total} loading={users.loading} badgeColor={KPI_BADGE.users} glyph={IconAccountCircleFill} /> },
+    { key: 'locations', order: 20, node: <StatCard label={t('kpiTotalLocations')} value={locations.total} loading={locations.loading} badgeColor={KPI_BADGE.locations} glyph={IconMapPinFill} /> },
+    { key: 'organizations', order: 30, node: <StatCard label={t('kpiTotalOrganizations')} value={orgs.total} loading={orgs.loading} badgeColor={KPI_BADGE.organisations} glyph={IconBriefcaseFill} /> },
+    { key: 'careTeams', order: 40, node: <StatCard label={t('kpiTotalCareTeams')} value={careTeams.total} loading={careTeams.loading} badgeColor={KPI_BADGE.careTeams} glyph={IconTeamFill} /> },
+    ...contributed('kpi'),
+  ];
+
+  const main: RegionItem[] = [
+    {
+      key: 'recentUsers',
+      order: 10,
+      node: (
+        <RecentCard
+          title={t('recentUsersTitle')}
+          subtitle={t('recentUsersSubtitle')}
+          viewAllTo="/users"
+          columns={userColumns}
+          rows={recentUsers.rows}
+          rowKey={(p) => p.id ?? ''}
+          loading={recentUsers.loading}
+          error={recentUsers.error}
+        />
+      ),
+    },
+    {
+      key: 'recentLocations',
+      order: 20,
+      node: (
+        <RecentCard
+          title={t('recentLocationsTitle')}
+          subtitle={t('recentLocationsSubtitle')}
+          viewAllTo="/locations"
+          columns={locationColumns}
+          rows={recentLocations.rows}
+          rowKey={(l) => l.id ?? ''}
+          loading={recentLocations.loading}
+          error={recentLocations.error}
+        />
+      ),
+    },
+    {
+      key: 'recentOrganizations',
+      order: 30,
+      node: (
+        <RecentCard
+          title={t('recentOrganizationsTitle')}
+          subtitle={t('recentOrganizationsSubtitle')}
+          viewAllTo="/organizations"
+          columns={orgColumns}
+          rows={recentOrgs.rows}
+          rowKey={(o) => o.id ?? ''}
+          loading={recentOrgs.loading}
+          error={recentOrgs.error}
+        />
+      ),
+    },
+    {
+      key: 'recentCareTeams',
+      order: 40,
+      node: (
+        <RecentCard
+          title={t('recentCareTeamsTitle')}
+          subtitle={t('recentCareTeamsSubtitle')}
+          viewAllTo="/care-teams"
+          columns={careTeamColumns}
+          rows={recentCareTeams.rows}
+          rowKey={(c) => c.id ?? ''}
+          loading={recentCareTeams.loading}
+          error={recentCareTeams.error}
+        />
+      ),
+    },
+    ...contributed('main'),
+  ];
+
+  const side: RegionItem[] = [
+    { key: 'userDistribution', order: 10, node: <DistributionCard title={t('distributionUsers')} loading={users.loading} segments={activeSplit(users.total, users.active, t)} /> },
+    { key: 'locationDistribution', order: 20, node: <DistributionCard title={t('distributionLocations')} loading={locations.loading} segments={activeSplit(locations.total, locations.active, t)} /> },
+    { key: 'organizationDistribution', order: 30, node: <DistributionCard title={t('distributionOrganizations')} loading={orgs.loading} segments={activeSplit(orgs.total, orgs.active, t)} /> },
+    { key: 'careTeamDistribution', order: 40, node: <DistributionCard title={t('distributionCareTeams')} loading={careTeams.loading} segments={activeSplit(careTeams.total, careTeams.active, t)} /> },
+    ...contributed('side'),
+  ];
+
   return (
     <Page>
       <PageHeader title={t('pageDashboard')} description={t('pageDashboardDescription')} />
@@ -149,67 +243,10 @@ export function DashboardPage(): React.ReactElement {
       <PermissionGuard permission="dashboard.view">
         <Stack gap={5}>
           <section aria-label={t('pageDashboard')} className="ohs-kpi-grid">
-            <StatCard label={t('kpiTotalUsers')} value={users.total} loading={users.loading} badgeColor={KPI_BADGE.users} glyph={IconAccountCircleFill} />
-            <StatCard label={t('kpiTotalLocations')} value={locations.total} loading={locations.loading} badgeColor={KPI_BADGE.locations} glyph={IconMapPinFill} />
-            <StatCard label={t('kpiTotalOrganizations')} value={orgs.total} loading={orgs.loading} badgeColor={KPI_BADGE.organisations} glyph={IconBriefcaseFill} />
-            <StatCard label={t('kpiTotalCareTeams')} value={careTeams.total} loading={careTeams.loading} badgeColor={KPI_BADGE.careTeams} glyph={IconTeamFill} />
+            <RegionItems items={kpi} />
           </section>
 
-          <div className="ohs-dash-row">
-            <RecentCard
-              title={t('recentUsersTitle')}
-              subtitle={t('recentUsersSubtitle')}
-              viewAllTo="/users"
-              columns={userColumns}
-              rows={recentUsers.rows}
-              rowKey={(p) => p.id ?? ''}
-              loading={recentUsers.loading}
-              error={recentUsers.error}
-            />
-            <DistributionCard title={t('distributionUsers')} loading={users.loading} segments={activeSplit(users.total, users.active, t)} />
-          </div>
-
-          <div className="ohs-dash-row">
-            <RecentCard
-              title={t('recentLocationsTitle')}
-              subtitle={t('recentLocationsSubtitle')}
-              viewAllTo="/locations"
-              columns={locationColumns}
-              rows={recentLocations.rows}
-              rowKey={(l) => l.id ?? ''}
-              loading={recentLocations.loading}
-              error={recentLocations.error}
-            />
-            <DistributionCard title={t('distributionLocations')} loading={locations.loading} segments={activeSplit(locations.total, locations.active, t)} />
-          </div>
-
-          <div className="ohs-dash-row">
-            <RecentCard
-              title={t('recentOrganizationsTitle')}
-              subtitle={t('recentOrganizationsSubtitle')}
-              viewAllTo="/organizations"
-              columns={orgColumns}
-              rows={recentOrgs.rows}
-              rowKey={(o) => o.id ?? ''}
-              loading={recentOrgs.loading}
-              error={recentOrgs.error}
-            />
-            <DistributionCard title={t('distributionOrganizations')} loading={orgs.loading} segments={activeSplit(orgs.total, orgs.active, t)} />
-          </div>
-
-          <div className="ohs-dash-row">
-            <RecentCard
-              title={t('recentCareTeamsTitle')}
-              subtitle={t('recentCareTeamsSubtitle')}
-              viewAllTo="/care-teams"
-              columns={careTeamColumns}
-              rows={recentCareTeams.rows}
-              rowKey={(c) => c.id ?? ''}
-              loading={recentCareTeams.loading}
-              error={recentCareTeams.error}
-            />
-            <DistributionCard title={t('distributionCareTeams')} loading={careTeams.loading} segments={activeSplit(careTeams.total, careTeams.active, t)} />
-          </div>
+          <DashboardRows main={main} side={side} />
         </Stack>
       </PermissionGuard>
     </Page>

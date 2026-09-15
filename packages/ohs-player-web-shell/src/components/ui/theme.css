@@ -2195,6 +2195,14 @@
 .ohs-dash-row > .ohs-card {
   height: 100%;
 }
+.ohs-dash-row:empty {
+  display: none;
+}
+@media (min-width: 901px) {
+  .ohs-dash-row[data-side-only] > * {
+    grid-column: 2;
+  }
+}
 @media (max-width: 900px) {
   .ohs-dash-row {
     grid-template-columns: 1fr;

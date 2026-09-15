@@ -1,13 +1,8 @@
-import {
-  lazy,
-  Suspense,
-  type ComponentType,
-  type LazyExoticComponent,
-  type ReactNode,
-} from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { AppLayout } from '../layout/AppLayout';
+import { lazyComponent } from '../lib/lazyComponent';
 import { RouteFallback } from './RouteFallback';
 import type { PortalRoute } from './types';
 
@@ -25,18 +20,8 @@ const DashboardPage = lazy(() =>
   import('../pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
 );
 
-const lazyPages = new WeakMap<PortalRoute['load'], LazyExoticComponent<ComponentType>>();
-
-function lazyPage(load: PortalRoute['load']): LazyExoticComponent<ComponentType> {
-  const cached = lazyPages.get(load);
-  if (cached) return cached;
-  const page = lazy(load);
-  lazyPages.set(load, page);
-  return page;
-}
-
 function GatedPage({ route }: Readonly<{ route: PortalRoute }>): React.ReactElement {
-  const Page = lazyPage(route.load);
+  const Page = lazyComponent(route.load);
   return (
     <ProtectedRoute
       flag={route.requires?.flag}
