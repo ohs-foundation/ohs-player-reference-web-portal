@@ -16,11 +16,13 @@ Types-only exports are listed under **Exported types**; runtime values are group
 
 ## Exported types (`./types/config` and `./sdc`)
 
-Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `ThemeShadow`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
+Configuration and auth shapes: `AuthConfig`, `AuthStatus`, `CorePlatformConfig`, `CustomEndpoints`, `FhirVersion`, `FlagsConfig`, `FlagRecord`, `I18nConfig`, `MessageCatalog`, `PermissionMap`, `RbacAdapter`, `RbacConfig`, `ThemeColors`, `ThemeConfig`, `TokenStore`, `UnauthorizedBehaviour`, `UseAuthResult`, `UsePermissionResult`, `UserProfile`.
 
-Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`.
+Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`, `SelectFieldOption`.
 
-Primitive props (subset): `ButtonProps`, `ButtonSize`, `ButtonVariant`, `CardHeaderProps`, `CardProps`, `DataTableColumn`, `DataTableProps`, `EmptyStateProps`, `ErrorStateProps`, `FieldRootProps`, `IconButtonProps`, `InlineProps`, `PageHeaderProps`, `PageProps`, `SelectFieldOption`, `SelectFieldProps`, `StackProps`, `StatusBadgeProps`, `StatusTone`, `TextAreaFieldProps`, `TextFieldProps`.
+FHIR data-access option shapes: `SearchAllOptions`, `PagedSearchParams`, `PagedSearchResult`, `OptimisticInsertOptions`.
+
+UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, etc. — are **app**-level, in `apps/ohs-player-web/src/components/ui/`, not library exports.)
 
 ---
 
@@ -51,11 +53,15 @@ Primitive props (subset): `ButtonProps`, `ButtonSize`, `ButtonVariant`, `CardHea
 | `useTranslation()` | `t(key)`, interpolation, RTL/dir future-ready. |
 | `useResource(resourceType, id)` | TanStack Query read: `client.read`. |
 | `useSearch(resourceType, params?)` | TanStack Query search bundle: `client.search`. |
+| `usePagedSearch(resourceType, { page, pageSize, params })` | Offset-paged search (`_count`/`_offset`/`_total=accurate`, as strings). Returns `{ rows, total, page, pageSize, hasNext, hasPrev, paginationMode, isLoading, isFetching, error }`. `paginationMode` is `'numbered'` when the server reports an accurate `total`, else `'links'`. Shares the `['fhir','search',type,…]` cache namespace, so delete/update/refresh invalidate it. |
 | `useFhirCapabilities()` | TanStack Query: `GET …/metadata`. |
 | `useCreateResource(resourceType)` | Mutation: `client.create`; invalidates search for `resourceType`. |
 | `useUpdateResource(resourceType)` | Mutation: `client.update`; invalidates read + search. |
+| `useDeleteResource(resourceType)` | Mutation: `client.delete` (hard delete); invalidates read + search for `resourceType`. Rejects with `FhirError` — surface 409/`OperationOutcome` conflicts. |
 | `useCustomEndpoint(alias)` | `{ get, post, put }` mutations wrapping `customGet` / `customPost` / `customPut` for that alias (`put` takes `{ id?, body }`). |
+| `useCustomResource(alias, params?, { enabled? })` | TanStack Query GET of `customEndpoints[alias]`, cached under `['custom', alias, params]`. Declarative counterpart to `useCustomEndpoint(alias).get`; resolves `unknown`, narrow at the call site. |
 | `useRefreshResources()` | Returns `(resourceType \| resourceType[]) => Promise<void>` that invalidates + refetches the cached `search` list(s) so view tables re-render after a mutation. |
+| `useOptimisticInsert()` | Returns `(resourceType, resource, options?) => rollback` that inserts a created resource into every mounted `search` list cache so the row renders instantly, then reconciles via a **delayed** background refetch (re-applying the row if the server isn't consistent yet, so it never disappears). `options.also` adds resource types to reconcile (derived columns); `options.reconcileDelayMs` tunes the delay (default 1500). Don't also call `useRefreshResources` for that create. Call the returned rollback on the mutation's error path. |
 | `useQuestionnaireFormState(questionnaire, initialAnswers?)` | SDC form state: `{ answers, setAnswer, setAnswers, buildQuestionnaireResponse, validateRequired }`. |
 | `useStatusBar()` | Status bar context consumer (primitives). |
 
@@ -85,9 +91,28 @@ Primitive props (subset): `ButtonProps`, `ButtonSize`, `ButtonVariant`, `CardHea
 
 | Export | Description |
 | --- | --- |
-| `applyTheme(theme?)` | Applies CSS variables to document (`ThemeConfig`). |
+| `applyTheme(theme, element)` | Writes the legacy `--ohs-*` tokens as inline style properties (`ThemeConfig`). |
 | `defaultTheme` | Baseline theme object. |
 | `mergeTheme(base, patch)` | Deep-merge themes for overrides. |
+| `themeCss(config?)` | Serialises a `ThemeConfigV2` to a stylesheet: `:root` for light plus mode-independent tokens, `[data-theme='dark']` for the dark scheme. |
+| `installThemeCss(config?, doc?)` | Installs or replaces that stylesheet in `document.head`. Idempotent; call once at startup. |
+| `upgradeThemeConfig(v1)` | Maps a v1 `ThemeConfig`'s colours onto their `ThemeConfigV2` sys roles. |
+
+The two layers are disjoint by design: `applyTheme` owns the legacy `--ohs-color-*`/`--ohs-spacing-*`/`--ohs-radius-*`
+names as inline styles, `themeCss` owns `--ohs-sys-*` and `--ohs-ref-*` as CSS rules. Inline styles beat
+attribute selectors, so no token is emitted by both.
+
+Theme types: `ThemeConfigV2`, `SysColorRole`, `SysColorScheme`, `TypescaleRole`, `TypescaleMetrics`, `ShapeToken`.
+
+`TypescaleMetrics` carries an optional `letterSpacing` (emitted as
+`--ohs-sys-typescale-<role>-letter-spacing`, `normal` when unset). `TypescaleRole` adds
+`heading-{5xl,4xl,3xl,2xl,l}` and `text-{xl,xs,2xs}` for the scale steps M3 has no role for;
+`ShapeToken` adds `extra-large-decreased` (24px). All three additions are backwards-compatible.
+
+**Removed** (were emitted by `applyTheme` but read by nothing): `ThemeShadow`, and `ThemeConfig`'s
+`shadow` and `spacing` fields; `ThemeColors.secondary`/`.warning`/`.info`. Spacing, elevation and the
+warning/info roles now come from `themeCss` as `--ohs-sys-spacing-*`, `--ohs-sys-elevation-*` and
+`--ohs-sys-color-{warning,info}*`. Consumers passing the removed fields should move to `ThemeConfigV2`.
 
 ---
 
@@ -107,15 +132,35 @@ Methods:
 | --- | --- |
 | `read(resourceType, id)` | `GET …/{type}/{id}` |
 | `search(resourceType, params?)` | `GET …/{type}?…` search parameters |
+| `searchAll(resourceType, params?, options?)` | Walk every search page via Bundle `link[rel=next]` (rebased onto the client base); returns the flat resource list. Options: `pageSize` (default 500), `maxPages` (default 100). Use when a single `_count` page is not enough (e.g. location roots). |
+| `rebaseFhirUrl(nextUrl, fhirBaseUrl)` | Pure helper: map a server-issued paging URL onto the client FHIR base (docker-internal hosts → browser proxy). |
 | `create(body)` | `POST …/{type}` — body must include `resourceType` |
 | `update(resourceType, id, body)` | `PUT …/{type}/{id}` |
 | `delete(resourceType, id)` | `DELETE …/{type}/{id}` — handles 204 empty body |
 | `transaction(bundle)` | `POST` bundle to base URL (typically transaction/batch) |
 | `capabilities()` | `GET …/metadata` (CapabilityStatement) |
 | `postOperation(relativePath, body?)` | `POST …/{relativePath}` — FHIR **$operations** (e.g. `Questionnaire/$extract`). Path must not start with `/`. |
-| `customGet(alias, params?)` | GET non-FHIR path from `customEndpoints[alias]` relative to gateway root derived from FHIR base |
+| `customGet(alias, params?, idSegment?)` | GET non-FHIR path from `customEndpoints[alias]` relative to gateway root, optionally appending `/{idSegment}` (e.g. `location-hierarchy/{rootId}`) |
 | `customPost(alias, body)` | POST JSON to `customEndpoints[alias]` (Accept `application/json`) |
 | `customPut(alias, body, idSegment?)` | PUT JSON to `customEndpoints[alias]`, optionally appending `/{idSegment}` (e.g. a resource id) |
+| `customPostStream(alias, body)` | POST `BodyInit` (e.g. multipart `FormData`) to `customEndpoints[alias]` and return the raw `Response` for streaming (SSE); no `Content-Type` set (browser sets the multipart boundary) |
+| `errorFromResponse(res)` | Convert a non-OK custom-route `Response` into a `FhirError` (parses the gateway JSON error body) |
+
+---
+
+## Bundle transactions
+
+Helpers for building and committing FHIR transaction Bundles. Single-resource saves (one entry) and multi-resource commits (with `urn:uuid:` cross-references) both go through `commitBundle`.
+
+| Export | Description |
+| --- | --- |
+| `newUrnUuid()` | A `urn:uuid:` placeholder (`crypto.randomUUID`) for a not-yet-created resource, referenceable within the same Bundle. |
+| `bundleEntry(request, resource?, fullUrl?)` | Builds one `TransactionBundleEntry`; pass `fullUrl` (from `newUrnUuid`) to cross-reference before the server assigns an id. |
+| `commitBundle(client, entries)` | Wraps `entries` in a `type: 'transaction'` Bundle and submits via `client.transaction` (all-or-nothing); returns the `TransactionResponseBundle`. |
+| `committedReference(response, index?)` | `{Type}/{id}` for the entry at `index`, parsed from its `response.location`. |
+| `committedId(response, index?)` | The bare server-assigned id for the entry at `index`. |
+
+Types: `BundleEntryMethod`, `TransactionBundleEntry`, `TransactionResponseBundle`.
 
 ---
 
@@ -154,23 +199,21 @@ Supported item types for rendering include `string`, `text`, `integer`, `decimal
 
 ---
 
-## UI primitives (token-driven + Material Web)
+## UI exports
 
-Exported React components and helpers from `./ui/primitives`:
-
-`Button`, `Card`, `CardHeader`, `DataTable`, `EmptyState`, `ErrorState`, `Field`, `IconButton`, `Inline`, `Page`, `PageHeader`, `SelectField`, `Spinner`, `Stack`, `StatusBadge`, `StatusBarProvider`, `TextAreaField`, `TextField`, `useStatusBar`.
-
-See Material bridge notes in [ARCHITECTURE.md](./ARCHITECTURE.md).
-
----
-
-## Radix & Material wrappers
+The library ships **behavior + Radix wrappers only** — it does **not** export presentational primitives (`Button`, `Card`, `TextField`, `DataTable`, etc.); those live in the app (`apps/ohs-player-web/src/components/ui/`). See **UI primitives & theming** in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 | Export | Description |
 | --- | --- |
-| `OhsDialog`, `OhsToast`, `OhsTooltip` | Radix-based overlays (see source under `ui/radix`). |
-| `OhsDropdownMenu` | Material `md-menu` wrapper. |
-| `OhsTabs` | Material tabs (`OhsM3Tabs` alias). |
+| `OhsDialog`, `OhsToast`, `OhsTooltip` | Radix-based overlays (`ui/radix`). |
+| `OhsDropdownMenu` | Radix dropdown-menu compound API. |
+| `OhsTabs` | Radix tabs compound API. |
+| `StatusBarProvider`, `useStatusBar` | Status bar context + consumer (`ui/primitives/StatusBar`). |
+| `FhirJsonView` | Read-only pretty-printed FHIR JSON + Copy button. Token-styled, dark-mode-safe; labels (`copyLabel`/`copiedLabel`) and `onCopy`/`onCopyError` are passed in (the app owns i18n + status feedback). |
+| `FhirJsonEditor` | Editable "FHIR Resource (JSON)" field with inline validation; rejects unparseable JSON and any change to `resourceType`/`id`. Reports `(parsed, text)` and validity via callbacks. Seeds once on mount — pass a `key` to reset. |
+| `formatOperationOutcomeMessage` | Human-readable message from a FHIR `OperationOutcome`. |
+
+Types: `OhsDialogProps`, `StatusTone`, `FhirJsonViewProps`, `FhirJsonEditorProps`, `PagedSearchParams`, `PagedSearchResult`.
 
 ---
 

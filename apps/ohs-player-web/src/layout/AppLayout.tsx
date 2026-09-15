@@ -6,30 +6,35 @@ import {
   useTranslation,
 } from 'ohs-player-web-core';
 import {
-  RiArrowDownSLine,
-  RiBuildingFill,
-  RiBuildingLine,
-  RiDashboardFill,
-  RiDashboardLine,
-  RiMapPin3Fill,
-  RiMapPin3Line,
-  RiMenuFoldLine,
-  RiMenuLine,
-  RiMenuUnfoldLine,
-  RiMoonLine,
-  RiNotificationLine,
-  RiSunLine,
-  RiTeamFill,
-  RiTeamLine,
-  RiUserFill,
-  RiUserLine,
-  type RemixiconComponentType,
-} from '@remixicon/react';
-import { Avatar, IconButton, SearchField } from '../components/ui';
-import { NavLink, Outlet } from 'react-router-dom';
+  IconBuilding,
+  IconBuildingFill,
+  IconChevronDown,
+  IconDashboard,
+  IconDashboardFill,
+  IconDatabase,
+  IconDatabaseFill,
+  IconMagic,
+  IconMagicFill,
+  IconMapPin,
+  IconMapPinFill,
+  IconMenu,
+  IconMoon,
+  IconSun,
+  IconTeam,
+  IconTeamFill,
+  IconUser,
+  IconUserFill,
+  type IconComponent,
+} from '../components/ui/icons';
+import { Avatar, IconButton } from '../components/ui';
+import { NavLink, Outlet, useMatch } from 'react-router-dom';
+import { useSignOut } from './useSignOut';
 import { useState } from 'react';
 import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
+import { GlobalSearch } from '../features/search/GlobalSearch';
+import { NotificationsBell } from '../features/activity/NotificationsBell';
+import { useSetupWizardAutoRedirect } from '../features/setup-wizard/useSetupWizardAutoRedirect';
 
 const ICON_SIZE = 20;
 
@@ -38,24 +43,27 @@ interface NavItem {
   label: string;
   permission: string;
   flag?: string;
-  LineIcon: RemixiconComponentType;
-  FillIcon: RemixiconComponentType;
+  LineIcon: IconComponent;
+  FillIcon: IconComponent;
 }
 
 const NAV_DEFS = [
-  { to: '/', labelKey: 'navDashboard', permission: 'dashboard.view', flag: 'dashboard', LineIcon: RiDashboardLine, FillIcon: RiDashboardFill },
-  { to: '/users', labelKey: 'navUsers', permission: 'users.view', flag: 'userMgmt', LineIcon: RiUserLine, FillIcon: RiUserFill },
-  { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: RiMapPin3Line, FillIcon: RiMapPin3Fill },
-  { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: RiBuildingLine, FillIcon: RiBuildingFill },
-  { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: RiTeamLine, FillIcon: RiTeamFill },
+  { to: '/', labelKey: 'navDashboard', permission: 'dashboard.view', flag: 'dashboard', LineIcon: IconDashboard, FillIcon: IconDashboardFill },
+  { to: '/users', labelKey: 'navUsers', permission: 'users.view', flag: 'userMgmt', LineIcon: IconUser, FillIcon: IconUserFill },
+  { to: '/locations', labelKey: 'navLocations', permission: 'locations.view', flag: 'locationMgmt', LineIcon: IconMapPin, FillIcon: IconMapPinFill },
+  { to: '/organizations', labelKey: 'navOrganizations', permission: 'orgs.view', flag: 'orgMgmt', LineIcon: IconBuilding, FillIcon: IconBuildingFill },
+  { to: '/care-teams', labelKey: 'navCareTeams', permission: 'careteams.view', flag: 'careTeams', LineIcon: IconTeam, FillIcon: IconTeamFill },
+  { to: '/resources', labelKey: 'navFhirViewer', permission: 'fhir-viewer.view', flag: 'fhirViewer', LineIcon: IconDatabase, FillIcon: IconDatabaseFill },
+  { to: '/setup', labelKey: 'navSetup', permission: 'setup.view', flag: 'setupWizard', LineIcon: IconMagic, FillIcon: IconMagicFill },
 ] as const;
 
 export function AppLayout() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const { t } = useTranslation();
+  const onSignOut = useSignOut();
   const { mode, toggle } = useThemeMode();
+  useSetupWizardAutoRedirect();
 
   if (auth.status !== 'authenticated') {
     return (
@@ -68,11 +76,10 @@ export function AppLayout() {
   }
 
   return (
-    <div
-      className="app-shell"
-      data-sidebar-open={open ? 'true' : undefined}
-      data-sidebar-collapsed={collapsed ? 'true' : undefined}
-    >
+    <div className="app-shell" data-sidebar-open={open ? 'true' : undefined}>
+      <a className="app-skip-link" href="#main-content">
+        {t('skipToContent')}
+      </a>
       <header className="app-topbar">
         <div className="app-topbar__brand">
           <IconButton
@@ -80,41 +87,27 @@ export function AppLayout() {
             className="app-topbar__menu-toggle"
             onClick={() => setOpen((v) => !v)}
           >
-            <RiMenuLine size={24} />
+            <IconMenu size={24} />
           </IconButton>
           <span className="app-topbar__logo">
             <BrandMark size={40} />
             <span className="app-topbar__title">{t('appTopbarTitle')}</span>
           </span>
-          <IconButton
-            label={t(collapsed ? 'expandSidebar' : 'collapseSidebar')}
-            className="app-topbar__collapse"
-            onClick={() => setCollapsed((v) => !v)}
-          >
-            {collapsed ? <RiMenuUnfoldLine size={24} /> : <RiMenuFoldLine size={24} />}
-          </IconButton>
         </div>
         <div className="app-topbar__actions">
-          <SearchField
-            size="lg"
-            className="app-topbar__search"
-            label={t('globalSearch')}
-            placeholder={t('globalSearch')}
-          />
+          <GlobalSearch />
           <IconButton
             label={mode === 'dark' ? t('themeLight') : t('themeDark')}
             className="app-topbar__bell"
             onClick={toggle}
           >
-            {mode === 'dark' ? <RiSunLine size={24} /> : <RiMoonLine size={24} />}
+            {mode === 'dark' ? <IconSun size={24} /> : <IconMoon size={24} />}
           </IconButton>
-          <IconButton label={t('notifications')} className="app-topbar__bell">
-            <RiNotificationLine size={24} />
-          </IconButton>
+          <NotificationsBell />
           <UserMenu
             name={auth.user?.preferred_username ?? auth.user?.name ?? auth.user?.sub ?? ''}
             email={auth.user?.email}
-            onSignOut={() => void auth.logout()}
+            onSignOut={onSignOut}
             signOutLabel={t('signOut')}
           />
         </div>
@@ -140,7 +133,7 @@ export function AppLayout() {
         </nav>
       </aside>
 
-      <main className="app-shell__main">
+      <main className="app-shell__main" id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
     </div>
@@ -151,28 +144,22 @@ function NavRow({ item }: Readonly<{ item: NavItem }>): React.ReactElement | nul
   const flagOn = useFlag(item.flag ?? '__always_on__');
   const enabled = item.flag ? flagOn : true;
   const { can } = usePermission(item.permission);
+  const isActive = Boolean(useMatch({ path: item.to, end: item.to === '/' }));
   if (!enabled || !can) return null;
+
+  const Icon = isActive ? item.FillIcon : item.LineIcon;
 
   return (
     <li>
       <NavLink
         to={item.to}
         end={item.to === '/'}
-        className={({ isActive }) =>
-          isActive ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'
-        }
+        className={isActive ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'}
       >
-        {({ isActive }) => {
-          const Icon = isActive ? item.FillIcon : item.LineIcon;
-          return (
-            <>
-              <span className="app-sidebar__icon" aria-hidden="true">
-                <Icon size={ICON_SIZE} />
-              </span>
-              <span>{item.label}</span>
-            </>
-          );
-        }}
+        <span className="app-sidebar__icon" aria-hidden="true">
+          <Icon size={ICON_SIZE} />
+        </span>
+        <span className="app-sidebar__label">{item.label}</span>
       </NavLink>
     </li>
   );
@@ -204,7 +191,7 @@ function UserMenu({
               {email ? <span className="app-topbar__user-email-inline">{email}</span> : null}
             </span>
           </span>
-          <RiArrowDownSLine size={16} className="app-topbar__user-chevron" aria-hidden="true" />
+          <IconChevronDown size={16} className="app-topbar__user-chevron" aria-hidden="true" />
         </button>
       </OhsDropdownMenu.Trigger>
       <OhsDropdownMenu.Portal>

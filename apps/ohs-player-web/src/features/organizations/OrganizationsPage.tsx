@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
-import type { Location } from '@medplum/fhirtypes';
+import { IconAddCircle, IconChevronDown, IconMore } from '../../components/ui/icons';
 import {
   OhsDropdownMenu,
   PermissionGuard,
@@ -11,25 +10,34 @@ import {
 } from 'ohs-player-web-core';
 import {
   Button,
-  ChipSet,
   DataTable,
   EmptyState,
   ErrorState,
   FilterChip,
+  FilterChipBar,
   IconButton,
   Inline,
   LinearProgress,
   Page,
   PageHeader,
   SearchField,
-  Stack,
   StatusBadge,
 } from '../../components/ui';
 import orgEmptyIllustration from '../../assets/illustrations/org-empty.svg';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
-import { OrganizationDetailsDrawer, type ManagedLocation, type OrgRow } from './OrganizationDetailsDrawer';
+import {
+  OrganizationDetailsDrawer,
+  type ManagedLocation,
+  type OrgRow,
+} from './OrganizationDetailsDrawer';
 import { OrganizationFormDrawer } from './OrganizationFormDrawer';
 import type { Option } from '../users/userFormOptions';
+import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
+import { useFilterParam } from '../search/useFilterParam';
+
+type LocRow = { id?: string; name?: string; managingOrganization?: { reference?: string } };
+
+const STATUS_VALUES = ['active', 'inactive'] as const;
 
 const TYPE_LABEL_BY_CODE = new Map(ORGANIZATION_TYPE_OPTIONS.map((o) => [o.value, o.label]));
 
@@ -55,28 +63,40 @@ export function OrganizationsPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
   const refresh = useRefreshResources();
-  const orgs = useSearch('Organization', { _count: '200' });
+  // `_revinclude` carries each org's managed Locations in the same bundle. Deriving them from the
+  // Location search instead would only ever see its first page, so a link outside that page reads
+  // as "none on record" — `Location.managingOrganization` is the only place the link is stored.
+  const orgs = useSearch('Organization', {
+    _count: '200',
+    _revinclude: 'Location:organization',
+  });
   const locs = useSearch('Location', { _count: '500' });
 
-  const [q, setQ] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [q, setQ] = useState(useInitialSearchTerm());
+  const [statusFilter, setStatusFilter] = useFilterParam('status', STATUS_VALUES);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const resourcesOf = <T,>(data: unknown): T[] =>
-    ((data as { entry?: { resource?: T }[] } | undefined)?.entry ?? [])
+  const resourcesOf = <T,>(data: unknown, resourceType?: string): T[] =>
+    (
+      (data as { entry?: { resource?: (T & { resourceType?: string }) | undefined }[] } | undefined)
+        ?.entry ?? []
+    )
       .map((e) => e.resource)
-      .filter((r): r is T => Boolean(r));
+      .filter((r): r is T & { resourceType?: string } => Boolean(r))
+      .filter((r) => !resourceType || r.resourceType === resourceType);
 
-  const locList = useMemo(() => resourcesOf<Location>(locs.data), [locs.data]);
+  const locList = useMemo(() => resourcesOf<LocRow>(locs.data, 'Location'), [locs.data]);
+
+  /** The `_revinclude`d Locations — every one carries a `managingOrganization`. */
+  const managedLocList = useMemo(() => resourcesOf<LocRow>(orgs.data, 'Location'), [orgs.data]);
 
   /** Locations grouped by the org they're managed by (`Location.managingOrganization`). */
   const locationsByOrgId = useMemo(() => {
     const m = new Map<string, ManagedLocation[]>();
-    for (const l of locList) {
+    for (const l of managedLocList) {
       const orgId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
       if (!orgId || !l.id) continue;
       const list = m.get(orgId) ?? [];
@@ -84,22 +104,37 @@ export function OrganizationsPage() {
       m.set(orgId, list);
     }
     return m;
-  }, [locList]);
+  }, [managedLocList]);
 
   // Options for an org's location picker: unmanaged Locations plus the ones this org already manages —
   // excludes Locations managed by another org so we don't silently steal them (managingOrganization is 0..1).
-  const locationOptionsFor = (orgId?: string): Option[] =>
-    locList
-      .filter((l) => {
-        if (!l.id) return false;
-        const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
-        return !managerId || managerId === orgId;
-      })
-      .map((l) => ({ value: `Location/${l.id}`, label: l.name ?? (l.id as string) }));
+  // The org's own locations come from the `_revinclude` so they survive falling outside the Location page.
+  const locationOptionsFor = (orgId?: string): Option[] => {
+    const seen = new Set<string>();
+    const options: Option[] = [];
+    const add = (l: LocRow) => {
+      if (!l.id || seen.has(l.id)) return;
+      seen.add(l.id);
+      options.push({ value: `Location/${l.id}`, label: l.name ?? l.id });
+    };
+
+    for (const l of managedLocList) {
+      const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
+      if (managerId && managerId === orgId) add(l);
+    }
+    for (const l of locList) {
+      const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
+      if (!managerId || managerId === orgId) add(l);
+    }
+    return options;
+  };
 
   const orgList = useMemo(() => {
-    const list = resourcesOf<OrgRow>(orgs.data);
-    return list.map((o) => ({ ...o, managedLocations: o.id ? locationsByOrgId.get(o.id) : undefined }));
+    const list = resourcesOf<OrgRow>(orgs.data, 'Organization');
+    return list.map((o) => ({
+      ...o,
+      managedLocations: o.id ? locationsByOrgId.get(o.id) : undefined,
+    }));
   }, [orgs.data, locationsByOrgId]);
 
   const isActive = (org: OrgRow): boolean => org.active !== false;
@@ -120,7 +155,7 @@ export function OrganizationsPage() {
     orgsError = orgs.error instanceof Error ? orgs.error.message : String(orgs.error);
   }
 
-  const isFiltering = q.trim() !== '' || statusFilter !== 'all';
+  const isFiltering = q.trim() !== '' || statusFilter !== null;
   const noOrgs = !orgs.isLoading && !orgsError && orgList.length === 0 && !isFiltering;
   const viewOrg = orgList.find((o) => o.id === viewId) ?? null;
   const editOrg = orgList.find((o) => o.id === editId) ?? null;
@@ -140,14 +175,14 @@ export function OrganizationsPage() {
               <Button
                 variant="secondary"
                 type="button"
-                iconRight={<RiArrowDownSLine size={20} />}
+                iconRight={<IconChevronDown size={20} />}
                 onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
               >
                 {t('exportLabel')}
               </Button>
             ) : null}
             <PermissionGuard permission="orgs.create">
-              <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addOrganization')}
               </Button>
             </PermissionGuard>
@@ -189,7 +224,7 @@ export function OrganizationsPage() {
             description={t('organizationsEmptyDescription')}
             action={
               <PermissionGuard permission="orgs.create">
-                <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                   {t('addOrganization')}
                 </Button>
               </PermissionGuard>
@@ -199,49 +234,39 @@ export function OrganizationsPage() {
       ) : (
         <DataTable<OrgRow>
           toolbar={
-            <Stack gap={3}>
-              <Inline
-                justify="between"
-                style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}
+            <Inline>
+              <SearchField
+                label={t('search')}
+                name="orgSearch"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t('searchByNameOrId')}
+              />
+              <FilterChipBar
+                align="end"
+                clearVisible={statusFilter !== null}
+                onClearAll={() => setStatusFilter(null)}
               >
-                <SearchField
-                  label={t('search')}
-                  name="orgSearch"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={t('searchByNameOrId')}
+                <FilterChip
+                  label={t('filterStatus')}
+                  allLabel={t('filterStatusAll')}
+                  options={[
+                    { value: 'active', label: t('filterStatusActive') },
+                    { value: 'inactive', label: t('filterStatusInactive') },
+                  ]}
+                  value={statusFilter}
+                  onChange={setStatusFilter}
                 />
-                <Button
-                  variant="secondary"
-                  type="button"
-                  iconLeft={<RiFilter3Line size={20} />}
-                  aria-expanded={filtersOpen}
-                  onClick={() => setFiltersOpen((v) => !v)}
-                >
-                  {statusFilter !== 'all' ? `${t('filterLabel')} (1)` : t('filterLabel')}
-                </Button>
-              </Inline>
-              {filtersOpen ? (
-                <div className="ohs-users-filters">
-                  <div className="ohs-formfield ohs-users-filters__field">
-                    <span className="ohs-formfield__label">{t('filterStatus')}</span>
-                    <ChipSet>
-                      <FilterChip label={t('filterStatusAll')} selected={statusFilter === 'all'} onChange={() => setStatusFilter('all')} />
-                      <FilterChip label={t('filterStatusActive')} selected={statusFilter === 'active'} onChange={() => setStatusFilter('active')} />
-                      <FilterChip label={t('filterStatusInactive')} selected={statusFilter === 'inactive'} onChange={() => setStatusFilter('inactive')} />
-                    </ChipSet>
-                  </div>
-                  {statusFilter !== 'all' ? (
-                    <button type="button" className="ohs-users-filters__clear" onClick={() => setStatusFilter('all')}>
-                      {t('clearFilters')}
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </Stack>
+              </FilterChipBar>
+            </Inline>
           }
           columns={[
-            { key: 'identifier', header: t('columnIdentifier'), render: (o) => identifierOf(o) || '—' },
+            {
+              key: 'identifier',
+              header: t('columnIdentifier'),
+              mono: true,
+              render: (o) => identifierOf(o) || '—',
+            },
             {
               key: 'name',
               header: t('columnName'),
@@ -275,9 +300,13 @@ export function OrganizationsPage() {
               sortValue: (o) => (isActive(o) ? 1 : 0),
               render: (o) =>
                 isActive(o) ? (
-                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>{t('statusActive')}</StatusBadge>
+                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>
+                    {t('statusActive')}
+                  </StatusBadge>
                 ) : (
-                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>{t('statusInactive')}</StatusBadge>
+                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>
+                    {t('statusInactive')}
+                  </StatusBadge>
                 ),
             },
             {
@@ -288,11 +317,15 @@ export function OrganizationsPage() {
                 <OhsDropdownMenu.Root>
                   <OhsDropdownMenu.Trigger asChild>
                     <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
-                      <RiMore2Fill size={20} />
+                      <IconMore size={20} />
                     </IconButton>
                   </OhsDropdownMenu.Trigger>
                   <OhsDropdownMenu.Portal>
-                    <OhsDropdownMenu.Content className="ohs-dropdown-content" align="end" sideOffset={4}>
+                    <OhsDropdownMenu.Content
+                      className="ohs-dropdown-content"
+                      align="end"
+                      sideOffset={4}
+                    >
                       <OhsDropdownMenu.Item
                         className="ohs-dropdown-item"
                         onSelect={() => {
@@ -319,11 +352,21 @@ export function OrganizationsPage() {
           }}
           pagination
           initialPageSize={10}
+          pageResetKey={statusFilter ?? ''}
           errorState={orgsError ? <ErrorState description={orgsError} /> : undefined}
           emptyState={
             <EmptyState
               title={t('emptyTitle')}
-              description={isFiltering ? t('filterEmptyGeneric') : t('organizationsEmptyDescription')}
+              description={
+                isFiltering ? t('filterEmptyGeneric') : t('organizationsEmptyDescription')
+              }
+              action={
+                statusFilter !== null ? (
+                  <Button variant="ghost" type="button" onClick={() => setStatusFilter(null)}>
+                    {t('filterClearAll')}
+                  </Button>
+                ) : undefined
+              }
             />
           }
         />

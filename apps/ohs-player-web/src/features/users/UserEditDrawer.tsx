@@ -1,23 +1,22 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
-  RiBriefcaseLine,
-  RiBuildingLine,
-  RiCloseLine,
-  RiMapPinLine,
-  RiTeamLine,
-  RiUserLine,
-} from '@remixicon/react';
-import type { Bundle, PractitionerRole } from '@medplum/fhirtypes';
+  IconBriefcase,
+  IconBuilding,
+  IconClose,
+  IconMapPin,
+  IconTeam,
+  IconUser,
+} from '../../components/ui/icons';
 import {
+  commitBundle,
   useCustomEndpoint,
   useFhirClient,
-  useResource,
   useSearch,
+  useStatusBar,
   useTranslation,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import {
   buildNewUserPayload,
@@ -26,8 +25,8 @@ import {
   type NewUserFields,
   usernameFromEmail,
 } from '../sdc/resourceFromAnswers';
+import { toErrorMessage, userErrorMessage } from '../sdc/toErrorMessage';
 import {
-  ImageUpload,
   MultiSelect,
   RadioRow,
   Section,
@@ -35,15 +34,20 @@ import {
   StackedSelect,
 } from './userFormControls';
 import { type Option, referenceOptions } from './userFormOptions';
-import { type UserFormErrors, validateUserForm } from './userFormSchema';
+import { todayIso, type UserFormErrors, validateUserForm } from './userFormSchema';
+import { usePractitionerDetails } from './usePractitionerDetails';
+
+interface SearchBundle {
+  entry?: { resource?: Record<string, unknown> }[];
+}
 
 function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
 function resourcesOf(bundle: unknown): Record<string, unknown>[] {
-  return ((bundle as Bundle | undefined)?.entry ?? [])
-    .map((e) => e.resource as Record<string, unknown> | undefined)
+  return ((bundle as SearchBundle | undefined)?.entry ?? [])
+    .map((e) => e.resource)
     .filter((r): r is Record<string, unknown> => Boolean(r));
 }
 
@@ -54,16 +58,20 @@ export function UserEditDrawer({
 }: Readonly<{ id: string; onClose: () => void; onSuccess: () => void }>): React.ReactElement {
   const { t } = useTranslation();
   const client = useFhirClient();
+  const writeAudit = useWriteAudit();
+  const status = useStatusBar();
   const { put } = useCustomEndpoint('users');
 
-  const read = useResource('Practitioner', id);
-  const roleSearch = useSearch('PractitionerRole', { practitioner: `Practitioner/${id}`, _count: '50' });
-  const membershipSearch = useSearch('CareTeam', { participant: `Practitioner/${id}`, _count: '100' });
+  const {
+    practitioner,
+    roles,
+    careTeams,
+    isLoading,
+    error: loadError,
+  } = usePractitionerDetails(id);
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
   const locSearch = useSearch('Location', { _count: '500' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
-
-  const pract = read.data as Record<string, unknown> | undefined;
 
   const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
   const locOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
@@ -83,20 +91,13 @@ export function UserEditDrawer({
     return map;
   }, [careTeamSearch.data]);
 
-  const existingRoles = useMemo(
-    () => resourcesOf(roleSearch.data) as unknown as PractitionerRole[],
-    [roleSearch.data],
-  );
   const existingRoleIds = useMemo(
-    () => existingRoles.map((r) => r.id).filter((x): x is string => Boolean(x)),
-    [existingRoles],
+    () => roles.map((r) => r.id).filter((x): x is string => Boolean(x)),
+    [roles],
   );
   const originalCareTeamIds = useMemo(
-    () =>
-      resourcesOf(membershipSearch.data)
-        .map((r) => (typeof r.id === 'string' ? r.id : ''))
-        .filter(Boolean),
-    [membershipSearch.data],
+    () => careTeams.map((ct) => ct.id).filter((x): x is string => Boolean(x)),
+    [careTeams],
   );
 
   const [given, setGiven] = useState('');
@@ -127,36 +128,35 @@ export function UserEditDrawer({
     submit();
   };
 
-  const relationsLoading = roleSearch.isLoading || membershipSearch.isLoading;
-
   // Populate the form once the practitioner and its relations have loaded.
   useEffect(() => {
-    if (hydrated || !pract || relationsLoading) return;
-    const name = (pract.name as { family?: string; given?: string[] }[] | undefined)?.[0];
-    const telecom = (pract.telecom as { system?: string; value?: string }[] | undefined) ?? [];
+    if (hydrated || !practitioner || isLoading) return;
+    const name = practitioner.name?.[0];
+    const telecom = practitioner.telecom ?? [];
     const email = telecom.find((c) => c.system === 'email')?.value ?? '';
-    const identifiers = (pract.identifier as { system?: string; value?: string }[] | undefined) ?? [];
     setGiven(name?.given?.join(' ') ?? '');
     setFamily(name?.family ?? '');
     setEmail(email);
     setOriginalUsername(usernameFromEmail(email));
     setPhone(telecom.find((c) => c.system === 'phone')?.value ?? '');
-    setGender(typeof pract.gender === 'string' ? pract.gender : '');
-    setDob(typeof pract.birthDate === 'string' ? pract.birthDate : '');
-    setNationalId(identifiers.find((i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM)?.value ?? '');
-    setStatusActive((pract.active as boolean | undefined) === false ? 'inactive' : 'active');
-    setRole(existingRoles[0]?.code?.[0]?.coding?.[0]?.code ?? '');
-    setOrgs(unique(existingRoles.map((r) => r.organization?.reference ?? '').filter(Boolean)));
+    setGender(practitioner.gender ?? '');
+    setDob(practitioner.birthDate ?? '');
+    setNationalId(
+      practitioner.identifier?.find((i) => i.system === NATIONAL_ID_IDENTIFIER_SYSTEM)?.value ?? '',
+    );
+    setStatusActive(practitioner.active === false ? 'inactive' : 'active');
+    setRole(roles[0]?.code?.[0]?.coding?.[0]?.code ?? '');
+    setOrgs(unique(roles.map((r) => r.organization?.reference ?? '').filter(Boolean)));
     setLocations(
-      unique(existingRoles.flatMap((r) => (r.location ?? []).map((l) => l.reference ?? '')).filter(Boolean)),
+      unique(roles.flatMap((r) => (r.location ?? []).map((l) => l.reference ?? '')).filter(Boolean)),
     );
     setCareTeamIds(originalCareTeamIds);
     setHydrated(true);
-  }, [hydrated, pract, relationsLoading, existingRoles, originalCareTeamIds]);
+  }, [hydrated, practitioner, isLoading, roles, originalCareTeamIds]);
 
   const submit = (): void => {
     setError(null);
-    if (!pract) return;
+    if (!practitioner) return;
     const errors = validateUserForm(
       {
         givenName: given,
@@ -201,11 +201,13 @@ export function UserEditDrawer({
         await put.mutateAsync({ id, body: buildNewUserPayload(fields, originalUsername) });
         // FHIR handles only what the gateway doesn't: PractitionerRoles + CareTeam membership.
         const bundle = buildUserEditBundle(id, fields, { existingRoleIds, careTeamAdds, careTeamRemoves });
-        if (bundle.entry.length > 0) await client.transaction(bundle);
-        await writeAuditEvent(client, { action: 'update', resourceType: 'Practitioner', resourceId: id });
+        if (bundle.entry.length > 0) await commitBundle(client, bundle.entry);
+        await writeAudit({ action: 'update', resourceType: 'Practitioner', resourceId: id });
         onSuccess();
       } catch (err) {
-        setError(toErrorMessage(err));
+        const message = userErrorMessage(err, t, 'userSaveError');
+        setError(message);
+        status.notify({ tone: 'error', title: message });
       } finally {
         setSubmitting(false);
       }
@@ -216,10 +218,9 @@ export function UserEditDrawer({
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{t('pageUserEdit')}</h2>
-        <p className="ohs-form-drawer__subtitle">{t('editUserSubtitle')}</p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -229,7 +230,7 @@ export function UserEditDrawer({
       <Button variant="outlined" type="button" onClick={onClose} disabled={submitting}>
         {t('cancel')}
       </Button>
-      <Button type="button" onClick={submit} loading={submitting} disabled={submitting || !pract}>
+      <Button type="button" onClick={submit} loading={submitting} disabled={submitting || !practitioner}>
         {t('save')}
       </Button>
     </div>
@@ -237,18 +238,21 @@ export function UserEditDrawer({
 
   return (
     <Drawer open onClose={onClose} title={t('pageUserEdit')} header={header} footer={footer}>
-      {read.isLoading || relationsLoading || !hydrated ? (
-        <div style={{ padding: 'var(--ohs-spacing-6, 32px)' }}>
-          {read.error ? <ErrorState description={toErrorMessage(read.error)} /> : <Spinner label={t('loading')} />}
+      {isLoading || !hydrated ? (
+        <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
+          {loadError ? (
+            <ErrorState description={toErrorMessage(loadError)} />
+          ) : (
+            <Spinner label={t('loading')} />
+          )}
         </div>
       ) : (
         <form className="ohs-detail-body" onSubmit={onFormSubmit}>
           <button type="submit" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }} />
           {error ? <ErrorState description={error} /> : null}
 
-          <Section icon={RiUserLine} title={t('sectionBasicInfo')}>
+          <Section icon={IconUser} title={t('sectionBasicInfo')}>
             <Stack gap={5}>
-              <ImageUpload />
               <div className="ohs-detail-grid">
                 <StackedInput
                   label={t('givenName')}
@@ -293,6 +297,7 @@ export function UserEditDrawer({
                 <StackedInput
                   label={t('dateOfBirth')}
                   type="date"
+                  max={todayIso()}
                   value={dob}
                   error={fieldErrors.dob}
                   onChange={(v) => {
@@ -313,7 +318,7 @@ export function UserEditDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiBriefcaseLine} title={t('sectionRoleStatus')}>
+          <Section icon={IconBriefcase} title={t('sectionRoleStatus')}>
             <Stack gap={5}>
               <div className="ohs-detail-grid">
                 <StackedSelect
@@ -338,27 +343,29 @@ export function UserEditDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiBuildingLine} title={t('sectionPrimaryOrg')}>
+          <Section icon={IconBuilding} title={t('sectionPrimaryOrg')}>
             <MultiSelect
               label={t('contextOrganization')}
               options={orgOptions}
               value={orgs}
               onChange={setOrgs}
-              placeholder={orgOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedData')}
+              placeholder={orgOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedOrgs')}
             />
           </Section>
 
-          <Section icon={RiMapPinLine} title={t('sectionLocation')}>
+          <Section icon={IconMapPin} title={t('sectionLocation')}>
             <MultiSelect
               label={t('contextLocation')}
               options={locOptions}
               value={locations}
               onChange={setLocations}
-              placeholder={locOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedData')}
+              placeholder={
+                locOptions.length > 0 ? t('selectPlaceholder') : t('assignmentsNeedLocations')
+              }
             />
           </Section>
 
-          <Section icon={RiTeamLine} title={t('sectionCareTeams')}>
+          <Section icon={IconTeam} title={t('sectionCareTeams')}>
             <MultiSelect
               label={t('sectionCareTeams')}
               options={careTeamOptions}

@@ -2,15 +2,6 @@
  * Link IDs and extraction functions for questionnaire-driven FHIR resource creation.
  * Link IDs must match bundled Questionnaire JSON in `src/questionnaires/`.
  */
-import type {
-  CareTeam,
-  ContactPoint,
-  HumanName,
-  Identifier,
-  Organization,
-  Parameters,
-  ParametersParameter,
-} from '@medplum/fhirtypes';
 
 // ---------------------------------------------------------------------------
 // Care Team
@@ -69,9 +60,9 @@ export interface CareTeamFormFields {
  */
 export function careTeamFromForm(
   fields: CareTeamFormFields,
-  existing?: CareTeam,
-): CareTeam {
-  const careTeam: CareTeam = {
+  existing?: Record<string, unknown>,
+): Record<string, unknown> {
+  const careTeam: Record<string, unknown> = {
     ...(existing ?? {}),
     resourceType: 'CareTeam',
     status: fields.status,
@@ -332,11 +323,15 @@ export function buildDeactivateBundle(
   return { bundle: { resourceType: 'Bundle', type: 'transaction', entry }, endedRoleCount, removedCareTeamCount };
 }
 
+type PractitionerName = { family?: string; given?: string[] };
+type ContactPoint = { system?: string; value?: string };
+type Identifier = { system?: string; value?: string };
+
 /** Pre-populate edit-form answers from an existing Practitioner. */
 export function userAnswersFromPractitioner(
   pract: Record<string, unknown>,
 ): Record<string, string> {
-  const name = (pract.name as HumanName[] | undefined)?.[0];
+  const name = (pract.name as PractitionerName[] | undefined)?.[0];
   const telecom = pract.telecom as ContactPoint[] | undefined;
   const email = telecom?.find((tc) => tc.system === 'email')?.value ?? '';
   const identifiers = pract.identifier as Identifier[] | undefined;
@@ -403,6 +398,9 @@ export const LOCATION_LINK_IDS = {
   parent: 'loc-parent',
 } as const;
 
+/** Identifier system for a Location's import source id (e.g. "MSA"). */
+export const LOCATION_SOURCE_ID_SYSTEM = 'http://ohs.dev/identifiers/source-id';
+
 /** CodeSystem for `Organization.type`. A "Team" is an Organization of type `team` (per backend). */
 export const ORGANIZATION_TYPE_SYSTEM = 'http://terminology.hl7.org/CodeSystem/organization-type';
 
@@ -417,6 +415,8 @@ export interface OrgFormFields {
   typeCode: string;
   email: string;
   active: boolean;
+  /** Parent org ref (`Organization/{id}` or `urn:uuid:…`), or '' for none. */
+  partOfReference?: string;
 }
 
 /**
@@ -428,30 +428,60 @@ export interface OrgFormFields {
  */
 export function organizationFromForm(
   fields: OrgFormFields,
-  existing?: Organization,
-): Organization {
-  const org: Organization = {
+  existing?: Record<string, unknown>,
+): Record<string, unknown> {
+  const org: Record<string, unknown> = {
     ...(existing ?? {}),
     resourceType: 'Organization',
     name: fields.name.trim(),
     active: fields.active,
   };
   // `managedLocations` is a UI-only field the page attaches to the row; never send it to the server.
-  delete (org as { managedLocations?: unknown }).managedLocations;
+  delete org.managedLocations;
 
   const typeCode = fields.typeCode.trim();
   if (typeCode) org.type = [{ coding: [{ system: ORGANIZATION_TYPE_SYSTEM, code: typeCode }] }];
   else delete org.type;
 
   const email = fields.email.trim();
-  const otherTelecom = (existing?.telecom ?? []).filter((tc) => tc.system !== 'email');
-  const telecom: ContactPoint[] = email
-    ? [...otherTelecom, { system: 'email', value: email }]
-    : otherTelecom;
+  const otherTelecom = Array.isArray(existing?.telecom)
+    ? (existing.telecom as ContactPoint[]).filter((tc) => tc.system !== 'email')
+    : [];
+  const telecom = email ? [...otherTelecom, { system: 'email', value: email }] : otherTelecom;
   if (telecom.length > 0) org.telecom = telecom;
   else delete org.telecom;
 
+  const partOf = fields.partOfReference?.trim() ?? '';
+  if (partOf) {
+    org.partOf = { reference: partOf.includes('/') || partOf.startsWith('urn:uuid:') ? partOf : `Organization/${partOf}` };
+  } else if (fields.partOfReference !== undefined) {
+    delete org.partOf;
+  }
+
   return org;
+}
+
+/**
+ * OrganizationAffiliation linking a parent and child org (partOf edge as an affiliation resource),
+ * or an org to one or more locations. Used by the guided setup wizard Bundle.
+ */
+export function organizationAffiliationFromLinks(opts: {
+  organizationRef: string;
+  participatingOrganizationRef?: string;
+  locationRefs?: string[];
+}): Record<string, unknown> {
+  const resource: Record<string, unknown> = {
+    resourceType: 'OrganizationAffiliation',
+    active: true,
+    organization: { reference: opts.organizationRef },
+  };
+  if (opts.participatingOrganizationRef) {
+    resource.participatingOrganization = { reference: opts.participatingOrganizationRef };
+  }
+  if (opts.locationRefs && opts.locationRefs.length > 0) {
+    resource.location = opts.locationRefs.map((reference) => ({ reference }));
+  }
+  return resource;
 }
 
 /**
@@ -465,8 +495,8 @@ export function organizationFromForm(
  * TOCTOU race could see either). `delete` (a no-op when absent) followed by `add` onto the now-empty
  * element is conformant regardless of prior state. Unlink is a lone `delete`.
  */
-export function locationManagingOrgPatch(orgRef: string | null): Parameters {
-  const del: ParametersParameter = {
+export function locationManagingOrgPatch(orgRef: string | null): Record<string, unknown> {
+  const del = {
     name: 'operation',
     part: [
       { name: 'type', valueCode: 'delete' },
@@ -474,7 +504,7 @@ export function locationManagingOrgPatch(orgRef: string | null): Parameters {
     ],
   };
   if (orgRef === null) return { resourceType: 'Parameters', parameter: [del] };
-  const add: ParametersParameter = {
+  const add = {
     name: 'operation',
     part: [
       { name: 'type', valueCode: 'add' },

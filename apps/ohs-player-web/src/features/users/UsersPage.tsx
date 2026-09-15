@@ -1,34 +1,69 @@
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
+import { IconAddCircle, IconChevronDown, IconMore } from '../../components/ui/icons';
 import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
   PermissionGuard,
+  useOptimisticInsert,
+  useRefreshResources,
   useSearch,
   useStatusBar,
   useTranslation,
 } from 'ohs-player-web-core';
-import { Avatar, Button, ChipSet, DataTable, EmptyState, ErrorState, FilterChip, IconButton, Inline, LinearProgress, Page, PageHeader, SearchField, Stack, StatusBadge } from '../../components/ui';
-import type { Bundle, Practitioner } from '@medplum/fhirtypes';
-import { UserCreateDrawer } from './UserCreateDrawer';
+import {
+  Avatar,
+  Button,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  FilterChip,
+  FilterChipBar,
+  IconButton,
+  Inline,
+  LinearProgress,
+  Page,
+  PageHeader,
+  SearchField,
+  StatusBadge,
+} from '../../components/ui';
+import { UserCreateEntryDrawer } from './UserCreateEntryDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
-import { StackedSelect } from './userFormControls';
+import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
+import { useFilterParam, useClearFilterParams } from '../search/useFilterParam';
+import { useDebounced } from '../search/useGlobalSearch';
 
-function fullName(p: Practitioner): string {
+type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
+
+type PractitionerRow = {
+  id?: string;
+  active?: boolean;
+  name?: { family?: string; given?: string[] }[];
+  telecom?: { system?: string; value?: string }[];
+};
+
+function fullName(p: PractitionerRow): string {
   const n = p.name?.[0];
   return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim();
 }
-function emailOf(p: Practitioner): string {
+function emailOf(p: PractitionerRow): string {
   return p.telecom?.find((tc) => tc.system === 'email')?.value ?? '';
 }
-function identifierOf(p: Practitioner): string {
+function identifierOf(p: PractitionerRow): string {
   return p.id ?? '—';
 }
 
 function practitionerIdFromReference(ref: string | undefined): string | undefined {
   if (!ref) return undefined;
   return ref.replace(/^Practitioner\//, '');
+}
+
+const STATUS_VALUES = ['active', 'inactive'] as const;
+const FILTER_PARAMS = ['status', 'role'] as const;
+
+/** Live data returns raw lowercase codes (`nurse`); the chip displays Title Case, the filter keeps the code. */
+function humaniseRoleCode(code: string): string {
+  return code.replace(/[_-]+/g, ' ').replace(/\b\p{L}/gu, (c) => c.toUpperCase());
 }
 
 function buildPractitionerRoleMap(
@@ -83,10 +118,12 @@ function buildOrgNameMap(
 export function UsersPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
-  const [q, setQ] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const refresh = useRefreshResources();
+  const insert = useOptimisticInsert();
+  const [q, setQ] = useState(useInitialSearchTerm());
+  const [statusFilter, setStatusFilter] = useFilterParam('status', STATUS_VALUES);
+  const [roleFilter, setRoleFilter] = useFilterParam('role');
+  const clearChipFilters = useClearFilterParams(FILTER_PARAMS);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   // One drawer at a time: details OR edit, never both (avoids the two-drawer overlay).
@@ -95,21 +132,26 @@ export function UsersPage() {
   const openEdit = (id: string) => setViewer({ mode: 'edit', id });
   const closeViewer = () => setViewer(null);
 
-  const activeFilterCount = (statusFilter === 'all' ? 0 : 1) + (roleFilter ? 1 : 0);
+  const hasChipFilters = statusFilter !== null || roleFilter !== null;
 
-  const clearFilters = (): void => {
-    setStatusFilter('all');
-    setRoleFilter('');
-  };
-
-  // Name search is client-side (below) so typing never refires the query — keeps the table from flickering.
-  const search = useSearch('Practitioner', { _count: '500' });
+  // Server-side name search (debounced so each keystroke doesn't refire the query): `name:contains`
+  // matches given/family on the server, so the search runs against the full dataset rather than only
+  // the first page fetched client-side. `_count: '500'` still caps each response page (no pagination
+  // yet), but with server filtering you only reach it if 500+ users match the term. Status/role still
+  // filter client-side on the returned set (role derives from the separate PractitionerRole search).
+  const debouncedQ = useDebounced(q.trim(), 300);
+  const searchParams = useMemo<Record<string, string>>(() => {
+    const params: Record<string, string> = { _count: '500' };
+    if (debouncedQ) params['name:contains'] = debouncedQ;
+    return params;
+  }, [debouncedQ]);
+  const search = useSearch('Practitioner', searchParams);
   const roleSearch = useSearch('PractitionerRole', { _count: '500' });
   const orgSearch = useSearch('Organization', { _count: '500' });
 
-  const bundle = search.data as Bundle<Practitioner> | undefined;
+  const bundle = search.data as Bundle | undefined;
   const rawRows = useMemo(
-    () => (bundle?.entry?.map((e) => e.resource).filter((r): r is Practitioner => Boolean(r)) ?? []),
+    () => (bundle?.entry?.map((e) => e.resource).filter(Boolean) ?? []) as PractitionerRow[],
     [bundle?.entry],
   );
 
@@ -130,7 +172,10 @@ export function UsersPage() {
   );
 
   const orgNameById = useMemo(
-    () => buildOrgNameMap(orgSearch.data as { entry?: { resource?: { id?: string; name?: string } }[] }),
+    () =>
+      buildOrgNameMap(
+        orgSearch.data as { entry?: { resource?: { id?: string; name?: string } }[] },
+      ),
     [orgSearch.data],
   );
 
@@ -140,17 +185,14 @@ export function UsersPage() {
       for (const c of s) codes.add(c);
     }
     const sorted = [...codes].sort((a, b) => a.localeCompare(b));
-    return sorted.map((code) => ({ value: code, label: code }));
+    return sorted.map((code) => ({ value: code, label: humaniseRoleCode(code) }));
   }, [roleMap]);
 
+  // Name matching is done server-side via `name:contains`; here we only apply the status/role filters
+  // to the returned set.
   const filteredRows = useMemo(() => {
-    const term = q.trim().toLowerCase();
     return rawRows.filter((p) => {
       if (!p.id) return false;
-      if (term) {
-        const haystack = `${fullName(p)} ${identifierOf(p)} ${emailOf(p)}`.toLowerCase();
-        if (!haystack.includes(term)) return false;
-      }
       if (statusFilter === 'active' && p.active === false) return false;
       if (statusFilter === 'inactive' && p.active !== false) return false;
       if (roleFilter) {
@@ -159,7 +201,7 @@ export function UsersPage() {
       }
       return true;
     });
-  }, [rawRows, q, statusFilter, roleFilter, roleMap]);
+  }, [rawRows, statusFilter, roleFilter, roleMap]);
 
   let searchError: string | null = null;
   if (search.error) {
@@ -170,7 +212,20 @@ export function UsersPage() {
     setCreateOpen(true);
   };
 
-  const isFiltering = q.trim() !== '' || statusFilter !== 'all' || roleFilter !== '';
+  const refetchUsers = (): void => {
+    void refresh(['Practitioner', 'PractitionerRole']);
+  };
+
+  // Show the created user immediately; the optimistic insert reconciles (incl. PractitionerRole-derived
+  // columns) in the background without the refetch wiping the row. Plain refresh only if no resource came back.
+  const handleUserCreated = (created?: { id?: string } & Record<string, unknown>): void => {
+    setCreateOpen(false);
+    status.notify({ tone: 'success', title: t('userCreated') });
+    if (created) insert('Practitioner', created, { also: ['PractitionerRole'] });
+    else refetchUsers();
+  };
+
+  const isFiltering = q.trim() !== '' || hasChipFilters;
   // Only the genuine "no users at all" case hides the toolbar; a no-match search keeps it.
   const noUsers = !search.isLoading && !searchError && rawRows.length === 0 && !isFiltering;
 
@@ -185,14 +240,14 @@ export function UsersPage() {
               <Button
                 variant="secondary"
                 type="button"
-                iconRight={<RiArrowDownSLine size={20} />}
+                iconRight={<IconChevronDown size={20} />}
                 onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
               >
                 {t('exportLabel')}
               </Button>
             ) : null}
             <PermissionGuard permission="users.create">
-              <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addUser')}
               </Button>
             </PermissionGuard>
@@ -203,15 +258,7 @@ export function UsersPage() {
       {search.isLoading ? <LinearProgress /> : null}
 
       {createOpen ? (
-        <UserCreateDrawer
-          onClose={() => setCreateOpen(false)}
-          onSuccess={() => {
-            setCreateOpen(false);
-            status.notify({ tone: 'success', title: t('userCreated') });
-            void search.refetch();
-            void roleSearch.refetch();
-          }}
-        />
+        <UserCreateEntryDrawer onClose={() => setCreateOpen(false)} onSuccess={handleUserCreated} />
       ) : null}
 
       {noUsers ? (
@@ -222,7 +269,7 @@ export function UsersPage() {
             description={t('usersEmptyDescription')}
             action={
               <PermissionGuard permission="users.create">
-                <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                   {t('addUser')}
                 </Button>
               </PermissionGuard>
@@ -230,10 +277,9 @@ export function UsersPage() {
           />
         </div>
       ) : (
-      <DataTable<Practitioner>
-        toolbar={
-          <Stack gap={3}>
-            <Inline justify="between" style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
+        <DataTable<PractitionerRow>
+          toolbar={
+            <Inline>
               <SearchField
                 label={t('search')}
                 name="userSearch"
@@ -241,171 +287,184 @@ export function UsersPage() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={t('searchByNameOrId')}
               />
-              <Button
-                variant="secondary"
-                type="button"
-                iconLeft={<RiFilter3Line size={20} />}
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen((v) => !v)}
+              <FilterChipBar
+                align="end"
+                clearVisible={hasChipFilters}
+                onClearAll={clearChipFilters}
               >
-                {activeFilterCount > 0 ? `${t('filterLabel')} (${activeFilterCount})` : t('filterLabel')}
-              </Button>
+                <FilterChip
+                  label={t('filterRole')}
+                  allLabel={t('filterRoleAll')}
+                  options={roleOptions}
+                  value={roleFilter}
+                  onChange={setRoleFilter}
+                  disabled={roleSearch.isLoading}
+                />
+                <FilterChip
+                  label={t('filterStatus')}
+                  allLabel={t('filterStatusAll')}
+                  options={[
+                    { value: 'active', label: t('filterStatusActive') },
+                    { value: 'inactive', label: t('filterStatusInactive') },
+                  ]}
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                />
+              </FilterChipBar>
             </Inline>
-            {filtersOpen ? (
-              <div className="ohs-users-filters">
-                <div className="ohs-formfield ohs-users-filters__field">
-                  <span className="ohs-formfield__label">{t('filterStatus')}</span>
-                  <ChipSet>
-                    <FilterChip label={t('filterStatusAll')} selected={statusFilter === 'all'} onChange={() => setStatusFilter('all')} />
-                    <FilterChip label={t('filterStatusActive')} selected={statusFilter === 'active'} onChange={() => setStatusFilter('active')} />
-                    <FilterChip label={t('filterStatusInactive')} selected={statusFilter === 'inactive'} onChange={() => setStatusFilter('inactive')} />
-                  </ChipSet>
-                </div>
-                <div className="ohs-users-filters__field ohs-users-filters__field--role">
-                  <StackedSelect
-                    label={t('filterRole')}
-                    value={roleFilter}
-                    onChange={setRoleFilter}
-                    options={roleOptions}
-                    placeholder={t('filterRoleAll')}
-                  />
-                </div>
-                {activeFilterCount > 0 ? (
-                  <button type="button" className="ohs-users-filters__clear" onClick={clearFilters}>
-                    {t('clearFilters')}
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </Stack>
-        }
-        columns={[
-          {
-            key: 'identifier',
-            header: t('columnIdentifier'),
-            render: (p) => identifierOf(p),
-          },
-          {
-            key: 'name',
-            header: t('columnName'),
-            sortable: true,
-            sortValue: (p) => fullName(p).toLowerCase(),
-            render: (p) => {
-              const name = fullName(p) || (p.id ?? '');
-              const email = emailOf(p);
-              return (
-                <Inline justify="start" style={{ gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}>
-                  <Avatar name={name} />
-                  <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <button
-                      type="button"
-                      className="ohs-rowlink"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (p.id) openDetails(p.id);
-                      }}
+          }
+          columns={[
+            {
+              key: 'identifier',
+              header: t('columnIdentifier'),
+              mono: true,
+              render: (p) => identifierOf(p),
+            },
+            {
+              key: 'name',
+              header: t('columnName'),
+              sortable: true,
+              sortValue: (p) => fullName(p).toLowerCase(),
+              render: (p) => {
+                const name = fullName(p) || (p.id ?? '');
+                const email = emailOf(p);
+                return (
+                  <Inline
+                    justify="start"
+                    style={{ gap: 'var(--ohs-sys-spacing-3, 12px)', alignItems: 'center' }}
+                  >
+                    <Avatar name={name} />
+                    <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      <button
+                        type="button"
+                        className="ohs-rowlink"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (p.id) openDetails(p.id);
+                        }}
+                      >
+                        {name}
+                      </button>
+                      {email ? (
+                        <span
+                          style={{
+                            fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)',
+                            color: 'var(--ohs-color-text-muted, #696969)',
+                          }}
+                        >
+                          {email}
+                        </span>
+                      ) : null}
+                    </span>
+                  </Inline>
+                );
+              },
+            },
+            {
+              key: 'role',
+              header: t('columnRole'),
+              render: (p) => {
+                const codes = p.id
+                  ? [...(roleMap.get(p.id) ?? [])].sort((a, b) => a.localeCompare(b)).join(', ')
+                  : '';
+                return codes || '—';
+              },
+            },
+            {
+              key: 'organisation',
+              header: t('columnOrganisation'),
+              render: (p) => {
+                const orgId = p.id ? orgIdByPractitioner.get(p.id) : undefined;
+                return (orgId ? orgNameById.get(orgId) : undefined) ?? '—';
+              },
+            },
+            {
+              key: 'status',
+              header: t('columnStatus'),
+              sortable: true,
+              sortValue: (p) => (p.active === false ? 0 : 1),
+              render: (p) =>
+                p.active === false ? (
+                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>
+                    {t('statusInactive')}
+                  </StatusBadge>
+                ) : (
+                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>
+                    {t('statusActive')}
+                  </StatusBadge>
+                ),
+            },
+            {
+              key: 'actions',
+              header: '',
+              align: 'right',
+              render: (p) => (
+                <OhsDropdownMenu.Root>
+                  <OhsDropdownMenu.Trigger asChild>
+                    <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
+                      <IconMore size={20} />
+                    </IconButton>
+                  </OhsDropdownMenu.Trigger>
+                  <OhsDropdownMenu.Portal>
+                    <OhsDropdownMenu.Content
+                      className="ohs-dropdown-content"
+                      align="end"
+                      sideOffset={4}
                     >
-                      {name}
-                    </button>
-                    {email ? (
-                      <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
-                        {email}
-                      </span>
-                    ) : null}
-                  </span>
-                </Inline>
-              );
-            },
-          },
-          {
-            key: 'role',
-            header: t('columnRole'),
-            render: (p) => {
-              const codes = p.id
-                ? [...(roleMap.get(p.id) ?? [])].sort((a, b) => a.localeCompare(b)).join(', ')
-                : '';
-              return codes || '—';
-            },
-          },
-          {
-            key: 'organisation',
-            header: t('columnOrganisation'),
-            render: (p) => {
-              const orgId = p.id ? orgIdByPractitioner.get(p.id) : undefined;
-              return (orgId ? orgNameById.get(orgId) : undefined) ?? '—';
-            },
-          },
-          {
-            key: 'status',
-            header: t('columnStatus'),
-            sortable: true,
-            sortValue: (p) => (p.active === false ? 0 : 1),
-            render: (p) =>
-              p.active === false ? (
-                <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>{t('statusInactive')}</StatusBadge>
-              ) : (
-                <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>{t('statusActive')}</StatusBadge>
-              ),
-          },
-          {
-            key: 'actions',
-            header: '',
-            align: 'right',
-            render: (p) => (
-              <OhsDropdownMenu.Root>
-                <OhsDropdownMenu.Trigger asChild>
-                  <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
-                    <RiMore2Fill size={20} />
-                  </IconButton>
-                </OhsDropdownMenu.Trigger>
-                <OhsDropdownMenu.Portal>
-                  <OhsDropdownMenu.Content className="ohs-dropdown-content" align="end" sideOffset={4}>
-                    <OhsDropdownMenu.Item
-                      className="ohs-dropdown-item"
-                      onSelect={() => {
-                        if (p.id) openDetails(p.id);
-                      }}
-                    >
-                      {t('viewDetails')}
-                    </OhsDropdownMenu.Item>
-                    <PermissionGuard permission="users.edit">
                       <OhsDropdownMenu.Item
                         className="ohs-dropdown-item"
                         onSelect={() => {
-                          if (p.id) openEdit(p.id);
+                          if (p.id) openDetails(p.id);
                         }}
                       >
-                        {t('edit')}
+                        {t('viewDetails')}
                       </OhsDropdownMenu.Item>
-                    </PermissionGuard>
-                  </OhsDropdownMenu.Content>
-                </OhsDropdownMenu.Portal>
-              </OhsDropdownMenu.Root>
-            ),
-          },
-        ]}
-        rows={filteredRows}
-        rowKey={(p) => p.id ?? ''}
-        loading={search.isLoading}
-        selectable
-        selectedKeys={selectedIds}
-        onSelectionChange={setSelectedIds}
-        onRowClick={(p) => {
-          // Functional update (reads latest state) so the stray click fired as a kebab menu closes
-          // can't override the edit/details the menu item just set — only opens when nothing is open.
-          const id = p.id;
-          if (id) setViewer((cur) => cur ?? { mode: 'details', id });
-        }}
-        pagination
-        initialPageSize={10}
-        errorState={searchError ? <ErrorState description={searchError} /> : undefined}
-        emptyState={
-          <EmptyState
-            title={t('emptyTitle')}
-            description={isFiltering ? t('filterEmpty') : t('emptyDescription')}
-          />
-        }
-      />
+                      <PermissionGuard permission="users.edit">
+                        <OhsDropdownMenu.Item
+                          className="ohs-dropdown-item"
+                          onSelect={() => {
+                            if (p.id) openEdit(p.id);
+                          }}
+                        >
+                          {t('edit')}
+                        </OhsDropdownMenu.Item>
+                      </PermissionGuard>
+                    </OhsDropdownMenu.Content>
+                  </OhsDropdownMenu.Portal>
+                </OhsDropdownMenu.Root>
+              ),
+            },
+          ]}
+          rows={filteredRows}
+          rowKey={(p) => p.id ?? ''}
+          loading={search.isLoading}
+          selectable
+          selectedKeys={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onRowClick={(p) => {
+            // Functional update (reads latest state) so the stray click fired as a kebab menu closes
+            // can't override the edit/details the menu item just set — only opens when nothing is open.
+            const id = p.id;
+            if (id) setViewer((cur) => cur ?? { mode: 'details', id });
+          }}
+          pagination
+          initialPageSize={10}
+          pageResetKey={`${statusFilter ?? ''}|${roleFilter ?? ''}`}
+          errorState={searchError ? <ErrorState description={searchError} /> : undefined}
+          emptyState={
+            <EmptyState
+              title={t('emptyTitle')}
+              description={isFiltering ? t('filterEmpty') : t('emptyDescription')}
+              action={
+                hasChipFilters ? (
+                  <Button variant="ghost" type="button" onClick={clearChipFilters}>
+                    {t('filterClearAll')}
+                  </Button>
+                ) : undefined
+              }
+            />
+          }
+        />
       )}
 
       {viewer?.mode === 'details' ? (
@@ -416,8 +475,7 @@ export function UsersPage() {
           onDeleted={() => {
             closeViewer();
             status.notify({ tone: 'success', title: t('userDeactivated') });
-            void search.refetch();
-            void roleSearch.refetch();
+            refetchUsers();
           }}
         />
       ) : null}
@@ -429,8 +487,7 @@ export function UsersPage() {
           onSuccess={() => {
             closeViewer();
             status.notify({ tone: 'success', title: t('saved') });
-            void search.refetch();
-            void roleSearch.refetch();
+            refetchUsers();
           }}
         />
       ) : null}

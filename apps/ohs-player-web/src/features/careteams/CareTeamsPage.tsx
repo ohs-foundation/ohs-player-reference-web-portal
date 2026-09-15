@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiFilter3Line, RiMore2Fill } from '@remixicon/react';
+import { IconAddCircle, IconChevronDown, IconMore } from '../../components/ui/icons';
+import careTeamsEmptyIllustration from '../../assets/illustrations/careteams-empty.svg';
 import {
   OhsDropdownMenu,
   PermissionGuard,
+  useOptimisticInsert,
   useRefreshResources,
   useSearch,
   useStatusBar,
@@ -11,25 +13,30 @@ import {
 import {
   Avatar,
   Button,
-  ChipSet,
   DataTable,
   EmptyState,
   ErrorState,
   FilterChip,
+  FilterChipBar,
   IconButton,
   Inline,
   LinearProgress,
   Page,
   PageHeader,
   SearchField,
-  Stack,
   StatusBadge,
 } from '../../components/ui';
-import type { Organization, Practitioner } from '@medplum/fhirtypes';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 import { CareTeamFormDrawer } from './CareTeamFormDrawer';
+import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
+import { useFilterParam } from '../search/useFilterParam';
 
-function practName(p: Practitioner): string {
+const STATUS_VALUES = ['active', 'inactive'] as const;
+
+type PractRow = { id?: string; active?: boolean; name?: { family?: string; given?: string[] }[] };
+type OrgRow = { id?: string; name?: string };
+
+function practName(p: PractRow): string {
   const n = p.name?.[0];
   return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim() || (p.id ?? '');
 }
@@ -44,13 +51,13 @@ export function CareTeamsPage() {
   const { t } = useTranslation();
   const status = useStatusBar();
   const refresh = useRefreshResources();
+  const insert = useOptimisticInsert();
   const teams = useSearch('CareTeam', { _count: '200' });
   const pract = useSearch('Practitioner', { _count: '500' });
   const orgs = useSearch('Organization', { _count: '500' });
 
-  const [q, setQ] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [q, setQ] = useState(useInitialSearchTerm());
+  const [statusFilter, setStatusFilter] = useFilterParam('status', STATUS_VALUES);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null);
@@ -61,7 +68,7 @@ export function CareTeamsPage() {
       .map((e) => e.resource)
       .filter((r): r is T => Boolean(r));
 
-  const practList = useMemo(() => resourcesOf<Practitioner>(pract.data), [pract.data]);
+  const practList = useMemo(() => resourcesOf<PractRow>(pract.data), [pract.data]);
   const practNameById = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of practList) if (p.id) m.set(p.id, practName(p));
@@ -75,19 +82,22 @@ export function CareTeamsPage() {
     [practList],
   );
 
-  const orgList = useMemo(() => resourcesOf<Organization>(orgs.data), [orgs.data]);
+  const orgList = useMemo(() => resourcesOf<OrgRow>(orgs.data), [orgs.data]);
   const orgNameById = useMemo(() => {
     const m = new Map<string, string>();
     for (const o of orgList) if (o.id) m.set(o.id, o.name ?? o.id);
     return m;
   }, [orgList]);
   const orgOptions = useMemo(
-    () => orgList.filter((o) => o.id).map((o) => ({ value: `Organization/${o.id}`, label: o.name ?? (o.id as string) })),
+    () =>
+      orgList
+        .filter((o) => o.id)
+        .map((o) => ({ value: `Organization/${o.id}`, label: o.name ?? (o.id as string) })),
     [orgList],
   );
   const orgNameOf = (team: CareTeamRow): string | undefined => {
     const id = team.managingOrganization?.[0]?.reference?.replace(/^Organization\//, '');
-    return id ? orgNameById.get(id) ?? id : undefined;
+    return id ? (orgNameById.get(id) ?? id) : undefined;
   };
 
   const teamList = useMemo(() => resourcesOf<CareTeamRow>(teams.data), [teams.data]);
@@ -111,7 +121,7 @@ export function CareTeamsPage() {
     teamsError = teams.error instanceof Error ? teams.error.message : String(teams.error);
   }
 
-  const isFiltering = q.trim() !== '' || statusFilter !== 'all';
+  const isFiltering = q.trim() !== '' || statusFilter !== null;
   const noTeams = !teams.isLoading && !teamsError && teamList.length === 0 && !isFiltering;
   const viewTeam = teamList.find((tm) => tm.id === viewId) ?? null;
   const editTeam = teamList.find((tm) => tm.id === editId) ?? null;
@@ -131,14 +141,14 @@ export function CareTeamsPage() {
               <Button
                 variant="secondary"
                 type="button"
-                iconRight={<RiArrowDownSLine size={20} />}
+                iconRight={<IconChevronDown size={20} />}
                 onClick={() => status.notify({ tone: 'info', title: t('exportComingSoon') })}
               >
                 {t('exportLabel')}
               </Button>
             ) : null}
             <PermissionGuard permission="careteams.manage">
-              <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+              <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addCareTeam')}
               </Button>
             </PermissionGuard>
@@ -153,10 +163,13 @@ export function CareTeamsPage() {
           practOptions={practOptions}
           orgOptions={orgOptions}
           onClose={() => setCreateOpen(false)}
-          onSuccess={() => {
+          onSuccess={(created) => {
             setCreateOpen(false);
             status.notify({ tone: 'success', title: t('careTeamCreated') });
-            void refresh('CareTeam');
+            // Optimistic insert reconciles in the background; only fall back to a plain refresh if the
+            // create response carried no resource to insert.
+            if (created) insert('CareTeam', created);
+            else void refresh('CareTeam');
           }}
         />
       ) : null}
@@ -178,11 +191,12 @@ export function CareTeamsPage() {
       {noTeams ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <EmptyState
-            title={t('emptyTitle')}
-            description={t('emptyDescription')}
+            illustration={<img src={careTeamsEmptyIllustration} alt="" width={110} height={104} />}
+            title={t('careTeamsEmptyTitle')}
+            description={t('careTeamsEmptyDescription')}
             action={
               <PermissionGuard permission="careteams.manage">
-                <Button type="button" iconLeft={<RiAddLine size={20} />} onClick={openCreate}>
+                <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                   {t('addCareTeam')}
                 </Button>
               </PermissionGuard>
@@ -192,49 +206,39 @@ export function CareTeamsPage() {
       ) : (
         <DataTable<CareTeamRow>
           toolbar={
-            <Stack gap={3}>
-              <Inline
-                justify="between"
-                style={{ flexWrap: 'wrap', gap: 'var(--ohs-spacing-3, 12px)', alignItems: 'center' }}
+            <Inline>
+              <SearchField
+                label={t('search')}
+                name="careTeamSearch"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t('searchByNameOrId')}
+              />
+              <FilterChipBar
+                align="end"
+                clearVisible={statusFilter !== null}
+                onClearAll={() => setStatusFilter(null)}
               >
-                <SearchField
-                  label={t('search')}
-                  name="careTeamSearch"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={t('searchByNameOrId')}
+                <FilterChip
+                  label={t('filterStatus')}
+                  allLabel={t('filterStatusAll')}
+                  options={[
+                    { value: 'active', label: t('filterStatusActive') },
+                    { value: 'inactive', label: t('filterStatusInactive') },
+                  ]}
+                  value={statusFilter}
+                  onChange={setStatusFilter}
                 />
-                <Button
-                  variant="secondary"
-                  type="button"
-                  iconLeft={<RiFilter3Line size={20} />}
-                  aria-expanded={filtersOpen}
-                  onClick={() => setFiltersOpen((v) => !v)}
-                >
-                  {statusFilter !== 'all' ? `${t('filterLabel')} (1)` : t('filterLabel')}
-                </Button>
-              </Inline>
-              {filtersOpen ? (
-                <div className="ohs-users-filters">
-                  <div className="ohs-formfield ohs-users-filters__field">
-                    <span className="ohs-formfield__label">{t('filterStatus')}</span>
-                    <ChipSet>
-                      <FilterChip label={t('filterStatusAll')} selected={statusFilter === 'all'} onChange={() => setStatusFilter('all')} />
-                      <FilterChip label={t('filterStatusActive')} selected={statusFilter === 'active'} onChange={() => setStatusFilter('active')} />
-                      <FilterChip label={t('filterStatusInactive')} selected={statusFilter === 'inactive'} onChange={() => setStatusFilter('inactive')} />
-                    </ChipSet>
-                  </div>
-                  {statusFilter !== 'all' ? (
-                    <button type="button" className="ohs-users-filters__clear" onClick={() => setStatusFilter('all')}>
-                      {t('clearFilters')}
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </Stack>
+              </FilterChipBar>
+            </Inline>
           }
           columns={[
-            { key: 'identifier', header: t('columnIdentifier'), render: (tm) => tm.id ?? '—' },
+            {
+              key: 'identifier',
+              header: t('columnIdentifier'),
+              mono: true,
+              render: (tm) => tm.id ?? '—',
+            },
             {
               key: 'name',
               header: t('columnName'),
@@ -243,7 +247,14 @@ export function CareTeamsPage() {
               render: (tm) => {
                 const members = memberIds(tm);
                 return (
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ohs-spacing-1, 4px)', minWidth: 0 }}>
+                  <span
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 'var(--ohs-sys-spacing-1, 4px)',
+                      minWidth: 0,
+                    }}
+                  >
                     <button
                       type="button"
                       className="ohs-rowlink"
@@ -254,15 +265,23 @@ export function CareTeamsPage() {
                     >
                       {tm.name ?? tm.id}
                     </button>
-                    <Inline justify="start" style={{ gap: 'var(--ohs-spacing-2, 8px)', alignItems: 'center' }}>
+                    <Inline
+                      justify="start"
+                      style={{ gap: 'var(--ohs-sys-spacing-2, 8px)', alignItems: 'center' }}
+                    >
                       {members.length > 0 ? (
                         <span className="ohs-avatar-stack">
                           {members.slice(0, 3).map((mid) => (
-                            <Avatar key={mid} name={practNameById.get(mid) ?? mid} className="ohs-avatar--sm" />
+                            <Avatar key={mid} name={practNameById.get(mid) ?? mid} size="sm" />
                           ))}
                         </span>
                       ) : null}
-                      <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                      <span
+                        style={{
+                          fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)',
+                          color: 'var(--ohs-color-text-muted, #696969)',
+                        }}
+                      >
                         {t('membersCount', { count: members.length })}
                       </span>
                     </Inline>
@@ -284,9 +303,13 @@ export function CareTeamsPage() {
               sortValue: (tm) => (isActive(tm) ? 1 : 0),
               render: (tm) =>
                 isActive(tm) ? (
-                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>{t('statusActive')}</StatusBadge>
+                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>
+                    {t('statusActive')}
+                  </StatusBadge>
                 ) : (
-                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>{t('statusInactive')}</StatusBadge>
+                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>
+                    {t('statusInactive')}
+                  </StatusBadge>
                 ),
             },
             {
@@ -297,11 +320,15 @@ export function CareTeamsPage() {
                 <OhsDropdownMenu.Root>
                   <OhsDropdownMenu.Trigger asChild>
                     <IconButton label={t('rowActions')} onClick={(e) => e.stopPropagation()}>
-                      <RiMore2Fill size={20} />
+                      <IconMore size={20} />
                     </IconButton>
                   </OhsDropdownMenu.Trigger>
                   <OhsDropdownMenu.Portal>
-                    <OhsDropdownMenu.Content className="ohs-dropdown-content" align="end" sideOffset={4}>
+                    <OhsDropdownMenu.Content
+                      className="ohs-dropdown-content"
+                      align="end"
+                      sideOffset={4}
+                    >
                       <OhsDropdownMenu.Item
                         className="ohs-dropdown-item"
                         onSelect={() => {
@@ -328,11 +355,19 @@ export function CareTeamsPage() {
           }}
           pagination
           initialPageSize={10}
+          pageResetKey={statusFilter ?? ''}
           errorState={teamsError ? <ErrorState description={teamsError} /> : undefined}
           emptyState={
             <EmptyState
-              title={t('emptyTitle')}
-              description={isFiltering ? t('filterEmptyGeneric') : t('emptyDescription')}
+              title={t('careTeamsEmptyTitle')}
+              description={isFiltering ? t('filterEmptyGeneric') : t('careTeamsEmptyDescription')}
+              action={
+                statusFilter !== null ? (
+                  <Button variant="ghost" type="button" onClick={() => setStatusFilter(null)}>
+                    {t('filterClearAll')}
+                  </Button>
+                ) : undefined
+              }
             />
           }
         />

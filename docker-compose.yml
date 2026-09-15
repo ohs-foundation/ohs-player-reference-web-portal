@@ -18,6 +18,7 @@ services:
       - '8090:8090'
     volumes:
       - ./infra/keycloak/ohs-realm.json:/opt/keycloak/data/import/ohs-realm.json:ro
+      - ./infra/keycloak/themes:/opt/keycloak/themes:ro
 
   ohs-info-gateway:
     # Set OHS_GATEWAY_IMAGE to your published OHS Info Gateway image; nginx is a dev-only FHIR proxy.

@@ -11,18 +11,18 @@ export const lightTheme: ThemeConfig = {
     primary: '#094F9A', // Background/Brand, Content/Brand
     primaryHover: '#073C75',
     primaryContrast: '#FAFAFA', // Content/Primary Inverse
-    primaryContainer: '#E6EEF6',
-    surface: '#FFFFFF', // Background/Primary
-    background: '#FFFFFF', // no separate gray page fill
+    primaryContainer: '#DCE5FE', // Brand-subtle surface — selected segment / selected tree row (matches county badge)
+    surface: '#FFFFFF', // Background/Primary — the content card, drawers
+    background: '#FAFAFA', // Background/Secondary — page fill behind the white content card
     text: '#0D0D0D', // Content/Primary (Neutral/950)
     textMuted: '#696969', // Content/Tertiary (Neutral/600)
     border: '#EDEDED', // Border/Primary (Neutral/100)
     focusRing: 'rgba(9, 79, 154, 0.28)',
-    success: '#009933', // Content/Positive
+    success: '#006E29', // Content/Positive
   },
   typography: {
-    fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
-    headingFontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
+    fontFamily: '"Google Sans", system-ui, -apple-system, sans-serif',
+    headingFontFamily: '"Google Sans", system-ui, -apple-system, sans-serif',
     baseFontSize: 16,
   },
   borderRadius: { default: 8 },

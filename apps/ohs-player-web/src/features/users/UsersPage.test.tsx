@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { FhirError } from 'ohs-player-web-core';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,12 +10,51 @@ const mockPost = vi.fn();
 const mockPut = vi.fn();
 const mockCustomGet = vi.fn();
 const mockCreateResource = vi.fn();
+const mockUseSearch = vi.fn();
+const mockNotify = vi.fn();
 // Stable client reference (the real useFhirClient is useMemo'd) so effects with a [client] dep run once.
 const mockFhirClient = { transaction: mockTransaction, baseUrl: '', customGet: mockCustomGet };
 
 const searchBundles: Record<string, { entry: { resource: Record<string, unknown> }[] }> = {
-  Organization: { entry: [{ resource: { resourceType: 'Organization', id: 'o1', name: 'Org One' } }] },
+  Practitioner: {
+    entry: [
+      {
+        resource: {
+          resourceType: 'Practitioner',
+          id: 'p1',
+          active: true,
+          name: [{ family: 'Smith', given: ['Jane'] }],
+        },
+      },
+      {
+        resource: {
+          resourceType: 'Practitioner',
+          id: 'p2',
+          active: false,
+          name: [{ family: 'Doe', given: ['John'] }],
+        },
+      },
+    ],
+  },
+  Organization: {
+    entry: [{ resource: { resourceType: 'Organization', id: 'o1', name: 'Org One' } }],
+  },
   Location: { entry: [{ resource: { resourceType: 'Location', id: 'l1', name: 'Loc One' } }] },
+  CareTeam: {
+    entry: [
+      { resource: { resourceType: 'CareTeam', id: 'ct1', name: 'Team A' } },
+      { resource: { resourceType: 'CareTeam', id: 'ct2', name: 'Team B' } },
+    ],
+  },
+};
+
+// `CareTeam?participant=` is the membership read; a bare `CareTeam` search feeds the picker.
+const careTeamMemberships: { entry: { resource: Record<string, unknown> }[] } = { entry: [] };
+
+const practitionerDetails: { data?: unknown; isLoading: boolean; error?: unknown } = {
+  data: undefined,
+  isLoading: false,
+  error: undefined,
 };
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
@@ -29,6 +69,11 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
       formatNumber: (v: unknown) => String(v),
     }),
     useFhirClient: () => mockFhirClient,
+    useAuth: () => ({ status: 'authenticated', user: { preferred_username: 'tester' } }),
+    useStatusBar: () => ({ notify: mockNotify }),
+    useRefreshResources: () => vi.fn().mockResolvedValue(undefined),
+    useOptimisticInsert: () => () => () => undefined,
+    PermissionGuard: ({ children }: { children: React.ReactNode }) => children,
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     useCustomEndpoint: () => ({
       post: { mutateAsync: mockPost, isPending: false },
@@ -36,13 +81,26 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
       put: { mutateAsync: mockPut, isPending: false },
     }),
     useCreateResource: () => ({ mutateAsync: mockCreateResource, isPending: false }),
-    useResource: () => ({ data: mockPractitioner, isLoading: false, error: null }),
-    useSearch: (resourceType: string) => ({
-      data: searchBundles[resourceType] ?? { entry: [] },
+    useCustomResource: () => practitionerDetails,
+    useResource: (_resourceType: string | undefined, resourceId?: string) => ({
+      data: resourceId ? mockPractitioner : undefined,
       isLoading: false,
       error: null,
-      refetch: vi.fn(),
     }),
+    useSearch: (resourceType: string | undefined, params?: Record<string, string>) => {
+      mockUseSearch(resourceType, params);
+      return {
+        data:
+          resourceType === 'CareTeam' && params?.participant
+            ? careTeamMemberships
+            : resourceType
+              ? (searchBundles[resourceType] ?? { entry: [] })
+              : undefined,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      };
+    },
   };
 });
 
@@ -56,7 +114,10 @@ vi.mock('../../config/env', () => ({
 }));
 
 const { UserCreateDrawer } = await import('./UserCreateDrawer');
+const { UserCreateEntryDrawer } = await import('./UserCreateEntryDrawer');
+const { UserCreateWizard } = await import('./UserCreateWizard');
 const { UserEditDrawer } = await import('./UserEditDrawer');
+const { UsersPage } = await import('./UsersPage');
 
 const mockPractitioner = {
   resourceType: 'Practitioner',
@@ -66,11 +127,30 @@ const mockPractitioner = {
   telecom: [{ system: 'email', value: 'jane@example.com' }],
 };
 
+function setPractitionerDetails(next: Partial<typeof practitionerDetails>): void {
+  Object.assign(practitionerDetails, { data: undefined, isLoading: false, error: undefined }, next);
+}
+
+const roleDetail = {
+  practitionerRole: {
+    resourceType: 'PractitionerRole',
+    id: 'pr1',
+    code: [{ coding: [{ system: 'http://ohs.dev/roles', code: 'nurse', display: 'Nurse' }] }],
+    organization: { reference: 'Organization/o1' },
+    location: [{ reference: 'Location/l1' }],
+  },
+  organization: { resourceType: 'Organization', id: 'o1', name: 'Org One' },
+  locations: [{ resourceType: 'Location', id: 'l1', name: 'Loc One' }],
+  careTeams: [{ resourceType: 'CareTeam', id: 'ct1', name: 'Team A' }],
+};
+
 describe('UserEditDrawer', () => {
   beforeEach(() => {
     mockTransaction.mockReset().mockResolvedValue({});
     mockPut.mockReset().mockResolvedValue({});
     mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
+    careTeamMemberships.entry = [];
+    setPractitionerDetails({ data: { practitioner: mockPractitioner, practitionerRoles: [] } });
   });
 
   it('pre-populates fields from the loaded practitioner', async () => {
@@ -113,6 +193,76 @@ describe('UserEditDrawer', () => {
     await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
   });
+  it('pre-selects the role, organisation, location and care teams from the endpoint', async () => {
+    setPractitionerDetails({
+      data: { practitioner: mockPractitioner, practitionerRoles: [roleDetail] },
+    });
+
+    render(
+      <MemoryRouter>
+        <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByDisplayValue('Jane')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /columnRole/ })).toHaveTextContent('Nurse');
+    expect(screen.getAllByText('Org One').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Loc One').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Team A').length).toBeGreaterThan(0);
+  });
+
+  it('adds a care team picked from the list to the transaction bundle', async () => {
+    const onSuccess = vi.fn();
+    render(
+      <MemoryRouter>
+        <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={onSuccess} />
+      </MemoryRouter>,
+    );
+
+    await screen.findByDisplayValue('Jane');
+    fireEvent.click(screen.getByRole('combobox', { name: /sectionCareTeams/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'Team B' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(mockTransaction).toHaveBeenCalledTimes(1));
+    const bundle = mockTransaction.mock.calls[0][0] as {
+      entry: { resource: Record<string, unknown>; request: { method: string; url: string } }[];
+    };
+    const added = bundle.entry.find((e) => e.request.url === 'CareTeam/ct2');
+    expect(added?.request.method).toBe('PUT');
+    expect(added?.resource.participant).toEqual([{ member: { reference: 'Practitioner/p1' } }]);
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows a spinner while the practitioner context loads', () => {
+    setPractitionerDetails({ isLoading: true });
+
+    render(
+      <MemoryRouter>
+        <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /columnRole/ })).not.toBeInTheDocument();
+  });
+
+  it('shows an error state when the practitioner context fails to load', () => {
+    setPractitionerDetails({
+      error: new FhirError('Missing practitioner-details.view', 403, {
+        error: 'Missing practitioner-details.view',
+      }),
+    });
+
+    render(
+      <MemoryRouter>
+        <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Missing practitioner-details.view');
+    expect(screen.queryByRole('combobox', { name: /columnRole/ })).not.toBeInTheDocument();
+  });
 });
 
 describe('UserCreateDrawer', () => {
@@ -125,12 +275,15 @@ describe('UserCreateDrawer', () => {
     mockTransaction.mockReset().mockResolvedValue({});
     mockCustomGet.mockReset().mockResolvedValue([]);
     mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
+    mockNotify.mockReset();
   });
 
   function fillDemographics() {
     fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
     fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
-    fireEvent.change(screen.getByLabelText(/emailAddress/), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), {
+      target: { value: 'jane@example.com' },
+    });
   }
 
   it('blocks submit when required fields are missing', async () => {
@@ -187,18 +340,204 @@ describe('UserCreateDrawer', () => {
     );
 
     fillDemographics();
-    fireEvent.change(screen.getByLabelText(/contextOrganization/), {
-      target: { value: 'Organization/o1' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /contextOrganization/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'Org One' }));
     fireEvent.click(screen.getByRole('button', { name: 'save' }));
 
     await waitFor(() => expect(mockTransaction).toHaveBeenCalledTimes(1));
     const bundle = mockTransaction.mock.calls[0][0] as {
-      entry?: { resource?: { organization?: { reference?: string } }; request?: { method?: string; url?: string } }[];
+      entry?: {
+        resource?: { organization?: { reference?: string } };
+        request?: { method?: string; url?: string };
+      }[];
     };
     const urls = (bundle.entry ?? []).map((e) => `${e.request?.method} ${e.request?.url}`);
     expect(urls).toContain('POST PractitionerRole');
     expect(urls.some((u) => u.startsWith('PUT Practitioner/'))).toBe(false);
     expect(bundle.entry?.[0].resource?.organization?.reference).toBe('Organization/o1');
+  });
+
+  it('treats the user as created when only the role/CareTeam follow-up fails (still closes + warns)', async () => {
+    // The gateway create (post) succeeds; the FHIR follow-up transaction rejects (e.g. staging 401/301).
+    mockTransaction.mockReset().mockRejectedValue(new Error('transaction failed'));
+    const onSuccess = vi.fn();
+    render(
+      <MemoryRouter>
+        <UserCreateDrawer onClose={vi.fn()} onSuccess={onSuccess} />
+      </MemoryRouter>,
+    );
+
+    fillDemographics();
+    fireEvent.click(screen.getByRole('combobox', { name: /contextOrganization/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'Org One' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    // The follow-up failure must NOT block create success: drawer closes + list refreshes via onSuccess.
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    // ...but the user is warned the assignment didn't land, not told the whole create failed.
+    expect(mockNotify).toHaveBeenCalledWith({
+      tone: 'warning',
+      title: 'userCreatedAssignmentFailed',
+    });
+    // The audit still records the create.
+    await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('UserCreateEntryDrawer', () => {
+  beforeEach(() => {
+    mockPost.mockReset().mockResolvedValue({
+      resourceType: 'Practitioner',
+      id: 'new',
+      identifier: [{ system: 'http://ohs.dev/identifiers/keycloak-user-id', value: 'kc-123' }],
+    });
+    mockTransaction.mockReset().mockResolvedValue({});
+    mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
+    mockNotify.mockReset();
+  });
+
+  it('shows the mode chooser when opened', () => {
+    render(
+      <MemoryRouter>
+        <UserCreateEntryDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('addUserQuickTitle')).toBeInTheDocument();
+    expect(screen.getByText('addUserWizardTitle')).toBeInTheDocument();
+  });
+
+  it('opens quick add from the chooser and can create a user', async () => {
+    const onSuccess = vi.fn();
+    render(
+      <MemoryRouter>
+        <UserCreateEntryDrawer onClose={vi.fn()} onSuccess={onSuccess} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /addUserQuickTitle/i }));
+    fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), {
+      target: { value: 'jane@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('UserCreateWizard', () => {
+  beforeEach(() => {
+    mockPost.mockReset().mockResolvedValue({
+      resourceType: 'Practitioner',
+      id: 'new',
+      identifier: [{ system: 'http://ohs.dev/identifiers/keycloak-user-id', value: 'kc-123' }],
+    });
+    mockTransaction.mockReset().mockResolvedValue({});
+    mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
+    mockNotify.mockReset();
+  });
+
+  it('blocks advancing from basic info when required fields are missing', async () => {
+    render(
+      <MemoryRouter>
+        <UserCreateWizard onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+
+    expect(await screen.findByText('validationRequiredGiven')).toBeInTheDocument();
+    expect(screen.getAllByText('wizardStepBasic').length).toBeGreaterThan(0);
+  });
+
+  it('walks through steps and creates a user from the review step', async () => {
+    const onSuccess = vi.fn();
+    render(
+      <MemoryRouter>
+        <UserCreateWizard onClose={vi.fn()} onSuccess={onSuccess} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), {
+      target: { value: 'jane@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'next' }));
+
+    expect(screen.getByText('wizardReviewIntro')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'createUser' }));
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('UsersPage search', () => {
+  beforeEach(() => mockUseSearch.mockClear());
+
+  it('opens the add-user mode chooser from the header action', () => {
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'addUser' }));
+    expect(screen.getByText('addUserQuickTitle')).toBeInTheDocument();
+  });
+
+  it('narrows the table when a Status chip value is applied and restores via Clear all', () => {
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'filterStatus' }));
+    fireEvent.click(screen.getByRole('option', { name: 'filterStatusInactive' }));
+
+    expect(screen.queryByText('Jane Smith')).toBeNull();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'filterStatus: filterStatusInactive' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'filterClearAll' }));
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+  });
+
+  it('queries Practitioner with name:contains (server-side) when a term is typed', async () => {
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+    // initial load: Practitioner search with no name param
+    const initial = mockUseSearch.mock.calls.find((c) => c[0] === 'Practitioner');
+    expect(initial?.[1]).not.toHaveProperty('name:contains');
+
+    fireEvent.change(screen.getByPlaceholderText('searchByNameOrId'), {
+      target: { value: 'jane' },
+    });
+
+    // debounced (300ms) → eventually a Practitioner search carries name:contains
+    await waitFor(() => {
+      const withTerm = mockUseSearch.mock.calls.find(
+        (c) =>
+          c[0] === 'Practitioner' &&
+          (c[1] as Record<string, string> | undefined)?.['name:contains'] === 'jane',
+      );
+      expect(withTerm).toBeDefined();
+    });
   });
 });

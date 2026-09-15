@@ -1,15 +1,13 @@
 import { useState } from 'react';
-import { RiBuildingLine, RiCloseLine, RiMapPinLine } from '@remixicon/react';
-import type { Organization } from '@medplum/fhirtypes';
+import { IconBuilding, IconClose, IconMapPin } from '../../components/ui/icons';
 import {
   OhsDialog,
   PermissionGuard,
-  useFhirClient,
   useStatusBar,
   useTranslation,
   useUpdateResource,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 import { toErrorMessage } from '../sdc/toErrorMessage';
@@ -17,8 +15,13 @@ import { toErrorMessage } from '../sdc/toErrorMessage';
 /** A managed Location (id + display name), resolved by the page from `Location.managingOrganization`. */
 export type ManagedLocation = { id: string; name: string };
 
-/** A FHIR Organization plus the UI-only `managedLocations` the page attaches to each row. */
-export type OrgRow = Organization & {
+export type OrgRow = {
+  id?: string;
+  name?: string;
+  active?: boolean;
+  type?: { coding?: { code?: string; display?: string }[] }[];
+  identifier?: { system?: string; value?: string }[];
+  telecom?: { system?: string; value?: string }[];
   /** Locations this org manages (`Location.managingOrganization` → this org), attached by the page. */
   managedLocations?: ManagedLocation[];
 };
@@ -52,7 +55,7 @@ export function OrganizationDetailsDrawer({
   onChanged: () => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
-  const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const status = useStatusBar();
   const update = useUpdateResource('Organization');
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -70,7 +73,7 @@ export function OrganizationDetailsDrawer({
         const body: Record<string, unknown> = { ...org, resourceType: 'Organization', active: false };
         delete body.managedLocations;
         await update.mutateAsync({ id, body });
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: 'update',
           resourceType: 'Organization',
           resourceId: id,
@@ -97,11 +100,10 @@ export function OrganizationDetailsDrawer({
             {active ? t('statusActive') : t('statusInactive')}
           </StatusBadge>
         </div>
-        {typeLabel ? <p className="ohs-form-drawer__subtitle">{typeLabel}</p> : null}
         {identifierValue ? <span className="ohs-user-drawer__id-chip">{identifierValue}</span> : null}
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -125,7 +127,7 @@ export function OrganizationDetailsDrawer({
     <>
       <Drawer open onClose={onClose} title={org.name ?? org.id ?? ''} header={header} footer={footer}>
         <div className="ohs-detail-body">
-          <Section icon={RiBuildingLine} title={t('sectionBasicInfo')}>
+          <Section icon={IconBuilding} title={t('sectionBasicInfo')}>
             <Stack gap={4}>
               <Field label={t('organizationType')} value={typeLabel} />
               <Field label={t('emailAddress')} value={email} />
@@ -136,14 +138,14 @@ export function OrganizationDetailsDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiMapPinLine} title={t('sectionManagedLocations')}>
+          <Section icon={IconMapPin} title={t('sectionManagedLocations')}>
             {locations.length === 0 ? (
               <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
             ) : (
               <Stack gap={3}>
                 {locations.map((l) => (
-                  <Inline key={l.id} style={{ gap: 'var(--ohs-spacing-2, 8px)', alignItems: 'center' }}>
-                    <RiMapPinLine size={16} aria-hidden="true" />
+                  <Inline key={l.id} style={{ gap: 'var(--ohs-sys-spacing-2, 8px)', alignItems: 'center' }}>
+                    <IconMapPin size={16} aria-hidden="true" />
                     <span>{l.name}</span>
                   </Inline>
                 ))}
@@ -161,7 +163,7 @@ export function OrganizationDetailsDrawer({
       >
         <Stack gap={4}>
           <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmDeactivateOrgBody')}</p>
-          <Inline justify="end" style={{ gap: 'var(--ohs-spacing-3, 12px)' }}>
+          <Inline justify="end" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}
             </Button>

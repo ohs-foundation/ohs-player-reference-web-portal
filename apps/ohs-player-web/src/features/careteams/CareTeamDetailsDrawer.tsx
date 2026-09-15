@@ -1,20 +1,27 @@
 import { useState } from 'react';
-import { RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
-import type { CareTeam } from '@medplum/fhirtypes';
+import { IconClose, IconGroup, IconTeam } from '../../components/ui/icons';
 import {
   OhsDialog,
   PermissionGuard,
-  useFhirClient,
   useStatusBar,
   useTranslation,
   useUpdateResource,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Avatar, Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
 import { Section } from '../users/userFormControls';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 
-export type CareTeamRow = CareTeam;
+export type CareTeamRow = {
+  id?: string;
+  name?: string;
+  status?: string;
+  note?: { text?: string }[];
+  managingOrganization?: { reference?: string }[];
+  participant?: {
+    member?: { reference?: string };
+    role?: { coding?: { code?: string; display?: string }[] }[];
+  }[];
+};
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
   return (
@@ -47,7 +54,7 @@ export function CareTeamDetailsDrawer({
   onChanged: () => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
-  const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const status = useStatusBar();
   const update = useUpdateResource('CareTeam');
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -70,7 +77,7 @@ export function CareTeamDetailsDrawer({
       setSaving(true);
       try {
         await update.mutateAsync({ id, body: { ...team, resourceType: 'CareTeam', status: 'inactive' } });
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: 'update',
           resourceType: 'CareTeam',
           resourceId: id,
@@ -81,7 +88,7 @@ export function CareTeamDetailsDrawer({
         onChanged();
         onClose();
       } catch (err) {
-        status.notify({ tone: 'error', title: toErrorMessage(err) });
+        status.notify({ tone: 'error', title: err instanceof Error ? err.message : t('saveFailed') });
       } finally {
         setSaving(false);
       }
@@ -100,7 +107,7 @@ export function CareTeamDetailsDrawer({
         <span className="ohs-user-drawer__id-chip">{team.id}</span>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -124,7 +131,7 @@ export function CareTeamDetailsDrawer({
     <>
       <Drawer open onClose={onClose} title={team.name ?? team.id ?? ''} header={header} footer={footer}>
         <div className="ohs-detail-body">
-          <Section icon={RiTeamLine} title={t('sectionBasicInfo')}>
+          <Section icon={IconTeam} title={t('sectionBasicInfo')}>
             <Stack gap={4}>
               <Field label={t('descriptionLabel')} value={description} />
               <Field label={t('organizationForTeam')} value={orgName} />
@@ -135,7 +142,7 @@ export function CareTeamDetailsDrawer({
             </Stack>
           </Section>
 
-          <Section icon={RiGroupLine} title={t('sectionMembers')}>
+          <Section icon={IconGroup} title={t('sectionMembers')}>
             {members.length === 0 ? (
               <span style={{ color: 'var(--ohs-color-text-muted, #696969)' }}>{t('detailNone')}</span>
             ) : (
@@ -146,16 +153,16 @@ export function CareTeamDetailsDrawer({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 'var(--ohs-spacing-3, 12px)',
-                      padding: 'var(--ohs-spacing-3, 12px) 0',
+                      gap: 'var(--ohs-sys-spacing-3, 12px)',
+                      padding: 'var(--ohs-sys-spacing-3, 12px) 0',
                       borderBottom: i < members.length - 1 ? '1px solid var(--ohs-color-border, #ededed)' : 'none',
                     }}
                   >
-                    <Avatar name={m.name} className="ohs-avatar--sm" />
+                    <Avatar name={m.name} size="sm" />
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                       <span>{m.name}</span>
                       {m.role ? (
-                        <span style={{ fontSize: 'var(--ohs-font-text-s-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
+                        <span style={{ fontSize: 'var(--ohs-sys-typescale-body-small-size, 12px)', color: 'var(--ohs-color-text-muted, #696969)' }}>
                           {m.role}
                         </span>
                       ) : null}
@@ -176,7 +183,7 @@ export function CareTeamDetailsDrawer({
       >
         <Stack gap={4}>
           <p style={{ margin: 0, color: 'var(--ohs-color-text-muted, #696969)' }}>{t('confirmRetireBody')}</p>
-          <Inline justify="end" style={{ gap: 'var(--ohs-spacing-3, 12px)' }}>
+          <Inline justify="end" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}
             </Button>

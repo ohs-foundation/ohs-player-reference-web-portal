@@ -22,8 +22,12 @@
   z-index: 51;
   background: var(--ohs-color-surface, #fff);
   border-radius: var(--ohs-radius-lg, 12px);
-  box-shadow: var(--ohs-shadow-lg, 0 8px 32px rgba(15, 23, 42, 0.2));
-  padding: var(--ohs-spacing-6, 24px);
+  box-shadow: var(
+    --ohs-sys-elevation-level3,
+    0 10px 24px rgba(15, 23, 42, 0.12),
+    0 4px 8px rgba(15, 23, 42, 0.08)
+  );
+  padding: var(--ohs-sys-spacing-8, 32px);
   width: min(92vw, 560px);
   max-height: calc(100vh - 64px);
   overflow-y: auto;
@@ -31,7 +35,7 @@
 }
 
 .ohs-dialog-title {
-  margin: 0 0 var(--ohs-spacing-4, 16px);
+  margin: 0 0 var(--ohs-sys-spacing-4, 16px);
   font-size: var(--ohs-text-title, 18px);
   font-weight: 600;
   color: var(--ohs-color-text, #1f2933);
@@ -45,8 +49,8 @@
 .ohs-dialog-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--ohs-spacing-3, 12px);
-  margin-top: var(--ohs-spacing-5, 20px);
+  gap: var(--ohs-sys-spacing-3, 12px);
+  margin-top: var(--ohs-sys-spacing-6, 24px);
   flex-wrap: wrap;
 }
 
@@ -55,9 +59,13 @@
 .ohs-dropdown-content {
   background: var(--ohs-color-surface, #fff);
   border: 1px solid var(--ohs-color-border, #dde3ed);
-  border-radius: var(--ohs-radius-md, 8px);
-  box-shadow: var(--ohs-shadow-md, 0 4px 12px rgba(15, 23, 42, 0.15));
-  padding: var(--ohs-spacing-1, 4px);
+  border-radius: var(--ohs-radius-default, 8px);
+  box-shadow: var(
+    --ohs-sys-elevation-level2,
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    0 2px 4px rgba(15, 23, 42, 0.06)
+  );
+  padding: var(--ohs-sys-spacing-1, 4px);
   min-width: 180px;
   z-index: 52;
   animation: ohs-fade-in 120ms ease;
@@ -66,8 +74,8 @@
 .ohs-dropdown-item {
   display: flex;
   align-items: center;
-  gap: var(--ohs-spacing-2, 8px);
-  padding: var(--ohs-spacing-2, 8px) var(--ohs-spacing-3, 12px);
+  gap: var(--ohs-sys-spacing-2, 8px);
+  padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-3, 12px);
   border-radius: var(--ohs-radius-sm, 4px);
   font-size: var(--ohs-text-body, 14px);
   color: var(--ohs-color-text, #1f2933);
@@ -78,17 +86,144 @@
 
 .ohs-dropdown-item:hover,
 .ohs-dropdown-item[data-highlighted] {
-  background: var(--ohs-color-surface-hover, #f0f4ff);
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
+  background: rgb(
+    from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
+  );
 }
 
 /* ─── Animations ──────────────────────────────────────────────────────────── */
 
 @keyframes ohs-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes ohs-slide-up {
-  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
-  to   { opacity: 1; transform: translate(-50%, -50%); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ─── FHIR JSON view / editor ─────────────────────────────────────────────── */
+
+.ohs-json-view {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--ohs-color-border, #dde3ed);
+  border-radius: var(--ohs-radius-default, 8px);
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
+  overflow: hidden;
+}
+
+.ohs-json-view__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--ohs-sys-spacing-2, 8px);
+  border-bottom: 1px solid var(--ohs-color-border, #dde3ed);
+}
+
+.ohs-json-view__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-2, 8px);
+  padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-3, 12px);
+  border: 1px solid var(--ohs-color-border, #dde3ed);
+  border-radius: var(--ohs-radius-pill, 999px);
+  background: var(--ohs-color-surface, #fff);
+  color: var(--ohs-color-text, #1f2933);
+  font-size: var(--ohs-text-label, 13px);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ohs-json-view__copy:hover {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
+  background: rgb(
+    from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
+  );
+  border-color: var(--ohs-color-text-muted, #696969);
+}
+
+.ohs-json-view__copy[data-copied] {
+  color: var(--ohs-color-success, #1f8a4c);
+  border-color: var(--ohs-color-success, #1f8a4c);
+}
+
+.ohs-json-view__copy:focus-visible {
+  outline: 2px solid var(--ohs-color-focus-ring, #2f6fed);
+  outline-offset: 2px;
+}
+
+.ohs-json-view__code {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: var(--ohs-sys-spacing-4, 16px);
+  overflow: auto;
+  white-space: pre;
+  font-family: var(--ohs-font-mono, ui-monospace, 'SF Mono', 'Menlo', monospace);
+  font-size: var(--ohs-text-label, 13px);
+  line-height: 1.6;
+  color: var(--ohs-color-text, #1f2933);
+}
+
+.ohs-json-editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: var(--ohs-sys-spacing-2, 8px);
+}
+
+.ohs-json-editor__label {
+  font-size: var(--ohs-text-label, 13px);
+  font-weight: 500;
+  color: var(--ohs-color-text-muted, #696969);
+}
+
+.ohs-json-editor__textarea {
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 240px;
+  resize: vertical;
+  padding: var(--ohs-sys-spacing-4, 16px);
+  border: 1px solid var(--ohs-color-border, #dde3ed);
+  border-radius: var(--ohs-radius-default, 8px);
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
+  color: var(--ohs-color-text, #1f2933);
+  font-family: var(--ohs-font-mono, ui-monospace, 'SF Mono', 'Menlo', monospace);
+  font-size: var(--ohs-text-label, 13px);
+  line-height: 1.6;
+  white-space: pre;
+  overflow-wrap: normal;
+  tab-size: 2;
+}
+
+.ohs-json-editor__textarea:focus-visible {
+  outline: 2px solid var(--ohs-color-focus-ring, #2f6fed);
+  outline-offset: 1px;
+  border-color: var(--ohs-color-focus-ring, #2f6fed);
+}
+
+.ohs-json-editor__textarea[aria-invalid='true'] {
+  border-color: var(--ohs-color-error, #d1434b);
+}
+
+.ohs-json-editor__error {
+  margin: 0;
+  font-size: var(--ohs-text-label, 13px);
+  color: var(--ohs-color-error, #d1434b);
 }

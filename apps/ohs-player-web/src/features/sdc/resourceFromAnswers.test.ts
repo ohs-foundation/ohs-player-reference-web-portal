@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { Organization, Parameters } from '@medplum/fhirtypes';
 import {
   applyUserAnswersToPractitioner,
   buildDeactivateBundle,
@@ -189,7 +188,12 @@ describe('careTeamFromForm', () => {
       status: 'inactive',
       memberIds: ['p1', 'Practitioner/p2'],
       organizationId: 'o1',
-    });
+    }) as {
+      status?: string;
+      note?: { text?: string }[];
+      managingOrganization?: { reference?: string }[];
+      participant?: { member?: { reference?: string }; role?: { coding?: { code?: string }[] }[] }[];
+    };
     expect(ct.status).toBe('inactive');
     expect(ct.note?.[0].text).toBe('Outbreak team');
     expect(ct.participant?.map((p) => p.member?.reference)).toEqual([
@@ -203,13 +207,13 @@ describe('careTeamFromForm', () => {
   });
 
   it('preserves a passed Organization/ ref and clears managingOrganization on edit when blank', () => {
-    const created = careTeamFromForm({ ...base, organizationId: 'Organization/o9' });
+    const created = careTeamFromForm({ ...base, organizationId: 'Organization/o9' }) as {
+      managingOrganization?: { reference?: string }[];
+    };
     expect(created.managingOrganization?.[0].reference).toBe('Organization/o9');
 
     const cleared = careTeamFromForm(base, {
-      resourceType: 'CareTeam',
       id: 'ct1',
-      status: 'active',
       managingOrganization: [{ reference: 'Organization/o9' }],
     });
     expect(cleared).not.toHaveProperty('managingOrganization');
@@ -295,8 +299,7 @@ describe('organizationFromForm', () => {
   });
 
   it('on edit, preserves unmanaged fields incl. server identifier, drops the cleared email', () => {
-    const existing: Organization = {
-      resourceType: 'Organization',
+    const existing = {
       id: 'o1',
       partOf: { reference: 'Organization/parent' },
       identifier: [{ system: 'http://other', value: 'keep' }],
@@ -305,7 +308,12 @@ describe('organizationFromForm', () => {
         { system: 'email', value: 'old@x.com' },
       ],
     };
-    const org = organizationFromForm(base, existing);
+    const org = organizationFromForm(base, existing) as {
+      id?: string;
+      partOf?: { reference?: string };
+      identifier?: { system?: string; value?: string }[];
+      telecom?: { system?: string; value?: string }[];
+    };
     expect(org.id).toBe('o1');
     expect(org.partOf?.reference).toBe('Organization/parent');
     // identifier is not form-managed — it passes through untouched
@@ -313,12 +321,20 @@ describe('organizationFromForm', () => {
     // email was blank in base → cleared; the non-email telecom survives
     expect(org.telecom).toEqual([{ system: 'phone', value: '0700' }]);
   });
+
+  it('sets partOf when partOfReference is provided', () => {
+    const org = organizationFromForm({
+      ...base,
+      partOfReference: 'Organization/parent',
+    }) as { partOf?: { reference?: string } };
+    expect(org.partOf?.reference).toBe('Organization/parent');
+  });
 });
 
 describe('locationManagingOrgPatch', () => {
   type Op = { name: string; valueCode?: string; valueString?: string; valueReference?: { reference?: string } };
-  const operations = (patch: Parameters): Op[][] =>
-    (patch.parameter ?? []).map((op) => (op.part ?? []) as Op[]);
+  const operations = (patch: Record<string, unknown>): Op[][] =>
+    (patch.parameter as { part?: Op[] }[]).map((op) => op.part ?? []);
   const typeOf = (parts: Op[]): string | undefined => parts.find((p) => p.name === 'type')?.valueCode;
 
   it('links via `delete` then `add` so it is conformant whether the element is absent or present', () => {

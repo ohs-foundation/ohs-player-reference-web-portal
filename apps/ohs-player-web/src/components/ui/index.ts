@@ -5,13 +5,28 @@ export { Card, CardHeader } from './Card';
 export type { CardHeaderProps, CardProps } from './Card';
 
 export { Field, TextField, TextAreaField, SelectField } from './Field';
-export type { FieldRootProps, SelectFieldOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './Field';
+export type {
+  FieldRootProps,
+  SelectFieldOption,
+  SelectFieldProps,
+  TextAreaFieldProps,
+  TextFieldProps,
+} from './Field';
 
+export { Combobox } from './Combobox';
+export type { ComboboxProps } from './Combobox';
+export { filterComboboxOptions } from './comboboxFilter';
+export type { ComboboxOption } from './comboboxFilter';
+
+export { Listbox } from './Listbox';
+export type { ListboxOption, ListboxProps } from './Listbox';
 export { SearchField } from './SearchField';
 export type { SearchFieldProps } from './SearchField';
 
 export { Avatar } from './Avatar';
 export type { AvatarProps } from './Avatar';
+export { KpiBadge } from './KpiBadge';
+export type { KpiBadgeProps } from './KpiBadge';
 
 export { Drawer } from './Drawer';
 export type { DrawerProps } from './Drawer';
@@ -22,8 +37,17 @@ export type { InlineProps, PageHeaderProps, PageProps, StackProps } from './Layo
 export { DataTable } from './DataTable';
 export type { DataTableColumn, DataTableProps } from './DataTable';
 
+export { DonutChart } from './DonutChart';
+export type { DonutChartProps, DonutSegment } from './DonutChart';
+
 export { EmptyState, ErrorState, LinearProgress, Spinner, StatusBadge } from './States';
-export type { EmptyStateProps, ErrorStateProps, LinearProgressProps, StatusBadgeProps, StatusTone } from './States';
+export type {
+  EmptyStateProps,
+  ErrorStateProps,
+  LinearProgressProps,
+  StatusBadgeProps,
+  StatusTone,
+} from './States';
 
 export { Switch } from './Switch';
 export type { SwitchProps } from './Switch';
@@ -31,5 +55,5 @@ export type { SwitchProps } from './Switch';
 export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 
-export { ChipSet, FilterChip } from './Chips';
-export type { ChipSetProps, FilterChipProps } from './Chips';
+export { FilterChip, FilterChipBar } from './Chips';
+export type { FilterChipBarProps, FilterChipOption, FilterChipProps } from './Chips';

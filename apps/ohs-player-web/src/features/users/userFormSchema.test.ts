@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { type UserFormValues, validateUserForm } from './userFormSchema';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { todayIso, type UserFormValues, validateUserForm } from './userFormSchema';
 
 const t = (key: string) => key;
 
@@ -51,5 +51,36 @@ describe('validateUserForm', () => {
     );
     expect(validateUserForm(values({ email: 'nh@mail.com' }), t).email).toBeUndefined();
     expect(validateUserForm(values({ email: 'nhx@mail.com' }), t, { enforceUsername: true }).email).toBeUndefined();
+  });
+
+  describe('date of birth cannot be in the future', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      // Local noon, so "today" resolves to this calendar day in every timezone.
+      vi.setSystemTime(new Date(2026, 6, 14, 12, 0, 0));
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('rejects a dob after today', () => {
+      expect(validateUserForm(values({ dob: '2026-07-15' }), t).dob).toBe('validationFutureDob');
+      expect(validateUserForm(values({ dob: '2030-01-01' }), t).dob).toBe('validationFutureDob');
+    });
+
+    it('accepts today and past dates', () => {
+      expect(validateUserForm(values({ dob: '2026-07-14' }), t).dob).toBeUndefined();
+      expect(validateUserForm(values({ dob: '2026-07-13' }), t).dob).toBeUndefined();
+      expect(validateUserForm(values({ dob: '1990-05-01' }), t).dob).toBeUndefined();
+    });
+
+    it('reports the format error rather than the future error when both could apply', () => {
+      expect(validateUserForm(values({ dob: '15/07/2030' }), t).dob).toBe('validationInvalidDob');
+    });
+  });
+});
+
+describe('todayIso', () => {
+  it('formats local date parts, zero-padded', () => {
+    // Late evening: a UTC-based implementation would roll to the 6th in positive offsets.
+    expect(todayIso(new Date(2026, 0, 5, 23, 30))).toBe('2026-01-05');
   });
 });

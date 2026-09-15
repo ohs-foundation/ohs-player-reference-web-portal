@@ -13,47 +13,61 @@ body {
   font-size: var(--ohs-font-size-base, 16px);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  /* Inherited: every step at or below 24px tracks -0.5px. Larger steps override at their own rule. */
+  letter-spacing: var(--ohs-sys-typescale-body-medium-letter-spacing, -0.5px);
+}
+
+/* Fixed, not in flow — `.app-shell` is a named-area grid and an in-flow child would add a row.
+   `.app-shell` prefix raises specificity above the global `[data-ohs-root] a` link color. */
+.app-shell .app-skip-link {
+  position: fixed;
+  top: var(--ohs-sys-spacing-2, 8px);
+  left: var(--ohs-sys-spacing-2, 8px);
+  z-index: 100;
+  padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-4, 16px);
+  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-radius-default, 8px);
+  background: var(--ohs-color-surface, #fff);
+  color: var(--ohs-color-text, #0d0d0d);
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+  line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--ohs-sys-spacing-4, 16px)));
+  transition: transform 120ms ease;
+}
+.app-shell .app-skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 /* Reference app shell — layout + top bar user control (avatar + name must not visually merge) */
 .app-shell {
   display: grid;
   height: 100%;
-  grid-template:
-    'top top' auto
-    'side main' 1fr
-    / 300px minmax(0, 1fr);
-  background: var(--ohs-color-background, #f4f7fb);
-}
-
-/* Desktop sidebar collapse (header toggle) */
-.app-shell[data-sidebar-collapsed='true'] {
-  grid-template:
-    'top top' auto
-    'side main' 1fr
-    / 0 minmax(0, 1fr);
-}
-.app-shell[data-sidebar-collapsed='true'] .app-sidebar {
-  display: none;
+  grid-template-areas:
+    'top top'
+    'side main';
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 134px minmax(0, 1fr);
+  background: var(--ohs-color-background, #fafafa);
 }
 
 .app-topbar {
   grid-area: top;
-  height: 100px;
+  height: 104px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ohs-spacing-4, 16px);
-  padding: var(--ohs-spacing-5, 24px) 80px;
-  border-bottom: 1.5px solid var(--ohs-color-border, #ededed);
-  background: var(--ohs-color-surface, #fff);
+  gap: var(--ohs-sys-spacing-4, 16px);
+  padding: var(--ohs-sys-spacing-6, 24px);
+  background: transparent;
 }
 
 .app-topbar__brand {
   display: flex;
   align-items: center;
-  gap: var(--ohs-spacing-4, 16px);
+  gap: var(--ohs-sys-spacing-4, 16px);
   min-width: 0;
   flex: 0 1 auto;
   overflow: hidden;
@@ -61,11 +75,8 @@ body {
 .app-topbar__logo {
   display: inline-flex;
   align-items: center;
-  gap: var(--ohs-spacing-2, 8px);
+  gap: var(--ohs-sys-spacing-2, 8px);
   min-width: 0;
-}
-.app-topbar__collapse {
-  flex-shrink: 0;
 }
 .app-topbar__title {
   font-weight: 600;
@@ -76,48 +87,176 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Mobile-only drawer toggle (desktop uses the collapse toggle) */
+/* Mobile-only drawer toggle */
 .app-topbar__menu-toggle {
   display: none;
 }
-/* Desktop sidebar collapse toggle + notification bell */
-.app-topbar__collapse,
+/* Notification bell */
 .app-topbar__bell {
   color: var(--ohs-color-text-muted, #696969);
 }
-.app-topbar__collapse:hover,
 .app-topbar__bell:hover {
-  background: var(--ohs-color-surface-variant, #f5f5f5);
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
+  background: rgb(
+    from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
+  );
 }
 
 .app-topbar__actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--ohs-spacing-4, 16px);
+  gap: var(--ohs-sys-spacing-4, 16px);
   flex: 1 1 auto;
   min-width: 0;
 }
-/* Search shrinks (basis 357, no grow) so it never pushes the brand/collapse; icons stay fixed. */
+/* Search shrinks (basis 360, no grow) so it never pushes the brand; icons stay fixed. */
 .app-topbar__search {
   width: auto;
-  flex: 0 1 357px;
+  flex: 0 1 360px;
   min-width: 0;
 }
 .app-topbar__bell {
   flex-shrink: 0;
 }
 
+/* Global search: the wrapper carries the flex sizing; the panel drops below the input. */
+.app-search {
+  position: relative;
+  flex: 0 1 360px;
+  min-width: 0;
+}
+.app-search .app-topbar__search {
+  flex: 1 1 auto;
+  width: 100%;
+}
+.app-search__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 70;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  padding: var(--ohs-sys-spacing-2, 8px);
+  background: var(--ohs-color-surface, #fff);
+  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-radius-default, 8px);
+  box-shadow: var(
+    --ohs-sys-elevation-level2,
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    0 2px 4px rgba(15, 23, 42, 0.06)
+  );
+}
+.app-search__status {
+  padding: var(--ohs-sys-spacing-3, 12px);
+  color: var(--ohs-color-text-muted, #696969);
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+  text-align: center;
+  margin: 0;
+}
+.app-search__group + .app-search__group {
+  margin-top: var(--ohs-sys-spacing-2, 8px);
+  padding-top: var(--ohs-sys-spacing-2, 8px);
+  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+}
+.app-search__group-title {
+  margin: 0 0 var(--ohs-sys-spacing-1, 4px);
+  padding: 0 var(--ohs-sys-spacing-2, 8px);
+  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  color: var(--ohs-color-text-muted, #696969);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.app-search__hit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ohs-sys-spacing-3, 12px);
+  width: 100%;
+  padding: var(--ohs-sys-spacing-2, 8px);
+  border: none;
+  background: none;
+  border-radius: var(--ohs-radius-sm, 6px);
+  text-align: left;
+  cursor: pointer;
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.app-search__hit:hover,
+.app-search__hit:focus-visible {
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
+  background: rgb(
+    from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
+  );
+}
+.app-search__hit-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-search__hit-id {
+  flex-shrink: 0;
+  color: var(--ohs-color-text-muted, #696969);
+  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
+}
+
+/* Notifications activity feed (rendered inside the shared dropdown content). */
+.app-activity {
+  width: min(92vw, 360px);
+  padding: var(--ohs-sys-spacing-2, 8px);
+}
+.app-activity__title {
+  margin: 0;
+  padding: var(--ohs-sys-spacing-2, 8px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.app-activity__list {
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+}
+.app-activity__status {
+  padding: var(--ohs-sys-spacing-4, 16px);
+  text-align: center;
+  color: var(--ohs-color-text-muted, #696969);
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+  margin: 0;
+}
+.app-activity__item {
+  padding: var(--ohs-sys-spacing-2, 8px);
+  border-radius: var(--ohs-radius-sm, 6px);
+}
+.app-activity__item + .app-activity__item {
+  border-top: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+}
+.app-activity__text {
+  margin: 0;
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.app-activity__meta {
+  margin: 2px 0 0;
+  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
+  color: var(--ohs-color-text-muted, #696969);
+}
+.app-activity__desc {
+  margin: 2px 0 0;
+  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
+  color: var(--ohs-color-text-muted, #696969);
+}
+
 .app-topbar__user {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ohs-spacing-2, 8px);
+  gap: var(--ohs-sys-spacing-2, 8px);
   width: 259px;
   height: 56px;
-  padding: 0 var(--ohs-spacing-4, 16px) 0 var(--ohs-spacing-2, 8px);
+  padding: 0 var(--ohs-sys-spacing-4, 16px) 0 var(--ohs-sys-spacing-2, 8px);
   margin: 0;
-  border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border: 1px solid var(--ohs-sys-color-outline, #74777f);
   border-radius: var(--ohs-radius-pill, 999px);
   background: transparent;
   font: inherit;
@@ -125,12 +264,15 @@ body {
   cursor: pointer;
 }
 .app-topbar__user:hover {
-  background: var(--ohs-color-surface-variant, #f5f5f5);
+  background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
+  background: rgb(
+    from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
+  );
 }
 .app-topbar__user-main {
   display: inline-flex;
   align-items: center;
-  gap: var(--ohs-spacing-4, 16px);
+  gap: var(--ohs-sys-spacing-4, 16px);
   min-width: 0;
 }
 .app-topbar__user-text {
@@ -140,8 +282,8 @@ body {
   min-width: 0;
 }
 .app-topbar__user-name {
-  font-size: var(--ohs-font-text-m-size, 14px);
-  line-height: var(--ohs-font-text-m-line, 20px);
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+  line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
   font-weight: var(--ohs-font-weight-medium, 500);
   color: var(--ohs-color-text, #0d0d0d);
   overflow: hidden;
@@ -150,9 +292,9 @@ body {
   max-width: 150px;
 }
 .app-topbar__user-email-inline {
-  font-size: var(--ohs-font-text-s-size, 12px);
-  line-height: var(--ohs-font-text-s-line, 16px);
-  color: var(--ohs-color-text-quaternary, #9e9e9e);
+  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
+  line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
+  color: var(--ohs-color-text-muted, #696969);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -170,10 +312,9 @@ body {
   --sidebar-active-fg: var(--ohs-color-primary-contrast, #ffffff);
   display: flex;
   flex-direction: column;
-  gap: var(--ohs-spacing-3, 12px);
-  padding: 40px var(--ohs-spacing-5, 24px);
-  border-right: 1.5px solid var(--ohs-color-border, #cdd7e1);
-  background: var(--ohs-color-surface, #fff);
+  padding: var(--ohs-sys-spacing-12, 48px) var(--ohs-sys-spacing-6, 24px)
+    var(--ohs-sys-spacing-14, 56px);
+  background: transparent;
   overflow-y: auto;
   align-self: stretch;
 }
@@ -181,43 +322,53 @@ body {
 .app-sidebar ul {
   display: flex;
   flex-direction: column;
-  gap: var(--ohs-spacing-3, 12px);
+  gap: var(--ohs-sys-spacing-4, 16px);
   width: 100%;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* `.app-sidebar` prefix raises specificity above the global `[data-ohs-root] a` link color. */
+/* Stacked item: a 56×32 icon pill over its label, 72px tall on an 88px pitch (72 + the 16px gap).
+   `.app-sidebar` prefix raises specificity above the global `[data-ohs-root] a` link color. */
 .app-sidebar .app-sidebar__link {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--ohs-spacing-4, 16px);
+  gap: var(--ohs-sys-spacing-2, 8px);
   width: 100%;
-  min-height: 56px;
-  padding: var(--ohs-spacing-4, 16px) var(--ohs-spacing-5, 24px);
-  border-radius: var(--ohs-radius-default, 12px);
+  min-height: 72px;
+  padding: 0;
   color: var(--ohs-color-text-muted, #696969);
-  font-family: var(--ohs-font-body, 'IBM Plex Sans', sans-serif);
-  font-size: var(--ohs-text-body, 16px);
-  line-height: 24px;
-  font-weight: 500;
+  font-family: var(--ohs-font-body, 'Google Sans', sans-serif);
+  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
+  line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
+  font-weight: var(--ohs-font-weight-medium, 500);
+  text-align: center;
   text-decoration: none;
   box-sizing: border-box;
-  transition: background 120ms ease, color 120ms ease;
+  transition: color 120ms ease;
 }
 
-.app-sidebar .app-sidebar__link:hover:not(.app-sidebar__link--active) {
-  background: var(--ohs-color-surface-variant, #eef2f7);
+.app-sidebar .app-sidebar__link:hover:not(.app-sidebar__link--active) .app-sidebar__icon {
+  background: rgb(
+    from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
+  );
+}
+.app-sidebar .app-sidebar__link:hover {
   text-decoration: none;
 }
 
 .app-sidebar .app-sidebar__link:focus-visible {
   outline: none;
+  border-radius: var(--ohs-sys-shape-corner-medium, 12px);
   box-shadow: 0 0 0 3px var(--ohs-color-focus-ring, rgba(31, 111, 235, 0.35));
 }
 
 .app-sidebar .app-sidebar__link--active {
+  color: var(--ohs-color-text, #0d0d0d);
+}
+.app-sidebar .app-sidebar__link--active .app-sidebar__icon {
   background: var(--sidebar-active-bg);
   color: var(--sidebar-active-fg);
 }
@@ -227,32 +378,34 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 56px;
+  height: 32px;
+  border-radius: var(--ohs-radius-pill, 999px);
+  transition: background 120ms ease;
 }
 
+/* The floating panel: rounded on all four corners so it reads as overlapping the rail/top-bar corner. */
 .app-shell__main {
   grid-area: main;
   padding: 0;
   overflow: auto;
   min-height: 0;
-  /* White content surface per the page-container spec; depth comes from neutral borders, not a gray fill. */
+  margin: 0 var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-6, 24px) 0;
+  border-top: 0.5px solid var(--ohs-color-border-secondary, #d4d4d4);
+  border-radius: var(--ohs-sys-shape-corner-extra-large, 28px);
   background: var(--ohs-color-surface, #fff);
 }
 
 /* Full-width main when no chrome (login / callback) */
 .app-shell--bare-root {
-  grid-template: 'main' 1fr / 1fr;
+  grid-template-areas: 'main';
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr;
   height: 100%;
 }
 
 .app-shell__main--bare {
   grid-area: main;
-}
-
-/* Mid widths: trim the wide 80px topbar gutter so search + brand fit before the mobile layout. */
-@media (max-width: 75rem) {
-  .app-topbar {
-    padding: var(--ohs-spacing-5, 24px) var(--ohs-spacing-6, 32px);
-  }
 }
 
 @media (max-width: 52rem) {
@@ -262,10 +415,9 @@ body {
   /* On mobile the header drops the desktop-only controls and tightens padding. */
   .app-topbar {
     height: auto;
-    padding: var(--ohs-spacing-4, 16px);
+    padding: var(--ohs-sys-spacing-4, 16px);
   }
-  .app-topbar__search,
-  .app-topbar__collapse {
+  .app-search {
     display: none;
   }
   .app-topbar__user {
@@ -275,11 +427,16 @@ body {
     display: none;
   }
 
+  .app-shell__main {
+    margin: 0 var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-4, 16px);
+  }
+
   .app-shell {
-    grid-template:
-      'top' auto
-      'main' 1fr
-      / 1fr;
+    grid-template-areas:
+      'top'
+      'main';
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr;
   }
 
   .app-sidebar {
@@ -287,16 +444,25 @@ body {
   }
 
   .app-shell[data-sidebar-open] {
-    grid-template:
-      'top' auto
-      'side' auto
-      'main' 1fr
-      / 1fr;
+    grid-template-areas:
+      'top'
+      'side'
+      'main';
+    grid-template-rows: auto auto 1fr;
+    grid-template-columns: 1fr;
   }
 
+  /* Horizontal strip on mobile: the stacked items tile across instead of down. */
   .app-shell[data-sidebar-open] .app-sidebar {
     display: flex;
-    border-right: none;
-    border-bottom: 1px solid var(--ohs-color-border, #cdd7e1);
+    padding: var(--ohs-sys-spacing-4, 16px);
+  }
+  .app-shell[data-sidebar-open] .app-sidebar ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .app-shell[data-sidebar-open] .app-sidebar li {
+    flex: 0 0 auto;
   }
 }

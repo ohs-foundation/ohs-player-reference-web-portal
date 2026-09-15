@@ -1,18 +1,25 @@
 import { type FormEvent, useState } from 'react';
-import { RiBuildingLine, RiCloseLine, RiGroupLine, RiTeamLine } from '@remixicon/react';
+import { IconBuilding, IconClose, IconGroup, IconTeam } from '../../components/ui/icons';
 import {
+  FhirError,
+  formatOperationOutcomeMessage,
+  newUrnUuid,
   useCreateResource,
-  useFhirClient,
   useTranslation,
   useUpdateResource,
-  writeAuditEvent,
 } from 'ohs-player-web-core';
+import { useWriteAudit } from '../audit/useWriteAudit';
 import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
 import { careTeamFromForm } from '../sdc/resourceFromAnswers';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect, StackedTextArea } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
 import type { CareTeamRow } from './CareTeamDetailsDrawer';
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
 
 const FORM_ID = 'careteam-form';
 
@@ -22,22 +29,28 @@ function memberIdsOf(team: CareTeamRow | undefined): string[] {
     .filter(Boolean);
 }
 
-/** Add or Edit a Care Team. Pass `team` to edit (prefills + PUTs); omit it to create (POSTs). */
+/** Add or Edit a Care Team. Pass `team` to edit (prefills + PUTs); omit it to create (POSTs).
+ * In `mode: 'wizard'`, emits a Bundle entry via `onEmit` instead of POSTing. */
 export function CareTeamFormDrawer({
   team,
   practOptions,
   orgOptions,
   onClose,
   onSuccess,
+  mode = 'standalone',
+  onEmit,
 }: Readonly<{
   team?: CareTeamRow;
   practOptions: Option[];
   orgOptions: Option[];
   onClose: () => void;
-  onSuccess: () => void;
+  /** On create, receives the new resource (server id + form body) for an optimistic list insert. */
+  onSuccess: (created?: { id?: string } & Record<string, unknown>) => void;
+  mode?: 'standalone' | 'wizard';
+  onEmit?: (payload: { fullUrl: string; resource: Record<string, unknown> }) => void;
 }>): React.ReactElement {
   const { t } = useTranslation();
-  const client = useFhirClient();
+  const writeAudit = useWriteAudit();
   const create = useCreateResource('CareTeam');
   const update = useUpdateResource('CareTeam');
   const editing = Boolean(team?.id);
@@ -66,6 +79,12 @@ export function CareTeamFormDrawer({
     void (async () => {
       setSubmitting(true);
       try {
+        if (mode === 'wizard' && onEmit) {
+          const fullUrl = editing && team?.id ? `CareTeam/${team.id}` : newUrnUuid();
+          onEmit({ fullUrl, resource: body });
+          onSuccess(editing ? undefined : { ...body, id: fullUrl });
+          return;
+        }
         let resourceId = team?.id;
         if (editing && team?.id) {
           await update.mutateAsync({ id: team.id, body });
@@ -73,12 +92,12 @@ export function CareTeamFormDrawer({
           resourceId = ((await create.mutateAsync(body)) as { id?: string }).id;
           if (!resourceId) throw new Error('Create did not return an id');
         }
-        await writeAuditEvent(client, {
+        await writeAudit({
           action: editing ? 'update' : 'create',
           resourceType: 'CareTeam',
           resourceId,
         });
-        onSuccess();
+        onSuccess(editing ? undefined : { ...body, id: resourceId });
       } catch (err) {
         setError(toErrorMessage(err));
       } finally {
@@ -96,12 +115,9 @@ export function CareTeamFormDrawer({
     <div className="ohs-form-drawer__head">
       <div>
         <h2 className="ohs-form-drawer__title">{editing ? t('editCareTeam') : t('addCareTeam')}</h2>
-        <p className="ohs-form-drawer__subtitle">
-          {editing ? t('editCareTeamSubtitle') : t('addCareTeamSubtitle')}
-        </p>
       </div>
       <IconButton label={t('close')} onClick={onClose}>
-        <RiCloseLine size={24} />
+        <IconClose size={24} />
       </IconButton>
     </div>
   );
@@ -128,7 +144,7 @@ export function CareTeamFormDrawer({
       <form id={FORM_ID} className="ohs-detail-body" onSubmit={onFormSubmit}>
         {error ? <ErrorState description={error} /> : null}
 
-        <Section icon={RiTeamLine} title={t('sectionBasicInfo')}>
+        <Section icon={IconTeam} title={t('sectionBasicInfo')}>
           <Stack gap={5}>
             <StackedInput
               full
@@ -160,7 +176,7 @@ export function CareTeamFormDrawer({
           </Stack>
         </Section>
 
-        <Section icon={RiBuildingLine} title={t('organizationForTeam')}>
+        <Section icon={IconBuilding} title={t('organizationForTeam')}>
           <StackedSelect
             full
             label={t('organizationForTeam')}
@@ -171,7 +187,7 @@ export function CareTeamFormDrawer({
           />
         </Section>
 
-        <Section icon={RiGroupLine} title={t('sectionMembers')}>
+        <Section icon={IconGroup} title={t('sectionMembers')}>
           <MultiSelect
             label={t('usersLabel')}
             options={practOptions}

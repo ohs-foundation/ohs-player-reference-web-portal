@@ -4,6 +4,40 @@ function gatewayRootFromFhirBase(fhirBaseUrl: string): string {
   return fhirBaseUrl.replace(/\/fhir\/?$/i, '').replace(/\/$/, '') || fhirBaseUrl;
 }
 
+/** Options for {@link FhirClient.searchAll}. */
+export interface SearchAllOptions {
+  /** Resources per page (`_count`). Default 500. */
+  pageSize?: number;
+  /** Hard stop on number of pages fetched (safety valve). Default 100. */
+  maxPages?: number;
+}
+
+interface SearchBundlePage {
+  entry?: { resource?: unknown }[];
+  link?: { relation?: string; url?: string }[];
+}
+
+/**
+ * Map a server-issued Bundle `next` link onto this client's FHIR base so paging works when HAPI
+ * emits an internal host (e.g. `http://hapi-fhir:8080/fhir?_getpages=…`) behind a browser proxy.
+ */
+export function rebaseFhirUrl(nextUrl: string, fhirBaseUrl: string): string {
+  const base = fhirBaseUrl.replace(/\/$/, '');
+  try {
+    const parsed = new URL(nextUrl, `${base}/`);
+    const path = parsed.pathname;
+    const marker = path.toLowerCase().lastIndexOf('/fhir');
+    if (marker >= 0) {
+      const afterFhir = path.slice(marker + '/fhir'.length);
+      return `${base}${afterFhir}${parsed.search}`;
+    }
+    if (!path || path === '/') return `${base}${parsed.search}`;
+    return `${base}${path.startsWith('/') ? path : `/${path}`}${parsed.search}`;
+  } catch {
+    return nextUrl;
+  }
+}
+
 async function readBody(res: Response): Promise<unknown> {
   const text = await res.text();
   if (!text) return undefined;
@@ -63,11 +97,15 @@ export class FhirClient {
     const body = await readBody(res);
     let message = `HTTP ${res.status}`;
     if (isOperationOutcome(body)) {
-      const oo = body as {
-        issue?: { diagnostics?: string }[];
-      };
-      const d = oo.issue?.[0]?.diagnostics;
+      const d = (body as { issue?: { diagnostics?: string }[] }).issue?.[0]?.diagnostics;
       if (d) message = d;
+    } else if (body && typeof body === 'object') {
+      // Gateway custom routes (/api/*) return a plain JSON error, e.g. `{ "error": "...", "status": 409 }`.
+      const b = body as { error?: unknown; message?: unknown };
+      const m = typeof b.error === 'string' ? b.error : typeof b.message === 'string' ? b.message : '';
+      if (m) message = m;
+    } else if (typeof body === 'string' && body.trim()) {
+      message = body;
     }
     const err = new FhirError(message, res.status, body);
     this.onError?.(err);
@@ -81,10 +119,64 @@ export class FhirClient {
     return readBody(res);
   }
 
-  /** FHIR search interaction: `GET {base}/{resourceType}?…` */
+  /**
+   * FHIR search interaction: `GET {base}/{resourceType}?…` — sent with `Cache-Control: no-cache`
+   * (HAPI otherwise reuses cached search results for 60 s, so post-mutation refetches return stale
+   * data) plus `Pragma`/`no-store` so browser and proxy caches cannot serve a stale Bundle either.
+   */
   async search(resourceType: string, params?: Record<string, string>): Promise<unknown> {
     const sp = params ? `?${new URLSearchParams(params).toString()}` : '';
-    const res = await this.fetchWithAuth(`${this.fhirBaseUrl}/${resourceType}${sp}`);
+    return this.searchUrl(`${this.fhirBaseUrl}/${resourceType}${sp}`);
+  }
+
+  /**
+   * Walk every page of a FHIR search result set. Follows Bundle `link[rel=next]`, rebasing each
+   * next URL onto this client's base so docker-internal hosts in HAPI paging links still hit the
+   * browser-reachable gateway/proxy. De-dupes by resource `id`. Caps pages as a safety valve.
+   */
+  async searchAll(
+    resourceType: string,
+    params?: Record<string, string>,
+    options?: SearchAllOptions,
+  ): Promise<unknown[]> {
+    const pageSize = options?.pageSize ?? 500;
+    const maxPages = options?.maxPages ?? 100;
+    const resources: unknown[] = [];
+    const seenIds = new Set<string>();
+
+    let bundle = (await this.search(resourceType, {
+      ...params,
+      _count: String(pageSize),
+    })) as SearchBundlePage;
+
+    for (let page = 0; page < maxPages; page++) {
+      let added = 0;
+      for (const entry of bundle.entry ?? []) {
+        const resource = entry.resource as { id?: string } | undefined;
+        if (!resource) continue;
+        if (typeof resource.id === 'string') {
+          if (seenIds.has(resource.id)) continue;
+          seenIds.add(resource.id);
+        }
+        resources.push(resource);
+        added += 1;
+      }
+
+      const nextRaw = bundle.link?.find((l) => l.relation === 'next')?.url;
+      if (!nextRaw || added === 0) break;
+
+      bundle = (await this.searchUrl(rebaseFhirUrl(nextRaw, this.fhirBaseUrl))) as SearchBundlePage;
+    }
+
+    return resources;
+  }
+
+  /** Authenticated GET of a fully resolved search/paging URL with the same cache-bypass headers as {@link search}. */
+  private async searchUrl(url: string): Promise<unknown> {
+    const res = await this.fetchWithAuth(url, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    });
     if (!res.ok) throw await this.toError(res);
     return readBody(res);
   }
@@ -159,6 +251,7 @@ export class FhirClient {
   async customGet(
     alias: string,
     params?: Record<string, string | number | boolean | undefined>,
+    idSegment?: string,
   ): Promise<unknown> {
     const path = this.customEndpoints[alias];
     if (!path) throw new Error(`Unknown custom endpoint alias: ${alias}`);
@@ -176,10 +269,43 @@ export class FhirClient {
           Object.fromEntries(Object.entries(filtered).map(([k, v]) => [k, String(v)])),
         )}`
       : '';
-    const url = `${root}${path.startsWith('/') ? path : `/${path}`}${qs}`;
+    const base = `${root}${path.startsWith('/') ? path : `/${path}`}`;
+    const url = `${idSegment ? `${base}/${encodeURIComponent(idSegment)}` : base}${qs}`;
     const res = await this.fetchWithAuth(url, { method: 'GET' });
     if (!res.ok) throw await this.toError(res);
     return readBody(res);
+  }
+
+  /**
+   * POST a body (e.g. `FormData` for multipart uploads) to a custom endpoint and return the raw
+   * `Response` so the caller can consume a streaming body (Server-Sent Events). Adds the bearer token
+   * and retries once on 401; does NOT set `Content-Type` (the browser sets the multipart boundary).
+   * The caller owns reading `res.body`; check `res.ok` and pass `!res.ok` responses to a handler.
+   */
+  async customPostStream(alias: string, body: BodyInit): Promise<Response> {
+    const path = this.customEndpoints[alias];
+    if (!path) throw new Error(`Unknown custom endpoint alias: ${alias}`);
+    const root = gatewayRootFromFhirBase(this.fhirBaseUrl);
+    const url = `${root}${path.startsWith('/') ? path : `/${path}`}`;
+    const build = (token: string | null): Headers => {
+      const h = new Headers();
+      h.set('Accept', 'text/event-stream');
+      if (token) h.set('Authorization', `Bearer ${token}`);
+      return h;
+    };
+    const token = await this.getAccessToken();
+    const first = await fetch(url, { method: 'POST', headers: build(token), body });
+    if (first.status === 401) {
+      await this.getAccessToken();
+      const t2 = await this.getAccessToken();
+      return fetch(url, { method: 'POST', headers: build(t2), body });
+    }
+    return first;
+  }
+
+  /** Surface a non-OK custom-route `Response` as a `FhirError` (parses the gateway JSON error body). */
+  async errorFromResponse(res: Response): Promise<FhirError> {
+    return this.toError(res);
   }
 
   /** POST JSON to a host-defined custom path (`customEndpoints[alias]`). Uses `application/json`. */

@@ -11,7 +11,6 @@ interface ImportMetaEnv {
   readonly VITE_FLAG_CARE_TEAMS?: string;
   readonly VITE_FLAG_DASHBOARD?: string;
   readonly VITE_FLAG_ORG_MGMT?: string;
-  readonly VITE_THEME_ALT?: string;
   /** Bundled questionnaire variant key (`registry.ts`). Default variant when omitted. */
   readonly VITE_QUESTIONNAIRE_VARIANT?: string;
 }

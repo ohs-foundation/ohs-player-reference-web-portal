@@ -27,6 +27,16 @@ const DOB_RE = /^\d{4}-\d{2}-\d{2}$/;
 const USERNAME_MIN = 3;
 
 /**
+ * Today as `YYYY-MM-DD` in local time. Built from local parts because a date-only ISO string parses
+ * as UTC midnight, which shifts a day in negative offsets and would misjudge "today" as future.
+ */
+export function todayIso(now: Date = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+/**
  * Zod schema for the user form. Required: given/family/email; email must be well-formed; phone is
  * optional but format-checked when present. With `enforceUsername`, the email local-part must yield a
  * Keycloak-valid username (≥ 3 chars). Messages are translated up-front so callers get display-ready text.
@@ -52,8 +62,12 @@ function userFormSchema(t: Translate, opts: ValidateUserOptions) {
       if (val.phone.trim() && !PHONE_RE.test(val.phone.trim())) {
         ctx.addIssue({ code: 'custom', path: ['phone'], message: t('validationInvalidPhone') });
       }
-      if (val.dob.trim() && !DOB_RE.test(val.dob.trim())) {
+      const dob = val.dob.trim();
+      if (dob && !DOB_RE.test(dob)) {
         ctx.addIssue({ code: 'custom', path: ['dob'], message: t('validationInvalidDob') });
+      } else if (dob && dob > todayIso()) {
+        // Same fixed-width format on both sides, so a string compare orders dates correctly.
+        ctx.addIssue({ code: 'custom', path: ['dob'], message: t('validationFutureDob') });
       }
     });
 }

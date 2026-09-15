@@ -8,7 +8,14 @@ export interface AuditParams {
   agentDisplay?: string;
 }
 
-/** Writes a FHIR `AuditEvent` for mutating operations (no reporting UI in MVP). */
+/** Maps the high-level action to the R4 `AuditEvent.action` code (C/R/U/D). */
+const ACTION_CODE: Record<AuditParams['action'], 'C' | 'R' | 'U' | 'D'> = {
+  create: 'C',
+  update: 'U',
+  delete: 'D',
+};
+
+/** Writes a FHIR `AuditEvent` for mutating operations (consumed by the activity feed). */
 export async function writeAuditEvent(
   client: FhirClient,
   params: AuditParams,
@@ -21,6 +28,7 @@ export async function writeAuditEvent(
       code: 'rest',
       display: 'RESTful Operation',
     },
+    action: ACTION_CODE[params.action],
     recorded: now,
     agent: [
       {
@@ -47,6 +55,7 @@ export async function writeAuditEvent(
               code: '2',
               display: 'System Object',
             },
+            ...(params.description ? { description: params.description } : {}),
           },
         ]
       : [],

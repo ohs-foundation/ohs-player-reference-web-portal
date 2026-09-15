@@ -20,7 +20,6 @@ export type {
   RbacConfig,
   ThemeColors,
   ThemeConfig,
-  ThemeShadow,
   TokenStore,
   UnauthorizedBehaviour,
   UseAuthResult,
@@ -52,18 +51,50 @@ export { defaultMessageCatalog } from './i18n/locales/en';
 export { swMessageCatalogStub } from './i18n/locales/sw';
 
 export { applyTheme, defaultTheme, mergeTheme } from './theme/theme';
+export { installThemeCss, themeCss, upgradeThemeConfig } from './theme/themeCss';
+export type { ThemeConfigV2 } from './theme/themeCss';
+export type {
+  ShapeToken,
+  SysColorRole,
+  SysColorScheme,
+  TypescaleMetrics,
+  TypescaleRole,
+} from './theme/sysTokens';
 
-export { FhirClient } from './client/FhirClient';
+export { FhirClient, rebaseFhirUrl } from './client/FhirClient';
+export type { SearchAllOptions } from './client/FhirClient';
 export { FhirError, isOperationOutcome } from './client/FhirError';
+
+export {
+  bundleEntry,
+  commitBundle,
+  committedId,
+  committedReference,
+  newUrnUuid,
+} from './bundle/transaction';
+export type {
+  BundleEntryMethod,
+  TransactionBundleEntry,
+  TransactionResponseBundle,
+} from './bundle/transaction';
 
 export {
   useCreateResource,
   useCustomEndpoint,
+  useCustomResource,
+  useDeleteResource,
   useFhirCapabilities,
+  useOptimisticInsert,
+  usePagedSearch,
   useRefreshResources,
   useResource,
   useSearch,
   useUpdateResource,
+} from './hooks/useFhirData';
+export type {
+  OptimisticInsertOptions,
+  PagedSearchParams,
+  PagedSearchResult,
 } from './hooks/useFhirData';
 
 export { formatOperationOutcomeMessage } from './ui/operationOutcome';
@@ -78,6 +109,11 @@ export type { OhsDialogProps } from './ui/radix';
 
 export { StatusBarProvider, useStatusBar } from './ui/primitives/StatusBar';
 export type { StatusTone } from './ui/primitives/StatusBar';
+
+export { FhirJsonView } from './ui/primitives/FhirJsonView';
+export type { FhirJsonViewProps } from './ui/primitives/FhirJsonView';
+export { FhirJsonEditor } from './ui/primitives/FhirJsonEditor';
+export type { FhirJsonEditorProps } from './ui/primitives/FhirJsonEditor';
 
 export { writeAuditEvent } from './audit/writeAudit';
 
