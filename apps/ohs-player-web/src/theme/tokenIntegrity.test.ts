@@ -37,7 +37,7 @@ function references(): Map<string, string[]> {
 }
 
 /**
- * A `var(--ohs-x, fallback)` on a token nothing declares silently pins the fallback in both themes,
+ * A `var(--ohs-sys-x, fallback)` on a token nothing declares silently pins the fallback in both themes,
  * so a light-mode fallback survives into dark mode. The value looks fine; it just never applies.
  */
 describe('token integrity', () => {
