@@ -16,8 +16,9 @@ export {
   type PortalHostInput,
   type ResolvedPortalHost,
 } from './host/createPortalHost';
-export { useExtensionQuestionnaire } from './host/extensionsContext';
+export { ExtensionsContext, useExtensionQuestionnaire } from './host/extensionsContext';
 export { PortalHost, type PortalHostProps } from './host/PortalHost';
+export { Slot, type SlotProps } from './host/Slot';
 export type {
   DashboardRegion,
   ExtensionContributions,

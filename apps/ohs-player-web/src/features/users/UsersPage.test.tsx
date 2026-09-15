@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { Practitioner } from '@medplum/fhirtypes';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { FhirError } from 'ohs-player-web-core';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -118,6 +119,8 @@ const { UserCreateEntryDrawer } = await import('./UserCreateEntryDrawer');
 const { UserCreateWizard } = await import('./UserCreateWizard');
 const { UserEditDrawer } = await import('./UserEditDrawer');
 const { UsersPage } = await import('./UsersPage');
+const { CorePlatformProvider, OhsDropdownMenu } = await import('ohs-player-web-core');
+const { ExtensionsContext } = await import('ohs-player-web-shell');
 
 const mockPractitioner = {
   resourceType: 'Practitioner',
@@ -539,5 +542,81 @@ describe('UsersPage search', () => {
       );
       expect(withTerm).toBeDefined();
     });
+  });
+});
+
+describe('UsersPage row actions slot', () => {
+  function ViewSchedules({ context }: { context: { practitioner: Practitioner } }) {
+    return (
+      <OhsDropdownMenu.Item className="ohs-dropdown-item">
+        View schedules for {context.practitioner.id}
+      </OhsDropdownMenu.Item>
+    );
+  }
+
+  function Broken(): React.ReactElement {
+    throw new Error('row action exploded');
+  }
+
+  function renderWithSlots() {
+    return render(
+      <MemoryRouter>
+        <CorePlatformProvider
+          config={{
+            fhirBaseUrl: 'http://localhost:8080/fhir',
+            auth: { issuer: 'http://localhost:8090/realms/ohs', clientId: 'ohs-player-web' },
+          }}
+        >
+          <ExtensionsContext.Provider
+            value={{
+              nav: [],
+              routes: [],
+              widgets: [],
+              questionnaires: {},
+              slots: [
+                { id: 'broken.open', slot: 'users.rowActions', order: 20, component: Broken },
+                {
+                  id: 'schedules.open',
+                  slot: 'users.rowActions',
+                  order: 10,
+                  component: ViewSchedules,
+                },
+              ],
+            }}
+          >
+            <UsersPage />
+          </ExtensionsContext.Provider>
+        </CorePlatformProvider>
+      </MemoryRouter>,
+    );
+  }
+
+  it('appends contributions after the built-in actions, given the row practitioner', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    renderWithSlots();
+
+    fireEvent.keyDown(screen.getAllByRole('button', { name: 'rowActions' })[0], { key: 'Enter' });
+
+    const menu = await screen.findByRole('menu');
+    expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+      'viewDetails',
+      'edit',
+      'View schedules for p1',
+    ]);
+    vi.restoreAllMocks();
+  });
+
+  it('keeps the menu and the table when a contribution throws', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    renderWithSlots();
+
+    fireEvent.keyDown(screen.getAllByRole('button', { name: 'rowActions' })[0], { key: 'Enter' });
+
+    const menu = await screen.findByRole('menu');
+    expect(within(menu).getByRole('alert')).toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: 'viewDetails' })).toBeInTheDocument();
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    vi.restoreAllMocks();
   });
 });
