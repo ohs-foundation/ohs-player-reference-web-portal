@@ -1,5 +1,5 @@
 import { useTranslation } from 'ohs-player-web-core';
-import { Spinner } from 'ohs-player-web-shell';
+import { Spinner } from '../../components/ui';
 import { type ActivityItem } from './useRecentActivity';
 
 const ACTION_KEY: Record<NonNullable<ActivityItem['action']>, string> = {

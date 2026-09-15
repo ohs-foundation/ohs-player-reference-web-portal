@@ -25,19 +25,17 @@ import {
   IconUser,
   IconUserFill,
   type IconComponent,
-  Avatar,
-  IconButton,
-  BrandMark,
-  type NavId,
-  usePortalConfig,
-} from 'ohs-player-web-shell';
+} from '../components/ui/icons';
+import { Avatar, IconButton } from '../components/ui';
 import { NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useSignOut } from './useSignOut';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
 import { GlobalSearch } from '../features/search/GlobalSearch';
 import { NotificationsBell } from '../features/activity/NotificationsBell';
-import { useSetupWizardAutoRedirect } from '../features/setup-wizard/useSetupWizardAutoRedirect';
+import type { NavId } from '../config/navigation';
+import { usePortalConfig } from '../config/portalConfigContext';
 
 const ICON_SIZE = 20;
 
@@ -60,7 +58,8 @@ const NAV_ICONS: Record<NavId, Pick<NavItem, 'LineIcon' | 'FillIcon'>> = {
   setup: { LineIcon: IconMagic, FillIcon: IconMagicFill },
 };
 
-export function AppLayout() {
+/** The portal frame around the routed page. `children` render only for a signed-in session. */
+export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
@@ -68,7 +67,6 @@ export function AppLayout() {
   const { mode, toggle } = useThemeMode();
   const { navigation } = usePortalConfig();
   const entries = useMemo(() => [...navigation].sort((a, b) => a.order - b.order), [navigation]);
-  useSetupWizardAutoRedirect();
 
   if (auth.status !== 'authenticated') {
     return (
@@ -140,6 +138,7 @@ export function AppLayout() {
       <main className="app-shell__main" id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
+      {children}
     </div>
   );
 }

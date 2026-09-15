@@ -8,8 +8,8 @@ import {
   LoginPage,
   LogoutPage,
   UnauthorizedPage,
+  AppLayout,
 } from 'ohs-player-web-shell';
-import { AppLayout } from './layout/AppLayout';
 import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './features/users/UsersPage';
 import { LocationsPage } from './features/locations/LocationsPage';
@@ -17,6 +17,7 @@ import { LocationsNoAccess } from './features/locations/LocationsNoAccess';
 import { OrganizationsPage } from './features/organizations/OrganizationsPage';
 import { CareTeamsPage } from './features/careteams/CareTeamsPage';
 import { SetupWizardPage } from './features/setup-wizard/SetupWizardPage';
+import { SetupWizardAutoRedirect } from './features/setup-wizard/SetupWizardAutoRedirect';
 import { FhirViewerPage } from './features/fhir-viewer/FhirViewerPage';
 
 function OrganizationsPermissionFallback() {
@@ -38,7 +39,13 @@ export function AppRoutes() {
       <Route path="/logout" element={<LogoutPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
-      <Route element={<AppLayout />}>
+      <Route
+        element={
+          <AppLayout>
+            <SetupWizardAutoRedirect />
+          </AppLayout>
+        }
+      >
         <Route
           path="/"
           element={

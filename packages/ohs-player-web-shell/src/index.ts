@@ -11,7 +11,14 @@ export {
   type ResolvedPortalConfig,
 } from './config/resolvePortalConfig';
 
+export { ThemeModeProvider } from './theme/ThemeModeProvider';
+
+export { useClearFilterParams, useFilterParam } from './features/search/useFilterParam';
+export { useDebounced } from './features/search/useGlobalSearch';
+export { useInitialSearchTerm } from './features/search/useInitialSearchTerm';
+
 export { ProtectedRoute } from './auth/ProtectedRoute';
+export { AppLayout } from './layout/AppLayout';
 export { BrandMark } from './layout/BrandMark';
 export { CallbackPage } from './pages/CallbackPage';
 export { LoginPage } from './pages/LoginPage';

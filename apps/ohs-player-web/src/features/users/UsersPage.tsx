@@ -27,13 +27,14 @@ import {
   IconAddCircle,
   IconChevronDown,
   IconMore,
+  useInitialSearchTerm,
+  useFilterParam,
+  useClearFilterParams,
+  useDebounced,
 } from 'ohs-player-web-shell';
 import { UserCreateEntryDrawer } from './UserCreateEntryDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
-import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
-import { useFilterParam, useClearFilterParams } from '../search/useFilterParam';
-import { useDebounced } from '../search/useGlobalSearch';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 

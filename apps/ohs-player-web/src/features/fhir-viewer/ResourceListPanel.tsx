@@ -16,6 +16,8 @@ import {
   SearchField,
   StatusBadge,
   cn,
+  useFilterParam,
+  useClearFilterParams,
 } from 'ohs-player-web-shell';
 import { exampleFor } from './examples';
 import {
@@ -25,7 +27,6 @@ import {
   searchPlaceholderKey,
 } from './registry';
 import { ResourcePager } from './ResourcePager';
-import { useFilterParam, useClearFilterParams } from '../search/useFilterParam';
 import { type ActiveFilter, type SincePreset, SINCE_PRESETS, sinceParam } from './filterParams';
 
 /** HTTP statuses that mean "this backend won't serve this type" rather than a genuine failure. */

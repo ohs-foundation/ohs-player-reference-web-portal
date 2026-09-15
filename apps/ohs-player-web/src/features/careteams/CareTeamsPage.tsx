@@ -27,11 +27,11 @@ import {
   IconAddCircle,
   IconChevronDown,
   IconMore,
+  useInitialSearchTerm,
+  useFilterParam,
 } from 'ohs-player-web-shell';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 import { CareTeamFormDrawer } from './CareTeamFormDrawer';
-import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
-import { useFilterParam } from '../search/useFilterParam';
 
 const STATUS_VALUES = ['active', 'inactive'] as const;
 

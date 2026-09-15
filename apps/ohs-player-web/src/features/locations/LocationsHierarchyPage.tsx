@@ -17,6 +17,7 @@ import {
   IconAddCircle,
   IconChevronDown,
   IconUpload,
+  useFilterParam,
 } from 'ohs-player-web-shell';
 import { collectExpandableIdsLimited, EXPAND_ALL_MAX, filterTree } from './expand';
 import { nodeChain, type LocationNode } from './hierarchy';
@@ -32,7 +33,6 @@ import { LocationTree } from './LocationTree';
 import { LocationColumnTable } from './LocationColumnTable';
 import { LocationViewToggle, type LocationView } from './LocationViewToggle';
 import { LOCATION_STATUS_FILTERS, type LocationStatusFilter } from './locationStatusFilter';
-import { useFilterParam } from '../search/useFilterParam';
 import { LocationBreadcrumb } from './LocationBreadcrumb';
 import { LocationDetailPanel } from './LocationDetailPanel';
 import { LocationCreateDrawer } from './LocationCreateDrawer';

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'ohs-player-web-core';
-import { SearchField, Spinner } from 'ohs-player-web-shell';
+import { SearchField, Spinner } from '../../components/ui';
 import { useGlobalSearch } from './useGlobalSearch';
 
 /**

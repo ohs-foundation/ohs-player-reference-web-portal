@@ -13,11 +13,13 @@
       "require": "./dist/index.cjs"
     },
     "./theme.css": "./src/components/ui/theme.css",
+    "./index.css": "./src/index.css",
     "./tailwind.css": "./src/tailwind.css"
   },
   "files": [
     "dist",
     "src/components/ui/theme.css",
+    "src/index.css",
     "src/tailwind.css"
   ],
   "scripts": {

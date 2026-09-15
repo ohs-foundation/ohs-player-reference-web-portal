@@ -24,6 +24,8 @@ import {
   IconAddCircle,
   IconChevronDown,
   IconMore,
+  useInitialSearchTerm,
+  useFilterParam,
 } from 'ohs-player-web-shell';
 import orgEmptyIllustration from '../../assets/illustrations/org-empty.svg';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
@@ -34,8 +36,6 @@ import {
 } from './OrganizationDetailsDrawer';
 import { OrganizationFormDrawer } from './OrganizationFormDrawer';
 import type { Option } from '../users/userFormOptions';
-import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
-import { useFilterParam } from '../search/useFilterParam';
 
 type LocRow = { id?: string; name?: string; managingOrganization?: { reference?: string } };
 
