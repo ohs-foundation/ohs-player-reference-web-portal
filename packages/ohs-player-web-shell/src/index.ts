@@ -19,13 +19,16 @@ export {
 export { ExtensionsContext, useExtensionQuestionnaire } from './host/extensionsContext';
 export { PortalHost, type PortalHostProps } from './host/PortalHost';
 export { Slot, type SlotProps } from './host/Slot';
-export type {
-  DashboardRegion,
-  ExtensionContributions,
-  PortalExtension,
-  SlotContexts,
-  SlotName,
+export {
+  DASHBOARD_REGIONS,
+  SLOT_NAMES,
+  type DashboardRegion,
+  type ExtensionContributions,
+  type PortalExtension,
+  type SlotContexts,
+  type SlotName,
 } from './host/types';
+export { StatCard, type StatCardProps } from './features/dashboard/StatCard';
 export type { PortalRoute } from './routes/types';
 
 export { useClearFilterParams, useFilterParam } from './features/search/useFilterParam';
