@@ -6,6 +6,6 @@ export const PortalConfigContext = createContext<ResolvedPortalConfig | null>(nu
 /** The resolved portal configuration. Throws outside a `PortalConfigContext` provider. */
 export function usePortalConfig(): ResolvedPortalConfig {
   const config = useContext(PortalConfigContext);
-  if (!config) throw new Error('usePortalConfig must be used inside a PortalConfigContext provider');
+  if (!config) throw new Error('usePortalConfig needs a PortalConfigContext provider');
   return config;
 }

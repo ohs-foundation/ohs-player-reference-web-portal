@@ -1,4 +1,10 @@
-import { lazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react';
+import {
+  lazy,
+  Suspense,
+  type ComponentType,
+  type LazyExoticComponent,
+  type ReactNode,
+} from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { AppLayout } from '../layout/AppLayout';
@@ -6,7 +12,9 @@ import { RouteFallback } from './RouteFallback';
 import type { PortalRoute } from './types';
 
 const LoginPage = lazy(() => import('../pages/LoginPage').then((m) => ({ default: m.LoginPage })));
-const LogoutPage = lazy(() => import('../pages/LogoutPage').then((m) => ({ default: m.LogoutPage })));
+const LogoutPage = lazy(() =>
+  import('../pages/LogoutPage').then((m) => ({ default: m.LogoutPage })),
+);
 const CallbackPage = lazy(() =>
   import('../pages/CallbackPage').then((m) => ({ default: m.CallbackPage })),
 );
@@ -46,7 +54,10 @@ export interface PortalRoutesProps {
 }
 
 /** The shell's route table: sign-in pages, the dashboard, then `routes` under the portal frame. */
-export function PortalRoutes({ routes, layoutChildren }: Readonly<PortalRoutesProps>): React.ReactElement {
+export function PortalRoutes({
+  routes,
+  layoutChildren,
+}: Readonly<PortalRoutesProps>): React.ReactElement {
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>

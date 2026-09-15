@@ -17,6 +17,9 @@ export function useExtensions(): ExtensionContributions {
 }
 
 /** A questionnaire an extension registered under `key` in its manifest. */
-export function useExtensionQuestionnaire(manifestId: string, key: string): Questionnaire | undefined {
+export function useExtensionQuestionnaire(
+  manifestId: string,
+  key: string,
+): Questionnaire | undefined {
   return useExtensions().questionnaires[manifestId]?.[key];
 }
