@@ -11,7 +11,21 @@ export {
   type ResolvedPortalConfig,
 } from './config/resolvePortalConfig';
 
-export { ThemeModeProvider } from './theme/ThemeModeProvider';
+export {
+  createPortalHost,
+  type PortalHostInput,
+  type ResolvedPortalHost,
+} from './host/createPortalHost';
+export { useExtensionQuestionnaire } from './host/extensionsContext';
+export { PortalHost, type PortalHostProps } from './host/PortalHost';
+export type {
+  DashboardRegion,
+  ExtensionContributions,
+  PortalExtension,
+  SlotContexts,
+  SlotName,
+} from './host/types';
+export type { PortalRoute } from './routes/types';
 
 export { useClearFilterParams, useFilterParam } from './features/search/useFilterParam';
 export { useDebounced } from './features/search/useGlobalSearch';
@@ -19,5 +33,3 @@ export { useInitialSearchTerm } from './features/search/useInitialSearchTerm';
 
 export { AppLayout } from './layout/AppLayout';
 export { LoginPage } from './pages/LoginPage';
-export { PortalRoutes, type PortalRoutesProps } from './routes/PortalRoutes';
-export type { PortalRoute } from './routes/types';

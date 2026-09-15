@@ -4,6 +4,7 @@ import {
   useFlag,
   usePermission,
   useTranslation,
+  type ExtensionNavEntry,
 } from 'ohs-player-web-core';
 import {
   IconBuilding,
@@ -13,6 +14,7 @@ import {
   IconDashboardFill,
   IconDatabase,
   IconDatabaseFill,
+  IconFileList,
   IconMagic,
   IconMagicFill,
   IconMapPin,
@@ -24,12 +26,11 @@ import {
   IconTeamFill,
   IconUser,
   IconUserFill,
-  type IconComponent,
 } from '../components/ui/icons';
 import { Avatar, IconButton } from '../components/ui';
 import { NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useSignOut } from './useSignOut';
-import { Suspense, useMemo, useState, type ReactNode } from 'react';
+import { Suspense, useMemo, useState, type ComponentType, type ReactNode } from 'react';
 import { BrandMark } from './BrandMark';
 import { useThemeMode } from '../theme/themeModeContext';
 import { GlobalSearch } from '../features/search/GlobalSearch';
@@ -37,6 +38,7 @@ import { NotificationsBell } from '../features/activity/NotificationsBell';
 import type { NavId } from '../config/navigation';
 import { usePortalConfig } from '../config/portalConfigContext';
 import { RouteFallback } from '../routes/RouteFallback';
+import { useExtensions } from '../host/extensionsContext';
 
 const ICON_SIZE = 20;
 
@@ -45,11 +47,13 @@ interface NavItem {
   label: string;
   permission?: string;
   flag?: string;
-  LineIcon: IconComponent;
-  FillIcon: IconComponent;
+  LineIcon: ComponentType<{ size?: number }>;
+  FillIcon: ComponentType<{ size?: number }>;
 }
 
-const NAV_ICONS: Record<NavId, Pick<NavItem, 'LineIcon' | 'FillIcon'>> = {
+type NavIcons = Pick<NavItem, 'LineIcon' | 'FillIcon'>;
+
+const NAV_ICONS: Record<NavId, NavIcons> = {
   dashboard: { LineIcon: IconDashboard, FillIcon: IconDashboardFill },
   users: { LineIcon: IconUser, FillIcon: IconUserFill },
   locations: { LineIcon: IconMapPin, FillIcon: IconMapPinFill },
@@ -59,6 +63,10 @@ const NAV_ICONS: Record<NavId, Pick<NavItem, 'LineIcon' | 'FillIcon'>> = {
   setup: { LineIcon: IconMagic, FillIcon: IconMagicFill },
 };
 
+function extensionIcons({ icon = IconFileList, activeIcon }: ExtensionNavEntry): NavIcons {
+  return { LineIcon: icon, FillIcon: activeIcon ?? icon };
+}
+
 /** The portal frame around the routed page. `children` render only for a signed-in session. */
 export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
   const auth = useAuth();
@@ -67,7 +75,15 @@ export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
   const onSignOut = useSignOut();
   const { mode, toggle } = useThemeMode();
   const { navigation } = usePortalConfig();
-  const entries = useMemo(() => [...navigation].sort((a, b) => a.order - b.order), [navigation]);
+  const { nav } = useExtensions();
+  const entries = useMemo(
+    () =>
+      [
+        ...navigation.map((entry) => ({ entry, icons: NAV_ICONS[entry.id] })),
+        ...nav.map((entry) => ({ entry, icons: extensionIcons(entry) })),
+      ].sort((a, b) => a.entry.order - b.entry.order),
+    [navigation, nav],
+  );
 
   if (auth.status !== 'authenticated') {
     return (
@@ -122,7 +138,7 @@ export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
       <aside className="app-sidebar" aria-label="Primary navigation">
         <nav>
           <ul className="app-sidebar__list">
-            {entries.map((entry) => (
+            {entries.map(({ entry, icons }) => (
               <NavRow
                 key={entry.id}
                 item={{
@@ -130,7 +146,7 @@ export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
                   label: t(entry.labelKey),
                   permission: entry.requires?.permission,
                   flag: entry.requires?.flag,
-                  ...NAV_ICONS[entry.id],
+                  ...icons,
                 }}
               />
             ))}
