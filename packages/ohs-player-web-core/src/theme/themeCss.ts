@@ -32,6 +32,7 @@ export interface ThemeConfigV2 {
 
 const DEFAULT_TYPEFACE = '"Google Sans", system-ui, -apple-system, sans-serif';
 const DEFAULT_MONO_TYPEFACE = '"Google Sans Code", ui-monospace, "SF Mono", "Menlo", monospace';
+const SCOPED_DENSITIES = [-1, -2] as const;
 
 /** Maps a v1 `ThemeConfig`'s colours onto their corresponding sys roles. @public */
 export function upgradeThemeConfig(v1: ThemeConfig): ThemeConfigV2 {
@@ -117,6 +118,12 @@ export function themeCss(config: ThemeConfigV2 = {}): string {
     declarations(dark),
     '}',
     '',
+    ...SCOPED_DENSITIES.flatMap((step) => [
+      `[data-density='${step}'] {`,
+      `  --ohs-sys-density-scale: ${step};`,
+      '}',
+      '',
+    ]),
   ].join('\n');
 }
 

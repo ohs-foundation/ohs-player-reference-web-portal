@@ -79,6 +79,13 @@ describe('themeCss', () => {
     expect(refPalettes.primary[40]).not.toBe('#094F9A');
   });
 
+  it('scopes the density scale to a data-density subtree', () => {
+    const css = themeCss();
+    expect(varsOf(css, "[data-density='-1']")['--ohs-sys-density-scale']).toBe('-1');
+    expect(varsOf(css, "[data-density='-2']")['--ohs-sys-density-scale']).toBe('-2');
+    expect(varsOf(css, ':root,')['--ohs-sys-density-scale']).toBe('0');
+  });
+
   it('emits extra colours as sys colour tokens in each scheme', () => {
     const css = themeCss({
       extraColors: { 'level-root-bg': { light: '#094f9a', dark: '#0a2540' } },

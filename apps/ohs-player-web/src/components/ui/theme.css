@@ -400,13 +400,6 @@
 .ohs-table-wrapper[data-flush='true'] .ohs-table {
   min-width: 0;
 }
-/* Scoped to the wrapper so a dense table cannot leak density into menus, dialogs or toasts. */
-.ohs-table-wrapper[data-density='-1'] {
-  --ohs-sys-density-scale: -1;
-}
-.ohs-table-wrapper[data-density='-2'] {
-  --ohs-sys-density-scale: -2;
-}
 
 /* Horizontal scroll for the table only — toolbar and pagination stay full-width.
    `overflow-y` must be stated: leaving it `visible` next to a non-visible `overflow-x` computes to
