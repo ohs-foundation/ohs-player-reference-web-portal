@@ -1,4 +1,4 @@
-import type { CorePlatformConfig, PermissionMap } from 'ohs-player-web-core';
+import type { CorePlatformConfig, FhirVersion, PermissionMap } from 'ohs-player-web-core';
 import { env } from './env';
 import { appMessageOverrides } from '../i18n/appMessages';
 import { lightTheme } from '../theme/lightTheme';
@@ -25,9 +25,11 @@ const permissionMap: PermissionMap = {
   'fhir-viewer.edit': ['admin'],
 };
 
+const FHIR_VERSIONS: readonly FhirVersion[] = ['R4', 'R5', 'STU3'];
+
 export const platformConfig: CorePlatformConfig = {
   fhirBaseUrl: env.fhirBaseUrl,
-  fhirVersion: 'R4',
+  fhirVersion: FHIR_VERSIONS.find((version) => version === env.fhirVersion) ?? 'R4',
   auth: {
     issuer: env.oidcIssuer,
     clientId: env.clientId,

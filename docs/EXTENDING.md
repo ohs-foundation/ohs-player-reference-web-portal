@@ -2,12 +2,13 @@
 
 Published **`ohs-player-web-core` API** (hooks, `FhirClient`, SDC helpers): see [CORE_PUBLIC_API.md](./CORE_PUBLIC_API.md).
 
-## 1. Add a feature behind a build-time flag
+## 1. Add a feature behind a flag
 
 1. Add `VITE_FLAG_MY_FEATURE=true` to `.env` (see `.env.example`).
 2. In [`apps/ohs-player-web/src/config/env.ts`](apps/ohs-player-web/src/config/env.ts), expose the flag (e.g. `myFeature: import.meta.env.VITE_FLAG_MY_FEATURE !== 'false'`).
 3. In [`apps/ohs-player-web/src/config/platform.ts`](apps/ohs-player-web/src/config/platform.ts), add the key to `flags.flags` (e.g. `myFeature: env.flags.myFeature`).
-4. Wrap routes or nav with `<FeatureGuard flag="myFeature">…</FeatureGuard>` and, if needed, `<PermissionGuard permission="…">`.
+4. Add the name to `FLAG_NAMES` in [`apps/ohs-player-web/src/config/portalConfigSchema.ts`](../apps/ohs-player-web/src/config/portalConfigSchema.ts) so the configuration document can set it at runtime, then run `pnpm config-schema:generate`.
+5. Wrap routes with `<FeatureGuard flag="myFeature">…</FeatureGuard>` and, if needed, `<PermissionGuard permission="…">`. For a sidebar entry, add its id to `NAV_IDS` and `DEFAULT_NAVIGATION` in [`config/navigation.ts`](../apps/ohs-player-web/src/config/navigation.ts), give it icons in `NAV_ICONS` in `layout/AppLayout.tsx`, and list it in `public/portal-config.json` with `requires: { "flag": "myFeature", "permission": "…" }` and an `order` between its neighbours.
 
 Evaluation order is **flag → authenticated user → permission**.
 

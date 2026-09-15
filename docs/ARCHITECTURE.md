@@ -17,7 +17,7 @@ flowchart LR
 - **`CorePlatformProvider`** — Single composition root: TanStack Query, FHIR base URL, OIDC `AuthConfig`, optional `RbacConfig`, `FlagsConfig`, `I18nConfig`, `ThemeConfig`, `customEndpoints`, `onError`.
 - **Auth** — `oidc-client-ts` `UserManager`, Authorization Code + PKCE, silent renew; `useAuth()` exposes login/logout/`handleRedirectCallback` for `/callback`.
 - **RBAC** — Roles from JWT (`claimPath`, default `roles`) mapped through host-supplied `permissionMap`; `usePermission`, `PermissionGuard`, `RoleGuard`.
-- **Feature flags** — Build-time booleans (`FlagsConfig.flags`), `useFlag`, `FeatureGuard`; evaluate **flag → auth → permission** when composing routes.
+- **Feature flags** — Booleans (`FlagsConfig.flags`) resolved at startup from the host's configuration, `useFlag`, `FeatureGuard`; evaluate **flag → auth → permission** when composing routes.
 - **FHIR** — `FhirClient` (fetch + 401 retry): CRUD, `transaction`, `capabilities`, **`postOperation`** for FHIR `$` operations (e.g. `Questionnaire/$extract`), plus `customGet` / `customPost` for gateway aliases. TanStack Query hooks: `useResource`, `useSearch`, `useCreateResource`, `useUpdateResource`, `useCustomEndpoint`, `useFhirCapabilities`.
 - **Structured Data Capture (SDC)** — Reusable Questionnaire capture: `QuestionnaireFields`, `QuestionnaireForm`, `useQuestionnaireFormState`, `buildQuestionnaireResponse`, `validateRequiredAnswers`, `formatQuestionnaireCanonical`, plus FHIR-lite types for `Questionnaire` / `QuestionnaireResponse`. Questionnaire **definitions** are expected to be supplied by the host app (bundled JSON); the core renders items and builds responses. See [CORE_PUBLIC_API.md](./CORE_PUBLIC_API.md).
 - **Theming** — Design tokens applied as CSS custom properties (`--ohs-*`) via `applyTheme()`; see **UI primitives & theming** below.
@@ -43,7 +43,7 @@ Decisions of note: `outcome` is **not** recorded (the call rejects on failure, s
 
 ## Reference application
 
-[`apps/ohs-player-web`](apps/ohs-player-web) wires environment-driven `platformConfig`, React Router routes, and feature modules for users, locations, organizations, care teams, and a simple dashboard.
+[`apps/ohs-player-web`](apps/ohs-player-web) loads a runtime configuration document (`public/portal-config.json`, validated at build and at boot, with `VITE_*` values as the fallback; see [DEPLOYMENT.md](./DEPLOYMENT.md)) into its `platformConfig`, and wires React Router routes, and feature modules for users, locations, organizations, care teams, and a simple dashboard.
 
 ### Bundled questionnaires (SDC)
 
