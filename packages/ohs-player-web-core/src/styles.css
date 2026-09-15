@@ -20,7 +20,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 51;
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border-radius: var(--ohs-radius-lg, 12px);
   box-shadow: var(
     --ohs-sys-elevation-level3,
@@ -57,7 +57,7 @@
 /* ─── Dropdown ────────────────────────────────────────────────────────────── */
 
 .ohs-dropdown-content {
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border: 1px solid var(--ohs-color-border, #dde3ed);
   border-radius: var(--ohs-radius-default, 8px);
   box-shadow: var(
@@ -141,7 +141,7 @@
   padding: var(--ohs-sys-spacing-2, 8px) var(--ohs-sys-spacing-3, 12px);
   border: 1px solid var(--ohs-color-border, #dde3ed);
   border-radius: var(--ohs-radius-pill, 999px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   color: var(--ohs-color-text, #1f2933);
   font-size: var(--ohs-text-label, 13px);
   font-weight: 500;

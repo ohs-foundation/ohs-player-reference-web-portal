@@ -14,7 +14,7 @@
   /* Definite height so descendants' `height: 100%` resolves (the wrapper sets only min-height inline). */
   height: 100%;
   color: var(--ohs-color-text, #1f2933);
-  background: var(--ohs-color-background, #f4f7fb);
+  background: var(--ohs-sys-color-surface-container, #f4f7fb);
   font-family: var(--ohs-font-body, system-ui, sans-serif);
   font-size: var(--ohs-font-size-base, 16px);
   line-height: 1.5;
@@ -253,7 +253,7 @@
   font-family: inherit;
   font-size: var(--ohs-text-body, 16px);
   color: var(--ohs-color-text, #1f2933);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border: 1px solid var(--ohs-sys-color-outline, #74777f);
   border-radius: var(--ohs-radius-sm, 8px);
   padding: 0 var(--ohs-sys-spacing-3, 12px);
@@ -283,7 +283,7 @@
   font-family: inherit;
   font-size: var(--ohs-text-body, 16px);
   color: var(--ohs-color-text, #1f2933);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border: 1px solid var(--ohs-sys-color-outline, #74777f);
   border-radius: var(--ohs-radius-sm, 8px);
   padding: 0 var(--ohs-sys-spacing-3, 12px);
@@ -331,7 +331,7 @@
 .ohs-select-content {
   z-index: 80;
   overflow: hidden;
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border: 1px solid var(--ohs-color-border, #cdd7e1);
   border-radius: var(--ohs-radius-default, 8px);
   box-shadow: var(
@@ -511,7 +511,7 @@
   justify-content: center;
   border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
   border-radius: var(--ohs-radius-pill, 999px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   color: var(--ohs-color-text, #0d0d0d);
   font: inherit;
   cursor: pointer;
@@ -644,7 +644,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border-left: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
   box-shadow:
     0 0 6px 0 rgba(0, 0, 0, 0.08),
@@ -689,7 +689,7 @@
   margin-left: -8px;
 }
 .ohs-avatar-stack .ohs-avatar {
-  box-shadow: 0 0 0 2px var(--ohs-color-surface, #fff);
+  box-shadow: 0 0 0 2px var(--ohs-sys-color-surface, #fff);
 }
 
 /* User details drawer */
@@ -763,7 +763,7 @@
   min-height: 76px;
   box-sizing: border-box;
   padding: var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-8, 32px);
-  background: var(--ohs-color-background, #fafafa);
+  background: var(--ohs-sys-color-surface-container, #fafafa);
   border-bottom: 2px solid var(--ohs-color-border, #ededed);
   cursor: pointer;
   list-style: none;
@@ -919,7 +919,7 @@
     var(--ohs-sys-spacing-4, 16px);
   border: 1px solid var(--ohs-color-border-tertiary, #b8b8b8);
   border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
 }
 /* Multi-line fields hug their content instead of the fixed 56px band. */
 .ohs-formfield--multiline {
@@ -957,7 +957,7 @@
   transform: translateY(-50%);
   max-width: calc(100% - 24px);
   padding: 0 var(--ohs-sys-spacing-1, 4px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
   line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
   letter-spacing: var(--ohs-sys-typescale-body-small-letter-spacing, -0.5px);
@@ -1112,7 +1112,7 @@
   padding: var(--ohs-sys-spacing-2, 8px) 0;
   list-style: none;
   overflow-y: auto;
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border: 1px solid var(--ohs-color-border, #ededed);
   border-radius: var(--ohs-sys-shape-corner-small, 8px);
   box-shadow:
@@ -1211,7 +1211,7 @@
   list-style: none;
   border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
   border-radius: var(--ohs-radius-default, 8px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   box-shadow: var(
     --ohs-sys-elevation-level2,
     0 4px 12px rgba(15, 23, 42, 0.08),
@@ -1410,7 +1410,7 @@
   padding: var(--ohs-sys-spacing-2, 8px) 0;
   list-style: none;
   overflow-y: auto;
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
   box-shadow: var(--ohs-sys-elevation-level2, 0 4px 12px rgba(15, 23, 42, 0.08));
 }
@@ -1450,7 +1450,7 @@
   gap: var(--ohs-sys-spacing-2, 8px);
   width: 280px;
   padding: var(--ohs-sys-spacing-4, 16px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
   box-shadow: var(--ohs-sys-elevation-level2, 0 4px 12px rgba(15, 23, 42, 0.08));
   font-family: var(--ohs-ref-typeface-plain, system-ui, sans-serif);
@@ -1465,7 +1465,7 @@
   padding: 0 var(--ohs-sys-spacing-3, 12px);
   border: 1px solid var(--ohs-color-border-tertiary, #b8b8b8);
   border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   color: var(--ohs-color-text, #1f2933);
   font: inherit;
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
@@ -1595,7 +1595,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border-radius: var(--ohs-radius-default, 12px);
   box-shadow: var(
     --ohs-sys-elevation-level3,
@@ -1619,7 +1619,7 @@
 
 .ohs-dropdown-content,
 .ohs-tooltip-content {
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border: 1px solid var(--ohs-color-border, #cdd7e1);
   border-radius: var(--ohs-radius-sm, 8px);
   box-shadow: var(
@@ -1646,7 +1646,7 @@
   user-select: none;
 }
 .ohs-dropdown-item[data-highlighted] {
-  background: var(--ohs-color-background, #f4f7fb);
+  background: var(--ohs-sys-color-surface-container, #f4f7fb);
 }
 
 .ohs-toast-viewport {
@@ -1664,7 +1664,7 @@
 }
 .ohs-toast-root {
   position: relative;
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   border: 1px solid var(--ohs-color-border, #cdd7e1);
   border-left: 4px solid var(--ohs-sys-color-primary, #1b6ef3);
   border-radius: var(--ohs-radius-sm, 8px);
@@ -1760,7 +1760,7 @@
   padding: var(--ohs-sys-spacing-6, 24px);
   border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
   border-radius: var(--ohs-sys-shape-corner-extra-large-decreased, 24px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   text-align: left;
   cursor: pointer;
   transition:
@@ -1835,7 +1835,7 @@
 }
 .ohs-wizard-stepper__item--done .ohs-wizard-stepper__dot {
   background: var(--ohs-color-text, #0d0d0d);
-  color: var(--ohs-color-surface, #fff);
+  color: var(--ohs-sys-color-surface, #fff);
 }
 .ohs-wizard-stepper__dot {
   display: inline-flex;
@@ -1846,12 +1846,12 @@
   border-radius: 50%;
   border: 1px solid var(--ohs-color-border-secondary, #d4d4d4);
   font-size: var(--ohs-sys-typescale-body-small-size, 12px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
 }
 .ohs-wizard-stepper__item--active .ohs-wizard-stepper__dot {
   border-color: var(--ohs-color-text, #0d0d0d);
   background: var(--ohs-color-text, #0d0d0d);
-  color: var(--ohs-color-surface, #fff);
+  color: var(--ohs-sys-color-surface, #fff);
 }
 .ohs-wizard-stepper__label {
   white-space: nowrap;
@@ -1922,7 +1922,7 @@
   gap: var(--ohs-sys-spacing-3, 12px);
   margin: 0 calc(-1 * var(--ohs-sys-spacing-8, 32px));
   padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-8, 32px);
-  background: color-mix(in srgb, var(--ohs-color-surface, #fff) 92%, transparent);
+  background: color-mix(in srgb, var(--ohs-sys-color-surface, #fff) 92%, transparent);
   border-top: 1px solid var(--ohs-color-border, #ededed);
   backdrop-filter: blur(8px);
 }
@@ -1970,7 +1970,7 @@
   padding: var(--ohs-sys-spacing-8, 32px);
   border: 1px solid var(--ohs-color-border, #ededed);
   border-radius: var(--ohs-radius-default, 8px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
   box-sizing: border-box;
 }
 .ohs-setup-form__toolbar {
@@ -2041,7 +2041,7 @@
   gap: var(--ohs-sys-spacing-3, 12px);
   padding: var(--ohs-sys-spacing-3, 12px) var(--ohs-sys-spacing-4, 16px);
   border-bottom: 1px solid var(--ohs-color-border, #ededed);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
 }
 .ohs-setup-draft-list__item:last-child {
   border-bottom: none;
@@ -2098,7 +2098,7 @@
   padding: var(--ohs-sys-spacing-4, 16px);
   border: 1px solid var(--ohs-color-border, #ededed);
   border-radius: var(--ohs-radius-default, 8px);
-  background: var(--ohs-color-surface, #fff);
+  background: var(--ohs-sys-color-surface, #fff);
 }
 .ohs-setup-review-summary__count {
   font-size: var(--ohs-sys-typescale-title-large-size, 20px);
