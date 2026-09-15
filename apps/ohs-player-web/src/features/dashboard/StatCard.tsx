@@ -1,6 +1,12 @@
 import { useTranslation } from 'ohs-player-web-core';
-import { Card, KpiBadge, Spinner } from '../../components/ui';
-import { IconArrowDownLeft, IconArrowUpRight, type IconComponent } from '../../components/ui/icons';
+import {
+  Card,
+  KpiBadge,
+  Spinner,
+  IconArrowDownLeft,
+  IconArrowUpRight,
+  type IconComponent,
+} from 'ohs-player-web-shell';
 
 export interface StatCardProps {
   label: string;

@@ -1,7 +1,14 @@
 import { useState } from 'react';
-import { IconArrowRight, IconClose, IconFlash, IconGuide } from '../../components/ui/icons';
+import {
+  IconArrowRight,
+  IconClose,
+  IconFlash,
+  IconGuide,
+  Button,
+  Drawer,
+  IconButton,
+} from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
-import { Button, Drawer, IconButton } from '../../components/ui';
 import { UserCreateDrawer } from './UserCreateDrawer';
 import { UserCreateWizard } from './UserCreateWizard';
 

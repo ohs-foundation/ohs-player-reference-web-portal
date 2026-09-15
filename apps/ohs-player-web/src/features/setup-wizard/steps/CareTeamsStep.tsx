@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { IconTeam } from '../../../components/ui/icons';
 import { newUrnUuid, useTranslation } from 'ohs-player-web-core';
-import { Button, Stack } from '../../../components/ui';
+import { Button, Stack, IconTeam } from 'ohs-player-web-shell';
 import { careTeamFromForm } from '../../sdc/resourceFromAnswers';
 import { RadioRow, Section, StackedInput, StackedSelect, StackedTextArea } from '../../users/userFormControls';
 import type { Option } from '../../users/userFormOptions';

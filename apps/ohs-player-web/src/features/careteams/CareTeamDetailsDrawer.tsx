@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { IconClose, IconGroup, IconTeam } from '../../components/ui/icons';
 import {
   OhsDialog,
   PermissionGuard,
@@ -8,7 +7,18 @@ import {
   useUpdateResource,
 } from 'ohs-player-web-core';
 import { useWriteAudit } from '../audit/useWriteAudit';
-import { Avatar, Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
+import {
+  Avatar,
+  Button,
+  Drawer,
+  IconButton,
+  Inline,
+  Stack,
+  StatusBadge,
+  IconClose,
+  IconGroup,
+  IconTeam,
+} from 'ohs-player-web-shell';
 import { Section } from '../users/userFormControls';
 
 export type CareTeamRow = {

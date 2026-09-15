@@ -6,7 +6,13 @@ import {
   IconMapPin,
   IconTeam,
   IconUser,
-} from '../../components/ui/icons';
+  Button,
+  Drawer,
+  ErrorState,
+  IconButton,
+  Spinner,
+  Stack,
+} from 'ohs-player-web-shell';
 import {
   commitBundle,
   useCustomEndpoint,
@@ -16,7 +22,6 @@ import {
   useTranslation,
 } from 'ohs-player-web-core';
 import { useWriteAudit } from '../audit/useWriteAudit';
-import { Button, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import {
   buildNewUserPayload,

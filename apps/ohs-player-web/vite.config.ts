@@ -7,6 +7,7 @@ import { checkPortalConfigFile } from './portalConfigCheck';
 
 const appDir = path.dirname(fileURLToPath(import.meta.url));
 const coreRoot = path.resolve(appDir, '../../packages/ohs-player-web-core');
+const shellRoot = path.resolve(appDir, '../../packages/ohs-player-web-shell');
 const envDir = path.resolve(appDir, '../..');
 
 function portalConfigCheck(): Plugin {
@@ -40,6 +41,10 @@ export default defineConfig(({ mode }) => {
       {
         find: 'ohs-player-web-core',
         replacement: path.join(coreRoot, 'src/index.ts'),
+      },
+      {
+        find: /^ohs-player-web-shell$/,
+        replacement: path.join(shellRoot, 'src/index.ts'),
       },
     ],
   },

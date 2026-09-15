@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'ohs-player-web-core';
-import { Stack } from '../../../components/ui';
+import { Stack } from 'ohs-player-web-shell';
 import { LocationFormFields } from '../../locations/LocationForm';
 import {
   answersToDraftLocation,

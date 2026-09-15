@@ -1,5 +1,5 @@
 import { useTranslation } from 'ohs-player-web-core';
-import { Button, Stack } from '../../../components/ui';
+import { Button, Stack } from 'ohs-player-web-shell';
 import { DraftList } from '../DraftList';
 import { draftResourceName, type DraftUser, type SetupWizardDraft } from '../types';
 

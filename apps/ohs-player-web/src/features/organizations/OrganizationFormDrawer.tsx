@@ -1,5 +1,4 @@
 import { type FormEvent, useState } from 'react';
-import { IconBuilding, IconClose, IconMapPin } from '../../components/ui/icons';
 import {
   bundleEntry,
   commitBundle,
@@ -12,7 +11,16 @@ import {
   type TransactionBundleEntry,
 } from 'ohs-player-web-core';
 import { useWriteAudit } from '../audit/useWriteAudit';
-import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
+import {
+  Button,
+  Drawer,
+  ErrorState,
+  IconButton,
+  Stack,
+  IconBuilding,
+  IconClose,
+  IconMapPin,
+} from 'ohs-player-web-shell';
 import {
   type OrgFormFields,
   locationManagingOrgPatch,

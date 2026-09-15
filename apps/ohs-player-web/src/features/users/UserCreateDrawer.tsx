@@ -1,7 +1,6 @@
 import { type FormEvent } from 'react';
-import { IconClose } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
-import { Button, Drawer, ErrorState, IconButton } from '../../components/ui';
+import { Button, Drawer, ErrorState, IconButton, IconClose } from 'ohs-player-web-shell';
 import {
   UserBasicInfoFields,
   UserCareTeamFields,

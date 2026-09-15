@@ -1,5 +1,4 @@
 import { type FormEvent, useState } from 'react';
-import { IconBuilding, IconClose, IconGroup, IconTeam } from '../../components/ui/icons';
 import {
   FhirError,
   formatOperationOutcomeMessage,
@@ -9,7 +8,17 @@ import {
   useUpdateResource,
 } from 'ohs-player-web-core';
 import { useWriteAudit } from '../audit/useWriteAudit';
-import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
+import {
+  Button,
+  Drawer,
+  ErrorState,
+  IconButton,
+  Stack,
+  IconBuilding,
+  IconClose,
+  IconGroup,
+  IconTeam,
+} from 'ohs-player-web-shell';
 import { careTeamFromForm } from '../sdc/resourceFromAnswers';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect, StackedTextArea } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';

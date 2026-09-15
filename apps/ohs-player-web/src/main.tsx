@@ -8,9 +8,9 @@ import '@fontsource/google-sans/400.css';
 import '@fontsource/google-sans/500.css';
 import '@fontsource/google-sans-code/400.css';
 import 'ohs-player-web-core/styles.css';
-import './components/ui/theme.css';
+import 'ohs-player-web-shell/theme.css';
 import './index.css';
-import './tailwind.css';
+import 'ohs-player-web-shell/tailwind.css';
 
 void loadPortalConfig().then(({ document: configDocument, error }) => {
   const portal = resolvePortalConfig(configDocument);

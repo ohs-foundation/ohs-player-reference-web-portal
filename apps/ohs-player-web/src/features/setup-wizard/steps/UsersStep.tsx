@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
-import { IconBriefcase, IconUser } from '../../../components/ui/icons';
+import { IconBriefcase, IconUser, Button, Stack } from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES, PRACTITIONER_ROLE_SYSTEM } from '../../../config/roles';
-import { Button, Stack } from '../../../components/ui';
 import { todayIso, validateUserForm, type UserFormErrors } from '../../users/userFormSchema';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect } from '../../users/userFormControls';
 import type { Option } from '../../users/userFormOptions';

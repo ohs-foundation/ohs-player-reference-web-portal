@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { IconAddCircle, IconChevronDown, IconMore } from '../../components/ui/icons';
 import {
   OhsDropdownMenu,
   PermissionGuard,
@@ -22,7 +21,10 @@ import {
   PageHeader,
   SearchField,
   StatusBadge,
-} from '../../components/ui';
+  IconAddCircle,
+  IconChevronDown,
+  IconMore,
+} from 'ohs-player-web-shell';
 import orgEmptyIllustration from '../../assets/illustrations/org-empty.svg';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
 import {

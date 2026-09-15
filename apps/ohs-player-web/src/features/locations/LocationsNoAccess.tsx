@@ -1,6 +1,5 @@
-import { IconLock } from '../../components/ui/icons';
 import { useAuth, useTranslation } from 'ohs-player-web-core';
-import { Button, EmptyState, Inline, StatusBadge } from '../../components/ui';
+import { Button, EmptyState, Inline, StatusBadge, IconLock } from 'ohs-player-web-shell';
 
 export interface LocationsNoAccessProps {
   /** 401 = valid token rejected (intermittent gateway bug, retryable) or unauthenticated; 403 = missing role. */

@@ -70,7 +70,11 @@ const RETIRED = [
   ...['default', 'sm', 'lg', 'pill'].map((name) => `--ohs-radius-${name}`),
 ];
 
-const ROOTS = ['src', '../../packages/ohs-player-web-core/src'];
+const ROOTS = [
+  'src',
+  '../../packages/ohs-player-web-shell/src',
+  '../../packages/ohs-player-web-core/src',
+];
 const EXTENSIONS = ['.ts', '.tsx', '.css'];
 
 function sourceFiles(dir: string): string[] {

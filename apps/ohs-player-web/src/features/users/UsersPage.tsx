@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { IconAddCircle, IconChevronDown, IconMore } from '../../components/ui/icons';
 import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
@@ -25,7 +24,10 @@ import {
   PageHeader,
   SearchField,
   StatusBadge,
-} from '../../components/ui';
+  IconAddCircle,
+  IconChevronDown,
+  IconMore,
+} from 'ohs-player-web-shell';
 import { UserCreateEntryDrawer } from './UserCreateEntryDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';

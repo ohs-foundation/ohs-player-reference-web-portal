@@ -1,6 +1,5 @@
-import { IconMore } from '../../components/ui/icons';
+import { IconMore, IconButton } from 'ohs-player-web-shell';
 import { OhsDropdownMenu, PermissionGuard, useTranslation } from 'ohs-player-web-core';
-import { IconButton } from '../../components/ui';
 
 export interface LocationRowMenuProps {
   nodeId: string;

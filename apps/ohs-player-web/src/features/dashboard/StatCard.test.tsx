@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { IconAccountCircleFill } from '../../components/ui/icons';
+import { IconAccountCircleFill } from 'ohs-player-web-shell';
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');

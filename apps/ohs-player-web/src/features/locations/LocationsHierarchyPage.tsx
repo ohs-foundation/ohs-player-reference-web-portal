@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { IconAddCircle, IconChevronDown, IconUpload } from '../../components/ui/icons';
 import {
   PermissionGuard,
   useRefreshResources,
@@ -15,7 +14,10 @@ import {
   PageHeader,
   SearchField,
   SelectField,
-} from '../../components/ui';
+  IconAddCircle,
+  IconChevronDown,
+  IconUpload,
+} from 'ohs-player-web-shell';
 import { collectExpandableIdsLimited, EXPAND_ALL_MAX, filterTree } from './expand';
 import { nodeChain, type LocationNode } from './hierarchy';
 import type { HierarchyError } from './useLocationHierarchy';

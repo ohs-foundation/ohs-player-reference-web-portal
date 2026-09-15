@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'ohs-player-web-core';
-import { Button, Combobox } from '../../components/ui';
+import { Button, Combobox } from 'ohs-player-web-shell';
 import { RadioRow, StackedInput, StackedSelect } from '../users/userFormControls';
 import { LOCATION_LINK_IDS, parentLocationIdFromAnswer } from '../sdc/resourceFromAnswers';
 import type { DraftLocation } from '../setup-wizard/types';

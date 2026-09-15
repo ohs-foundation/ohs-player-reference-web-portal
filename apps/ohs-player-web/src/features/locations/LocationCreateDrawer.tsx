@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { IconClose } from '../../components/ui/icons';
 import {
   bundleEntry,
   commitBundle,
@@ -8,7 +7,7 @@ import {
   useStatusBar,
   useTranslation,
 } from 'ohs-player-web-core';
-import { Drawer, ErrorState, IconButton } from '../../components/ui';
+import { Drawer, ErrorState, IconButton, IconClose } from 'ohs-player-web-shell';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { locationBodyFromAnswers } from '../sdc/resourceFromAnswers';
 import { toErrorMessage } from '../sdc/toErrorMessage';

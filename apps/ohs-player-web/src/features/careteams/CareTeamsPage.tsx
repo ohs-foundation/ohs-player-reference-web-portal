@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { IconAddCircle, IconChevronDown, IconMore } from '../../components/ui/icons';
 import careTeamsEmptyIllustration from '../../assets/illustrations/careteams-empty.svg';
 import {
   OhsDropdownMenu,
@@ -25,7 +24,10 @@ import {
   PageHeader,
   SearchField,
   StatusBadge,
-} from '../../components/ui';
+  IconAddCircle,
+  IconChevronDown,
+  IconMore,
+} from 'ohs-player-web-shell';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 import { CareTeamFormDrawer } from './CareTeamFormDrawer';
 import { useInitialSearchTerm } from '../search/useInitialSearchTerm';

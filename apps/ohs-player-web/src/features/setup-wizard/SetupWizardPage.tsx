@@ -7,7 +7,7 @@ import {
   useStatusBar,
   useTranslation,
 } from 'ohs-player-web-core';
-import { Button, ErrorState, Page, PageHeader } from '../../components/ui';
+import { Button, ErrorState, Page, PageHeader } from 'ohs-player-web-shell';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { toErrorMessage } from '../sdc/toErrorMessage';
 import { referenceOptions } from '../users/userFormOptions';

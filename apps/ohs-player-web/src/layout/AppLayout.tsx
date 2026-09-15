@@ -25,8 +25,9 @@ import {
   IconUser,
   IconUserFill,
   type IconComponent,
-} from '../components/ui/icons';
-import { Avatar, IconButton } from '../components/ui';
+  Avatar,
+  IconButton,
+} from 'ohs-player-web-shell';
 import { NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useSignOut } from './useSignOut';
 import { useMemo, useState } from 'react';

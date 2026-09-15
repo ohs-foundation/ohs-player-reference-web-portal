@@ -7,7 +7,7 @@ import {
   ErrorState,
   Spinner,
   type DataTableColumn,
-} from '../../components/ui';
+} from 'ohs-player-web-shell';
 
 export interface RecentCardProps<Row> {
   title: string;

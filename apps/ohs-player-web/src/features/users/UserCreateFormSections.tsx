@@ -4,10 +4,10 @@ import {
   IconMapPin,
   IconTeam,
   IconUser,
-} from '../../components/ui/icons';
+  Stack,
+} from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES } from '../../config/roles';
-import { Stack } from '../../components/ui';
 import {
   MultiSelect,
   RadioRow,

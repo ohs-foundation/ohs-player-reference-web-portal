@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { sysTheme } from './sysTheme';
 
 const STYLESHEETS = [
-  'src/components/ui/theme.css',
+  '../../packages/ohs-player-web-shell/src/components/ui/theme.css',
   'src/index.css',
-  'src/tailwind.css',
+  '../../packages/ohs-player-web-shell/src/tailwind.css',
   '../../packages/ohs-player-web-core/src/styles.css',
 ];
 

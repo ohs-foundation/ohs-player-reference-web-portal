@@ -15,8 +15,8 @@ import {
   FilterChipBar,
   SearchField,
   StatusBadge,
-} from '../../components/ui';
-import { cn } from '../../lib/cn';
+  cn,
+} from 'ohs-player-web-shell';
 import { exampleFor } from './examples';
 import {
   type FhirRecord,
