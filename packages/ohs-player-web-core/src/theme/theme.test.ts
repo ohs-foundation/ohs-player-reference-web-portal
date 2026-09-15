@@ -36,11 +36,31 @@ describe('themeCss', () => {
     const dark = varsOf(css, "[data-theme='dark'],");
     const roles = Object.keys(sysColorSchemes.light) as SysColorRole[];
 
+    expect(Object.keys(sysColorSchemes.dark).sort()).toEqual([...roles].sort());
     expect(roles.length).toBeGreaterThan(30);
     for (const role of roles) {
       expect(light[`--ohs-sys-color-${role}`], `light ${role}`).toBeTruthy();
       expect(dark[`--ohs-sys-color-${role}`], `dark ${role}`).toBeTruthy();
     }
+  });
+
+  it('carries the colours M3 has no role for at their established values', () => {
+    const css = themeCss();
+    const light = varsOf(css, ':root,');
+    const dark = varsOf(css, "[data-theme='dark'],");
+
+    expect(light['--ohs-sys-color-primary-hover']).toBe('#073c75');
+    expect(dark['--ohs-sys-color-primary-hover']).toBe('#a9c7ff');
+    expect(light['--ohs-sys-color-on-surface-secondary']).toBe('#363636');
+    expect(dark['--ohs-sys-color-on-surface-secondary']).toBe('#d4d4d4');
+    expect(light['--ohs-sys-color-outline-secondary']).toBe('#d4d4d4');
+    expect(dark['--ohs-sys-color-outline-secondary']).toBe('#4f4f4f');
+    expect(light['--ohs-sys-color-outline-tertiary']).toBe('#b8b8b8');
+    expect(dark['--ohs-sys-color-outline-tertiary']).toBe('#696969');
+    expect(light['--ohs-sys-color-focus-ring']).toBe('rgba(9, 79, 154, 0.28)');
+    expect(dark['--ohs-sys-color-focus-ring']).toBe('rgba(31, 135, 252, 0.4)');
+    expect(light['--ohs-sys-color-focus-ring-error']).toBe('rgba(229, 0, 0, 0.28)');
+    expect(dark['--ohs-sys-color-focus-ring-error']).toBe('rgba(229, 0, 0, 0.28)');
   });
 
   it('resolves unpinned roles from the generated palettes', () => {
