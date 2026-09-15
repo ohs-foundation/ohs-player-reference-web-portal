@@ -91,7 +91,7 @@ export default function ActiveSchedulesWidget(): React.ReactElement {
       label={t('schedulesKpi')}
       value={(active.data as Bundle | undefined)?.total}
       loading={active.isLoading}
-      badgeColor="var(--ohs-sys-color-primary-container)"
+      badgeColor="var(--ohs-sys-color-primary)"
       glyph={IconToday}
     />
   );
