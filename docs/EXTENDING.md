@@ -1,6 +1,6 @@
 # Extending the portal
 
-The portal is three packages: `ohs-player-web-core` (the library), `ohs-player-web-shell` (the portal frame and the extension host) and an application that composes them, such as `apps/ohs-player-web`. See [ARCHITECTURE.md](./ARCHITECTURE.md) for what each owns and [CORE_PUBLIC_API.md](./CORE_PUBLIC_API.md) for the library's exports.
+The portal is three packages: `ohs-player-web-core` (the library), `ohs-player-web-shell` (the portal frame and the extension host) and an application that composes them, such as `apps/ohs-player-web`. See [ARCHITECTURE.md](./ARCHITECTURE.md) for what each owns and [CORE_PUBLIC_API.md](./CORE_PUBLIC_API.md) for the library's exports. For a hands-on tour of every customization and extension point, run in the browser, see [CUSTOMIZING.md](./CUSTOMIZING.md).
 
 ## Choosing how to change the portal
 
@@ -59,7 +59,7 @@ export const schedulesExtension: PortalExtension = {
 
 A route has an `id`, a `path` and `load`, a function that imports a module whose **default export** is the page, as `React.lazy` expects. The host serves it under the portal frame, next to the application's own pages, and shows a spinner while the chunk loads.
 
-`requires` gates it in a fixed order: the feature **flag** first (a switched-off page renders nothing), then the **session** (a signed-out visitor goes to sign-in), then the **permission**. A path the host already serves, or another extension's path, fails startup.
+`requires` gates it in a fixed order: the feature **flag** first (a switched-off page renders nothing), then the **session** (a signed-out visitor goes to sign-in), then the **permission**. A path the host already serves, or another extension's path, fails startup. Paths may carry route parameters, such as `/schedules/:id`, which the page reads with `useParams`.
 
 ### Sidebar entries
 
@@ -75,7 +75,7 @@ A widget has an `id`, a `region`, an integer `order`, `load` (a module whose def
 | --- | --- |
 | `kpi` | The strip of totals across the top. The built-in cards are at orders 10 to 40, and the shell's `StatCard` renders a matching card. |
 | `main` | The wide column of the rows below. |
-| `side` | The narrow column. A `main` and a `side` widget with the same `order` share a row. The built-in rows are at 10 to 40. |
+| `side` | The narrow column. A `main` and a `side` widget with the same `order` share a row. The built-in rows are at 10 to 40, and an `order` no built-in row uses starts a row of its own. |
 
 ```tsx
 import type { Bundle } from '@medplum/fhirtypes';
@@ -149,6 +149,8 @@ Contributions carry no `requires`; gate one yourself, as above. One that throws 
 
 The host merges these in order: the application's defaults, then the extensions, then the configuration document. An extension cannot replace a key the application or core already defines, and a deployment can still override an extension's flag default, roles or copy from `portal-config.json`.
 
+That document is validated by the application's own schema first. The example application accepts any flag name. The reference application only accepts the names in `FLAG_NAMES` in [`config/portalConfigSchema.ts`](../apps/ohs-player-web/src/config/portalConfigSchema.ts), so a document that sets an extension's flag is invalid there, and the app falls back to its last valid document or its build-time values. To let deployments of the reference app switch an extension's flag, add the name to `FLAG_NAMES` and run `pnpm config-schema:generate`.
+
 ### Installing an extension
 
 Add it to the application's extensions list. [`apps/ohs-player-web-example/src/extensions.ts`](../apps/ohs-player-web-example/src/extensions.ts):
@@ -204,6 +206,7 @@ In production the same error goes to the platform's `onError` callback and that 
 
 - Test pages and widgets on their own. Mock the core hooks they call with a module-level `vi.mock('ohs-player-web-core', …)` that spreads the real module, render inside `CorePlatformProvider`, and cover success, loading, empty and error with an axe check. See [`SchedulesPage.test.tsx`](../apps/ohs-player-web-example/src/extensions/schedules/SchedulesPage.test.tsx).
 - Test the extension inside the host by rendering `PortalHost` from `createPortalHost`, as the example's [`host.test.tsx`](../apps/ohs-player-web-example/src/host.test.tsx) does for the sidebar order, the widget's region and the row action.
+- Try it in the browser by running the example application with `pnpm --filter ohs-player-web-example dev`. [CUSTOMIZING.md](./CUSTOMIZING.md) walks through what to check.
 
 ## Adding a feature to the reference app
 

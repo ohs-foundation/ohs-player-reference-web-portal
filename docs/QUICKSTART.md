@@ -34,10 +34,15 @@ cp .env.example .env
 6. **Run the portal**
 
 ```bash
-pnpm dev
+pnpm --filter ohs-player-web dev            # the reference application
+pnpm --filter ohs-player-web-example dev    # or the example application, built on the shell with one extension
 ```
 
-Open `http://localhost:5173`, sign in with Keycloak (e.g. `admin-user` / `admin` from the imported realm). By default `VITE_FHIR_BASE_URL` targets HAPI directly at `http://localhost:8080/fhir`. Switch to `http://localhost:8180/fhir` if you want requests to go through the `ohs-info-gateway` service in `docker-compose.yml` instead.
+Run one application at a time. Both serve on port 5173 with a strict port, because the Keycloak client only accepts redirects to `:5173`, so a bare `pnpm dev` starts both and one of them fails. Neither needs the packages built first: both resolve `ohs-player-web-core` and `ohs-player-web-shell` from source.
+
+Open `http://localhost:5173`, sign in with Keycloak (e.g. `admin-user` / `admin` from the imported realm). With `.env` copied from `.env.example`, `VITE_FHIR_BASE_URL` is `http://localhost:5173/fhir`, and the Vite dev server proxies `/fhir` to HAPI (`VITE_DEV_FHIR_TARGET`, default `http://localhost:8080`) and `/api` to the gateway (`VITE_DEV_API_TARGET`, default `http://localhost:8180`).
+
+To customize or extend the portal, continue with [CUSTOMIZING.md](./CUSTOMIZING.md).
 
 ## Troubleshooting
 
