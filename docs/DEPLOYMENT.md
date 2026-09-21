@@ -47,7 +47,7 @@ Notes:
 | `VITE_CLIENT_ID` | Keycloak client id for the app | `ohs-player-web` |
 | `VITE_FHIR_VERSION` | FHIR version | `R4` |
 
-Defaults live in `apps/ohs-player-web/Dockerfile` (and `.env.example`) and point at local dev hosts — **always override them for a real deployment**, either here or in the configuration document. Feature flags (`VITE_FLAG_*`) and the optional `VITE_THEME_ALT` default to the values in `.env.example`; override at build time only if a deployment needs different ones.
+Defaults live in `apps/ohs-player-web/Dockerfile` (and `.env.example`) and point at local dev hosts — **always override them for a real deployment**, either here or in the configuration document. Feature flags (`VITE_FLAG_*`) default to the values in `.env.example`; override at build time only if a deployment needs different ones.
 
 Every value in this table is a fallback: the configuration document (section 4) wins for any field it sets.
 
@@ -64,7 +64,7 @@ The image serves `apps/ohs-player-web/public/portal-config.json` at `/portal-con
 | `fhirVersion` | `R4`, `R5` or `STU3` | `VITE_FHIR_VERSION` |
 | `oidcIssuer`, `clientId` | Keycloak realm issuer and client id | `VITE_OIDC_ISSUER`, `VITE_CLIENT_ID` |
 | `brand.overrides`, `brand.darkOverrides` | Colour pins per theme role, light and dark (see [THEMING.md](./THEMING.md)) | the built-in pins |
-| `flags` | Feature flags by name: `userMgmt`, `locationMgmt`, `careTeams`, `dashboard`, `orgMgmt`, `setupWizard`, `fhirViewer` | the matching `VITE_FLAG_*` |
+| `flags` | Feature flags by name: `userMgmt`, `locationMgmt`, `careTeams`, `dashboard`, `orgMgmt`, `setupWizard`, `fhirViewer`. Any other name, including an extension's flag, makes the document invalid until it is added to `FLAG_NAMES` (see [EXTENDING.md](./EXTENDING.md)) | the matching `VITE_FLAG_*` |
 | `navigation` | Sidebar entries: `id`, `to`, `labelKey`, `order`, and `requires` with a `flag` and a `permission` | the built-in sidebar |
 | `permissionMap` | Permission key to the roles that hold it | the built-in map |
 | `locale`, `messages` | Locale and message overrides by key | `en`, the built-in messages |
@@ -87,6 +87,8 @@ Maps such as `flags`, `permissionMap`, `messages`, `customEndpoints` and the bra
 - **Missing or unreachable** (404, network error, not JSON): the app starts without an error, on the last valid document this browser loaded or, failing that, on the build-time values. With the reference document, the build-time values render identically.
 - **Invalid** (unknown field, wrong type, missing `order` on a navigation entry, and so on): the app still starts on the fallback values. The error names the field and the expected type, for example `✖ Invalid input: expected boolean, received string → at flags.userMgmt`. It goes to the platform `onError` callback, and in development it also appears as an error toast.
 - **The checked-in document** is validated when the image is built: `pnpm build` fails on an invalid `portal-config.json`, and `pnpm config:check` runs the same check on its own. After changing the schema, regenerate `portal-config.schema.json` with `pnpm config-schema:generate`.
+
+This section describes the reference application. The example application (`apps/ohs-player-web-example`) loads its own `public/portal-config.json` the same way, with three differences: its schema accepts any flag name and any colour role, its build does not check the document, and an invalid document is reported only through `onError`, with no toast.
 
 **Changing it on a running deployment.** Mount your own document over the image's copy and reload the browser; no rebuild is needed:
 

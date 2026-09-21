@@ -1,0 +1,36 @@
+{
+  "product": {
+    "name": "OHS Example Portal"
+  },
+  "brand": {
+    "overrides": {
+      "primary": "#0F766E",
+      "primary-container": "#CCFBF1"
+    },
+    "darkOverrides": {
+      "primary": "#5EEAD4"
+    }
+  },
+  "navigation": [
+    {
+      "id": "users",
+      "to": "/users",
+      "labelKey": "navUsers",
+      "order": 10,
+      "requires": {
+        "flag": "userMgmt",
+        "permission": "users.view"
+      }
+    },
+    {
+      "id": "dashboard",
+      "to": "/",
+      "labelKey": "navDashboard",
+      "order": 20,
+      "requires": {
+        "flag": "dashboard",
+        "permission": "dashboard.view"
+      }
+    }
+  ]
+}

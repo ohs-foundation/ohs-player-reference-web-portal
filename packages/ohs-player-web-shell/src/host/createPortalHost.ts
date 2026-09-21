@@ -5,7 +5,7 @@ import {
   type ResolvedPortalConfig,
 } from '../config/resolvePortalConfig';
 import type { PortalRoute } from '../routes/types';
-import { missingPermission, withoutClashes } from './extensionChecks';
+import { missingPermission, validManifests } from './extensionChecks';
 import type { ExtensionContributions, PortalExtension } from './types';
 
 export interface PortalHostInput {
@@ -123,7 +123,7 @@ export function createPortalHost({
 }: PortalHostInput): ResolvedPortalHost {
   const report = reporter(development, defaults.platform.onError);
   const { manifests, portal } = withPermissionsMet(
-    withoutClashes(defaults, routes, extensions, report),
+    validManifests(defaults, routes, extensions, report),
     (candidates) => resolvePortalConfig(withExtensions(defaults, candidates), document),
     report,
   );

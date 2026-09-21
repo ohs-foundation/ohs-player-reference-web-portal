@@ -33,6 +33,12 @@ export type {
   ExtensionSlotContribution,
   ExtensionWidget,
 } from './types/extension';
+export { validateExtensionManifest } from './types/validateExtensionManifest';
+export type {
+  ExtensionManifestIssue,
+  ExtensionManifestRules,
+  ExtensionManifestValidation,
+} from './types/validateExtensionManifest';
 
 export { CorePlatformProvider } from './providers/CorePlatformProvider';
 export { AuthProvider, useAuth, useAuthContext } from './auth/AuthProvider';

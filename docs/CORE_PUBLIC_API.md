@@ -22,6 +22,8 @@ Runtime configuration document: `PortalConfigDocument`, `PortalNavigationEntry`.
 
 Extension manifest: `ExtensionManifest`, `ExtensionRoute`, `ExtensionNavEntry`, `ExtensionWidget`, `ExtensionSlotContribution`, `ExtensionRequirements`. This is the contract an extension writes against: its routes, sidebar entries, dashboard widgets, slot contributions, messages, flag defaults, permission mappings, custom endpoint aliases and questionnaires. Routes, nav entries and widgets can carry `requires: { flag, permission }`, evaluated flag first, then session, then permission. Pages and widgets are loaded lazily through `load`, which resolves a module whose default export is the component. Slot contributions are plain components that receive the slot's context. `ExtensionManifest` is generic over the host's dashboard region names and slot contexts, so the library never names them; the host binds both, and a region or slot the host does not declare is a type error. There is no version field, because the library version carries the contract.
 
+Manifest validation: `ExtensionManifestIssue`, `ExtensionManifestRules`, `ExtensionManifestValidation`, the types used by `validateExtensionManifest` (see [Extension manifest](#extension-manifest)).
+
 Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`, `SelectFieldOption`.
 
 FHIR data-access option shapes: `SearchAllOptions`, `PagedSearchParams`, `PagedSearchResult`, `OptimisticInsertOptions`.
@@ -171,6 +173,14 @@ Helpers for building and committing FHIR transaction Bundles. Single-resource sa
 | `committedId(response, index?)` | The bare server-assigned id for the entry at `index`. |
 
 Types: `BundleEntryMethod`, `TransactionBundleEntry`, `TransactionResponseBundle`.
+
+---
+
+## Extension manifest
+
+| Export | Description |
+| --- | --- |
+| `validateExtensionManifest(input, rules)` | Checks an extension manifest before a host merges it. `rules` names the host's dashboard `regions` and `slots`. It checks that `id` is a non-empty string, that there are no unknown top-level keys, and that ids are non-empty and unique within each list. Every route needs a `path` starting with `/` and a `load` function. Every nav entry needs `to`, `labelKey` and an integer `order`. Every widget needs a declared `region`, an integer `order` and `load`. Every slot contribution needs a declared `slot`, an integer `order` and a `component`. `requires` holds only `flag` and `permission`, messages are strings, flags are booleans, permissions are arrays of role names, endpoint aliases are paths starting with `/`, and questionnaires are objects. Returns `{ success: true, data }` or `{ success: false, errors }`, where each error has the field's `path` (for example `widgets[0].region`) and a `message` saying what was expected. It does not check permissions against a permission map; the host does that once every manifest is merged. |
 
 ---
 
