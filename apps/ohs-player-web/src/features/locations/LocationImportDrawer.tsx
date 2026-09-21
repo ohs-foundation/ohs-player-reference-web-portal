@@ -6,9 +6,13 @@ import {
   IconErrorFill,
   IconFileList,
   IconUpload,
-} from '../../components/ui/icons';
+  Button,
+  Drawer,
+  IconButton,
+  LinearProgress,
+  Stack,
+} from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
-import { Button, Drawer, IconButton, LinearProgress, Stack } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 import { useBulkImport, type ImportResult } from './useBulkImport';
 import { downloadImportTemplate, EXPECTED_COLUMNS } from './importTemplate';

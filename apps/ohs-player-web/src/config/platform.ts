@@ -1,6 +1,8 @@
 import type { CorePlatformConfig, FhirVersion, PermissionMap } from 'ohs-player-web-core';
+import type { PortalDefaults } from 'ohs-player-web-shell';
 import { env } from './env';
 import { appMessageOverrides } from '../i18n/appMessages';
+import { sysTheme } from '../theme/sysTheme';
 
 const permissionMap: PermissionMap = {
   'dashboard.view': ['admin', 'care-team-manager'],
@@ -64,4 +66,10 @@ export const platformConfig: CorePlatformConfig = {
     locationsBulkImport: '/api/bulk-import/locations',
     practitionerDetails: '/api/practitioner-details',
   },
+};
+
+export const portalDefaults: PortalDefaults = {
+  platform: platformConfig,
+  theme: sysTheme,
+  questionnaireVariant: env.questionnaireVariant,
 };

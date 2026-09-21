@@ -1,4 +1,4 @@
-import { IconCheck } from '../../components/ui/icons';
+import { IconCheck } from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
 
 export type LocationView = 'tree' | 'column';

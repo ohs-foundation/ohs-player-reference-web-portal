@@ -1,0 +1,60 @@
+/*
+ * Tailwind v4 entry. Preflight (the global reset) is intentionally NOT imported — the hand-written CSS owns
+ * resets/base styles. Enabling Preflight would reset margins/headings/box-sizing globally; do so deliberately.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@source './';
+
+/*
+ * Token bridge — maps utility names to the `--ohs-*` design tokens. Utility names are stable.
+ * NEVER hardcode hex/px here — every value points at a token (the portable contract).
+ * MUST stay `@theme inline`.
+ */
+@theme inline {
+  --color-primary: var(--ohs-sys-color-primary);
+  --color-primary-container: var(--ohs-sys-color-primary-container);
+  --color-surface: var(--ohs-sys-color-surface);
+  --color-background: var(--ohs-sys-color-surface-container);
+  --color-text: var(--ohs-sys-color-on-surface);
+  --color-outline: var(--ohs-sys-color-outline);
+  --color-error: var(--ohs-sys-color-error);
+  --color-success: var(--ohs-sys-color-success);
+  --color-warning: var(--ohs-sys-color-warning);
+  --color-positive: var(--ohs-sys-color-success);
+  --color-positive-surface: var(--ohs-sys-color-success-container);
+  --color-primary-contrast: var(--ohs-sys-color-on-primary);
+  --color-primary-hover: var(--ohs-sys-color-primary-hover);
+  --color-surface-variant: var(--ohs-sys-color-surface-container-low);
+  --color-surface-container-high: var(--ohs-sys-color-surface-container-high);
+  --color-text-muted: var(--ohs-sys-color-on-surface-variant);
+  --color-text-quaternary: var(--ohs-sys-color-on-surface-variant);
+  --color-border: var(--ohs-sys-color-outline-variant);
+  --color-border-secondary: var(--ohs-sys-color-outline-secondary);
+  --color-border-tertiary: var(--ohs-sys-color-outline-tertiary);
+  --color-neutral-surface: var(--ohs-sys-color-surface-container-high);
+  --color-focus: var(--ohs-sys-color-focus-ring);
+
+  /* `--radius` backs the bare `rounded` utility (v4). */
+  --radius: var(--ohs-sys-shape-corner-small);
+  --radius-sm: var(--ohs-sys-shape-corner-extra-small);
+  --radius-lg: var(--ohs-sys-shape-corner-medium);
+  --radius-card: var(--ohs-sys-shape-corner-extra-large-decreased);
+  --radius-panel: var(--ohs-sys-shape-corner-extra-large);
+  --radius-pill: var(--ohs-sys-shape-corner-full);
+
+  /* M3 level structure; the ink stays on the reviewed recipes until that is decided. */
+  --shadow-sm: var(--ohs-sys-elevation-level1);
+  --shadow-md: var(--ohs-sys-elevation-level2);
+  --shadow-lg: var(--ohs-sys-elevation-level3);
+
+  --font-heading: var(--ohs-ref-typeface-brand);
+  --font-body: var(--ohs-ref-typeface-plain);
+  /* Without this the `font-mono` utilities keep Tailwind's own stack, diverging from the token the
+     hand-written CSS and the library's JSON viewer resolve. */
+  --font-mono: var(--ohs-ref-typeface-mono);
+
+  /* One 4px system: Tailwind's spacing scale and `--ohs-sys-spacing-*` share a base step. */
+  --spacing: var(--ohs-sys-spacing-1);
+}

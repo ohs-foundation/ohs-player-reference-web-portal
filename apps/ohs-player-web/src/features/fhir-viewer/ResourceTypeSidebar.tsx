@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'ohs-player-web-core';
-import { SearchField } from '../../components/ui';
+import { SearchField, cn } from 'ohs-player-web-shell';
 import { RESOURCE_TYPE_DEFS } from './registry';
-import { cn } from '../../lib/cn';
 
 interface ResourceTypeSidebarProps {
   selected: string;

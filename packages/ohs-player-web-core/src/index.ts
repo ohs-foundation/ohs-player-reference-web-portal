@@ -25,6 +25,14 @@ export type {
   UserProfile,
 } from './types/config';
 export type { PortalConfigDocument, PortalNavigationEntry } from './types/portalConfig';
+export type {
+  ExtensionManifest,
+  ExtensionNavEntry,
+  ExtensionRequirements,
+  ExtensionRoute,
+  ExtensionSlotContribution,
+  ExtensionWidget,
+} from './types/extension';
 
 export { CorePlatformProvider } from './providers/CorePlatformProvider';
 export { AuthProvider, useAuth, useAuthContext } from './auth/AuthProvider';

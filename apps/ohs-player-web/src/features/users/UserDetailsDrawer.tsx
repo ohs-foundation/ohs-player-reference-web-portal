@@ -8,7 +8,14 @@ import {
   IconTeam,
   IconUser,
   type IconComponent,
-} from '../../components/ui/icons';
+  Avatar,
+  Button,
+  Drawer,
+  ErrorState,
+  IconButton,
+  Spinner,
+  StatusBadge,
+} from 'ohs-player-web-shell';
 import {
   commitBundle,
   OhsDialog,
@@ -18,15 +25,6 @@ import {
   useTranslation,
 } from 'ohs-player-web-core';
 import { useWriteAudit } from '../audit/useWriteAudit';
-import {
-  Avatar,
-  Button,
-  Drawer,
-  ErrorState,
-  IconButton,
-  Spinner,
-  StatusBadge,
-} from '../../components/ui';
 import { buildDeactivateBundle, NATIONAL_ID_IDENTIFIER_SYSTEM } from '../sdc/resourceFromAnswers';
 import { toErrorMessage } from '../sdc/toErrorMessage';
 import { usePractitionerDetails } from './usePractitionerDetails';

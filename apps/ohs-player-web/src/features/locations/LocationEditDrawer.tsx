@@ -1,5 +1,4 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { IconClose, IconInfo } from '../../components/ui/icons';
 import {
   useCreateResource,
   useQuestionnaireFormState,
@@ -9,8 +8,18 @@ import {
   useUpdateResource,
 } from 'ohs-player-web-core';
 import type { Location } from '@medplum/fhirtypes';
-import { Button, Combobox, Drawer, ErrorState, IconButton, Spinner, Stack } from '../../components/ui';
-import { usePortalConfig } from '../../config/portalConfigContext';
+import {
+  Button,
+  Combobox,
+  Drawer,
+  ErrorState,
+  IconButton,
+  Spinner,
+  Stack,
+  IconClose,
+  IconInfo,
+  usePortalConfig,
+} from 'ohs-player-web-shell';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { toErrorMessage } from '../sdc/toErrorMessage';

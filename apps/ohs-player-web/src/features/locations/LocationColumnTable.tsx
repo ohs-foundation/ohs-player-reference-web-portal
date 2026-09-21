@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { IconSubdirectory } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
-import { DataTable, type DataTableColumn } from '../../components/ui';
+import { DataTable, type DataTableColumn, IconSubdirectory } from 'ohs-player-web-shell';
 import type { LocationNode } from './hierarchy';
 import { levelFromType } from './locationLevel';
 import { LocationLevelBadge } from './LocationLevelBadge';

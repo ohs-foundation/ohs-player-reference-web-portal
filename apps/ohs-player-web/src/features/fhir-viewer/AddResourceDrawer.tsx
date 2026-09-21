@@ -8,9 +8,14 @@ import {
   useTranslation,
   useUpdateResource,
 } from 'ohs-player-web-core';
-import { IconClose, IconMagic } from '../../components/ui/icons';
-import { Button, IconButton, TextAreaField } from '../../components/ui';
-import { Drawer } from '../../components/ui/Drawer';
+import {
+  Button,
+  IconButton,
+  TextAreaField,
+  IconClose,
+  IconMagic,
+  Drawer,
+} from 'ohs-player-web-shell';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { type FhirRecord, type ResourceTypeDef } from './registry';
 import { exampleFor } from './examples';

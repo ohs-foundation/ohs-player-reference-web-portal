@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { IconClose } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES } from '../../config/roles';
-import { Button, Drawer, ErrorState, IconButton, Stack } from '../../components/ui';
+import { Button, Drawer, ErrorState, IconButton, Stack, IconClose } from 'ohs-player-web-shell';
 import {
   UserBasicInfoStep,
   UserCareTeamFields,

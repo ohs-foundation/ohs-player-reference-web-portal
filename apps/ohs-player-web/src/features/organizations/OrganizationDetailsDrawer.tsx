@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { IconBuilding, IconClose, IconMapPin } from '../../components/ui/icons';
 import {
   OhsDialog,
   PermissionGuard,
@@ -8,7 +7,17 @@ import {
   useUpdateResource,
 } from 'ohs-player-web-core';
 import { useWriteAudit } from '../audit/useWriteAudit';
-import { Button, Drawer, IconButton, Inline, Stack, StatusBadge } from '../../components/ui';
+import {
+  Button,
+  Drawer,
+  IconButton,
+  Inline,
+  Stack,
+  StatusBadge,
+  IconBuilding,
+  IconClose,
+  IconMapPin,
+} from 'ohs-player-web-shell';
 import { Section } from '../users/userFormControls';
 import { toErrorMessage } from '../sdc/toErrorMessage';
 

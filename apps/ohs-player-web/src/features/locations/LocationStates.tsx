@@ -1,6 +1,12 @@
-import { IconMapPin, IconWarning } from '../../components/ui/icons';
 import { useTranslation } from 'ohs-player-web-core';
-import { Button, EmptyState, ErrorState, Inline } from '../../components/ui';
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  Inline,
+  IconMapPin,
+  IconWarning,
+} from 'ohs-player-web-shell';
 import type { HierarchyError } from './useLocationHierarchy';
 
 export function HierarchySkeleton(): React.ReactElement {

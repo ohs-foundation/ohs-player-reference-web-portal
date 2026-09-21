@@ -25,32 +25,24 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     }),
     useFlag: () => true,
     usePermission: () => ({ can: true }),
+    useSearch: () => ({ data: undefined, isLoading: false, error: null }),
   };
 });
 
-vi.mock('./features/search/useGlobalSearch', () => ({
-  useGlobalSearch: () => ({ groups: [], loading: false, hasTerm: false }),
-}));
-
-vi.mock('./features/activity/useRecentActivity', () => ({
-  useRecentActivity: () => ({ items: [], loading: false, error: null }),
-}));
-
-vi.mock('./features/setup-wizard/useSetupWizardAutoRedirect', () => ({
-  useSetupWizardAutoRedirect: () => undefined,
-}));
-
 const { CorePlatformProvider } = await import('ohs-player-web-core');
-const { platformConfig } = await import('./config/platform');
-const { LoginPage } = await import('./pages/LoginPage');
-const { AppLayout } = await import('./layout/AppLayout');
+const { platformConfig, portalDefaults } = await import('./config/platform');
+const { AppLayout, LoginPage, PortalConfigContext, resolvePortalConfig } = await import(
+  'ohs-player-web-shell'
+);
 
 function renderShell() {
   authStatus = 'authenticated';
   return render(
     <MemoryRouter>
       <CorePlatformProvider config={platformConfig}>
-        <AppLayout />
+        <PortalConfigContext.Provider value={resolvePortalConfig(portalDefaults)}>
+          <AppLayout />
+        </PortalConfigContext.Provider>
       </CorePlatformProvider>
     </MemoryRouter>,
   );

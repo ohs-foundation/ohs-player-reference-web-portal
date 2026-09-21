@@ -1,5 +1,5 @@
+import type { Practitioner } from '@medplum/fhirtypes';
 import { useMemo, useState } from 'react';
-import { IconAddCircle, IconChevronDown, IconMore } from '../../components/ui/icons';
 import usersEmptyIllustration from '../../assets/illustrations/users-empty.svg';
 import {
   OhsDropdownMenu,
@@ -24,32 +24,30 @@ import {
   Page,
   PageHeader,
   SearchField,
+  Slot,
   StatusBadge,
-} from '../../components/ui';
+  IconAddCircle,
+  IconChevronDown,
+  IconMore,
+  useInitialSearchTerm,
+  useFilterParam,
+  useClearFilterParams,
+  useDebounced,
+} from 'ohs-player-web-shell';
 import { UserCreateEntryDrawer } from './UserCreateEntryDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
-import { useInitialSearchTerm } from '../search/useInitialSearchTerm';
-import { useFilterParam, useClearFilterParams } from '../search/useFilterParam';
-import { useDebounced } from '../search/useGlobalSearch';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 
-type PractitionerRow = {
-  id?: string;
-  active?: boolean;
-  name?: { family?: string; given?: string[] }[];
-  telecom?: { system?: string; value?: string }[];
-};
-
-function fullName(p: PractitionerRow): string {
+function fullName(p: Practitioner): string {
   const n = p.name?.[0];
   return `${n?.given?.join(' ') ?? ''} ${n?.family ?? ''}`.trim();
 }
-function emailOf(p: PractitionerRow): string {
+function emailOf(p: Practitioner): string {
   return p.telecom?.find((tc) => tc.system === 'email')?.value ?? '';
 }
-function identifierOf(p: PractitionerRow): string {
+function identifierOf(p: Practitioner): string {
   return p.id ?? '—';
 }
 
@@ -151,7 +149,7 @@ export function UsersPage() {
 
   const bundle = search.data as Bundle | undefined;
   const rawRows = useMemo(
-    () => (bundle?.entry?.map((e) => e.resource).filter(Boolean) ?? []) as PractitionerRow[],
+    () => (bundle?.entry?.map((e) => e.resource).filter(Boolean) ?? []) as Practitioner[],
     [bundle?.entry],
   );
 
@@ -277,7 +275,7 @@ export function UsersPage() {
           />
         </div>
       ) : (
-        <DataTable<PractitionerRow>
+        <DataTable<Practitioner>
           toolbar={
             <Inline>
               <SearchField
@@ -429,6 +427,7 @@ export function UsersPage() {
                           {t('edit')}
                         </OhsDropdownMenu.Item>
                       </PermissionGuard>
+                      <Slot name="users.rowActions" context={{ practitioner: p }} />
                     </OhsDropdownMenu.Content>
                   </OhsDropdownMenu.Portal>
                 </OhsDropdownMenu.Root>

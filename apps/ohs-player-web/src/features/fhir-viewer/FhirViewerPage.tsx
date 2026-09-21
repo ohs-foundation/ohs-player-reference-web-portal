@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { usePermission, useTranslation } from 'ohs-player-web-core';
-import { IconAddCircle } from '../../components/ui/icons';
-import { Button, Page, PageHeader } from '../../components/ui';
+import { Button, Page, PageHeader, IconAddCircle } from 'ohs-player-web-shell';
 import { ResourceTypeSidebar } from './ResourceTypeSidebar';
 import { ResourceListPanel } from './ResourceListPanel';
 import { ResourceDrawer } from './ResourceDrawer';

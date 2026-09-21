@@ -1,27 +1,16 @@
-import { CorePlatformProvider } from 'ohs-player-web-core';
-import { BrowserRouter } from 'react-router-dom';
-import { AppRoutes } from './AppRoutes';
+import { PortalHost, type ResolvedPortalHost } from 'ohs-player-web-shell';
 import { ConfigErrorNotice } from './config/ConfigErrorNotice';
-import { PortalConfigContext } from './config/portalConfigContext';
-import type { ResolvedPortalConfig } from './config/resolvePortalConfig';
-import { ThemeModeProvider } from './theme/ThemeModeProvider';
+import { SetupWizardAutoRedirect } from './features/setup-wizard/SetupWizardAutoRedirect';
 
 interface AppProps {
-  portal: ResolvedPortalConfig;
+  host: ResolvedPortalHost;
   configError?: string;
 }
 
-export default function App({ portal, configError }: Readonly<AppProps>) {
+export default function App({ host, configError }: Readonly<AppProps>) {
   return (
-    <ThemeModeProvider>
-      <PortalConfigContext.Provider value={portal}>
-        <CorePlatformProvider config={portal.platform}>
-          <ConfigErrorNotice error={configError} />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </CorePlatformProvider>
-      </PortalConfigContext.Provider>
-    </ThemeModeProvider>
+    <PortalHost host={host} layoutChildren={<SetupWizardAutoRedirect />}>
+      <ConfigErrorNotice error={configError} />
+    </PortalHost>
   );
 }

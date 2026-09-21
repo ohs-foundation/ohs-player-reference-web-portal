@@ -4,6 +4,7 @@ WORKDIR /repo
 RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY packages/ohs-player-web-core ./packages/ohs-player-web-core
+COPY packages/ohs-player-web-shell ./packages/ohs-player-web-shell
 COPY apps/ohs-player-web ./apps/ohs-player-web
 RUN pnpm install --frozen-lockfile
 ARG VITE_FHIR_BASE_URL=http://localhost:8180/fhir

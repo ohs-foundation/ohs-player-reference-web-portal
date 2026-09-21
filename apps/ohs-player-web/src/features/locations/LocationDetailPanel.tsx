@@ -1,8 +1,16 @@
 import { useState } from 'react';
-import { IconBuildings, IconClose, IconCopy, IconInfo, IconTree } from '../../components/ui/icons';
+import {
+  IconBuildings,
+  IconClose,
+  IconCopy,
+  IconInfo,
+  IconTree,
+  Button,
+  Drawer,
+  IconButton,
+} from 'ohs-player-web-shell';
 import { OhsTabs, PermissionGuard, useResource, useTranslation } from 'ohs-player-web-core';
 import type { Location, Organization } from '@medplum/fhirtypes';
-import { Button, Drawer, IconButton } from '../../components/ui';
 import { Section } from '../users/userFormControls';
 import { LOCATION_SOURCE_ID_SYSTEM } from '../sdc/resourceFromAnswers';
 import { bareId, findNode, type LocationNode } from './hierarchy';

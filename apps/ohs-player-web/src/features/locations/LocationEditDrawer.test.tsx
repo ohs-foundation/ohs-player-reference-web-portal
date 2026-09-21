@@ -25,6 +25,11 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   };
 });
 
+vi.mock('ohs-player-web-shell', async (): Promise<object> => {
+  const actual = await vi.importActual<object>('ohs-player-web-shell');
+  return { ...actual, usePortalConfig: () => ({ questionnaireVariant: 'default' }) };
+});
+
 vi.mock('./useLocationRoots', () => ({
   useAllLocationsLean: () => ({
     data: [

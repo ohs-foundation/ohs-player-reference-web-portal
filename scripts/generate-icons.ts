@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const SVG_DIR = 'node_modules/@material-symbols/svg-400/outlined';
-const OUTPUT = 'apps/ohs-player-web/src/components/ui/icons.tsx';
+const OUTPUT = 'packages/ohs-player-web-shell/src/components/ui/icons.tsx';
 
 /** Exported component name -> Material Symbols file stem. */
 const ICONS: Record<string, string> = {

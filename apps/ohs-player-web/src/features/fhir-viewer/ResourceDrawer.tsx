@@ -13,9 +13,17 @@ import {
   useTranslation,
   useUpdateResource,
 } from 'ohs-player-web-core';
-import { IconClose, IconDelete, IconEdit } from '../../components/ui/icons';
-import { Avatar, Button, ErrorState, IconButton, LinearProgress } from '../../components/ui';
-import { Drawer } from '../../components/ui/Drawer';
+import {
+  Avatar,
+  Button,
+  ErrorState,
+  IconButton,
+  LinearProgress,
+  IconClose,
+  IconDelete,
+  IconEdit,
+  Drawer,
+} from 'ohs-player-web-shell';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { type FhirRecord, type ResourceTypeDef, displayNameFor } from './registry';
 

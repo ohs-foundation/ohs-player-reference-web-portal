@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { IconBuilding } from '../../../components/ui/icons';
 import { newUrnUuid, useTranslation } from 'ohs-player-web-core';
-import { Button, Stack } from '../../../components/ui';
+import { Button, Stack, IconBuilding } from 'ohs-player-web-shell';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../../config/organizations';
 import { organizationFromForm, type OrgFormFields } from '../../sdc/resourceFromAnswers';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect } from '../../users/userFormControls';

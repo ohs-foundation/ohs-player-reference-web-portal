@@ -1,6 +1,11 @@
 import { type ReactNode, useId, useRef } from 'react';
-import { IconChevronDown, IconClose, IconToday, type IconComponent } from '../../components/ui/icons';
-import { Listbox } from '../../components/ui/Listbox';
+import {
+  IconChevronDown,
+  IconClose,
+  IconToday,
+  type IconComponent,
+  Listbox,
+} from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
 import type { Option } from './userFormOptions';
 

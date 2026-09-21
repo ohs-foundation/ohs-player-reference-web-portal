@@ -8,7 +8,7 @@ import {
   type KeyboardEvent,
   type UIEvent,
 } from 'react';
-import { IconChevronDown, IconChevronRight } from '../../components/ui/icons';
+import { IconChevronDown, IconChevronRight } from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
 import type { LocationNode } from './hierarchy';
 import { levelFromType } from './locationLevel';

@@ -1,4 +1,4 @@
-import { IconChevronRight } from '../../components/ui/icons';
+import { IconChevronRight } from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
 import { nodeChain, type LocationNode } from './hierarchy';
 

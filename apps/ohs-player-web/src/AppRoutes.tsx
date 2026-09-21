@@ -1,115 +1,61 @@
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
-import { useTranslation } from 'ohs-player-web-core';
-import { Page, PageHeader } from './components/ui';
-import { ProtectedRoute } from './auth/ProtectedRoute';
-import { AppLayout } from './layout/AppLayout';
-import { CallbackPage } from './pages/CallbackPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { LoginPage } from './pages/LoginPage';
-import { LogoutPage } from './pages/LogoutPage';
-import { UsersPage } from './features/users/UsersPage';
-import { LocationsPage } from './features/locations/LocationsPage';
+import type { PortalRoute } from 'ohs-player-web-shell';
 import { LocationsNoAccess } from './features/locations/LocationsNoAccess';
-import { OrganizationsPage } from './features/organizations/OrganizationsPage';
-import { CareTeamsPage } from './features/careteams/CareTeamsPage';
-import { SetupWizardPage } from './features/setup-wizard/SetupWizardPage';
-import { FhirViewerPage } from './features/fhir-viewer/FhirViewerPage';
-import { UnauthorizedPage } from './pages/UnauthorizedPage';
+import { OrganizationsPermissionFallback } from './features/organizations/OrganizationsPermissionFallback';
 
-function OrganizationsPermissionFallback() {
-  const { t } = useTranslation();
-  return (
-    <Page>
-      <PageHeader title={t('pageUnauthorized')} description={t('pageUnauthorizedDescription')} />
-      <p>
-        <Link to="/">{t('goToDashboard')}</Link>
-      </p>
-    </Page>
-  );
-}
+const loadFhirViewerPage = () =>
+  import('./features/fhir-viewer/FhirViewerPage').then((m) => ({ default: m.FhirViewerPage }));
 
-export function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/logout" element={<LogoutPage />} />
-      <Route path="/callback" element={<CallbackPage />} />
-      <Route path="/unauthorized" element={<UnauthorizedPage />} />
-      <Route element={<AppLayout />}>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute flag="dashboard">
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute flag="userMgmt" permission="users.view">
-              <UsersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/locations"
-          element={
-            <ProtectedRoute
-              flag="locationMgmt"
-              permission="location-hierarchy.view"
-              permissionFallback={<LocationsNoAccess status={403} />}
-            >
-              <LocationsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/organizations"
-          element={
-            <ProtectedRoute
-              flag="orgMgmt"
-              permission="orgs.view"
-              permissionFallback={<OrganizationsPermissionFallback />}
-            >
-              <OrganizationsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/care-teams"
-          element={
-            <ProtectedRoute flag="careTeams" permission="careteams.view">
-              <CareTeamsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/setup"
-          element={
-            <ProtectedRoute flag="setupWizard" permission="setup.view">
-              <SetupWizardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/resources"
-          element={
-            <ProtectedRoute flag="fhirViewer" permission="fhir-viewer.view">
-              <FhirViewerPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/resources/:resourceType"
-          element={
-            <ProtectedRoute flag="fhirViewer" permission="fhir-viewer.view">
-              <FhirViewerPage />
-            </ProtectedRoute>
-          }
-        />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-}
+export const appRoutes: readonly PortalRoute[] = [
+  {
+    id: 'users',
+    path: '/users',
+    load: () => import('./features/users/UsersPage').then((m) => ({ default: m.UsersPage })),
+    requires: { flag: 'userMgmt', permission: 'users.view' },
+  },
+  {
+    id: 'locations',
+    path: '/locations',
+    load: () =>
+      import('./features/locations/LocationsPage').then((m) => ({ default: m.LocationsPage })),
+    requires: { flag: 'locationMgmt', permission: 'location-hierarchy.view' },
+    permissionFallback: <LocationsNoAccess status={403} />,
+  },
+  {
+    id: 'organizations',
+    path: '/organizations',
+    load: () =>
+      import('./features/organizations/OrganizationsPage').then((m) => ({
+        default: m.OrganizationsPage,
+      })),
+    requires: { flag: 'orgMgmt', permission: 'orgs.view' },
+    permissionFallback: <OrganizationsPermissionFallback />,
+  },
+  {
+    id: 'careTeams',
+    path: '/care-teams',
+    load: () =>
+      import('./features/careteams/CareTeamsPage').then((m) => ({ default: m.CareTeamsPage })),
+    requires: { flag: 'careTeams', permission: 'careteams.view' },
+  },
+  {
+    id: 'setup',
+    path: '/setup',
+    load: () =>
+      import('./features/setup-wizard/SetupWizardPage').then((m) => ({
+        default: m.SetupWizardPage,
+      })),
+    requires: { flag: 'setupWizard', permission: 'setup.view' },
+  },
+  {
+    id: 'fhirViewer',
+    path: '/resources',
+    load: loadFhirViewerPage,
+    requires: { flag: 'fhirViewer', permission: 'fhir-viewer.view' },
+  },
+  {
+    id: 'fhirViewerResourceType',
+    path: '/resources/:resourceType',
+    load: loadFhirViewerPage,
+    requires: { flag: 'fhirViewer', permission: 'fhir-viewer.view' },
+  },
+];

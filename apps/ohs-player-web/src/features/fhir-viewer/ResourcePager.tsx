@@ -1,7 +1,5 @@
 import { useTranslation } from 'ohs-player-web-core';
-import { IconChevronLeft, IconChevronRight } from '../../components/ui/icons';
-import { cn } from '../../lib/cn';
-import { Listbox } from '../../components/ui/Listbox';
+import { IconChevronLeft, IconChevronRight, cn, Listbox } from 'ohs-player-web-shell';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 

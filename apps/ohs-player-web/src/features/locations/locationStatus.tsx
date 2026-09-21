@@ -1,5 +1,5 @@
 import { useTranslation } from 'ohs-player-web-core';
-import { StatusBadge, type StatusTone } from '../../components/ui';
+import { StatusBadge, type StatusTone } from 'ohs-player-web-shell';
 
 function statusTone(status: string | null | undefined): StatusTone {
   switch (status) {

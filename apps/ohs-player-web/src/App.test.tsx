@@ -3,7 +3,7 @@ import { CorePlatformProvider } from 'ohs-player-web-core';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { platformConfig } from './config/platform';
-import { LoginPage } from './pages/LoginPage';
+import { LoginPage } from 'ohs-player-web-shell';
 
 describe('LoginPage', () => {
   it('shows sign in', () => {

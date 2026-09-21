@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { appMessageOverrides } from '../i18n/appMessages';
 import { sysTheme } from '../theme/sysTheme';
-import { DEFAULT_NAVIGATION } from './navigation';
-import { platformConfig } from './platform';
+import { DEFAULT_NAVIGATION, resolvePortalConfig } from 'ohs-player-web-shell';
+import { platformConfig, portalDefaults } from './platform';
 import { validatePortalConfig, type PortalConfig } from './portalConfigSchema';
 
 function referenceDocument(): PortalConfig {
@@ -24,6 +24,12 @@ describe('reference configuration document', () => {
     expect(document.permissionMap).toEqual(platformConfig.rbac?.permissionMap);
     expect(document.customEndpoints).toEqual(platformConfig.customEndpoints);
     expect(document.locale).toEqual(platformConfig.i18n?.locale);
+  });
+
+  it('resolves to exactly the baked configuration', () => {
+    expect(resolvePortalConfig(portalDefaults, referenceDocument())).toEqual(
+      resolvePortalConfig(portalDefaults),
+    );
   });
 
   it('holds the baked sidebar, spaced ten apart in the current order', () => {

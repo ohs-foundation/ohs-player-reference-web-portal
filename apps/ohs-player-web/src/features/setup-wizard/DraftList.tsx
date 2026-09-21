@@ -1,6 +1,5 @@
-import { IconDelete } from '../../components/ui/icons';
+import { IconDelete, IconButton } from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
-import { IconButton } from '../../components/ui';
 
 export interface DraftListItem {
   id: string;
