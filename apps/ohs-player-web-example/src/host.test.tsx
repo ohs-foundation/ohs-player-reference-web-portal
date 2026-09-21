@@ -53,6 +53,9 @@ function exampleDocument() {
   return result.data;
 }
 
+// Pages load through the real lazy route table; a cold CI runner can take over a second to import one.
+const LAZY_PAGE = { timeout: 5000 };
+
 function renderAt(path: string) {
   window.history.pushState({}, '', path);
   const host = createPortalHost({
@@ -86,7 +89,7 @@ describe('the example portal with the schedules extension', () => {
   it('renders the active schedules widget in the KPI strip', async () => {
     renderAt('/');
 
-    const kpiStrip = await screen.findByRole('region', { name: 'Dashboard' });
+    const kpiStrip = await screen.findByRole('region', { name: 'Dashboard' }, LAZY_PAGE);
     expect(await within(kpiStrip).findByText('Active Schedules')).toBeInTheDocument();
     expect(within(kpiStrip).getAllByText('3')).toHaveLength(5);
   });
@@ -94,7 +97,7 @@ describe('the example portal with the schedules extension', () => {
   it("adds the schedules action to a users row's menu", async () => {
     renderAt('/users');
 
-    const [trigger] = await screen.findAllByRole('button', { name: 'Row actions' });
+    const [trigger] = await screen.findAllByRole('button', { name: 'Row actions' }, LAZY_PAGE);
     fireEvent.keyDown(trigger, { key: 'Enter' });
 
     const menu = await screen.findByRole('menu');
