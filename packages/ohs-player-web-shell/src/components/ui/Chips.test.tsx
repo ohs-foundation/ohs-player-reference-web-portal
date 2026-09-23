@@ -156,6 +156,51 @@ describe('FilterChip (text variant)', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(document.activeElement).toBe(chip);
   });
+
+  it('takes a date with bounds and applies it', () => {
+    const onChange = vi.fn();
+    render(
+      <FilterChip
+        variant="text"
+        label="From"
+        value={null}
+        onChange={onChange}
+        input={{ type: 'date', min: '2026-01-01', max: '2026-09-23' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'From' }));
+    const input = screen.getByLabelText('From', { selector: 'input' });
+    expect(input).toHaveAttribute('type', 'date');
+    expect(input).toHaveAttribute('min', '2026-01-01');
+    expect(input).toHaveAttribute('max', '2026-09-23');
+
+    fireEvent.change(input, { target: { value: '2026-09-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'filterApply' }));
+    expect(onChange).toHaveBeenCalledWith('2026-09-01');
+  });
+
+  it('does not apply a date outside its bounds', () => {
+    const onChange = vi.fn();
+    render(
+      <FilterChip
+        variant="text"
+        label="To"
+        value={null}
+        onChange={onChange}
+        input={{ type: 'date', min: '2026-09-10' }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'To' }));
+    const input = screen.getByLabelText('To', { selector: 'input' });
+    fireEvent.change(input, { target: { value: '2026-09-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'filterApply' }));
+
+    expect(input).toBeInvalid();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'To' })).toBeInTheDocument();
+  });
 });
 
 describe('FilterChipBar', () => {

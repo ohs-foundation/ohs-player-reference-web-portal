@@ -61,4 +61,9 @@ export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 
 export { FilterChip, FilterChipBar } from './Chips';
-export type { FilterChipBarProps, FilterChipOption, FilterChipProps } from './Chips';
+export type {
+  FilterChipBarProps,
+  FilterChipInput,
+  FilterChipOption,
+  FilterChipProps,
+} from './Chips';
