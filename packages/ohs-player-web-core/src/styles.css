@@ -180,6 +180,11 @@
   color: var(--ohs-sys-color-on-surface, #1f2933);
 }
 
+.ohs-json-view__code:focus-visible {
+  outline: 2px solid var(--ohs-sys-color-focus-ring, #2f6fed);
+  outline-offset: -2px;
+}
+
 .ohs-json-editor {
   display: flex;
   flex-direction: column;
