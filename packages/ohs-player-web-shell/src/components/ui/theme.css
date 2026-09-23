@@ -1596,6 +1596,26 @@
   padding: var(--ohs-sys-spacing-1, 4px) var(--ohs-sys-spacing-2, 8px);
   font-size: var(--ohs-sys-typescale-label-medium-size, 14px);
 }
+
+/* Anchored panel; the consumer sets width and inner padding. The hairline keeps it visible on dark,
+   where the shadow does not read. */
+.ohs-popover {
+  box-sizing: border-box;
+  max-width: calc(100vw - 2 * var(--ohs-sys-spacing-4, 16px));
+  border: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
+  border-radius: var(--ohs-sys-shape-corner-medium, 12px);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
+  box-shadow: var(
+    --ohs-sys-elevation-level4,
+    0 16px 32px rgba(15, 23, 42, 0.16),
+    0 6px 12px rgba(15, 23, 42, 0.1)
+  );
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
+  z-index: 80;
+}
+.ohs-popover:focus-visible {
+  outline: none;
+}
 .ohs-dropdown-item {
   display: flex;
   align-items: center;
@@ -1703,6 +1723,7 @@
 /* dropdown variant uses no transform translate */
 .ohs-dropdown-content,
 .ohs-tooltip-content,
+.ohs-popover,
 .ohs-toast-root {
   animation: ohs-fade-in 140ms ease-out;
 }

@@ -31,6 +31,9 @@ export type { KpiBadgeProps } from './KpiBadge';
 export { Drawer } from './Drawer';
 export type { DrawerProps } from './Drawer';
 
+export { Popover } from './Popover';
+export type { PopoverProps } from './Popover';
+
 export { Inline, Page, PageHeader, Stack } from './Layout';
 export type { InlineProps, PageHeaderProps, PageProps, StackProps } from './Layout';
 

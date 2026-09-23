@@ -217,7 +217,9 @@ productivity tool and respect reduced motion.
 
 ## 6. Elevation
 
-`--ohs-sys-elevation-level0..5`, mapped as card L1, menu/dropdown/popover L2, dialog/drawer/toast L3.
+`--ohs-sys-elevation-level0..5`, mapped as card L1, menu/dropdown L2, dialog/drawer/toast L3, popover L4.
+The popover takes L4 because its 16/32 offset and blur are the nearest match to Figma's `Shadows/Light - L6`;
+no level reproduces that shadow exactly.
 
 The **level structure** is M3's; the **ink** is this product's reviewed slate-tinted shadows rather than
 M3's umbra/penumbra recipes. That choice is still open — swapping the ink means editing `ELEVATION` in
