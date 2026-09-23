@@ -202,6 +202,24 @@ describe('DashboardPage KPI selection', () => {
     expect(kpiLabels(container)).toEqual(['kpiTotalOrganizations', 'kpiTotalCareTeams']);
   });
 
+  it('keeps a gated KPI selected through a save, so it returns with its flag', async () => {
+    flagsOff = new Set(['careTeams']);
+    const first = renderPage();
+    const panel = await openPicker();
+
+    fireEvent.click(within(panel).getByRole('checkbox', { name: 'navUsers' }));
+    fireEvent.click(within(panel).getByRole('button', { name: 'save' }));
+    first.unmount();
+
+    flagsOff = new Set();
+    const { container } = renderPage();
+    expect(kpiLabels(container)).toEqual([
+      'kpiTotalLocations',
+      'kpiTotalOrganizations',
+      'kpiTotalCareTeams',
+    ]);
+  });
+
   it('keeps the row unchanged when the picker is cancelled', async () => {
     const { container } = renderPage();
     const panel = await openPicker();

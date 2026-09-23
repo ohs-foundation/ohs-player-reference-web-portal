@@ -3,7 +3,7 @@ import { useId, useState } from 'react';
 import { Button, Checkbox, Popover } from '../../components/ui';
 import { CustomizeWidgetsButton } from './CustomizeWidgetsButton';
 import type { KpiDefinition, KpiId } from './kpiCatalogue';
-import { toggleKpi } from './kpiSelection';
+import { toggleKpi, visibleFirst } from './kpiSelection';
 
 export interface KpiPickerProps {
   options: readonly KpiDefinition[];
@@ -12,7 +12,10 @@ export interface KpiPickerProps {
   onSave: (ids: readonly KpiId[]) => void;
 }
 
-/** Header control and panel for choosing the KPI cards; edits stay local until Save. */
+/**
+ * Header control and panel for choosing the KPI cards; edits stay local until Save. Selected ids
+ * that are not among `options` (gated off, or not resolved yet) are kept on Save.
+ */
 export function KpiPicker({
   options,
   selected,
@@ -23,15 +26,16 @@ export function KpiPicker({
   const titleId = useId();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<readonly KpiId[]>([]);
-  const atMax = draft.length >= max;
+  const isVisible = (id: KpiId): boolean => options.some((kpi) => kpi.id === id);
+  const atMax = draft.filter(isVisible).length >= max;
 
   const onOpenChange = (next: boolean): void => {
-    if (next) setDraft(selected.filter((id) => options.some((kpi) => kpi.id === id)));
+    if (next) setDraft(selected);
     setOpen(next);
   };
 
   const save = (): void => {
-    onSave(draft);
+    onSave(visibleFirst(draft, isVisible));
     setOpen(false);
   };
 
@@ -58,7 +62,7 @@ export function KpiPicker({
               label={t(kpi.optionKey)}
               checked={checked}
               disabled={atMax && !checked}
-              onToggle={() => setDraft((current) => toggleKpi(current, kpi.id, max))}
+              onToggle={() => setDraft((current) => toggleKpi(current, kpi.id, max, isVisible))}
             />
           );
         })}

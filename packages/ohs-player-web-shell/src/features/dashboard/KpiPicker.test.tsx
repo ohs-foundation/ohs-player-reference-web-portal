@@ -16,6 +16,7 @@ const { KpiPicker } = await import('./KpiPicker');
 type KpiId = (typeof KPI_CATALOGUE)[number]['id'];
 
 const onSave = vi.fn();
+const withoutCareTeams = KPI_CATALOGUE.filter((kpi) => kpi.id !== 'careTeams');
 
 async function renderPicker(selected: KpiId[], max = 4): Promise<HTMLElement> {
   render(<KpiPicker options={KPI_CATALOGUE} selected={selected} max={max} onSave={onSave} />);
@@ -112,11 +113,11 @@ describe('KpiPicker', () => {
     expect(within(panel).getByRole('status')).toHaveTextContent('kpiPickerLimit');
   });
 
-  it('only lists and saves the options it is given', async () => {
+  it('lists only visible options and keeps a hidden selection on save', async () => {
     render(
       <KpiPicker
-        options={KPI_CATALOGUE.filter((kpi) => kpi.id !== 'careTeams')}
-        selected={['users', 'careTeams']}
+        options={withoutCareTeams}
+        selected={['careTeams', 'users']}
         max={4}
         onSave={onSave}
       />,
@@ -124,8 +125,53 @@ describe('KpiPicker', () => {
     const panel = await openPicker();
 
     expect(within(panel).queryByText('navCareTeams')).not.toBeInTheDocument();
+    fireEvent.click(option(panel, 'navLocations'));
     fireEvent.click(within(panel).getByRole('button', { name: 'save' }));
-    expect(onSave).toHaveBeenCalledWith(['users']);
+    expect(onSave).toHaveBeenCalledWith(['users', 'locations', 'careTeams']);
+  });
+
+  it('does not count a hidden selection toward the limit', async () => {
+    render(
+      <KpiPicker
+        options={withoutCareTeams}
+        selected={['users', 'careTeams']}
+        max={2}
+        onSave={onSave}
+      />,
+    );
+    const panel = await openPicker();
+
+    expect(within(panel).queryByText('kpiPickerLimit')).not.toBeInTheDocument();
+    fireEvent.click(option(panel, 'navLocations'));
+    expect(within(panel).getByRole('status')).toHaveTextContent('kpiPickerLimit');
+  });
+
+  it('keeps the stored selection when saved before any option is visible', async () => {
+    render(<KpiPicker options={[]} selected={['users', 'careTeams']} max={4} onSave={onSave} />);
+    const panel = await openPicker();
+
+    fireEvent.click(within(panel).getByRole('button', { name: 'save' }));
+    expect(onSave).toHaveBeenCalledWith(['users', 'careTeams']);
+  });
+
+  it('ticks stored selections that become visible while the panel is open', async () => {
+    const { rerender } = render(
+      <KpiPicker options={[]} selected={['users', 'careTeams']} max={4} onSave={onSave} />,
+    );
+    await openPicker();
+    rerender(
+      <KpiPicker
+        options={KPI_CATALOGUE}
+        selected={['users', 'careTeams']}
+        max={4}
+        onSave={onSave}
+      />,
+    );
+    const panel = screen.getByRole('dialog');
+
+    expect(option(panel, 'navUsers')).toBeChecked();
+    expect(option(panel, 'navCareTeams')).toBeChecked();
+    expect(option(panel, 'navLocations')).not.toBeChecked();
   });
 
   it('has no critical a11y violations while open', async () => {

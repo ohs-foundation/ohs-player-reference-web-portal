@@ -16,12 +16,21 @@ export function sanitizeKpis(value: unknown): KpiId[] {
   return [...new Set(value.filter(isKpiId))].slice(0, MAX_KPIS);
 }
 
-/** Ticks or unticks `id`; ticking past `max` returns the selection unchanged. */
+/**
+ * Ticks or unticks `id`. Ticking is rejected once `max` ids that pass `counts` are ticked, so ids
+ * the user cannot see can be kept without using up the limit.
+ */
 export function toggleKpi(
   selected: readonly KpiId[],
   id: KpiId,
   max: number = MAX_KPIS,
+  counts: (id: KpiId) => boolean = () => true,
 ): readonly KpiId[] {
   if (selected.includes(id)) return selected.filter((current) => current !== id);
-  return selected.length >= max ? selected : [...selected, id];
+  return selected.filter(counts).length >= max ? selected : [...selected, id];
+}
+
+/** Visible ids first, so trimming to the limit drops a hidden id before anything the user chose. */
+export function visibleFirst(ids: readonly KpiId[], isVisible: (id: KpiId) => boolean): KpiId[] {
+  return [...ids.filter(isVisible), ...ids.filter((id) => !isVisible(id))];
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { KpiId } from './kpiCatalogue';
-import { DEFAULT_KPIS, MAX_KPIS, sanitizeKpis, toggleKpi } from './kpiSelection';
+import { DEFAULT_KPIS, MAX_KPIS, sanitizeKpis, toggleKpi, visibleFirst } from './kpiSelection';
 
 describe('toggleKpi', () => {
   it('ticks an unticked id and unticks a ticked one', () => {
@@ -18,6 +18,34 @@ describe('toggleKpi', () => {
 
   it('honours a lower max', () => {
     expect(toggleKpi(['users', 'locations'], 'careTeams', 2)).toEqual(['users', 'locations']);
+  });
+
+  it('counts only the ids that pass `counts` against the limit', () => {
+    const visible = (id: KpiId) => id !== 'careTeams';
+
+    expect(toggleKpi(['careTeams', 'users'], 'locations', 2, visible)).toEqual([
+      'careTeams',
+      'users',
+      'locations',
+    ]);
+    expect(toggleKpi(['careTeams', 'users', 'locations'], 'organizations', 2, visible)).toEqual([
+      'careTeams',
+      'users',
+      'locations',
+    ]);
+  });
+});
+
+describe('visibleFirst', () => {
+  it('moves hidden ids after visible ones and keeps each group in order', () => {
+    const visible = (id: KpiId) => id !== 'careTeams' && id !== 'users';
+
+    expect(visibleFirst(['careTeams', 'locations', 'users', 'organizations'], visible)).toEqual([
+      'locations',
+      'organizations',
+      'careTeams',
+      'users',
+    ]);
   });
 });
 
