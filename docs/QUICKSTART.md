@@ -34,11 +34,11 @@ cp .env.example .env
 6. **Run the portal**
 
 ```bash
-pnpm --filter ohs-player-web dev            # the reference application
-pnpm --filter ohs-player-web-example dev    # or the example application, built on the shell with one extension
+pnpm dev            # the reference application
+pnpm dev:example    # or the example application, built on the shell with one extension
 ```
 
-Run one application at a time. Both serve on port 5173 with a strict port, because the Keycloak client only accepts redirects to `:5173`, so a bare `pnpm dev` starts both and one of them fails. Neither needs the packages built first: both resolve `ohs-player-web-core` and `ohs-player-web-shell` from source.
+Run one application at a time. Both serve on port 5173 with a strict port, because the Keycloak client only accepts redirects to `:5173`. Each script builds `ohs-player-web-core` and `ohs-player-web-shell` first, because the reference app's Vite config reads the shell's build, then keeps both rebuilding on change. The app itself loads the packages from source, so edits to them reload without waiting for a build.
 
 Open `http://localhost:5173`, sign in with Keycloak (e.g. `admin-user` / `admin` from the imported realm). With `.env` copied from `.env.example`, `VITE_FHIR_BASE_URL` is `http://localhost:5173/fhir`, and the Vite dev server proxies `/fhir` to HAPI (`VITE_DEV_FHIR_TARGET`, default `http://localhost:8080`) and `/api` to the gateway (`VITE_DEV_API_TARGET`, default `http://localhost:8180`).
 
