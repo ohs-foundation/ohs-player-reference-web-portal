@@ -8,6 +8,7 @@ export const NAV_IDS = [
   'careTeams',
   'fhirViewer',
   'setup',
+  'audit',
 ] as const;
 
 export type NavId = (typeof NAV_IDS)[number];
@@ -64,5 +65,12 @@ export const DEFAULT_NAVIGATION: readonly NavEntry[] = [
     labelKey: 'navSetup',
     order: 70,
     requires: { flag: 'setupWizard', permission: 'setup.view' },
+  },
+  {
+    id: 'audit',
+    to: '/audit',
+    labelKey: 'navAudit',
+    order: 80,
+    requires: { flag: 'auditLog', permission: 'audit.view' },
   },
 ];

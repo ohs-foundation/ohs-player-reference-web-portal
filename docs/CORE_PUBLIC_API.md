@@ -26,7 +26,9 @@ Manifest validation: `ExtensionManifestIssue`, `ExtensionManifestRules`, `Extens
 
 Structured Data Capture (FHIR Questionnaire): `Questionnaire`, `QuestionnaireAnswerValue`, `QuestionnaireFormProps`, `QuestionnaireFormRenderContext`, `QuestionnaireItem`, `QuestionnaireResponse`, `QuestionnaireResponseItem`, `BuildQuestionnaireResponseOptions`, `SelectFieldOption`.
 
-FHIR data-access option shapes: `SearchAllOptions`, `PagedSearchParams`, `PagedSearchResult`, `OptimisticInsertOptions`.
+FHIR data-access option shapes: `SearchParams`, `SearchAllOptions`, `PagedSearchParams`, `PagedSearchResult`, `OptimisticInsertOptions`.
+
+Audit read model: `ActivityItem`, `AuditAction`.
 
 UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, etc. — belong to the shell package, `ohs-player-web-shell`, not the library.)
 
@@ -56,10 +58,10 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types �
 | `useRoles()` | Current role strings from JWT. |
 | `useFhirClient()` | Singleton `FhirClient` for the app tree. |
 | `useFlag(flagName)` | Resolved boolean for a feature flag. |
-| `useTranslation()` | `t(key)`, interpolation, RTL/dir future-ready. |
+| `useTranslation()` | `t(key)`, interpolation, RTL/dir future-ready, `locale`, `formatDate(d)` (date only, `I18nConfig.dateFormat`), `formatDateTime(d)` (date and time, `I18nConfig.dateTimeFormat`, default medium date and short time; set its `timeZone` to pin a zone), `formatNumber(n)`. |
 | `useResource(resourceType, id)` | TanStack Query read: `client.read`. |
-| `useSearch(resourceType, params?)` | TanStack Query search bundle: `client.search`. |
-| `usePagedSearch(resourceType, { page, pageSize, params })` | Offset-paged search (`_count`/`_offset`/`_total=accurate`, as strings). Returns `{ rows, total, page, pageSize, hasNext, hasPrev, paginationMode, isLoading, isFetching, error }`. `paginationMode` is `'numbered'` when the server reports an accurate `total`, else `'links'`. Shares the `['fhir','search',type,…]` cache namespace, so delete/update/refresh invalidate it. |
+| `useSearch(resourceType, params?)` | TanStack Query search bundle: `client.search`. `params` is `SearchParams`: an array value repeats the key (FHIR AND), e.g. `{ date: ['ge…', 'lt…'] }`. |
+| `usePagedSearch(resourceType, { page, pageSize, params })` | Offset-paged search (`_count`/`_offset`/`_total=accurate`, as strings); `params` is `SearchParams`, so array values repeat the key. Returns `{ rows, total, page, pageSize, hasNext, hasPrev, paginationMode, isLoading, isFetching, error }`. `paginationMode` is `'numbered'` when the server reports an accurate `total`, else `'links'`. Shares the `['fhir','search',type,…]` cache namespace, so delete/update/refresh invalidate it. |
 | `useFhirCapabilities()` | TanStack Query: `GET …/metadata`. |
 | `useCreateResource(resourceType)` | Mutation: `client.create`; invalidates search for `resourceType`. |
 | `useUpdateResource(resourceType)` | Mutation: `client.update`; invalidates read + search. |
@@ -143,7 +145,7 @@ Methods:
 | Method | Description |
 | --- | --- |
 | `read(resourceType, id)` | `GET …/{type}/{id}` |
-| `search(resourceType, params?)` | `GET …/{type}?…` search parameters |
+| `search(resourceType, params?)` | `GET …/{type}?…` search parameters. `params: SearchParams` (`Record<string, string \| readonly string[]>`); an array value is sent as a repeated key, which FHIR reads as AND |
 | `searchAll(resourceType, params?, options?)` | Walk every search page via Bundle `link[rel=next]` (rebased onto the client base); returns the flat resource list. Options: `pageSize` (default 500), `maxPages` (default 100). Use when a single `_count` page is not enough (e.g. location roots). |
 | `rebaseFhirUrl(nextUrl, fhirBaseUrl)` | Pure helper: map a server-issued paging URL onto the client FHIR base (docker-internal hosts → browser proxy). |
 | `create(body)` | `POST …/{type}` — body must include `resourceType` |
@@ -198,7 +200,9 @@ Types: `BundleEntryMethod`, `TransactionBundleEntry`, `TransactionResponseBundle
 
 | Export | Description |
 | --- | --- |
-| `writeAuditEvent(client, params)` | `POST` a minimal FHIR `AuditEvent` via `client.create`. `AuditParams`: `action`, `resourceType`, optional `resourceId`, `description`, `agentDisplay`. |
+| `writeAuditEvent(client, params)` | `POST` a minimal FHIR `AuditEvent` via `client.create`. `AuditParams`: `action`, `resourceType`, optional `resourceId`, `description`, `agentDisplay`. Writes `agent[0].name` (the display) and types `entity[0]` with `RESOURCE_TYPES_SYSTEM`, so the `agent-name` and `entity-type` search parameters match portal events. |
+| `RESOURCE_TYPES_SYSTEM` | `'http://hl7.org/fhir/resource-types'`, the `entity.type` system `writeAuditEvent` writes; filter with `entity-type=<system>\|<Type>`. |
+| `activityItemFromAuditEvent(resource)` | Pure normaliser from an R4 `AuditEvent` (portal or gateway BALP written, input `unknown`) to `ActivityItem` `{ id, action?, resourceType, resourceId, description?, who, recorded? }`. Picks the `requestor` agent and the first entity whose reference ends in `Type/id`; `action` is `AuditAction` (`C`/`R`/`U`/`D`) or `undefined`. Used by the shell's activity feed and the reference app's audit log. |
 
 ---
 

@@ -168,7 +168,8 @@
           "dashboard",
           "orgMgmt",
           "setupWizard",
-          "fhirViewer"
+          "fhirViewer",
+          "auditLog"
         ]
       },
       "additionalProperties": {
@@ -189,7 +190,8 @@
               "organizations",
               "careTeams",
               "fhirViewer",
-              "setup"
+              "setup",
+              "audit"
             ]
           },
           "to": {
@@ -217,7 +219,8 @@
                   "dashboard",
                   "orgMgmt",
                   "setupWizard",
-                  "fhirViewer"
+                  "fhirViewer",
+                  "auditLog"
                 ]
               },
               "permission": {

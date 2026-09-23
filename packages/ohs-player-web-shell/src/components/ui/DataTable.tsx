@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'ohs-player-web-core';
-import { IconChevronLeft, IconChevronRight } from './icons';
 import { Checkbox } from './Checkbox';
-import { Listbox } from './Listbox';
+import { DataTablePagination } from './DataTablePagination';
+import { paginationSummary, serverPaginationState, type PaginationState } from './dataTablePaging';
 
 export interface DataTableColumn<Row> {
   key: string;
@@ -14,6 +14,21 @@ export interface DataTableColumn<Row> {
   sortValue?: (row: Row) => string | number;
   /** Render the cell in the code face — for identifiers and other machine-readable values. */
   mono?: boolean;
+}
+
+/** Server-driven paging (e.g. from `usePagedSearch`): `rows` is already one page; the table draws the footer. */
+export interface DataTableServerPagination {
+  /** 0-based page, as `usePagedSearch` counts. */
+  page: number;
+  pageSize: number;
+  /** Grand total when the server reports one; used in `'numbered'` mode. */
+  total?: number;
+  hasNext: boolean;
+  /** `'numbered'` shows page buttons and the total; `'links'` shows the range with previous/next only. */
+  mode: 'numbered' | 'links';
+  /** Receives the 0-based page to load. */
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 }
 
 export interface DataTableProps<Row> {
@@ -37,6 +52,11 @@ export interface DataTableProps<Row> {
   pageSizeOptions?: readonly number[];
   /** Snaps back to page 1 whenever this changes — pass the page's applied filter state. */
   pageResetKey?: string;
+  /**
+   * Server paging footer. When set, `rows` are rendered as given and `pagination`,
+   * `initialPageSize` and `pageResetKey` are ignored; `pageSizeOptions` still applies.
+   */
+  serverPagination?: DataTableServerPagination;
   /** Drop the wrapper's border/shadow/background and the min-width — for embedding inside a Card. */
   flush?: boolean;
   /** M3 density: each step down removes 4px of row height. Interactive targets stay >= 44px. */
@@ -83,13 +103,6 @@ function SortIcon({ dir }: Readonly<{ dir?: SortDir }>): React.ReactElement {
   );
 }
 
-function pageWindow(page: number, totalPages: number): number[] {
-  const size = Math.min(5, totalPages);
-  let start = Math.max(1, page - Math.floor(size / 2));
-  start = Math.min(start, Math.max(1, totalPages - size + 1));
-  return Array.from({ length: size }, (_, i) => start + i);
-}
-
 export function DataTable<Row>({
   columns,
   rows,
@@ -108,6 +121,7 @@ export function DataTable<Row>({
   initialPageSize = 10,
   pageSizeOptions = [10, 25, 50],
   pageResetKey,
+  serverPagination,
   flush,
 }: Readonly<DataTableProps<Row>>): React.ReactElement {
   const { t } = useTranslation();
@@ -128,8 +142,9 @@ export function DataTable<Row>({
     });
   }, [rows, sortKey, sortDir, columns]);
 
+  const clientPaging = Boolean(pagination) && !serverPagination;
   const total = sortedRows.length;
-  const totalPages = pagination ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+  const totalPages = clientPaging ? Math.max(1, Math.ceil(total / pageSize)) : 1;
 
   useEffect(() => {
     if (page > totalPages) setPage(1);
@@ -140,10 +155,10 @@ export function DataTable<Row>({
   }, [pageResetKey]);
 
   const visibleRows = useMemo(() => {
-    if (!pagination) return sortedRows;
+    if (!clientPaging) return sortedRows;
     const sliceStart = (page - 1) * pageSize;
     return sortedRows.slice(sliceStart, sliceStart + pageSize);
-  }, [pagination, sortedRows, page, pageSize]);
+  }, [clientPaging, sortedRows, page, pageSize]);
 
   const handleSortClick = (key: string): void => {
     if (sortKey === key) {
@@ -175,8 +190,33 @@ export function DataTable<Row>({
   };
 
   const showEmpty = !loading && rows.length === 0 && Boolean(emptyState);
-  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const end = Math.min(page * pageSize, total);
+  const clientState: PaginationState = {
+    start: total === 0 ? 0 : (page - 1) * pageSize + 1,
+    end: Math.min(page * pageSize, total),
+    total,
+    page,
+    pageCount: totalPages,
+    pageSize,
+    canPrev: page > 1,
+    canNext: page < totalPages,
+    onPage: setPage,
+    onPageSize: (next) => {
+      setPageSize(next);
+      setPage(1);
+    },
+  };
+  let footer: PaginationState | undefined;
+  let announced: PaginationState | undefined;
+  if (serverPagination) {
+    footer =
+      rows.length > 0 && !loading
+        ? serverPaginationState(serverPagination, rows.length)
+        : undefined;
+    announced = footer;
+  } else if (clientPaging) {
+    footer = total > 0 ? clientState : undefined;
+    announced = loading ? undefined : clientState;
+  }
 
   return (
     <div
@@ -186,9 +226,9 @@ export function DataTable<Row>({
     >
       {toolbar ? <div className="ohs-table__toolbar">{toolbar}</div> : null}
 
-      {pagination && !loading && !errorState ? (
+      {announced && !errorState ? (
         <span className="sr-only" role="status">
-          {t('tableShowing', { start, end, total })}
+          {paginationSummary(announced, t)}
         </span>
       ) : null}
 
@@ -285,57 +325,7 @@ export function DataTable<Row>({
             </table>
           </div>
 
-          {pagination && total > 0 ? (
-            <div className="ohs-pagination">
-              <span>{t('tableShowing', { start, end, total })}</span>
-              <div className="ohs-pagination__per-page">
-                <span>{t('tableItemsPerPage')}</span>
-                <Listbox
-                  compact
-                  className="ohs-pagination__select"
-                  label={t('tableItemsPerPage')}
-                  placeholder={String(pageSize)}
-                  value={[String(pageSize)]}
-                  options={pageSizeOptions.map((n) => ({ value: String(n), label: String(n) }))}
-                  onChange={(next) => {
-                    setPageSize(Number(next[0]));
-                    setPage(1);
-                  }}
-                />
-              </div>
-              <div className="ohs-pagination__pages">
-                <button
-                  type="button"
-                  className="ohs-pagination__page"
-                  aria-label={t('paginationPrev')}
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  <IconChevronLeft size={20} />
-                </button>
-                {pageWindow(page, totalPages).map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    className="ohs-pagination__page"
-                    aria-current={n === page ? 'page' : undefined}
-                    onClick={() => setPage(n)}
-                  >
-                    {n}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="ohs-pagination__page"
-                  aria-label={t('paginationNext')}
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                >
-                  <IconChevronRight size={20} />
-                </button>
-              </div>
-            </div>
-          ) : null}
+          {footer ? <DataTablePagination state={footer} pageSizeOptions={pageSizeOptions} /> : null}
         </>
       )}
     </div>

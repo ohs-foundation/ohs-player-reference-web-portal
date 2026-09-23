@@ -1,6 +1,6 @@
 {
   "name": "ohs-player-web-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "OHS Player web portal core library: FHIR, OIDC, RBAC, theming",
   "type": "module",
   "main": "./dist/index.cjs",

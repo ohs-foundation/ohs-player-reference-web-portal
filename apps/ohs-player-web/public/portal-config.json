@@ -78,6 +78,13 @@
       "labelKey": "navSetup",
       "order": 70,
       "requires": { "flag": "setupWizard", "permission": "setup.view" }
+    },
+    {
+      "id": "audit",
+      "to": "/audit",
+      "labelKey": "navAudit",
+      "order": 80,
+      "requires": { "flag": "auditLog", "permission": "audit.view" }
     }
   ],
   "permissionMap": {
@@ -96,7 +103,8 @@
     "careteams.manage": ["admin", "care-team-manager"],
     "setup.view": ["admin"],
     "fhir-viewer.view": ["admin", "care-team-manager"],
-    "fhir-viewer.edit": ["admin"]
+    "fhir-viewer.edit": ["admin"],
+    "audit.view": ["admin"]
   },
   "locale": "en",
   "customEndpoints": {
