@@ -1,8 +1,6 @@
 import {
   OhsDropdownMenu,
   useAuth,
-  useFlag,
-  usePermission,
   useTranslation,
   type ExtensionNavEntry,
 } from 'ohs-player-web-core';
@@ -39,8 +37,9 @@ import type { NavId } from '../config/navigation';
 import { usePortalConfig } from '../config/portalConfigContext';
 import { RouteFallback } from '../routes/RouteFallback';
 import { useExtensions } from '../host/extensionsContext';
+import { useRequirement } from '../auth/useRequirement';
 
-const ICON_SIZE = 20;
+const ICON_SIZE = 24;
 
 interface NavItem {
   to: string;
@@ -165,12 +164,9 @@ export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
 }
 
 function NavRow({ item }: Readonly<{ item: NavItem }>): React.ReactElement | null {
-  const flagOn = useFlag(item.flag ?? '__always_on__');
-  const enabled = item.flag ? flagOn : true;
-  const { can } = usePermission(item.permission ?? '__always_allowed__');
-  const permitted = item.permission ? can : true;
+  const allowed = useRequirement({ flag: item.flag, permission: item.permission });
   const isActive = Boolean(useMatch({ path: item.to, end: item.to === '/' }));
-  if (!enabled || !permitted) return null;
+  if (!allowed) return null;
 
   const Icon = isActive ? item.FillIcon : item.LineIcon;
 
@@ -179,7 +175,11 @@ function NavRow({ item }: Readonly<{ item: NavItem }>): React.ReactElement | nul
       <NavLink
         to={item.to}
         end={item.to === '/'}
-        className={isActive ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'}
+        className={
+          isActive
+            ? 'app-sidebar__link app-sidebar__link--active ohs-state-layer'
+            : 'app-sidebar__link ohs-state-layer'
+        }
       >
         <span className="app-sidebar__icon" aria-hidden="true">
           <Icon size={ICON_SIZE} />
