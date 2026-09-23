@@ -9,6 +9,7 @@ export const FLAG_NAMES = [
   'orgMgmt',
   'setupWizard',
   'fhirViewer',
+  'auditLog',
 ] as const;
 
 export const SYS_COLOR_ROLES = [

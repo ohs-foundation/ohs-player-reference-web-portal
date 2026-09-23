@@ -64,7 +64,7 @@ The image serves `apps/ohs-player-web/public/portal-config.json` at `/portal-con
 | `fhirVersion` | `R4`, `R5` or `STU3` | `VITE_FHIR_VERSION` |
 | `oidcIssuer`, `clientId` | Keycloak realm issuer and client id | `VITE_OIDC_ISSUER`, `VITE_CLIENT_ID` |
 | `brand.overrides`, `brand.darkOverrides` | Colour pins per theme role, light and dark (see [THEMING.md](./THEMING.md)) | the built-in pins |
-| `flags` | Feature flags by name: `userMgmt`, `locationMgmt`, `careTeams`, `dashboard`, `orgMgmt`, `setupWizard`, `fhirViewer`. Any other name, including an extension's flag, makes the document invalid until it is added to `FLAG_NAMES` (see [EXTENDING.md](./EXTENDING.md)) | the matching `VITE_FLAG_*` |
+| `flags` | Feature flags by name: `userMgmt`, `locationMgmt`, `careTeams`, `dashboard`, `orgMgmt`, `setupWizard`, `fhirViewer`, `auditLog`. Any other name, including an extension's flag, makes the document invalid until it is added to `FLAG_NAMES` (see [EXTENDING.md](./EXTENDING.md)) | the matching `VITE_FLAG_*` |
 | `navigation` | Sidebar entries: `id`, `to`, `labelKey`, `order`, and `requires` with a `flag` and a `permission` | the built-in sidebar |
 | `permissionMap` | Permission key to the roles that hold it | the built-in map |
 | `locale`, `messages` | Locale and message overrides by key | `en`, the built-in messages |
@@ -186,6 +186,7 @@ Front the container with a reverse proxy on the VM (nginx/Caddy/Traefik) to term
 2. **Auth:** sign in via Keycloak → you land on the dashboard (confirms `VITE_OIDC_ISSUER` / `VITE_CLIENT_ID` and the Keycloak redirect-URI config are correct).
 3. **Data:** the dashboard KPI counts and tables populate (confirms `VITE_FHIR_BASE_URL` reaches the gateway and the gateway reaches HAPI).
 4. **Transactional routes:** create a user (or any write) → succeeds and writes an audit entry. A `501` on `/custom/*` means the gateway is the dev nginx stand-in, not the real backend gateway — escalate to the backend team.
+5. **Audit log:** as an `admin`, open **Audit log** → the write from step 4 is the first row. The page reads `AuditEvent` from `VITE_FHIR_BASE_URL`, so it lists both the portal's events and, when the gateway sets `AUDIT_EVENT_ACTIONS_CONFIG`, the gateway's own. Prefer `CUD` there: with `CRUDE` every search the page runs is itself audited as an `E` row. Filtering by agent or resource type matches events written by this release onwards; older events, and gateway events until the gateway writes `agent.name` and a resource type on `entity.type`, match only the action and date filters.
 
 ---
 

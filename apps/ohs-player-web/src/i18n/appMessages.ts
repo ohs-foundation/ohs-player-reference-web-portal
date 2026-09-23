@@ -16,6 +16,7 @@ export const appMessageOverrides = {
   navOrganizations: 'Organisations',
   navCareTeams: 'Care Teams',
   navFhirViewer: 'FHIR Viewer',
+  navAudit: 'Audit log',
   navToggle: 'Toggle navigation',
   skipToContent: 'Skip to main content',
   appTopbarTitle: 'Open Health Stack',
@@ -509,4 +510,7 @@ export const appMessageOverrides = {
   fhirTypeSpecimen: 'Specimen',
   fhirTypeSupplyDelivery: 'Supply Delivery',
   fhirTypeTask: 'Task',
+
+  pageAudit: 'Audit log',
+  pageAuditDescription: 'Who changed what, and when, across the portal and the FHIR gateway.',
 } as const satisfies Partial<MessageCatalog>;

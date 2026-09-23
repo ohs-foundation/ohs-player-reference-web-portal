@@ -58,4 +58,11 @@ export const appRoutes: readonly PortalRoute[] = [
     load: loadFhirViewerPage,
     requires: { flag: 'fhirViewer', permission: 'fhir-viewer.view' },
   },
+  {
+    id: 'audit',
+    path: '/audit',
+    load: () => import('./features/audit/AuditPage').then((m) => ({ default: m.AuditPage })),
+    requires: { flag: 'auditLog', permission: 'audit.view' },
+    permissionFallback: <OrganizationsPermissionFallback />,
+  },
 ];

@@ -181,7 +181,7 @@ createRoot(document.getElementById('root')!).render(<PortalHost host={host} />);
 At startup the host checks every manifest:
 
 1. **Shape:** `validateExtensionManifest` from the library, with the shell's `DASHBOARD_REGIONS` and `SLOT_NAMES`. It checks the id, unknown top-level keys, ids unique within each list, route paths and loaders, nav fields, widget regions, slot names, and the value types of the flat maps.
-2. **Clashes:** a manifest id another manifest uses, or a key, contributed id or route path that the host or another extension already declares.
+2. **Clashes:** a manifest id another manifest uses, or a key, contributed id or route path that the host or another extension already declares. The host's claims grow with each release: `0.2.0` adds the route path `/audit`, the flag `auditLog`, the permission `audit.view` and the reference app's `navAudit`, `pageAudit*`, `audit*` and `tableShowingRange` message keys, so an extension that already declares one of them is rejected after the upgrade.
 3. **Permissions:** every `requires.permission` must be in the merged permission map.
 
 Contributed ids become `<manifestId>.<id>`. With `development: true` the first failure throws before anything renders. The message names the extension, the field path and what was expected:
