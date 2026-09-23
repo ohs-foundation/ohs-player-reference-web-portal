@@ -126,7 +126,36 @@ describe('ResourceListPanel', () => {
       paginationMode: 'numbered',
     });
     renderPanel();
-    expect(screen.getByText(/fhirViewerShowingOf/)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'tableShowing {"start":1,"end":10,"total":25}',
+    );
+    expect(screen.getByRole('button', { name: '3' })).toBeInTheDocument();
+  });
+
+  it('degrades to a range with previous and next when the server gives no total', () => {
+    paged.current = base({ rows: orgRows(10), hasNext: true, paginationMode: 'links' });
+    renderPanel();
+    expect(screen.getByRole('status')).toHaveTextContent('tableShowingRange {"start":1,"end":10}');
+    expect(screen.queryByRole('button', { name: '1' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'paginationNext' })).toBeEnabled();
+  });
+
+  it('pages on the server: next asks for the following page', () => {
+    paged.current = base({
+      rows: orgRows(10),
+      total: 25,
+      hasNext: true,
+      paginationMode: 'numbered',
+    });
+    renderPanel();
+    fireEvent.click(screen.getByRole('button', { name: 'paginationNext' }));
+    expect(lastSearchOptions().page).toBe(1);
+  });
+
+  it('draws no footer under the example row shown for an empty type', () => {
+    paged.current = base({ rows: [], total: 0, paginationMode: 'numbered' });
+    renderPanel();
+    expect(screen.queryByRole('button', { name: 'paginationNext' })).toBeNull();
   });
 
   it('has no critical a11y violations with rows rendered', async () => {
