@@ -1,11 +1,5 @@
-import { PermissionGuard, useTranslation } from 'ohs-player-web-core';
+import { PermissionGuard, useStatusBar, useTranslation } from 'ohs-player-web-core';
 import { Link } from 'react-router-dom';
-import {
-  IconAccountCircleFill,
-  IconBriefcaseFill,
-  IconMapPinFill,
-  IconTeamFill,
-} from '../components/ui/icons';
 import {
   Avatar,
   LinearProgress,
@@ -16,7 +10,11 @@ import {
   type DataTableColumn,
   type DonutSegment,
 } from '../components/ui';
-import { StatCard } from '../features/dashboard/StatCard';
+import { KpiCard } from '../features/dashboard/KpiCard';
+import { KpiPicker } from '../features/dashboard/KpiPicker';
+import { VisibleKpis } from '../features/dashboard/VisibleKpis';
+import { useDashboardKpis } from '../features/dashboard/useDashboardKpis';
+import type { KpiDefinition, KpiId } from '../features/dashboard/kpiCatalogue';
 import { RecentCard } from '../features/dashboard/RecentCard';
 import { DistributionCard } from '../features/dashboard/DistributionCard';
 import { useRecent, useResourceStats } from '../features/dashboard/useDashboardData';
@@ -38,14 +36,6 @@ type CareTeamRow = Named & { status?: string };
 
 const ACTIVE_COLOR = 'var(--ohs-sys-color-success)';
 const INACTIVE_COLOR = 'var(--ohs-sys-color-surface-container)';
-
-/* Per-KPI badge fills from the design; decorative, so they sit outside the themed roles. */
-const KPI_BADGE = {
-  users: '#D398E6',
-  locations: '#E89271',
-  organisations: '#70A1E5',
-  careTeams: '#F0C274',
-} as const;
 
 function fullName(p: PractitionerRow): string {
   const n = p.name?.[0];
@@ -76,7 +66,9 @@ function activeSplit(
 
 export function DashboardPage(): React.ReactElement {
   const { t } = useTranslation();
+  const { notify } = useStatusBar();
   const { widgets } = useExtensions();
+  const kpis = useDashboardKpis();
 
   const users = useResourceStats('Practitioner', { active: 'true' });
   const locations = useResourceStats('Location', { status: 'active' });
@@ -151,13 +143,17 @@ export function DashboardPage(): React.ReactElement {
       .filter((widget) => widget.region === region)
       .map((widget) => ({ key: widget.id, order: widget.order, node: <ExtensionWidgetTile widget={widget} /> }));
 
-  const kpi: RegionItem[] = [
-    { key: 'users', order: 10, node: <StatCard label={t('kpiTotalUsers')} value={users.total} loading={users.loading} badgeColor={KPI_BADGE.users} glyph={IconAccountCircleFill} /> },
-    { key: 'locations', order: 20, node: <StatCard label={t('kpiTotalLocations')} value={locations.total} loading={locations.loading} badgeColor={KPI_BADGE.locations} glyph={IconMapPinFill} /> },
-    { key: 'organizations', order: 30, node: <StatCard label={t('kpiTotalOrganizations')} value={orgs.total} loading={orgs.loading} badgeColor={KPI_BADGE.organisations} glyph={IconBriefcaseFill} /> },
-    { key: 'careTeams', order: 40, node: <StatCard label={t('kpiTotalCareTeams')} value={careTeams.total} loading={careTeams.loading} badgeColor={KPI_BADGE.careTeams} glyph={IconTeamFill} /> },
+  const kpiItems = (available: readonly KpiDefinition[]): RegionItem[] => [
+    ...available
+      .filter((kpi) => kpis.selected.includes(kpi.id))
+      .map((kpi) => ({ key: kpi.id, order: kpi.order, node: <KpiCard kpi={kpi} /> })),
     ...contributed('kpi'),
   ];
+
+  const saveKpis = (ids: readonly KpiId[]): void => {
+    kpis.save(ids);
+    notify({ tone: 'success', title: t('kpiSaved') });
+  };
 
   const main: RegionItem[] = [
     {
@@ -236,19 +232,41 @@ export function DashboardPage(): React.ReactElement {
   ];
 
   return (
-    <Page>
-      <PageHeader title={t('pageDashboard')} description={t('pageDashboardDescription')} />
-      {anyStatsLoading ? <LinearProgress style={{ marginBottom: 'var(--ohs-sys-spacing-4, 16px)' }} /> : null}
+    <VisibleKpis>
+      {(available) => {
+        const kpi = kpiItems(available);
+        return (
+          <Page>
+            <PageHeader
+              title={t('pageDashboard')}
+              description={t('pageDashboardDescription')}
+              actions={
+                <KpiPicker
+                  options={available}
+                  selected={kpis.selected}
+                  max={kpis.max}
+                  onSave={saveKpis}
+                />
+              }
+            />
+            {anyStatsLoading ? (
+              <LinearProgress style={{ marginBottom: 'var(--ohs-sys-spacing-4, 16px)' }} />
+            ) : null}
 
-      <PermissionGuard permission="dashboard.view">
-        <Stack gap={5}>
-          <section aria-label={t('pageDashboard')} className="ohs-kpi-grid">
-            <RegionItems items={kpi} />
-          </section>
+            <PermissionGuard permission="dashboard.view">
+              <Stack gap={5}>
+                {kpi.length > 0 ? (
+                  <section aria-label={t('pageDashboard')} className="ohs-kpi-grid">
+                    <RegionItems items={kpi} />
+                  </section>
+                ) : null}
 
-          <DashboardRows main={main} side={side} />
-        </Stack>
-      </PermissionGuard>
-    </Page>
+                <DashboardRows main={main} side={side} />
+              </Stack>
+            </PermissionGuard>
+          </Page>
+        );
+      }}
+    </VisibleKpis>
   );
 }

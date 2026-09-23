@@ -193,7 +193,7 @@ The `schedules` extension in `apps/ohs-player-web-example/src/extensions/schedul
 | --- | --- | --- |
 | Route | `routes: [{ id: 'list', path: '/schedules', load, requires }]` | `/schedules` shows a table of Schedule resources, loaded lazily behind a spinner. |
 | Sidebar entry | `nav: [{ id: 'list', to: '/schedules', labelKey: 'navSchedules', order: 15, icon: IconToday, requires }]` | Schedules sits between Users (10) and Dashboard (20). |
-| Dashboard widget | `widgets: [{ id: 'active', region: 'kpi', order: 50, load, requires }]` | An Active Schedules card after the four built-in KPI cards. |
+| Dashboard widget | `widgets: [{ id: 'active', region: 'kpi', order: 50, load, requires }]` | An Active Schedules card after the built-in Total Users card. The example turns off the other screens' flags, which hides their KPI cards too. |
 | Slot contribution | `slots: [{ id: 'view', slot: 'users.rowActions', order: 10, component: ViewSchedulesAction }]` | Users, then a row's ⋮ menu: View schedules opens `/schedules?actor=Practitioner/<id>`. |
 | Messages, flag, permission | `messages`, `flags: { schedules: true }`, `permissions: { 'schedules.view': ['admin', 'care-team-manager'] }` | The copy above; the gates from Part 1 steps 4 and 5. |
 
@@ -285,6 +285,8 @@ A widget's `load` imports a module whose default export is the tile. There are t
 | `side` | The narrow column beside it | 10 to 40 |
 
 A `main` and a `side` widget with the same `order` share a row, and an `order` no built-in row uses starts a row of its own.
+
+The built-in KPI cards follow their sidebar entry's `requires`, so switching off a screen's flag, or denying its permission, hides its card as well. Each user chooses up to four of the remaining cards with Customize Widgets, and the choice is kept per user in that browser. Extension tiles in `kpi` always render after the chosen cards and do not count toward the four.
 
 `PracticeKpiWidget.tsx` uses the shell's `StatCard` to match the built-in cards:
 
