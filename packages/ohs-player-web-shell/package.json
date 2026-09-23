@@ -1,6 +1,6 @@
 {
   "name": "ohs-player-web-shell",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "OHS Player web portal shell: routes, layout, dashboard, primitive kit and extension host",
   "type": "module",
   "main": "./dist/index.cjs",
