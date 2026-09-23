@@ -92,6 +92,18 @@ function pairs(mode, t, badges) {
     on(t.text, t.primaryContainer, 'text on primary-container'),
     ui(t.primary, t.surface, 'primary as focus outline on surface'),
 
+    on(t.primary, sys(mode, 'secondary-container'), 'primary nav label on the active row fill'),
+    on(
+      sys(mode, 'on-secondary-container'),
+      sys(mode, 'secondary-container'),
+      'on-secondary-container on selected filter chip',
+    ),
+    on(
+      sys(mode, 'on-warning-container'),
+      sys(mode, 'warning-container'),
+      'on-warning-container on the widget limit notice',
+    ),
+
     on(t.error, t.surface, 'error text on surface'),
     on(sys(mode, 'warning'), t.surface, 'warning text on surface'),
     on(sys(mode, 'success'), t.surface, 'success text on surface'),

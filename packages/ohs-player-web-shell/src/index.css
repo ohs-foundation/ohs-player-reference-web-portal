@@ -42,19 +42,21 @@ body {
 
 /* Reference app shell — layout + top bar user control (avatar + name must not visually merge) */
 .app-shell {
+  /* A 56px control row plus the top bar's own padding; the sidebar starts its list at this line. */
+  --app-topbar-height: calc(var(--ohs-sys-spacing-14, 56px) + 2 * var(--ohs-sys-spacing-6, 24px));
   display: grid;
   height: 100%;
   grid-template-areas:
-    'top top'
+    'side top'
     'side main';
   grid-template-rows: auto 1fr;
-  grid-template-columns: 134px minmax(0, 1fr);
+  grid-template-columns: 197px minmax(0, 1fr);
   background: var(--ohs-sys-color-surface-container, #fafafa);
 }
 
 .app-topbar {
   grid-area: top;
-  height: 104px;
+  height: var(--app-topbar-height);
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -307,13 +309,11 @@ body {
 
 .app-sidebar {
   grid-area: side;
-  /* Brand + inverse for the active item; token-driven so it flips with light/dark. */
-  --sidebar-active-bg: var(--ohs-sys-color-primary, #094f9a);
-  --sidebar-active-fg: var(--ohs-sys-color-on-primary, #ffffff);
+  --sidebar-active-bg: var(--ohs-sys-color-secondary-container, #bccefe);
+  --sidebar-active-fg: var(--ohs-sys-color-primary, #094f9a);
   display: flex;
   flex-direction: column;
-  padding: var(--ohs-sys-spacing-12, 48px) var(--ohs-sys-spacing-6, 24px)
-    var(--ohs-sys-spacing-14, 56px);
+  padding: var(--app-topbar-height) var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-3, 12px);
   background: transparent;
   overflow-y: auto;
   align-self: stretch;
@@ -322,66 +322,58 @@ body {
 .app-sidebar ul {
   display: flex;
   flex-direction: column;
-  gap: var(--ohs-sys-spacing-4, 16px);
+  gap: var(--ohs-sys-spacing-3, 12px);
   width: 100%;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* Stacked item: a 56×32 icon pill over its label, 72px tall on an 88px pitch (72 + the 16px gap).
+/* Full-width pill row; `.ohs-state-layer` paints hover, focus and press over the whole row.
+   The short end padding only moves where a long label truncates; the row width is fixed.
    `.app-sidebar` prefix raises specificity above the global `[data-ohs-root] a` link color. */
 .app-sidebar .app-sidebar__link {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--ohs-sys-spacing-2, 8px);
+  gap: var(--ohs-sys-spacing-3, 12px);
   width: 100%;
-  min-height: 72px;
-  padding: 0;
+  height: var(--ohs-sys-spacing-14, 56px);
+  padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-2, 8px)
+    var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-6, 24px);
+  border-radius: var(--ohs-sys-shape-corner-full, 9999px);
   color: var(--ohs-sys-color-on-surface-variant, #696969);
-  font-family: var(--ohs-ref-typeface-plain, 'Google Sans', sans-serif);
-  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
-  line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
-  font-weight: var(--ohs-ref-typeface-weight-medium, 500);
-  text-align: center;
+  font-family: var(--ohs-sys-typescale-label-medium-font, inherit);
+  font-size: var(--ohs-sys-typescale-label-medium-size, 14px);
+  line-height: var(--ohs-sys-typescale-label-medium-line-height, 20px);
+  font-weight: var(--ohs-sys-typescale-label-medium-weight, 500);
+  letter-spacing: var(--ohs-sys-typescale-label-medium-letter-spacing, -0.5px);
   text-decoration: none;
   box-sizing: border-box;
-  transition: color 120ms ease;
-}
-
-.app-sidebar .app-sidebar__link:hover:not(.app-sidebar__link--active) .app-sidebar__icon {
-  background: rgb(
-    from var(--ohs-sys-color-on-surface, #0d0d0d) r g b / var(--ohs-sys-state-hover-opacity, 0.08)
-  );
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
 .app-sidebar .app-sidebar__link:hover {
   text-decoration: none;
 }
-
 .app-sidebar .app-sidebar__link:focus-visible {
   outline: none;
-  border-radius: var(--ohs-sys-shape-corner-medium, 12px);
   box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(31, 111, 235, 0.35));
 }
-
 .app-sidebar .app-sidebar__link--active {
-  color: var(--ohs-sys-color-on-surface, #0d0d0d);
-}
-.app-sidebar .app-sidebar__link--active .app-sidebar__icon {
   background: var(--sidebar-active-bg);
   color: var(--sidebar-active-fg);
 }
 
 .app-sidebar__icon {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 56px;
-  height: 32px;
-  border-radius: var(--ohs-sys-shape-corner-full, 999px);
-  transition: background 120ms ease;
+}
+.app-sidebar__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* The floating panel: rounded on all four corners so it reads as overlapping the rail/top-bar corner. */
@@ -452,7 +444,7 @@ body {
     grid-template-columns: 1fr;
   }
 
-  /* Horizontal strip on mobile: the stacked items tile across instead of down. */
+  /* Horizontal strip on mobile: the rows tile across instead of down. */
   .app-shell[data-sidebar-open] .app-sidebar {
     display: flex;
     padding: var(--ohs-sys-spacing-4, 16px);
@@ -464,5 +456,9 @@ body {
   }
   .app-shell[data-sidebar-open] .app-sidebar li {
     flex: 0 0 auto;
+  }
+  .app-shell[data-sidebar-open] .app-sidebar .app-sidebar__link {
+    width: auto;
+    padding-inline-end: var(--ohs-sys-spacing-6, 24px);
   }
 }

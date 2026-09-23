@@ -91,7 +91,9 @@ describe('the example portal with the schedules extension', () => {
 
     const kpiStrip = await screen.findByRole('region', { name: 'Dashboard' }, LAZY_PAGE);
     expect(await within(kpiStrip).findByText('Active Schedules')).toBeInTheDocument();
-    expect(within(kpiStrip).getAllByText('3')).toHaveLength(5);
+    expect(within(kpiStrip).getByText('Total Users')).toBeInTheDocument();
+    expect(within(kpiStrip).queryByText('Total Locations')).not.toBeInTheDocument();
+    expect(within(kpiStrip).getAllByText('3')).toHaveLength(2);
   });
 
   it("adds the schedules action to a users row's menu", async () => {

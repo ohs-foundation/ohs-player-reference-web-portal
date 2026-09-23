@@ -72,19 +72,22 @@ seed and that check is skipped, as it should be.
 
 ### What the reference app pins, and why
 
-Seventeen roles, all in `apps/ohs-player-web/src/theme/sysTheme.ts`. Everything else is generated.
+Twenty roles, all in `apps/ohs-player-web/src/theme/sysTheme.ts`. Everything else is generated.
 
 | Scheme | Role | Pinned to | Why |
 | --- | --- | --- | --- |
 | light | `primary` | `#094F9A` | brand; generated tone 40 is `#245eaa` |
 | light | `on-primary` | `#FAFAFA` | established content-on-brand; generated is `#ffffff` |
 | light | `primary-container` | `#DCE5FE` | brand |
+| light | `secondary-container` | `#BCCEFE` | Figma `Background/Brand Subtle`: the active sidebar row (M3's nav indicator role), also the selected filter chip |
 | light | `surface-container` | `#FAFAFA` | the established page grey |
 | light | `on-surface` | `#0D0D0D` | brand near-black |
 | light | `on-surface-variant` | `#696969` | established muted text; generated is `#44474e` |
 | light | `outline-variant` | `#EDEDED` | established card and table border; generated is `#c4c6cf` |
+| light | `warning-container` | `#FFF5CC` | Figma `Background/Notice Subtle`: the dashboard widget-limit notice. Its text stays `on-warning-container` `#5c4a00` (7.9:1), because Figma's `#997A00` is 3.7:1 |
 | light | `error` | `#E50000` | established negative red; generated is `#ba1a1a` |
 | dark | `primary-container` | `#04366D` | brand; generated is `#00468c` |
+| dark | `secondary-container` | `#04366D` | interim until design supplies a dark `Brand Subtle`; the generated `#3e4758` puts the primary label at 4.08:1 |
 | dark | `surface` | `#0D0D0D` | brand |
 | dark | `surface-container` | `#0D0D0D` | page |
 | dark | `surface-container-lowest` | `#1A1A1A` | drawer, dialog and panel fill; generated is `#0d0e11` |
@@ -214,7 +217,9 @@ productivity tool and respect reduced motion.
 
 ## 6. Elevation
 
-`--ohs-sys-elevation-level0..5`, mapped as card L1, menu/dropdown/popover L2, dialog/drawer/toast L3.
+`--ohs-sys-elevation-level0..5`, mapped as card L1, menu/dropdown L2, dialog/drawer/toast L3, popover L4.
+The popover takes L4 because its 16/32 offset and blur are the nearest match to Figma's `Shadows/Light - L6`;
+no level reproduces that shadow exactly.
 
 The **level structure** is M3's; the **ink** is this product's reviewed slate-tinted shadows rather than
 M3's umbra/penumbra recipes. That choice is still open — swapping the ink means editing `ELEVATION` in
