@@ -38,7 +38,9 @@ export { Inline, Page, PageHeader, Stack } from './Layout';
 export type { InlineProps, PageHeaderProps, PageProps, StackProps } from './Layout';
 
 export { DataTable } from './DataTable';
-export type { DataTableColumn, DataTableProps } from './DataTable';
+export type { DataTableColumn, DataTableProps, DataTableServerPagination } from './DataTable';
+export { DetailField } from './DetailField';
+export type { DetailFieldProps } from './DetailField';
 
 export { DonutChart } from './DonutChart';
 export type { DonutChartProps, DonutSegment } from './DonutChart';

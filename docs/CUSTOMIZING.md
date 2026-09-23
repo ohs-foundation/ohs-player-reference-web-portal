@@ -274,6 +274,33 @@ export default function PracticeDetailPage(): React.ReactElement {
 }
 ```
 
+The list above loads one page of twenty. To page through a larger collection on the server, use `usePagedSearch` and hand its result to the table's `serverPagination`; the table then renders `rows` as given and draws the same footer as client paging, with numbered pages when the server reports a total and previous/next only when it does not. Show a record's fields in a drawer or panel with `DetailField` inside a `.ohs-detail-grid`.
+
+```tsx
+const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(10);
+const result = usePagedSearch<Practitioner>('Practitioner', { page, pageSize });
+
+<DataTable
+  columns={columns}
+  rows={result.rows}
+  rowKey={(p) => p.id ?? ''}
+  loading={result.isLoading}
+  serverPagination={{
+    page,
+    pageSize,
+    total: result.total,
+    hasNext: result.hasNext,
+    mode: result.paginationMode,
+    onPageChange: setPage,
+    onPageSizeChange: (size) => {
+      setPageSize(size);
+      setPage(0);
+    },
+  }}
+/>;
+```
+
 #### Dashboard widgets
 
 A widget's `load` imports a module whose default export is the tile. There are three regions:
