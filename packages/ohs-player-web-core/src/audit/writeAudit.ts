@@ -8,6 +8,12 @@ export interface AuditParams {
   agentDisplay?: string;
 }
 
+/**
+ * `AuditEvent.entity.type` system for an audited FHIR resource. The R4 audit-entity-type value set
+ * includes every resource type code, so readers can filter with `entity-type=<system>|<Type>`.
+ */
+export const RESOURCE_TYPES_SYSTEM = 'http://hl7.org/fhir/resource-types';
+
 /** Maps the high-level action to the R4 `AuditEvent.action` code (C/R/U/D). */
 const ACTION_CODE: Record<AuditParams['action'], 'C' | 'R' | 'U' | 'D'> = {
   create: 'C',
@@ -21,6 +27,7 @@ export async function writeAuditEvent(
   params: AuditParams,
 ): Promise<unknown> {
   const now = new Date().toISOString();
+  const agentDisplay = params.agentDisplay ?? 'Portal user';
   const record = {
     resourceType: 'AuditEvent',
     type: {
@@ -41,7 +48,8 @@ export async function writeAuditEvent(
             },
           ],
         },
-        who: { display: params.agentDisplay ?? 'Portal user' },
+        who: { display: agentDisplay },
+        name: agentDisplay,
         requestor: true,
       },
     ],
@@ -51,9 +59,9 @@ export async function writeAuditEvent(
           {
             what: { reference: `${params.resourceType}/${params.resourceId}` },
             type: {
-              system: 'http://terminology.hl7.org/CodeSystem/audit-entity-type',
-              code: '2',
-              display: 'System Object',
+              system: RESOURCE_TYPES_SYSTEM,
+              code: params.resourceType,
+              display: params.resourceType,
             },
             ...(params.description ? { description: params.description } : {}),
           },
