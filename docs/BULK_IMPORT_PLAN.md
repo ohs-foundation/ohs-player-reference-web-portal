@@ -549,7 +549,7 @@ DoD
 
 ## Follow-ups worth ticketing
 
-Backend (`ohs-player-reference-backend`):
+Backend (`ohs-player-reference-backend`), filed as ohs-foundation/ohs-player-reference-backend#85 to #93 in that order (B8's quoting item became #93; the stale batch size comment is noted in #91):
 - B1. `BulkUserImportServlet` never calls `emitDone` (D2).
 - B2. No up-front header validation; the users servlet enforces neither `username` nor `email` despite the README.
 - B3. `CsvProcessor` does not strip a UTF-8 BOM, so the first column silently vanishes.
