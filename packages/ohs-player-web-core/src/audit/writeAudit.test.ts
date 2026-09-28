@@ -27,17 +27,45 @@ describe('writeAuditEvent', () => {
 
   it('maps create→C and delete→D', async () => {
     const client = clientStub();
-    await writeAuditEvent(client, { action: 'create', resourceType: 'Organization', resourceId: 'o1' });
-    await writeAuditEvent(client, { action: 'delete', resourceType: 'Organization', resourceId: 'o1' });
+    await writeAuditEvent(client, {
+      action: 'create',
+      resourceType: 'Organization',
+      resourceId: 'o1',
+    });
+    await writeAuditEvent(client, {
+      action: 'delete',
+      resourceType: 'Organization',
+      resourceId: 'o1',
+    });
     expect((client.create.mock.calls[0][0] as { action?: string }).action).toBe('C');
     expect((client.create.mock.calls[1][0] as { action?: string }).action).toBe('D');
   });
 
-  it('omits the entity when no resourceId is given', async () => {
+  it('omits the entity when neither a resourceId nor a description is given', async () => {
     const client = clientStub();
     await writeAuditEvent(client, { action: 'create', resourceType: 'Bundle' });
     const record = client.create.mock.calls[0][0] as { entity?: unknown[] };
     expect(record.entity).toEqual([]);
+  });
+
+  it('records a summary entity with no what when only a description is given', async () => {
+    const client = clientStub();
+    await writeAuditEvent(client, {
+      action: 'create',
+      resourceType: 'Organization',
+      description: 'Bulk import of orgs.csv: 48 imported, 2 failed, 50 rows',
+    });
+    const record = client.create.mock.calls[0][0] as { entity?: Record<string, unknown>[] };
+    expect(record.entity).toEqual([
+      {
+        type: {
+          system: 'http://terminology.hl7.org/CodeSystem/audit-entity-type',
+          code: '2',
+          display: 'System Object',
+        },
+        description: 'Bulk import of orgs.csv: 48 imported, 2 failed, 50 rows',
+      },
+    ]);
   });
 
   it('propagates the error when the underlying create fails (does not swallow it)', async () => {

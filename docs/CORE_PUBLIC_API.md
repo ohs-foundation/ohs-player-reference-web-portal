@@ -198,7 +198,7 @@ Types: `BundleEntryMethod`, `TransactionBundleEntry`, `TransactionResponseBundle
 
 | Export | Description |
 | --- | --- |
-| `writeAuditEvent(client, params)` | `POST` a minimal FHIR `AuditEvent` via `client.create`. `AuditParams`: `action`, `resourceType`, optional `resourceId`, `description`, `agentDisplay`. |
+| `writeAuditEvent(client, params)` | `POST` a minimal FHIR `AuditEvent` via `client.create`. `AuditParams`: `action`, `resourceType`, optional `resourceId`, `description`, `agentDisplay`. With a `description` and no `resourceId`, it records one summary entity with no `what` (e.g. a bulk import). |
 
 ---
 
