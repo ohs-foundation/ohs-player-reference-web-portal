@@ -1,121 +1,129 @@
-import { useCallback, useRef, useState } from 'react';
-import { FhirError, useFhirClient } from 'ohs-player-web-core';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { type FhirClient, useFhirClient } from 'ohs-player-web-core';
+import { toErrorMessage } from '../sdc/toErrorMessage';
+import {
+  type ImportCompletion,
+  type ImportFailure,
+  type ImportOutcome,
+  type ImportResult,
+  outcomeFromFrames,
+  readFrames,
+} from './importStream';
 
 export interface ImportProgress {
   processed: number;
   total: number;
 }
 
-export interface ImportResult {
-  done: true;
-  processed: number;
-  failed: number;
-  total: number;
-}
-
 export type ImportPhase = 'idle' | 'uploading' | 'success' | 'error';
 
-interface ParsedEvent {
-  processed?: number;
-  total?: number;
-  done?: boolean;
-  failed?: number;
+export interface ImportStreamOptions {
+  alias: string;
+  completion: ImportCompletion;
 }
 
-/** POST a multipart CSV to /api/bulk-import/locations and consume its SSE progress stream. */
-export function useBulkImport() {
+export interface BulkImportState {
+  phase: ImportPhase;
+  progress: ImportProgress;
+  result: ImportResult | null;
+  failure: ImportFailure | null;
+  start: (file: File) => Promise<ImportOutcome | null>;
+  reset: () => void;
+}
+
+const NO_PROGRESS: ImportProgress = { processed: 0, total: 0 };
+
+function uploadForm(file: File): FormData {
+  const form = new FormData();
+  form.append('file', file);
+  return form;
+}
+
+interface StreamHooks {
+  onReader: (reader: ReadableStreamDefaultReader<Uint8Array>) => void;
+  onProgress: (progress: ImportProgress) => void;
+}
+
+async function streamImport(
+  client: FhirClient,
+  { alias, completion }: ImportStreamOptions,
+  file: File,
+  { onReader, onProgress }: StreamHooks,
+): Promise<ImportOutcome> {
+  try {
+    const res = await client.customPostStream(alias, uploadForm(file));
+    if (!res.ok) throw await client.errorFromResponse(res);
+    if (!res.body) return { ok: false, failure: { kind: 'empty' } };
+    const reader = res.body.getReader();
+    onReader(reader);
+    const frames = await readFrames(reader, (frame) => {
+      if (frame.kind === 'progress') onProgress({ processed: frame.processed, total: frame.total });
+    });
+    return outcomeFromFrames(frames, completion);
+  } catch (err) {
+    return { ok: false, failure: { kind: 'request', message: toErrorMessage(err) } };
+  }
+}
+
+export function useBulkImport({ alias, completion }: ImportStreamOptions): BulkImportState {
   const client = useFhirClient();
   const [phase, setPhase] = useState<ImportPhase>('idle');
-  const [progress, setProgress] = useState<ImportProgress>({ processed: 0, total: 0 });
+  const [progress, setProgress] = useState<ImportProgress>(NO_PROGRESS);
   const [result, setResult] = useState<ImportResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  const [failure, setFailure] = useState<ImportFailure | null>(null);
+  const runRef = useRef(0);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 
-  const reset = useCallback(() => {
-    abortRef.current?.abort();
-    setPhase('idle');
-    setProgress({ processed: 0, total: 0 });
-    setResult(null);
-    setError(null);
+  const abandonRun = useCallback(() => {
+    runRef.current += 1;
+    readerRef.current?.cancel().catch(() => undefined);
+    readerRef.current = null;
   }, []);
 
+  useEffect(() => abandonRun, [abandonRun]);
+
+  const reset = useCallback(() => {
+    abandonRun();
+    setPhase('idle');
+    setProgress(NO_PROGRESS);
+    setResult(null);
+    setFailure(null);
+  }, [abandonRun]);
+
   const start = useCallback(
-    async (file: File) => {
+    async (file: File): Promise<ImportOutcome | null> => {
+      runRef.current += 1;
+      const run = runRef.current;
+      const isLive = (): boolean => runRef.current === run;
       setPhase('uploading');
-      setProgress({ processed: 0, total: 0 });
+      setProgress(NO_PROGRESS);
       setResult(null);
-      setError(null);
+      setFailure(null);
 
-      const form = new FormData();
-      form.append('file', file);
-
-      try {
-        const res = await client.customPostStream('locationsBulkImport', form);
-        if (!res.ok) {
-          const err = await client.errorFromResponse(res);
-          throw err;
-        }
-        if (!res.body) throw new Error('No response stream');
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        // Holder object (not a bare `let`) so TS doesn't narrow the closure-mutated value away.
-        const state: { final: ImportResult | null } = { final: null };
-
-        // SSE frames are separated by a blank line; each `data:` line carries one JSON payload.
-        const handleFrame = (frame: string) => {
-          for (const line of frame.split('\n')) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith('data:')) continue;
-            const json = trimmed.slice(5).trim();
-            if (!json) continue;
-            let evt: ParsedEvent;
-            try {
-              evt = JSON.parse(json) as ParsedEvent;
-            } catch {
-              continue;
-            }
-            if (evt.done) {
-              state.final = {
-                done: true,
-                processed: evt.processed ?? 0,
-                failed: evt.failed ?? 0,
-                total: evt.total ?? 0,
-              };
-            } else if (typeof evt.processed === 'number') {
-              setProgress({ processed: evt.processed, total: evt.total ?? 0 });
-            }
-          }
-        };
-
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          let sep = buffer.indexOf('\n\n');
-          while (sep !== -1) {
-            handleFrame(buffer.slice(0, sep));
-            buffer = buffer.slice(sep + 2);
-            sep = buffer.indexOf('\n\n');
-          }
-        }
-        if (buffer.trim()) handleFrame(buffer);
-
-        if (state.final) {
-          setResult(state.final);
-          setProgress({ processed: state.final.processed, total: state.final.total });
-          setPhase('success');
-        } else {
-          throw new Error('Import stream ended without a completion event');
-        }
-      } catch (err) {
-        setError(err instanceof FhirError ? err.message : err instanceof Error ? err.message : String(err));
+      const outcome = await streamImport(client, { alias, completion }, file, {
+        onReader: (reader) => {
+          if (isLive()) readerRef.current = reader;
+          else reader.cancel().catch(() => undefined);
+        },
+        onProgress: (next) => {
+          if (isLive()) setProgress(next);
+        },
+      });
+      if (!isLive()) return null;
+      readerRef.current = null;
+      if (outcome.ok) {
+        const { processed, total } = outcome.result;
+        setResult(outcome.result);
+        setProgress({ processed, total: total ?? processed });
+        setPhase('success');
+      } else {
+        setFailure(outcome.failure);
         setPhase('error');
       }
+      return outcome;
     },
-    [client],
+    [client, alias, completion],
   );
 
-  return { phase, progress, result, error, start, reset };
+  return { phase, progress, result, failure, start, reset };
 }

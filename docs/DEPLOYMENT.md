@@ -68,7 +68,7 @@ The image serves `apps/ohs-player-web/public/portal-config.json` at `/portal-con
 | `navigation` | Sidebar entries: `id`, `to`, `labelKey`, `order`, and `requires` with a `flag` and a `permission` | the built-in sidebar |
 | `permissionMap` | Permission key to the roles that hold it | the built-in map |
 | `locale`, `messages` | Locale and message overrides by key | `en`, the built-in messages |
-| `customEndpoints` | Gateway route alias to path | the built-in aliases |
+| `customEndpoints` | Gateway route alias to path: `users`, `groups`, `roles`, `locationHierarchy`, `practitionerDetails`, and the bulk import routes `usersBulkImport`, `organizationsBulkImport`, `locationsBulkImport` | the built-in aliases |
 | `questionnaireVariant` | Bundled questionnaire set | `VITE_QUESTIONNAIRE_VARIANT` |
 
 Every field is optional. The reference document carries the product name, brand pins, sidebar, permission map, locale and endpoint aliases. It leaves the connection settings, flags and questionnaire variant to `VITE_*`, so each environment's build args keep applying until you add them.

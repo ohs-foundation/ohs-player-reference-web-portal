@@ -64,6 +64,8 @@ export const platformConfig: CorePlatformConfig = {
     roles: '/api/roles',
     locationHierarchy: '/api/location-hierarchy',
     locationsBulkImport: '/api/bulk-import/locations',
+    usersBulkImport: '/api/bulk-import/users',
+    organizationsBulkImport: '/api/bulk-import/organizations',
     practitionerDetails: '/api/practitioner-details',
   },
 };

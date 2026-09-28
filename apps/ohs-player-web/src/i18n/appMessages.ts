@@ -19,7 +19,8 @@ export const appMessageOverrides = {
   navToggle: 'Toggle navigation',
   skipToContent: 'Skip to main content',
   appTopbarTitle: 'Open Health Stack',
-  configDocumentInvalid: 'The configuration document is invalid, so the app is using its built-in settings.',
+  configDocumentInvalid:
+    'The configuration document is invalid, so the app is using its built-in settings.',
   globalSearch: 'Global Search',
   searchNoResults: 'No matches found.',
   notifications: 'Notifications',
@@ -257,23 +258,56 @@ export const appMessageOverrides = {
   locationsRequestAccess: 'Request access',
   // Import drawer
   locationsImportTitle: 'Import Locations',
-  locationsDropzone: 'Drag a CSV here, or click to browse',
-  locationsDropzoneHint: 'One .csv file · field name file',
   done: 'Done',
-  locationsUploadFile: 'Upload File',
-  locationsExpectedColumns: 'Expected columns',
-  locationsTemplateHint:
-    'Start from the template — column names must match exactly. Only name is required.',
-  locationsDownloadTemplate: 'Download Template',
-  locationsStartImport: 'Start Import',
-  locationsImportProgress: 'Processing {{processed}} of {{total}} ({{pct}}%)',
-  locationsImportComplete: 'Import complete',
-  locationsImportPartial: 'Import completed with errors',
-  locationsImportTotal: 'Total rows',
-  locationsImportProcessed: 'Processed',
-  locationsImportFailed: 'Failed',
-  locationsImportFailedNotice:
-    '{{failed}} row(s) failed to import. Check the CSV and retry those rows.',
+  bulkImportDropzone: 'Drag a CSV or Excel file here, or click to browse',
+  bulkImportDropzoneHint: 'One .csv or .xlsx file · Excel: first sheet only, row 1 is the header',
+  bulkImportUploadFile: 'Upload File',
+  bulkImportExpectedColumns: 'Expected columns',
+  bulkImportTemplateHint:
+    'Start from the template — column names must match exactly. Required columns are marked *. In Excel, format id and phone columns as text to keep leading zeros.',
+  bulkImportDownloadTemplate: 'Download Template',
+  bulkImportStart: 'Start Import',
+  bulkImportProgress: 'Processing {{processed}} of {{total}} ({{pct}}%)',
+  bulkImportComplete: 'Import complete',
+  bulkImportPartial: 'Import completed with errors',
+  bulkImportStoppedTitle: 'Import stopped',
+  bulkImportTotal: 'Total rows',
+  bulkImportProcessed: 'Imported',
+  bulkImportFailed: 'Failed',
+  bulkImportFailedNotice: '{{failed}} row(s) failed to import. Check the CSV and retry those rows.',
+  bulkImportRowErrors: 'Row errors',
+  bulkImportStopped: 'Stopped at row {{row}}. Rows after it were not imported.',
+  bulkImportContinued: 'The import continued past the failed rows.',
+  bulkImportRowError: 'Row {{row}}: {{message}}',
+  bulkImportMoreErrors: 'and {{count}} more',
+  bulkImportRowNumberHint: 'Row numbers count data rows from the first row under the header.',
+  bulkImportFileType:
+    'Choose a .csv or .xlsx file. Save older .xls workbooks as .xlsx or as CSV UTF-8 first.',
+  bulkImportFileTooLarge: 'This file is larger than {{max}} MB. Split it into smaller files.',
+  bulkImportNotUtf8:
+    'This CSV is not UTF-8. In Excel, save it as "CSV UTF-8 (Comma delimited)" and try again.',
+  bulkImportWorkbookAsCsv:
+    'This file is an Excel workbook with a .csv name. Rename it to .xlsx, or export it as CSV.',
+  bulkImportQuotedCsv:
+    'Line {{line}} has a quoted cell. The import cannot read quotes or commas inside a cell; remove them and save the file again.',
+  bulkImportMissingColumns:
+    'The header row is missing required columns: {{columns}}. Column names must match the template exactly, including case.',
+  bulkImportNoRows: 'The file has no data rows under the header.',
+  bulkImportUnsupportedCell:
+    'Row {{row}}, column {{column}} contains a comma or a line break, which the import cannot carry. Remove it and try again.',
+  bulkImportUnreadable:
+    '{{file}} could not be read. Check that it is a .csv or .xlsx file and is not open in another program.',
+  bulkImportAuditFailed: 'The import finished, but its audit record could not be saved.',
+  usersImport: 'Import Users',
+  usersImportTitle: 'Import Users',
+  usersImportWarning:
+    'For initial loads only. Use user management for changes to existing users: re-importing a user without a password resets it to the username followed by 123.',
+  organizationsImport: 'Import Organisations',
+  organizationsImportTitle: 'Import Organisations',
+  bulkImportStreamEmpty:
+    'The server ended the import without reporting any rows. Nothing was imported.',
+  bulkImportStreamInterrupted:
+    'The import stopped before it finished. {{processed}} row(s) were imported before it stopped.',
 
   pageOrganizations: 'Organisations',
   pageOrganizationsDescription: 'Organisations available in your environment',

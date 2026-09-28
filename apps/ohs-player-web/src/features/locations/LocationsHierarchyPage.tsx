@@ -37,7 +37,8 @@ import { LocationBreadcrumb } from './LocationBreadcrumb';
 import { LocationDetailPanel } from './LocationDetailPanel';
 import { LocationCreateDrawer } from './LocationCreateDrawer';
 import { LocationEditDrawer } from './LocationEditDrawer';
-import { LocationImportDrawer } from './LocationImportDrawer';
+import { BulkImportDrawer } from '../bulk-import/BulkImportDrawer';
+import { locationTemplate } from '../bulk-import/importTemplates';
 import { LocationsNoAccess } from './LocationsNoAccess';
 import {
   HierarchyEmpty,
@@ -371,7 +372,8 @@ export function LocationsHierarchyPage(): React.ReactElement {
         />
       ) : null}
 
-      <LocationImportDrawer
+      <BulkImportDrawer
+        template={locationTemplate}
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onComplete={onImportComplete}

@@ -24,6 +24,7 @@ import {
   IconAddCircle,
   IconChevronDown,
   IconMore,
+  IconUpload,
   useInitialSearchTerm,
   useFilterParam,
 } from 'ohs-player-web-shell';
@@ -35,6 +36,8 @@ import {
   type OrgRow,
 } from './OrganizationDetailsDrawer';
 import { OrganizationFormDrawer } from './OrganizationFormDrawer';
+import { BulkImportDrawer } from '../bulk-import/BulkImportDrawer';
+import { organizationTemplate } from '../bulk-import/importTemplates';
 import type { Option } from '../users/userFormOptions';
 
 type LocRow = { id?: string; name?: string; managingOrganization?: { reference?: string } };
@@ -78,6 +81,7 @@ export function OrganizationsPage() {
   const [statusFilter, setStatusFilter] = useFilterParam('status', STATUS_VALUES);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [viewId, setViewId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
 
@@ -183,6 +187,16 @@ export function OrganizationsPage() {
                 {t('exportLabel')}
               </Button>
             ) : null}
+            <PermissionGuard permission="bulk-import.manage">
+              <Button
+                variant="secondary"
+                type="button"
+                iconLeft={<IconUpload size={20} />}
+                onClick={() => setImportOpen(true)}
+              >
+                {t('organizationsImport')}
+              </Button>
+            </PermissionGuard>
             <PermissionGuard permission="orgs.create">
               <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addOrganization')}
@@ -392,6 +406,15 @@ export function OrganizationsPage() {
           }}
         />
       ) : null}
+
+      <BulkImportDrawer
+        template={organizationTemplate}
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onComplete={() => {
+          void refresh(['Organization']);
+        }}
+      />
     </Page>
   );
 }

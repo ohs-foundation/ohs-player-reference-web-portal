@@ -58,6 +58,8 @@ const practitionerDetails: { data?: unknown; isLoading: boolean; error?: unknown
   error: undefined,
 };
 
+const mockDenied = new Set<string>();
+
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
   return {
@@ -74,7 +76,13 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useStatusBar: () => ({ notify: mockNotify }),
     useRefreshResources: () => vi.fn().mockResolvedValue(undefined),
     useOptimisticInsert: () => () => () => undefined,
-    PermissionGuard: ({ children }: { children: React.ReactNode }) => children,
+    PermissionGuard: ({
+      permission,
+      children,
+    }: {
+      permission: string;
+      children: React.ReactNode;
+    }) => (mockDenied.has(permission) ? null : children),
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     useCustomEndpoint: () => ({
       post: { mutateAsync: mockPost, isPending: false },
@@ -497,6 +505,30 @@ describe('UsersPage search', () => {
     expect(screen.getByText('addUserQuickTitle')).toBeInTheDocument();
   });
 
+  it('opens the users import drawer from a header action gated by bulk-import.manage', () => {
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'usersImport' }));
+    expect(screen.getByText('usersImportWarning')).toBeInTheDocument();
+  });
+
+  it('hides the import action without bulk-import.manage', () => {
+    mockDenied.add('bulk-import.manage');
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('button', { name: 'usersImport' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'addUser' })).toBeInTheDocument();
+    mockDenied.clear();
+  });
+
   it('narrows the table when a Status chip value is applied and restores via Clear all', () => {
     render(
       <MemoryRouter>
@@ -598,11 +630,11 @@ describe('UsersPage row actions slot', () => {
     fireEvent.keyDown(screen.getAllByRole('button', { name: 'rowActions' })[0], { key: 'Enter' });
 
     const menu = await screen.findByRole('menu');
-    expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
-      'viewDetails',
-      'edit',
-      'View schedules for p1',
-    ]);
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['viewDetails', 'edit', 'View schedules for p1']);
     vi.restoreAllMocks();
   });
 

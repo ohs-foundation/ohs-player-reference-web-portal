@@ -119,6 +119,8 @@ Sign in as `manager-user`. Schedules is gone from the sidebar, the dashboard and
 
 The sidebar now says Staff, and the Schedules page is titled Rosters, with planning horizons formatted as British dates. Keys come from the library catalogue (`packages/ohs-player-web-core/src/i18n/locales/en.ts`), the app's messages and each extension's messages. A key that exists nowhere renders as the key itself, which makes a typo easy to spot. `locale` does not translate: supply translated `messages` for another language.
 
+The import drawer shared by Users, Organisations and Locations reads `bulkImport*` keys. Before users and organisations import, the locations drawer read `locationsDropzone`, `locationsDropzoneHint`, `locationsUploadFile`, `locationsExpectedColumns`, `locationsTemplateHint`, `locationsDownloadTemplate`, `locationsStartImport`, `locationsImportProgress`, `locationsImportComplete`, `locationsImportPartial`, `locationsImportTotal`, `locationsImportProcessed`, `locationsImportFailed` and `locationsImportFailedNotice`. A document that overrides any of those should move the override to the matching `bulkImport*` key (`locationsDropzone` becomes `bulkImportDropzone`, `locationsImportTotal` becomes `bulkImportTotal`, and `locationsStartImport` becomes `bulkImportStart`).
+
 ### 7. Connection settings and gateway endpoints
 
 `fhirBaseUrl`, `fhirVersion`, `oidcIssuer` and `clientId` point one build at another environment. `customEndpoints` maps an alias used by `useCustomEndpoint(alias)` to a gateway path starting with `/`. These are covered in [DEPLOYMENT.md](./DEPLOYMENT.md) section 4.

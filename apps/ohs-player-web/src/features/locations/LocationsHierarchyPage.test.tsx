@@ -76,8 +76,8 @@ vi.mock('./useLocationHierarchy', () => ({
   }),
 }));
 
-vi.mock('./LocationImportDrawer', () => ({
-  LocationImportDrawer: ({ open, onComplete }: { open: boolean; onComplete: () => void }) =>
+vi.mock('../bulk-import/BulkImportDrawer', () => ({
+  BulkImportDrawer: ({ open, onComplete }: { open: boolean; onComplete: () => void }) =>
     open ? (
       <button type="button" onClick={onComplete}>
         finish-import
