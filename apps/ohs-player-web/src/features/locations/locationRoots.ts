@@ -67,7 +67,7 @@ export async function fetchLocationRoots(
 export async function fetchAllLocationsLean(client: FhirClient): Promise<Location[]> {
   const resources = await client.searchAll(
     'Location',
-    { _elements: 'id,name,partOf' },
+    { _elements: 'id,name,partOf,status' },
     { pageSize: PAGE_SIZE, maxPages: 100 },
   );
   return resources.filter((r): r is Location => {

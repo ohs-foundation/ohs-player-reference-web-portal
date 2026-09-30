@@ -214,6 +214,45 @@ describe('UserEditDrawer', () => {
     expect(screen.getAllByText('Team A').length).toBeGreaterThan(0);
   });
 
+  it('offers only active locations but keeps an assigned inactive one, marked and removable', async () => {
+    mockUseSearch.mockClear();
+    setPractitionerDetails({
+      data: {
+        practitioner: mockPractitioner,
+        practitionerRoles: [
+          {
+            ...roleDetail,
+            practitionerRole: {
+              ...roleDetail.practitionerRole,
+              location: [{ reference: 'Location/l7' }],
+            },
+            locations: [
+              { resourceType: 'Location', id: 'l7', name: 'Old Depot', status: 'inactive' },
+            ],
+          },
+        ],
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const remove = await screen.findByRole('button', {
+      name: 'removeAssignment Old Depot (locationStatusInactive)',
+    });
+    expect(mockUseSearch).toHaveBeenCalledWith('Location', { _count: '500', status: 'active' });
+
+    fireEvent.click(remove);
+    expect(
+      screen.queryByRole('button', {
+        name: 'removeAssignment Old Depot (locationStatusInactive)',
+      }),
+    ).toBeNull();
+  });
+
   it('adds a care team picked from the list to the transaction bundle', async () => {
     const onSuccess = vi.fn();
     render(
@@ -288,6 +327,16 @@ describe('UserCreateDrawer', () => {
       target: { value: 'jane@example.com' },
     });
   }
+
+  it('loads only active locations for the assignment picker', () => {
+    mockUseSearch.mockClear();
+    render(
+      <MemoryRouter>
+        <UserCreateDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+    expect(mockUseSearch).toHaveBeenCalledWith('Location', { _count: '500', status: 'active' });
+  });
 
   it('blocks submit when required fields are missing', async () => {
     render(

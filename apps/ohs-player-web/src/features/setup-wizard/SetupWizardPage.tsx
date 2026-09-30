@@ -10,7 +10,11 @@ import {
 import { Button, ErrorState, Page, PageHeader } from 'ohs-player-web-shell';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { toErrorMessage } from '../sdc/toErrorMessage';
-import { referenceOptions } from '../users/userFormOptions';
+import {
+  locationOptions,
+  locationsFromBundle,
+  referenceOptions,
+} from '../users/userFormOptions';
 import { clearDraft, loadDraft, saveDraft } from './draftStore';
 import { commitPhase1, commitPhase2 } from './commitSetupWizard';
 import { maxReachableStep } from './maxReachableStep';
@@ -42,10 +46,13 @@ export function SetupWizardPage(): React.ReactElement {
   const [commitError, setCommitError] = useState<string | null>(null);
   const [commitStatus, setCommitStatus] = useState<string | null>(null);
 
-  const locSearch = useSearch('Location', { _count: '500' });
+  const locSearch = useSearch('Location', { _count: '500', status: 'active' });
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
 
-  const serverLocationOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
+  const serverLocationOptions = useMemo(
+    () => locationOptions(locationsFromBundle(locSearch.data), t),
+    [locSearch.data, t],
+  );
   const serverOrgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
 
   useEffect(() => {

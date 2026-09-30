@@ -24,6 +24,7 @@ import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { toErrorMessage } from '../sdc/toErrorMessage';
 import { RadioRow, Section, StackedInput, StackedSelect } from '../users/userFormControls';
+import { locationOptions } from '../users/userFormOptions';
 import {
   LOCATION_LINK_IDS,
   locationBodyFromAnswers,
@@ -104,13 +105,10 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
 
   const parentOptions = useMemo(() => {
     const root = { value: '__root__', label: t('rootLocation') };
-    const rest = locList
-      .filter((l) => l.id !== nodeId)
-      .map((l) => ({
-        value: `Location/${l.id as string}`,
-        label: l.name?.trim() ? l.name : (l.id as string),
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+    const rest = locationOptions(
+      locList.filter((l) => l.id !== nodeId),
+      t,
+    ).sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
     return [root, ...rest];
   }, [locList, nodeId, t]);
 

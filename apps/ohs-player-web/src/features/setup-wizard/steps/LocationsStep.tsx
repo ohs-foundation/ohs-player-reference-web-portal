@@ -8,6 +8,7 @@ import {
   orderDraftLocations,
 } from '../../locations/locationDraft';
 import { useAllLocationsLean } from '../../locations/useLocationRoots';
+import { locationOptions } from '../../users/userFormOptions';
 import { DraftList, StepIntro } from '../DraftList';
 import type { DraftLocation } from '../types';
 
@@ -32,13 +33,9 @@ export function LocationsStep({
         value: l.fullUrl,
         label: `${l.resource.name} (${t('setupDraftBadge')})`,
       }));
-    const serverOpts = serverLocs
-      .filter((l) => l.id)
-      .map((l) => ({
-        value: `Location/${l.id as string}`,
-        label: l.name?.trim() ? l.name : (l.id as string),
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+    const serverOpts = locationOptions(serverLocs, t).sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+    );
     return [root, ...draftOpts, ...serverOpts];
   }, [locations, serverLocs, editingId, t]);
 
