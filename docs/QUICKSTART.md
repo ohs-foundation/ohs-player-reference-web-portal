@@ -1,6 +1,6 @@
 # Quickstart (about five minutes)
 
-1. **Prerequisites:** Node 20+, pnpm 9+, Docker (for local FHIR + Keycloak).
+1. **Prerequisites:** Node 22.13 or newer (`.nvmrc` selects the current Node 22), pnpm at the version pinned by `packageManager` in `package.json` (`corepack enable` picks it up; on Node 22.13.x the bundled corepack is too old to verify the download, so run `npm install -g corepack@latest` first or install that pnpm version directly), Docker (for local FHIR + Keycloak).
 
 2. **Clone and install**
 

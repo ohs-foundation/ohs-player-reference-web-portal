@@ -12,7 +12,7 @@ The web app is a **Vite single-page application**. There is no Node server at ru
 
 The repo ships a multi-stage `apps/ohs-player-web/Dockerfile`:
 
-1. **Build stage** (Node 22 + pnpm) runs `turbo run build --filter=ohs-player-web` → static `dist/`.
+1. **Build stage** (Node 22, pnpm from `packageManager`) runs `turbo run build --filter=ohs-player-web` → static `dist/`.
 2. **Serve stage** (nginx 1.27) copies `dist/` into `/usr/share/nginx/html` and exposes port `80`.
 
 The deploy target is **this Docker image, run on a Linux VM**.
@@ -119,7 +119,7 @@ The app requests the document with `cache: no-cache`, so every page load revalid
 
 ## 5. Get the code on the VM
 
-The build runs **inside Docker** (the Dockerfile's build stage provides Node 22 + pnpm 9.15.4), so the VM only needs **Docker** and **git** — no local Node/pnpm toolchain.
+The build runs **inside Docker** (the Dockerfile's build stage provides Node 22 and the pnpm version pinned by `packageManager` in `package.json`), so the VM only needs **Docker** and **git** — no local Node/pnpm toolchain.
 
 ```bash
 git clone https://github.com/ohs-foundation/ohs-player-reference-web-portal.git
