@@ -444,7 +444,7 @@ export const practiceExtension: PortalExtension = {
   widgets: [
     { id: 'kpi', region: 'kpi', order: 5, load: () => import('./PracticeKpiWidget'), requires },
     { id: 'main', region: 'main', order: 25, load: () => import('./PracticeMainWidget'), requires },
-    { id: 'side', region: 'side', order: 50, load: () => import('./PracticeSideWidget'), requires },
+    { id: 'side', region: 'side', order: 25, load: () => import('./PracticeSideWidget'), requires },
   ],
   slots: [{ id: 'open', slot: 'users.rowActions', order: 20, component: OpenPracticeAction }],
   questionnaires: { intake: intakeQuestionnaire },
@@ -495,8 +495,7 @@ Sign in as `admin-user`:
 | `/practice` | A list of practitioners; each id links to `/practice/<id>` |
 | `/practice/intake` | A form with a required Reason field and a Notes field |
 | Dashboard, top strip | Practitioners first, at order 5, before the built-in cards |
-| Dashboard, main column | A new row between the recent locations (20) and recent organizations (30) rows |
-| Dashboard, side column | A row of its own at the bottom, at order 50 |
+| Dashboard rows | A new row at order 25 between the recent locations (20) and recent organizations (30) rows, with the main widget on the left and the side widget on the right |
 | Users, row ⋮ menu | View schedules (10), then Open in practice (20) |
 | Sign in as `manager-user` | All of the above is hidden: `practice.view` only lists `admin` |
 | Document `"permissionMap": { "practice.view": ["admin", "care-team-manager"] }` | `manager-user` now sees it all |
