@@ -12,7 +12,8 @@ export const messages = {
   comboboxNoMatches: 'No matches',
   comboboxNoResults: 'No results',
   comboboxShowingLimited: 'Showing {{shown}} of {{total}} — type to narrow',
-  configUnknownMessageKeys: 'The configuration document overrides messages that nothing declares, so they have no effect',
+  configUnknownMessageKeys:
+    'The configuration document overrides messages that nothing declares, so they have no effect',
   configUnknownMessageKeySuggestion: '{{key}} (did you mean {{suggestion}}?)',
   distributionCareTeams: 'Care Team Distribution',
   distributionEmpty: 'No data to chart yet.',

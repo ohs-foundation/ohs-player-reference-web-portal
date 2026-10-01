@@ -5,7 +5,9 @@ const declared = new Set(['navUsers', 'navSchedules', 'schedulesTitle', 'schedul
 
 describe('unknownMessageKeys', () => {
   it('passes every key a catalogue declares', () => {
-    expect(unknownMessageKeys({ navUsers: 'Staff', navSchedules: 'Rosters' }, declared)).toEqual([]);
+    expect(unknownMessageKeys({ navUsers: 'Staff', navSchedules: 'Rosters' }, declared)).toEqual(
+      [],
+    );
   });
 
   it('returns nothing when the document sets no messages', () => {
@@ -34,7 +36,10 @@ describe('unknownMessageKeys', () => {
 describe('describeUnknownMessageKeys', () => {
   it('names each key and its suggestion', () => {
     expect(
-      describeUnknownMessageKeys([{ key: 'navSchedles', suggestion: 'navSchedules' }, { key: 'rosterHeading' }]),
+      describeUnknownMessageKeys([
+        { key: 'navSchedles', suggestion: 'navSchedules' },
+        { key: 'rosterHeading' },
+      ]),
     ).toBe(
       'The configuration document\'s messages override keys no catalogue declares, so they have no effect: "navSchedles" (did you mean "navSchedules"?), "rosterHeading".',
     );

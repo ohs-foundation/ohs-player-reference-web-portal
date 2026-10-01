@@ -50,7 +50,9 @@ export function unknownMessageKeys(
 /** The message `onError` receives, written for the engineer editing the document. */
 export function describeUnknownMessageKeys(keys: readonly UnknownMessageKey[]): string {
   const listed = keys
-    .map(({ key, suggestion }) => (suggestion ? `"${key}" (did you mean "${suggestion}"?)` : `"${key}"`))
+    .map(({ key, suggestion }) =>
+      suggestion ? `"${key}" (did you mean "${suggestion}"?)` : `"${key}"`,
+    )
     .join(', ');
   return `The configuration document's messages override keys no catalogue declares, so they have no effect: ${listed}.`;
 }

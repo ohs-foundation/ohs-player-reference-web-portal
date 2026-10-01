@@ -106,7 +106,9 @@ describe('createPortalHost', () => {
 
     expect(host.unknownMessageKeys).toEqual([{ key: 'navSchedles', suggestion: 'navSchedules' }]);
     expect(onError).toHaveBeenCalledOnce();
-    expect(String(onError.mock.calls[0][0])).toContain('"navSchedles" (did you mean "navSchedules"?)');
+    expect(String(onError.mock.calls[0][0])).toContain(
+      '"navSchedles" (did you mean "navSchedules"?)',
+    );
     expect(host.portal.platform.i18n?.messages).toMatchObject({ navSchedules: 'Schedules' });
   });
 
