@@ -16,6 +16,27 @@ const practitioners = {
   ],
 };
 
+const auditEvents = {
+  resourceType: 'Bundle',
+  entry: [
+    {
+      resource: {
+        resourceType: 'AuditEvent',
+        id: 'ae1',
+        action: 'C',
+        recorded: '2026-09-30T08:00:00.000Z',
+        agent: [{ requestor: true, who: { display: 'admin' } }],
+        entity: [{ what: { reference: 'Practitioner/p1' } }],
+      },
+    },
+  ],
+};
+
+const searchResults: Record<string, unknown> = {
+  Practitioner: practitioners,
+  AuditEvent: auditEvents,
+};
+
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
   return {
@@ -33,7 +54,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
       if (params?._summary === 'count') {
         return { data: { total: 3 }, isLoading: false, error: null };
       }
-      const data = resourceType === 'Practitioner' ? practitioners : { entry: [] };
+      const data = (resourceType && searchResults[resourceType]) ?? { entry: [] };
       return { data, isLoading: false, error: null };
     },
   };
@@ -104,5 +125,17 @@ describe('the example portal with the schedules extension', () => {
 
     const menu = await screen.findByRole('menu');
     expect(within(menu).getByRole('menuitem', { name: 'View schedules' })).toBeInTheDocument();
+  });
+
+  it('describes an activity in the notifications panel through the catalogue, with no raw key', async () => {
+    renderAt('/users');
+
+    fireEvent.keyDown(await screen.findByRole('button', { name: 'Notifications' }), {
+      key: 'Enter',
+    });
+
+    const panel = await screen.findByRole('menu');
+    expect(within(panel).getByText('Created User p1')).toBeInTheDocument();
+    expect(panel.textContent).not.toMatch(/\b(activity|resourceType)[A-Z]/);
   });
 });
