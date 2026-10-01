@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { writeAuditEvent } from './writeAudit';
+import { RESOURCE_TYPES_SYSTEM, writeAuditEvent } from './writeAudit';
 import type { FhirClient } from '../client/FhirClient';
 
 function clientStub() {
@@ -27,17 +27,69 @@ describe('writeAuditEvent', () => {
 
   it('maps create→C and delete→D', async () => {
     const client = clientStub();
-    await writeAuditEvent(client, { action: 'create', resourceType: 'Organization', resourceId: 'o1' });
-    await writeAuditEvent(client, { action: 'delete', resourceType: 'Organization', resourceId: 'o1' });
+    await writeAuditEvent(client, {
+      action: 'create',
+      resourceType: 'Organization',
+      resourceId: 'o1',
+    });
+    await writeAuditEvent(client, {
+      action: 'delete',
+      resourceType: 'Organization',
+      resourceId: 'o1',
+    });
     expect((client.create.mock.calls[0][0] as { action?: string }).action).toBe('C');
     expect((client.create.mock.calls[1][0] as { action?: string }).action).toBe('D');
   });
 
-  it('omits the entity when no resourceId is given', async () => {
+  it('writes agent.name so the agent-name search parameter matches the signed-in user', async () => {
+    const client = clientStub();
+    await writeAuditEvent(client, {
+      action: 'update',
+      resourceType: 'Location',
+      resourceId: 'l1',
+      agentDisplay: 'admin-user',
+    });
+    await writeAuditEvent(client, { action: 'update', resourceType: 'Location', resourceId: 'l1' });
+    type Agent = { name?: string; who?: { display?: string }; requestor?: boolean };
+    const [named] = (client.create.mock.calls[0][0] as { agent: Agent[] }).agent;
+    const [fallback] = (client.create.mock.calls[1][0] as { agent: Agent[] }).agent;
+    expect(named).toMatchObject({ name: 'admin-user', who: { display: 'admin-user' }, requestor: true });
+    expect(fallback).toMatchObject({ name: 'Portal user', who: { display: 'Portal user' } });
+  });
+
+  it('types the entity with its FHIR resource type so the entity-type search parameter matches it', async () => {
+    const client = clientStub();
+    await writeAuditEvent(client, { action: 'create', resourceType: 'Location', resourceId: 'l1' });
+    const record = client.create.mock.calls[0][0] as { entity: { type?: unknown }[] };
+    expect(record.entity[0].type).toEqual({
+      system: RESOURCE_TYPES_SYSTEM,
+      code: 'Location',
+      display: 'Location',
+    });
+    expect(RESOURCE_TYPES_SYSTEM).toBe('http://hl7.org/fhir/resource-types');
+  });
+
+  it('omits the entity when neither a resourceId nor a description is given', async () => {
     const client = clientStub();
     await writeAuditEvent(client, { action: 'create', resourceType: 'Bundle' });
     const record = client.create.mock.calls[0][0] as { entity?: unknown[] };
     expect(record.entity).toEqual([]);
+  });
+
+  it('records a summary entity with no what when only a description is given', async () => {
+    const client = clientStub();
+    await writeAuditEvent(client, {
+      action: 'create',
+      resourceType: 'Organization',
+      description: 'Bulk import of orgs.csv: 48 imported, 2 failed, 50 rows',
+    });
+    const record = client.create.mock.calls[0][0] as { entity?: Record<string, unknown>[] };
+    expect(record.entity).toEqual([
+      {
+        type: { system: RESOURCE_TYPES_SYSTEM, code: 'Organization', display: 'Organization' },
+        description: 'Bulk import of orgs.csv: 48 imported, 2 failed, 50 rows',
+      },
+    ]);
   });
 
   it('propagates the error when the underlying create fails (does not swallow it)', async () => {

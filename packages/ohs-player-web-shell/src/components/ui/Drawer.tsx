@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 
 export interface DrawerProps {
   open: boolean;
@@ -11,13 +11,43 @@ export interface DrawerProps {
   children: ReactNode;
 }
 
-/** Right-anchored, full-height overlay drawer: fixed header, scrolling body, fixed footer. */
-export function Drawer({ open, onClose, title, header, footer, children }: Readonly<DrawerProps>): React.ReactElement {
+/**
+ * Right-anchored, full-height overlay drawer: fixed header, scrolling body, fixed footer. On close,
+ * focus returns to the element that had it when the drawer opened (the row link or button).
+ */
+export function Drawer({
+  open,
+  onClose,
+  title,
+  header,
+  footer,
+  children,
+}: Readonly<DrawerProps>): React.ReactElement {
+  const opener = useRef<HTMLElement | null>(null);
+
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <Dialog.Portal>
         <Dialog.Overlay className="ohs-drawer-overlay" />
-        <Dialog.Content className="ohs-drawer" aria-describedby={undefined}>
+        <Dialog.Content
+          className="ohs-drawer"
+          aria-describedby={undefined}
+          onOpenAutoFocus={() => {
+            opener.current =
+              document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          }}
+          // Drawers open from page state, not a Dialog.Trigger, so Radix has nothing to return focus to.
+          onCloseAutoFocus={(event) => {
+            if (!opener.current?.isConnected) return;
+            event.preventDefault();
+            opener.current.focus();
+          }}
+        >
           <Dialog.Title className="ohs-visually-hidden">{title}</Dialog.Title>
           {header ? <div className="ohs-drawer__header">{header}</div> : null}
           <div className="ohs-drawer__body">{children}</div>

@@ -74,7 +74,8 @@ export function FhirJsonView({
           {copied ? copiedLabel : copyLabel}
         </button>
       </div>
-      <pre className="ohs-json-view__code">
+      {/* Focusable so keyboard users can scroll JSON wider or taller than the panel. */}
+      <pre className="ohs-json-view__code" tabIndex={0}>
         <code>{text}</code>
       </pre>
     </div>

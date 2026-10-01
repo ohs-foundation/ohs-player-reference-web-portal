@@ -13,7 +13,9 @@ const mockFhirClient = { transaction: mockTransaction, baseUrl: '' };
  * `l99` appears only in the Organization bundle, as `_revinclude` returns it — never in the Location
  * search. That mirrors production, where the managed Location can fall outside the Location page.
  */
-const searchBundles: Record<string, { entry: { resource: Record<string, unknown> }[] }> = {
+type SearchBundle = { entry: { resource: Record<string, unknown> }[] };
+
+const searchBundles: Record<string, SearchBundle> = {
   Organization: {
     entry: [
       {
@@ -38,6 +40,15 @@ const searchBundles: Record<string, { entry: { resource: Record<string, unknown>
       {
         resource: {
           resourceType: 'Location',
+          id: 'l98',
+          name: 'Old Depot',
+          status: 'inactive',
+          managingOrganization: { reference: 'Organization/o1' },
+        },
+      },
+      {
+        resource: {
+          resourceType: 'Location',
           id: 'l99',
           name: 'Addis Ababa',
           status: 'active',
@@ -50,9 +61,17 @@ const searchBundles: Record<string, { entry: { resource: Record<string, unknown>
     entry: [
       { resource: { resourceType: 'Location', id: 'l1', name: 'Clinic A', status: 'active' } },
       { resource: { resourceType: 'Location', id: 'l2', name: 'Clinic B', status: 'active' } },
+      { resource: { resourceType: 'Location', id: 'l3', name: 'Clinic A', status: 'inactive' } },
+      { resource: { resourceType: 'Location', id: 'l4', name: 'Clinic D', status: 'suspended' } },
+      { resource: { resourceType: 'Location', id: 'l5', name: 'Clinic E' } },
     ],
   },
 };
+
+const mockDenied = new Set<string>();
+
+const matching = (bundle: SearchBundle, status?: string): SearchBundle =>
+  status ? { entry: bundle.entry.filter((e) => e.resource.status === status) } : bundle;
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
@@ -71,9 +90,15 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useStatusBar: () => ({ notify: mockNotify }),
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     useUpdateResource: () => ({ mutateAsync: vi.fn() }),
-    PermissionGuard: ({ children }: { children: React.ReactNode }) => children,
-    useSearch: (resourceType: string) => ({
-      data: searchBundles[resourceType] ?? { entry: [] },
+    PermissionGuard: ({
+      permission,
+      children,
+    }: {
+      permission: string;
+      children: React.ReactNode;
+    }) => (mockDenied.has(permission) ? null : children),
+    useSearch: (resourceType: string, params?: Record<string, string>) => ({
+      data: matching(searchBundles[resourceType] ?? { entry: [] }, params?.status),
       isLoading: false,
       error: null,
       refetch: vi.fn(),
@@ -99,6 +124,24 @@ describe('OrganizationsPage', () => {
     expect(await screen.findByText('Ministry of Health')).toBeInTheDocument();
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
+  });
+
+  it('opens the organisations import drawer from a header action gated by bulk-import.manage', async () => {
+    renderPage();
+    expect(await screen.findByText('Ministry of Health')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'organizationsImport' }));
+    expect(screen.getByRole('dialog', { name: 'organizationsImportTitle' })).toBeInTheDocument();
+  });
+
+  it('hides the import action without bulk-import.manage', async () => {
+    mockDenied.add('bulk-import.manage');
+    renderPage();
+    expect(await screen.findByText('Ministry of Health')).toBeInTheDocument();
+
+    expect(screen.queryByRole('button', { name: 'organizationsImport' })).toBeNull();
+    expect(screen.getByRole('button', { name: /addOrganization/ })).toBeInTheDocument();
+    mockDenied.clear();
   });
 
   it('create with a selected location issues one transaction: POST org (urn) + PATCH the location to it', async () => {
@@ -144,6 +187,39 @@ describe('OrganizationsPage', () => {
 
   // Regression: the link lives on Location.managingOrganization, so deriving it from the Location
   // search only saw that search's first page — a link outside it rendered as "None on record".
+  it('offers only active locations in the Managed Locations picker of a new organisation', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('addOrganization'));
+
+    const drawer = await screen.findByRole('dialog');
+    fireEvent.click(within(drawer).getByRole('combobox', { name: /contextLocation/ }));
+
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Clinic A',
+      'Clinic B',
+    ]);
+  });
+
+  it('keeps an inactive location the organisation already manages, marked and removable', async () => {
+    renderPage();
+    fireEvent.click(await screen.findByText('Ministry of Health'));
+    fireEvent.click(within(await screen.findByRole('dialog')).getByText('editDetails'));
+
+    const drawer = await screen.findByRole('dialog');
+    const remove = await within(drawer).findByRole('button', {
+      name: 'removeAssignment Old Depot (locationStatusInactive)',
+    });
+    const result = await axe(drawer, { rules: { 'color-contrast': { enabled: false } } });
+    expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
+
+    fireEvent.click(remove);
+    expect(
+      within(drawer).queryByRole('button', {
+        name: 'removeAssignment Old Depot (locationStatusInactive)',
+      }),
+    ).toBeNull();
+  });
+
   it('lists a managed location that the Location search never returned', async () => {
     renderPage();
     fireEvent.click(await screen.findByText('Addis Ababa Health Bureau'));

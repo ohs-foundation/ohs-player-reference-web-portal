@@ -4,6 +4,21 @@ function gatewayRootFromFhirBase(fhirBaseUrl: string): string {
   return fhirBaseUrl.replace(/\/fhir\/?$/i, '').replace(/\/$/, '') || fhirBaseUrl;
 }
 
+/**
+ * FHIR search parameters. An array value repeats the key, which FHIR reads as AND
+ * (e.g. `{ date: ['ge2026-01-01', 'lt2026-02-01'] }` for a date range).
+ */
+export type SearchParams = Record<string, string | readonly string[]>;
+
+function toQuery(params?: SearchParams): string {
+  const sp = new URLSearchParams();
+  for (const [key, value] of Object.entries(params ?? {})) {
+    for (const v of typeof value === 'string' ? [value] : value) sp.append(key, v);
+  }
+  const query = sp.toString();
+  return query ? `?${query}` : '';
+}
+
 /** Options for {@link FhirClient.searchAll}. */
 export interface SearchAllOptions {
   /** Resources per page (`_count`). Default 500. */
@@ -124,9 +139,8 @@ export class FhirClient {
    * (HAPI otherwise reuses cached search results for 60 s, so post-mutation refetches return stale
    * data) plus `Pragma`/`no-store` so browser and proxy caches cannot serve a stale Bundle either.
    */
-  async search(resourceType: string, params?: Record<string, string>): Promise<unknown> {
-    const sp = params ? `?${new URLSearchParams(params).toString()}` : '';
-    return this.searchUrl(`${this.fhirBaseUrl}/${resourceType}${sp}`);
+  async search(resourceType: string, params?: SearchParams): Promise<unknown> {
+    return this.searchUrl(`${this.fhirBaseUrl}/${resourceType}${toQuery(params)}`);
   }
 
   /**
@@ -136,7 +150,7 @@ export class FhirClient {
    */
   async searchAll(
     resourceType: string,
-    params?: Record<string, string>,
+    params?: SearchParams,
     options?: SearchAllOptions,
   ): Promise<unknown[]> {
     const pageSize = options?.pageSize ?? 500;

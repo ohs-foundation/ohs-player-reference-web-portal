@@ -62,4 +62,23 @@ describe('resolvePortalConfig', () => {
 
     expect(resolvePortalConfig(testPortalDefaults, { navigation }).navigation).toEqual(navigation);
   });
+
+  it('lets a document place and relabel the audit log entry', () => {
+    const navigation: NavEntry[] = [
+      {
+        id: 'audit',
+        to: '/audit',
+        labelKey: 'navAuditTrail',
+        order: 15,
+        requires: { flag: 'auditLog', permission: 'audit.view' },
+      },
+    ];
+
+    expect(resolvePortalConfig(testPortalDefaults, { navigation }).navigation).toEqual(navigation);
+  });
+
+  it('includes the audit log after Setup in the built-in sidebar', () => {
+    const ids = resolvePortalConfig(testPortalDefaults, {}).navigation.map((entry) => entry.id);
+    expect(ids.slice(-2)).toEqual(['setup', 'audit']);
+  });
 });

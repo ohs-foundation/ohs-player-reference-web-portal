@@ -11,7 +11,12 @@ import { PRACTITIONER_ROLE_SYSTEM } from '../../config/roles';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { buildNewUserBundle, buildNewUserPayload, type NewUserFields } from '../sdc/resourceFromAnswers';
 import { userErrorMessage } from '../sdc/toErrorMessage';
-import { type Option, referenceOptions } from './userFormOptions';
+import {
+  type Option,
+  locationOptions,
+  locationsFromBundle,
+  referenceOptions,
+} from './userFormOptions';
 import { type UserFormErrors, validateUserForm } from './userFormSchema';
 
 interface SearchBundle {
@@ -64,11 +69,14 @@ export function useUserCreateForm(onSuccess: (created?: { id?: string } & Record
   const { post } = useCustomEndpoint('users');
 
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
-  const locSearch = useSearch('Location', { _count: '500' });
+  const locSearch = useSearch('Location', { _count: '500', status: 'active' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
 
   const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
-  const locOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
+  const locOptions = useMemo(
+    () => locationOptions(locationsFromBundle(locSearch.data), t),
+    [locSearch.data, t],
+  );
   const careTeamOptions = useMemo<Option[]>(
     () =>
       ((careTeamSearch.data as SearchBundle | undefined)?.entry ?? [])

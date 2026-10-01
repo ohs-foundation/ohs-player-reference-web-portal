@@ -83,7 +83,7 @@ Reload, then use the sun and moon button in the top bar to switch schemes. Every
 
 - **Reorder.** Swap the `order` values of `users` and `dashboard` and reload.
 - **Hide.** Remove an entry. Its link disappears, but its page is still served at its path, so use a flag (next step) to switch a feature off entirely.
-- **Allowed ids.** `id` must be one of the shell's screens: `dashboard`, `users`, `locations`, `organizations`, `careTeams`, `fhirViewer`, `setup`. A screen also needs a page in the app to be useful; the example app only has Users and the dashboard.
+- **Allowed ids.** `id` must be one of the shell's screens: `dashboard`, `users`, `locations`, `organizations`, `careTeams`, `fhirViewer`, `setup`, `audit`. A screen also needs a page in the app to be useful; the example app only has Users and the dashboard.
 - **Extension entries** are not listed here. They come from each extension's manifest and are sorted in among these by `order`: the example's Schedules entry, at 15, sits between the two.
 
 ### 4. Feature flags
@@ -96,7 +96,7 @@ Reload, then use the sun and moon button in the top bar to switch schemes. Every
 
 Reload. The Schedules sidebar entry, its dashboard tile and the "View schedules" row action all disappear, and `/schedules` renders an empty page. The flag is checked before the session, so a signed-out visitor to a switched-off page is not sent to sign-in either. Set it back to `true`.
 
-The example app accepts any flag name. The reference app accepts only its own seven flags, listed in [DEPLOYMENT.md](./DEPLOYMENT.md) section 4, until a name is added to its `FLAG_NAMES`.
+The example app accepts any flag name. The reference app accepts only its own eight flags, listed in [DEPLOYMENT.md](./DEPLOYMENT.md) section 4, until a name is added to its `FLAG_NAMES`.
 
 ### 5. Permissions and roles
 
@@ -118,6 +118,8 @@ Sign in as `manager-user`. Schedules is gone from the sidebar, the dashboard and
 ```
 
 The sidebar now says Staff and Rosters, and the Schedules page is titled Rosters, with planning horizons formatted as British dates. Each label has its own key, so renaming a screen everywhere means overriding each one. For Schedules, `navSchedules` is the sidebar entry, `schedulesTitle` the page heading, `schedulesKpi` the dashboard tile and `schedulesViewForUser` the row action, all listed in `apps/ohs-player-web-example/src/extensions/schedules/messages.ts`. A key can also label more than one place. `navUsers` names the Users sidebar entry, its option in Customize Widgets and its group in the global search results, so all three say Staff. Keys come from the library catalogue (`packages/ohs-player-web-core/src/i18n/locales/en.ts`), the app's messages and each extension's messages. A key a component asks for that exists nowhere renders as the key itself, which makes a missing message easy to spot. A misspelled key in `messages` is caught at startup instead. The schema accepts any key, because an extension's keys are only known once its manifest loads, so the host checks every key against the library, the app and each installed extension. A key none of them declares shows a warning toast on every load, naming the key and the closest declared one, for example `navSchedles (did you mean navSchedules?)`, and goes to the platform `onError` callback. `locale` does not translate: supply translated `messages` for another language.
+
+The import drawer shared by Users, Organisations and Locations reads `bulkImport*` keys. Before users and organisations import, the locations drawer read `locationsDropzone`, `locationsDropzoneHint`, `locationsUploadFile`, `locationsExpectedColumns`, `locationsTemplateHint`, `locationsDownloadTemplate`, `locationsStartImport`, `locationsImportProgress`, `locationsImportComplete`, `locationsImportPartial`, `locationsImportTotal`, `locationsImportProcessed`, `locationsImportFailed` and `locationsImportFailedNotice`. A document that overrides any of those should move the override to the matching `bulkImport*` key (`locationsDropzone` becomes `bulkImportDropzone`, `locationsImportTotal` becomes `bulkImportTotal`, and `locationsStartImport` becomes `bulkImportStart`).
 
 ### 7. Connection settings and gateway endpoints
 
@@ -273,6 +275,33 @@ export default function PracticeDetailPage(): React.ReactElement {
     </Page>
   );
 }
+```
+
+The list above loads one page of twenty. To page through a larger collection on the server, use `usePagedSearch` and hand its result to the table's `serverPagination`; the table then renders `rows` as given and draws the same footer as client paging, with numbered pages when the server reports a total and previous/next only when it does not. Show a record's fields in a drawer or panel with `DetailField` inside a `.ohs-detail-grid`.
+
+```tsx
+const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(10);
+const result = usePagedSearch<Practitioner>('Practitioner', { page, pageSize });
+
+<DataTable
+  columns={columns}
+  rows={result.rows}
+  rowKey={(p) => p.id ?? ''}
+  loading={result.isLoading}
+  serverPagination={{
+    page,
+    pageSize,
+    total: result.total,
+    hasNext: result.hasNext,
+    mode: result.paginationMode,
+    onPageChange: setPage,
+    onPageSizeChange: (size) => {
+      setPageSize(size);
+      setPage(0);
+    },
+  }}
+/>;
 ```
 
 #### Dashboard widgets

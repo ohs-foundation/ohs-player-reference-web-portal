@@ -34,6 +34,7 @@ vi.mock('./useLocationRoots', () => ({
   useAllLocationsLean: () => ({
     data: [
       { resourceType: 'Location', id: 'ke', name: 'Kenya' },
+      { resourceType: 'Location', id: 'old', name: 'Old Region', status: 'inactive' },
       LOCATION_RESOURCE,
     ],
     isLoading: false,
@@ -52,6 +53,17 @@ describe('LocationEditDrawer', () => {
     expect(save).toHaveAttribute('form', 'location-edit-form');
     // nrb has no children in the mocked list → the parent stays editable.
     expect(screen.getByRole('combobox', { name: /locationsParentLocation/ })).not.toBeDisabled();
+  });
+
+  it('marks an inactive location in the parent picker', () => {
+    render(<LocationEditDrawer nodeId="nrb" onClose={vi.fn()} onSaved={vi.fn()} />);
+    fireEvent.change(screen.getByRole('combobox', { name: /locationsParentLocation/ }), {
+      target: { value: '' },
+    });
+    expect(
+      screen.getByRole('option', { name: 'Old Region (locationStatusInactive)' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Kenya' })).toBeInTheDocument();
   });
 
   it('keeps the parent editable for a location that has children (edits are mirrored locally)', () => {

@@ -38,7 +38,9 @@ export { Inline, Page, PageHeader, Stack } from './Layout';
 export type { InlineProps, PageHeaderProps, PageProps, StackProps } from './Layout';
 
 export { DataTable } from './DataTable';
-export type { DataTableColumn, DataTableProps } from './DataTable';
+export type { DataTableColumn, DataTableProps, DataTableServerPagination } from './DataTable';
+export { DetailField } from './DetailField';
+export type { DetailFieldProps } from './DetailField';
 
 export { DonutChart } from './DonutChart';
 export type { DonutChartProps, DonutSegment } from './DonutChart';
@@ -59,4 +61,9 @@ export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 
 export { FilterChip, FilterChipBar } from './Chips';
-export type { FilterChipBarProps, FilterChipOption, FilterChipProps } from './Chips';
+export type {
+  FilterChipBarProps,
+  FilterChipInput,
+  FilterChipOption,
+  FilterChipProps,
+} from './Chips';

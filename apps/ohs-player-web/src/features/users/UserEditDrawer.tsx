@@ -38,7 +38,12 @@ import {
   StackedInput,
   StackedSelect,
 } from './userFormControls';
-import { type Option, referenceOptions } from './userFormOptions';
+import {
+  type Option,
+  locationOptions,
+  locationsFromBundle,
+  referenceOptions,
+} from './userFormOptions';
 import { todayIso, type UserFormErrors, validateUserForm } from './userFormSchema';
 import { usePractitionerDetails } from './usePractitionerDetails';
 
@@ -69,17 +74,25 @@ export function UserEditDrawer({
 
   const {
     practitioner,
+    roleDetails,
     roles,
     careTeams,
     isLoading,
     error: loadError,
   } = usePractitionerDetails(id);
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
-  const locSearch = useSearch('Location', { _count: '500' });
+  const locSearch = useSearch('Location', { _count: '500', status: 'active' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
 
   const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
-  const locOptions = useMemo(() => referenceOptions(locSearch.data, 'Location'), [locSearch.data]);
+  const locOptions = useMemo(
+    () =>
+      locationOptions(
+        [...roleDetails.flatMap((d) => d.locations ?? []), ...locationsFromBundle(locSearch.data)],
+        t,
+      ),
+    [roleDetails, locSearch.data, t],
+  );
   const careTeamOptions = useMemo<Option[]>(
     () =>
       resourcesOf(careTeamSearch.data).map((r) => ({

@@ -28,6 +28,7 @@ import {
   StatusBadge,
   IconAddCircle,
   IconChevronDown,
+  IconUpload,
   IconMore,
   useInitialSearchTerm,
   useFilterParam,
@@ -37,6 +38,8 @@ import {
 import { UserCreateEntryDrawer } from './UserCreateEntryDrawer';
 import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
+import { BulkImportDrawer } from '../bulk-import/BulkImportDrawer';
+import { userTemplate } from '../bulk-import/importTemplates';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 
@@ -123,6 +126,7 @@ export function UsersPage() {
   const [roleFilter, setRoleFilter] = useFilterParam('role');
   const clearChipFilters = useClearFilterParams(FILTER_PARAMS);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [importOpen, setImportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   // One drawer at a time: details OR edit, never both (avoids the two-drawer overlay).
   const [viewer, setViewer] = useState<{ mode: 'details' | 'edit'; id: string } | null>(null);
@@ -244,6 +248,16 @@ export function UsersPage() {
                 {t('exportLabel')}
               </Button>
             ) : null}
+            <PermissionGuard permission="bulk-import.manage">
+              <Button
+                variant="secondary"
+                type="button"
+                iconLeft={<IconUpload size={20} />}
+                onClick={() => setImportOpen(true)}
+              >
+                {t('usersImport')}
+              </Button>
+            </PermissionGuard>
             <PermissionGuard permission="users.create">
               <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
                 {t('addUser')}
@@ -490,6 +504,13 @@ export function UsersPage() {
           }}
         />
       ) : null}
+
+      <BulkImportDrawer
+        template={userTemplate}
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onComplete={refetchUsers}
+      />
     </Page>
   );
 }

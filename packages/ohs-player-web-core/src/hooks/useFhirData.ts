@@ -7,6 +7,7 @@ import {
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
+import type { SearchParams } from '../client/FhirClient';
 import { useFhirClient } from '../providers/FhirClientProvider';
 
 export function useResource(resourceType: string | undefined, id: string | undefined) {
@@ -21,7 +22,7 @@ export function useResource(resourceType: string | undefined, id: string | undef
   });
 }
 
-export function useSearch(resourceType: string | undefined, params?: Record<string, string>) {
+export function useSearch(resourceType: string | undefined, params?: SearchParams) {
   const client = useFhirClient();
   return useQuery({
     queryKey: ['fhir', 'search', resourceType, params],
@@ -39,8 +40,11 @@ export interface PagedSearchParams {
   page?: number;
   /** Resources per page (`_count`). Default `10`. */
   pageSize?: number;
-  /** Extra FHIR search params (e.g. `{ name: 'jane' }`). Reserved paging keys are set by the hook. */
-  params?: Record<string, string>;
+  /**
+   * Extra FHIR search params (e.g. `{ name: 'jane' }`); an array value repeats the key.
+   * Reserved paging keys are set by the hook.
+   */
+  params?: SearchParams;
 }
 
 /** Result of {@link usePagedSearch}. */
@@ -89,7 +93,7 @@ export function usePagedSearch<T = unknown>(
   { page = 0, pageSize = 10, params }: PagedSearchParams = {},
 ): PagedSearchResult<T> {
   const client = useFhirClient();
-  const searchParams: Record<string, string> = {
+  const searchParams: SearchParams = {
     ...params,
     _count: String(pageSize),
     _offset: String(page * pageSize),
