@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { resolvePortalConfig } from '../config/resolvePortalConfig';
 import type { PortalRoute } from '../routes/types';
 import { testPortalDefaults } from '../test/testPlatformConfig';
@@ -82,6 +82,32 @@ describe('createPortalHost', () => {
     expect(contributions.questionnaires).toEqual({
       schedules: { schedule: { resourceType: 'Questionnaire', title: 'Schedule' } },
     });
+  });
+
+  it('accepts document message keys the library, the app or an extension declares', () => {
+    const host = createPortalHost({
+      defaults: testPortalDefaults,
+      document: { messages: { saving: 'Working…', logoutHeading: 'Bye', navSchedules: 'Rosters' } },
+      extensions: [schedules],
+      development: true,
+    });
+
+    expect(host.unknownMessageKeys).toEqual([]);
+  });
+
+  it('reports a misspelled document message key without throwing, with the key it meant', () => {
+    const onError = vi.fn();
+    const host = createPortalHost({
+      defaults: { ...testPortalDefaults, platform: { ...testPortalDefaults.platform, onError } },
+      document: { messages: { navSchedles: 'Rosters' } },
+      extensions: [schedules],
+      development: true,
+    });
+
+    expect(host.unknownMessageKeys).toEqual([{ key: 'navSchedles', suggestion: 'navSchedules' }]);
+    expect(onError).toHaveBeenCalledOnce();
+    expect(String(onError.mock.calls[0][0])).toContain('"navSchedles" (did you mean "navSchedules"?)');
+    expect(host.portal.platform.i18n?.messages).toMatchObject({ navSchedules: 'Schedules' });
   });
 
   it("serves extension routes after the host's own routes", () => {

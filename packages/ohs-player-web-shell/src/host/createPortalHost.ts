@@ -1,9 +1,15 @@
+import { defaultMessageCatalog } from 'ohs-player-web-core';
 import {
   resolvePortalConfig,
   type PortalDefaults,
   type PortalDocument,
   type ResolvedPortalConfig,
 } from '../config/resolvePortalConfig';
+import {
+  describeUnknownMessageKeys,
+  unknownMessageKeys,
+  type UnknownMessageKey,
+} from '../config/unknownMessageKeys';
 import type { PortalRoute } from '../routes/types';
 import { missingPermission, validManifests } from './extensionChecks';
 import type { ExtensionContributions, PortalExtension } from './types';
@@ -21,6 +27,11 @@ export interface ResolvedPortalHost {
   portal: ResolvedPortalConfig;
   routes: readonly PortalRoute[];
   contributions: ExtensionContributions;
+  /**
+   * Keys in the document's `messages` that neither the library, the app nor an installed extension
+   * declares. They have no effect; `PortalHost` shows them in a warning toast on every load.
+   */
+  unknownMessageKeys?: readonly UnknownMessageKey[];
 }
 
 function fromExtensions<T>(
@@ -85,6 +96,17 @@ function contributionsOf(manifests: readonly PortalExtension[]): ExtensionContri
   };
 }
 
+function declaredMessageKeys(
+  defaults: PortalDefaults,
+  manifests: readonly PortalExtension[],
+): Set<string> {
+  return new Set([
+    ...Object.keys(defaultMessageCatalog),
+    ...Object.keys(defaults.platform.i18n?.messages ?? {}),
+    ...manifests.flatMap((manifest) => Object.keys(manifest.messages ?? {})),
+  ]);
+}
+
 function reporter(development: boolean, onError?: (error: unknown) => void) {
   return (message: string): void => {
     const error = new Error(message);
@@ -128,5 +150,14 @@ export function createPortalHost({
     report,
   );
   const contributions = contributionsOf(manifests);
-  return { portal, routes: [...routes, ...contributions.routes], contributions };
+  const unknown = unknownMessageKeys(document?.messages, declaredMessageKeys(defaults, manifests));
+  if (unknown.length > 0) {
+    defaults.platform.onError?.(new Error(describeUnknownMessageKeys(unknown)));
+  }
+  return {
+    portal,
+    routes: [...routes, ...contributions.routes],
+    contributions,
+    unknownMessageKeys: unknown,
+  };
 }

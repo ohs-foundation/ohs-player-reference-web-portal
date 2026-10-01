@@ -10,6 +10,7 @@ export {
   type PortalDocument,
   type ResolvedPortalConfig,
 } from './config/resolvePortalConfig';
+export type { UnknownMessageKey } from './config/unknownMessageKeys';
 
 export {
   createPortalHost,

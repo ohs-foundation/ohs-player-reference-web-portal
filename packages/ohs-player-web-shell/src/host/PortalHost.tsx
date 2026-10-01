@@ -2,6 +2,7 @@ import { CorePlatformProvider } from 'ohs-player-web-core';
 import type { ReactNode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { PortalConfigContext } from '../config/portalConfigContext';
+import { UnknownMessageKeysNotice } from '../config/UnknownMessageKeysNotice';
 import { PortalRoutes } from '../routes/PortalRoutes';
 import { ThemeModeProvider } from '../theme/ThemeModeProvider';
 import type { ResolvedPortalHost } from './createPortalHost';
@@ -27,6 +28,7 @@ export function PortalHost({
       <PortalConfigContext.Provider value={host.portal}>
         <ExtensionsContext.Provider value={host.contributions}>
           <CorePlatformProvider config={host.portal.platform}>
+            <UnknownMessageKeysNotice keys={host.unknownMessageKeys} />
             {children}
             <BrowserRouter>
               <PortalRoutes routes={host.routes} layoutChildren={layoutChildren} />

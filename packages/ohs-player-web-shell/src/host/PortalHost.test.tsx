@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { PortalDocument } from '../config/resolvePortalConfig';
 import type { PortalExtension } from './types';
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
@@ -51,10 +52,26 @@ const schedules: PortalExtension = {
   questionnaires: { schedule: { resourceType: 'Questionnaire', title: 'Schedule' } },
 };
 
-function renderHostAt(path: string) {
+const defaults = {
+  ...testPortalDefaults,
+  platform: {
+    ...testPortalDefaults.platform,
+    i18n: {
+      ...testPortalDefaults.platform.i18n,
+      messages: {
+        ...testPortalDefaults.platform.i18n?.messages,
+        configUnknownMessageKeys: 'Unknown message keys',
+        configUnknownMessageKeySuggestion: '{{key}} (did you mean {{suggestion}}?)',
+      },
+    },
+  },
+};
+
+function renderHostAt(path: string, document?: PortalDocument) {
   window.history.pushState({}, '', path);
   const host = createPortalHost({
-    defaults: testPortalDefaults,
+    defaults,
+    document,
     extensions: [schedules],
     development: true,
   });
@@ -92,5 +109,19 @@ describe('PortalHost', () => {
 
     expect(hrefs.slice(0, 4)).toEqual(['/', '/users', '/schedules', '/locations']);
     expect(within(sidebar).getByRole('link', { name: 'Schedules' })).toBeInTheDocument();
+  });
+
+  it('warns about a document message key nothing declares, naming the key it meant', async () => {
+    renderHostAt('/schedules', { messages: { navSchedles: 'Rosters' } });
+
+    expect(await screen.findByText('Unknown message keys')).toBeInTheDocument();
+    expect(screen.getByText('navSchedles (did you mean navSchedules?)')).toBeInTheDocument();
+  });
+
+  it('shows no warning when every document message key is declared', async () => {
+    renderHostAt('/schedules', { messages: { navSchedules: 'Rosters' } });
+
+    expect(await screen.findByRole('link', { name: 'Rosters' })).toBeInTheDocument();
+    expect(screen.queryByText('Unknown message keys')).not.toBeInTheDocument();
   });
 });
