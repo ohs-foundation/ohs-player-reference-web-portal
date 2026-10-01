@@ -113,11 +113,11 @@ Sign in as `manager-user`. Schedules is gone from the sidebar, the dashboard and
 `messages` overrides any message by key, and `locale` sets the locale for dates and numbers.
 
 ```json
-"messages": { "navUsers": "Staff", "schedulesTitle": "Rosters" },
+"messages": { "navUsers": "Staff", "navSchedules": "Rosters", "schedulesTitle": "Rosters" },
 "locale": "en-GB"
 ```
 
-The sidebar now says Staff, and the Schedules page is titled Rosters, with planning horizons formatted as British dates. Keys come from the library catalogue (`packages/ohs-player-web-core/src/i18n/locales/en.ts`), the app's messages and each extension's messages. A key that exists nowhere renders as the key itself, which makes a typo easy to spot. `locale` does not translate: supply translated `messages` for another language.
+The sidebar now says Staff and Rosters, and the Schedules page is titled Rosters, with planning horizons formatted as British dates. Each label has its own key, so renaming a screen everywhere means overriding each one. For Schedules, `navSchedules` is the sidebar entry, `schedulesTitle` the page heading, `schedulesKpi` the dashboard tile and `schedulesViewForUser` the row action, all listed in `apps/ohs-player-web-example/src/extensions/schedules/messages.ts`. Keys come from the library catalogue (`packages/ohs-player-web-core/src/i18n/locales/en.ts`), the app's messages and each extension's messages. A key a component asks for that exists nowhere renders as the key itself, which makes a missing message easy to spot. A misspelled key in `messages` does not. The schema accepts any key, so the override passes validation and changes nothing. When an override has no effect, check its name against the catalogue. `locale` does not translate: supply translated `messages` for another language.
 
 ### 7. Connection settings and gateway endpoints
 
