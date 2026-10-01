@@ -284,9 +284,9 @@ A widget's `load` imports a module whose default export is the tile. There are t
 | `main` | The wide column of the rows below | 10 to 40 |
 | `side` | The narrow column beside it | 10 to 40 |
 
-A `main` and a `side` widget with the same `order` share a row, and an `order` no built-in row uses starts a row of its own.
+A `main` and a `side` widget with the same `order` share a row, and an `order` no built-in row uses starts a row of its own. A widget with no partner at its order still gets a row, with the other column empty.
 
-The built-in KPI cards follow their sidebar entry's `requires`, so switching off a screen's flag, or denying its permission, hides its card as well. Each user chooses up to four of the remaining cards with Customize Widgets, and the choice is kept per user in that browser. Extension tiles in `kpi` always render after the chosen cards and do not count toward the four.
+The built-in KPI cards follow their sidebar entry's `requires`, so switching off a screen's flag, or denying its permission, hides its card as well. Each user chooses up to four of the remaining cards with Customize Widgets, and the choice is kept per user in that browser. Extension tiles in `kpi` are sorted in among the chosen cards by `order`, with the built-in cards at 10 to 40, so a tile at order 5 renders first and one at 50 renders last. They do not count toward the four.
 
 `PracticeKpiWidget.tsx` uses the shell's `StatCard` to match the built-in cards:
 

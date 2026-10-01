@@ -73,9 +73,9 @@ A widget has an `id`, a `region`, an integer `order`, `load` (a module whose def
 
 | Region | Where |
 | --- | --- |
-| `kpi` | The strip of totals across the top. The built-in cards are at orders 10 to 40, and the shell's `StatCard` renders a matching card. Each user picks up to four built-in cards with Customize Widgets; an extension tile always renders after them and does not count toward the four. |
+| `kpi` | The strip of totals across the top. The built-in cards are at orders 10 to 40, and the shell's `StatCard` renders a matching card. Each user picks up to four built-in cards with Customize Widgets. An extension tile is sorted in among the chosen cards by `order` and does not count toward the four. |
 | `main` | The wide column of the rows below. |
-| `side` | The narrow column. A `main` and a `side` widget with the same `order` share a row. The built-in rows are at 10 to 40, and an `order` no built-in row uses starts a row of its own. |
+| `side` | The narrow column. A `main` and a `side` widget with the same `order` share a row. The built-in rows are at 10 to 40, and an `order` no built-in row uses starts a row of its own. A widget with no partner at its order still gets a row, with the other column empty. |
 
 ```tsx
 import type { Bundle } from '@medplum/fhirtypes';
