@@ -1,9 +1,14 @@
 import type { MessageCatalog } from 'ohs-player-web-core';
 
 export const messages = {
+  activityChanged: 'Changed',
+  activityCreated: 'Created',
+  activityDeleted: 'Deactivated',
   activityEmpty: 'No recent activity yet.',
   activityLine: '{{verb}} {{resource}} {{id}}',
   activityTitle: 'Recent activity',
+  activityUpdated: 'Updated',
+  activityViewed: 'Viewed',
   appTopbarTitle: 'OHS Example Portal',
   clear: 'Clear',
   columnIdentifier: 'Identifier',
@@ -34,6 +39,8 @@ export const messages = {
   kpiTotalLocations: 'Total Locations',
   kpiTotalOrganizations: 'Total Organisations',
   kpiTotalUsers: 'Total Users',
+  kpiTrendDecrease: '{{value}}% Decrease from last month',
+  kpiTrendIncrease: '{{value}}% Increase from last month',
   loadingSession: 'Loading session…',
   loginHeading: 'Sign in to continue',
   loginSubtitle: 'You’ll be redirected to your identity provider to sign in securely.',
@@ -75,6 +82,7 @@ export const messages = {
   statusInactive: 'Inactive',
   tableItemsPerPage: 'Items per page:',
   tableShowing: 'Showing {{start}} to {{end}} of {{total}} results',
+  tableShowingRange: 'Showing {{start}} to {{end}}',
   themeDark: 'Switch to dark mode',
   themeLight: 'Switch to light mode',
   viewAll: 'View All',
