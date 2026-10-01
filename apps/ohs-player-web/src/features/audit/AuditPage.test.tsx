@@ -23,7 +23,7 @@ interface PagedState {
 
 type SearchOptions = { page: number; pageSize: number; params: Record<string, unknown> };
 
-const { paged, usePagedSearchMock, notify } = vi.hoisted(() => {
+const { paged, usePagedSearchMock, notify, messages } = vi.hoisted(() => {
   const paged = { current: null as PagedState | null };
   const usePagedSearchMock = vi.fn((_type: string, options: SearchOptions) => ({
     ...paged.current,
@@ -31,7 +31,8 @@ const { paged, usePagedSearchMock, notify } = vi.hoisted(() => {
     pageSize: options.pageSize,
     hasPrev: options.page > 0,
   }));
-  return { paged, usePagedSearchMock, notify: vi.fn() };
+  const messages: { current: Record<string, string> } = { current: {} };
+  return { paged, usePagedSearchMock, notify: vi.fn(), messages };
 });
 
 vi.mock(
@@ -39,7 +40,8 @@ vi.mock(
   async (): Promise<object> => ({
     ...(await vi.importActual<object>('ohs-player-web-core')),
     useTranslation: () => ({
-      t: (key: string, vars?: object) => (vars ? `${key} ${JSON.stringify(vars)}` : key),
+      t: (key: string, vars?: object) =>
+        messages.current[key] ?? (vars ? `${key} ${JSON.stringify(vars)}` : key),
       formatDateTime: (d: Date) => `at ${d.toISOString()}`,
       dir: 'ltr',
       locale: 'en',
@@ -92,6 +94,7 @@ beforeEach(() => {
   paged.current = state({});
   usePagedSearchMock.mockClear();
   notify.mockReset();
+  messages.current = {};
 });
 afterEach(cleanup);
 
@@ -120,6 +123,20 @@ describe('AuditPage', () => {
         name: 'auditOpenDetails {"action":"activityUpdated","resource":"Location l1"}',
       }),
     ).toBeInTheDocument();
+  });
+
+  it('names the resource type from the catalogue, so a messages override renames it', () => {
+    messages.current = { resourceTypeLocation: 'Site' };
+    renderPage();
+
+    const [portal, gateway] = screen.getAllByRole('row').slice(1);
+    expect(within(portal).getByText('Site')).toBeInTheDocument();
+    expect(
+      within(portal).getByRole('button', {
+        name: 'auditOpenDetails {"action":"activityUpdated","resource":"Site l1"}',
+      }),
+    ).toBeInTheDocument();
+    expect(within(gateway).getByText('Organization')).toBeInTheDocument();
   });
 
   it('reads gateway events through the requesting agent and the data entity', () => {

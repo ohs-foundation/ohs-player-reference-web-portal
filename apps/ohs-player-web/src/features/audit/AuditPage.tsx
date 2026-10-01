@@ -9,6 +9,7 @@ import {
   ErrorState,
   Page,
   PageHeader,
+  resourceTypeLabel,
   StatusBadge,
 } from 'ohs-player-web-shell';
 import { AuditDetailsDrawer } from './AuditDetailsDrawer';
@@ -46,7 +47,7 @@ function auditColumns(
     {
       key: 'resourceType',
       header: t('auditColumnResourceType'),
-      render: ({ item }) => item.resourceType || '—',
+      render: ({ item }) => (item.resourceType ? resourceTypeLabel(t, item.resourceType) : '—'),
     },
     {
       key: 'resource',
@@ -56,7 +57,10 @@ function auditColumns(
         const { item } = row;
         const action = t(actionLabelKey(item.action));
         const label = item.resourceType
-          ? t('auditOpenDetails', { action, resource: `${item.resourceType} ${item.resourceId}` })
+          ? t('auditOpenDetails', {
+              action,
+              resource: `${resourceTypeLabel(t, item.resourceType)} ${item.resourceId}`,
+            })
           : t('auditOpenDetailsNoResource', { action });
         return (
           <button
