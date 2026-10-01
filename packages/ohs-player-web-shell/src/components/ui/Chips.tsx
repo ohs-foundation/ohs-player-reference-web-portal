@@ -12,6 +12,13 @@ import { useTranslation } from 'ohs-player-web-core';
 import { cn } from '../../lib/cn';
 import { IconArrowDropDown, IconCheck } from './icons';
 
+/** Text variant: the popover input's type and bounds; a `date` value is `YYYY-MM-DD`. */
+export interface FilterChipInput {
+  type?: 'text' | 'date';
+  min?: string;
+  max?: string;
+}
+
 export interface FilterChipOption {
   value: string;
   label: string;
@@ -30,6 +37,8 @@ export interface FilterChipProps {
   variant?: 'menu' | 'text';
   /** Text variant: helper line under the input. */
   hint?: string;
+  /** Text variant: input type and bounds; out-of-bounds dates block Apply. Default `{ type: 'text' }`. */
+  input?: FilterChipInput;
 }
 
 interface AnchorRect {
@@ -54,6 +63,7 @@ export function FilterChip({
   disabled,
   variant = 'menu',
   hint,
+  input,
 }: Readonly<FilterChipProps>): React.ReactElement {
   const { t } = useTranslation();
   const id = useId();
@@ -258,7 +268,9 @@ export function FilterChip({
                 <input
                   autoFocus
                   id={`${id}-input`}
-                  type="text"
+                  type={input?.type ?? 'text'}
+                  min={input?.min}
+                  max={input?.max}
                   className="ohs-filter-chip__input"
                   value={draft}
                   aria-describedby={hint ? `${id}-hint` : undefined}

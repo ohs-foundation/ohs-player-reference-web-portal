@@ -54,6 +54,8 @@ const ICONS: Record<string, string> = {
   IconFlash: 'bolt',
   IconGroup: 'group',
   IconGuide: 'menu_book',
+  IconHistory: 'history',
+  IconHistoryFill: 'history-fill',
   IconInfo: 'info',
   IconLock: 'lock',
   IconMagic: 'wand_stars',

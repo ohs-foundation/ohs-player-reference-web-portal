@@ -1,8 +1,9 @@
 # Build reference app static assets and serve with nginx
-FROM node:22-alpine AS build
+FROM node:22.23-alpine AS build
 WORKDIR /repo
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+RUN corepack install
 COPY packages/ohs-player-web-core ./packages/ohs-player-web-core
 COPY packages/ohs-player-web-shell ./packages/ohs-player-web-shell
 COPY apps/ohs-player-web ./apps/ohs-player-web

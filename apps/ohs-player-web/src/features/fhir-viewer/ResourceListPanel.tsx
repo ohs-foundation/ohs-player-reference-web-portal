@@ -26,7 +26,6 @@ import {
   displayNameFor,
   searchPlaceholderKey,
 } from './registry';
-import { ResourcePager } from './ResourcePager';
 import { type ActiveFilter, type SincePreset, SINCE_PRESETS, sinceParam } from './filterParams';
 
 /** HTTP statuses that mean "this backend won't serve this type" rather than a genuine failure. */
@@ -113,8 +112,10 @@ export function ResourceListPanel({
     return p;
   }, [def, searchQuery, active, statusValue, since]);
 
-  const { rows, total, hasNext, hasPrev, paginationMode, isLoading, error } =
-    usePagedSearch<FhirRecord>(def.resourceType, { page, pageSize, params });
+  const { rows, total, hasNext, paginationMode, isLoading, error } = usePagedSearch<FhirRecord>(
+    def.resourceType,
+    { page, pageSize, params },
+  );
 
   const classified = classifyError(error);
   const typeLabel = t(def.labelKey);
@@ -254,20 +255,20 @@ export function ResourceListPanel({
           />
         }
         errorState={errorNode}
+        serverPagination={
+          !classified && rows.length > 0
+            ? {
+                page,
+                pageSize,
+                total,
+                hasNext,
+                mode: paginationMode,
+                onPageChange: setPage,
+                onPageSizeChange: setPageSize,
+              }
+            : undefined
+        }
       />
-      {!classified && rows.length > 0 ? (
-        <ResourcePager
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          rowsOnPage={rows.length}
-          hasNext={hasNext}
-          hasPrev={hasPrev}
-          mode={paginationMode}
-          onPage={setPage}
-          onPageSize={setPageSize}
-        />
-      ) : null}
     </section>
   );
 }

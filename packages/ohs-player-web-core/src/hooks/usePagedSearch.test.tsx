@@ -42,6 +42,20 @@ describe('usePagedSearch', () => {
     });
   });
 
+  it('passes an array param through untouched beside the paging keys', async () => {
+    search.mockResolvedValue(bundle(0, { total: 0 }));
+    const date = ['ge2026-09-01T00:00:00.000Z', 'lt2026-09-02T00:00:00.000Z'];
+    const { result } = renderPaged('AuditEvent', { page: 1, pageSize: 25, params: { date } });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(search).toHaveBeenCalledWith('AuditEvent', {
+      date,
+      _count: '25',
+      _offset: '25',
+      _total: 'accurate',
+    });
+  });
+
   it('numbered mode: accurate total drives page math', async () => {
     search.mockResolvedValue(bundle(10, { total: 25 }));
     const { result } = renderPaged('Patient', { page: 0, pageSize: 10 });

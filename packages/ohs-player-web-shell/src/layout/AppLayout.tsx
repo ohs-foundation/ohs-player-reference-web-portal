@@ -13,6 +13,8 @@ import {
   IconDatabase,
   IconDatabaseFill,
   IconFileList,
+  IconHistory,
+  IconHistoryFill,
   IconMagic,
   IconMagicFill,
   IconMapPin,
@@ -60,6 +62,7 @@ const NAV_ICONS: Record<NavId, NavIcons> = {
   careTeams: { LineIcon: IconTeam, FillIcon: IconTeamFill },
   fhirViewer: { LineIcon: IconDatabase, FillIcon: IconDatabaseFill },
   setup: { LineIcon: IconMagic, FillIcon: IconMagicFill },
+  audit: { LineIcon: IconHistory, FillIcon: IconHistoryFill },
 };
 
 function extensionIcons({ icon = IconFileList, activeIcon }: ExtensionNavEntry): NavIcons {

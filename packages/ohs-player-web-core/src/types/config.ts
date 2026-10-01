@@ -52,6 +52,11 @@ export interface I18nConfig {
   locale?: string;
   messages?: Partial<MessageCatalog> | MessageCatalog;
   dateFormat?: Intl.DateTimeFormatOptions;
+  /**
+   * `Intl.DateTimeFormat` options for `formatDateTime`; default `{ dateStyle: 'medium', timeStyle: 'short' }`.
+   * Set `timeZone` to show instants in a fixed zone instead of the browser's.
+   */
+  dateTimeFormat?: Intl.DateTimeFormatOptions;
   numberFormat?: Intl.NumberFormatOptions;
   dir?: 'ltr' | 'rtl';
 }

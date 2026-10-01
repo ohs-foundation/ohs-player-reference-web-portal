@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { Location } from '@medplum/fhirtypes';
 import {
   OhsDropdownMenu,
   PermissionGuard,
@@ -38,9 +39,7 @@ import {
 import { OrganizationFormDrawer } from './OrganizationFormDrawer';
 import { BulkImportDrawer } from '../bulk-import/BulkImportDrawer';
 import { organizationTemplate } from '../bulk-import/importTemplates';
-import type { Option } from '../users/userFormOptions';
-
-type LocRow = { id?: string; name?: string; managingOrganization?: { reference?: string } };
+import { type Option, locationOptions } from '../users/userFormOptions';
 
 const STATUS_VALUES = ['active', 'inactive'] as const;
 
@@ -75,7 +74,7 @@ export function OrganizationsPage() {
     _count: '200',
     _revinclude: 'Location:organization',
   });
-  const locs = useSearch('Location', { _count: '500' });
+  const locs = useSearch('Location', { _count: '500', status: 'active' });
 
   const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useFilterParam('status', STATUS_VALUES);
@@ -94,10 +93,10 @@ export function OrganizationsPage() {
       .filter((r): r is T & { resourceType?: string } => Boolean(r))
       .filter((r) => !resourceType || r.resourceType === resourceType);
 
-  const locList = useMemo(() => resourcesOf<LocRow>(locs.data, 'Location'), [locs.data]);
+  const locList = useMemo(() => resourcesOf<Location>(locs.data, 'Location'), [locs.data]);
 
   /** The `_revinclude`d Locations — every one carries a `managingOrganization`. */
-  const managedLocList = useMemo(() => resourcesOf<LocRow>(orgs.data, 'Location'), [orgs.data]);
+  const managedLocList = useMemo(() => resourcesOf<Location>(orgs.data, 'Location'), [orgs.data]);
 
   /** Locations grouped by the org they're managed by (`Location.managingOrganization`). */
   const locationsByOrgId = useMemo(() => {
@@ -116,23 +115,16 @@ export function OrganizationsPage() {
   // excludes Locations managed by another org so we don't silently steal them (managingOrganization is 0..1).
   // The org's own locations come from the `_revinclude` so they survive falling outside the Location page.
   const locationOptionsFor = (orgId?: string): Option[] => {
-    const seen = new Set<string>();
-    const options: Option[] = [];
-    const add = (l: LocRow) => {
-      if (!l.id || seen.has(l.id)) return;
-      seen.add(l.id);
-      options.push({ value: `Location/${l.id}`, label: l.name ?? l.id });
-    };
-
+    const offered: Location[] = [];
     for (const l of managedLocList) {
       const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
-      if (managerId && managerId === orgId) add(l);
+      if (managerId && managerId === orgId) offered.push(l);
     }
     for (const l of locList) {
       const managerId = l.managingOrganization?.reference?.replace(/^Organization\//, '');
-      if (!managerId || managerId === orgId) add(l);
+      if (!managerId || managerId === orgId) offered.push(l);
     }
-    return options;
+    return locationOptions(offered, t);
   };
 
   const orgList = useMemo(() => {

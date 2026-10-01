@@ -13,6 +13,7 @@ const I18nContext = createContext<{
   dir: 'ltr' | 'rtl';
   locale: string;
   formatDate: (d: Date) => string;
+  formatDateTime: (d: Date) => string;
   formatNumber: (n: number) => string;
 } | null>(null);
 
@@ -66,6 +67,15 @@ export function I18nProvider({
     [config?.dateFormat, locale],
   );
 
+  const formatDateTime = useCallback(
+    (d: Date): string =>
+      new Intl.DateTimeFormat(
+        locale,
+        config?.dateTimeFormat ?? { dateStyle: 'medium', timeStyle: 'short' },
+      ).format(d),
+    [config?.dateTimeFormat, locale],
+  );
+
   const formatNumber = useCallback(
     (n: number): string => new Intl.NumberFormat(locale, config?.numberFormat).format(n),
     [config?.numberFormat, locale],
@@ -77,9 +87,10 @@ export function I18nProvider({
       dir,
       locale,
       formatDate,
+      formatDateTime,
       formatNumber,
     }),
-    [t, dir, locale, formatDate, formatNumber],
+    [t, dir, locale, formatDate, formatDateTime, formatNumber],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -90,6 +101,7 @@ export function useTranslation(): {
   dir: 'ltr' | 'rtl';
   locale: string;
   formatDate: (d: Date) => string;
+  formatDateTime: (d: Date) => string;
   formatNumber: (n: number) => string;
 } {
   const c = useContext(I18nContext);

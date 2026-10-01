@@ -13,6 +13,16 @@ describe('FhirJsonView', () => {
     expect(pre.textContent).toBe(JSON.stringify(resource, null, 2));
   });
 
+  it('lets keyboard users focus the scrolling JSON block', () => {
+    const { container } = render(
+      <FhirJsonView resource={resource} copyLabel="Copy Code" copiedLabel="Copied" />,
+    );
+    const pre = container.querySelector('pre');
+    expect(pre).toHaveAttribute('tabindex', '0');
+    pre?.focus();
+    expect(pre).toHaveFocus();
+  });
+
   it('copies JSON to the clipboard and fires onCopy, swapping the label', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText } });

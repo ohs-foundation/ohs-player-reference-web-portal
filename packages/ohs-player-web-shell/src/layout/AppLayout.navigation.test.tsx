@@ -90,7 +90,18 @@ describe('AppLayout sidebar', () => {
       '/care-teams',
       '/resources',
       '/setup',
+      '/audit',
     ]);
+  });
+
+  it('hides the audit log when its flag is off', () => {
+    flagsOff = new Set(['auditLog']);
+    expect(sidebarLinks()).not.toContain('/audit');
+  });
+
+  it('hides the audit log from a user without audit.view', () => {
+    deniedPermissions = new Set(['audit.view']);
+    expect(sidebarLinks()).not.toContain('/audit');
   });
 
   it('orders the sidebar by the order values in the document', () => {
@@ -143,6 +154,17 @@ describe('AppLayout sidebar', () => {
       .map((link) => link.getAttribute('href'));
 
     expect(hrefs.slice(0, 4)).toEqual(['/', '/users', '/reports', '/locations']);
+  });
+
+  it('puts an extension entry that shares the audit log order after the built-in entry', () => {
+    const extensionNav: ExtensionNavEntry[] = [
+      { id: 'reports.list', to: '/reports', labelKey: 'navReports', order: 80 },
+    ];
+    const hrefs = within(renderSidebar({ extensionNav }))
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+
+    expect(hrefs.slice(-2)).toEqual(['/audit', '/reports']);
   });
 
   it('renders every row as a focusable full-row link with a label and an icon', () => {

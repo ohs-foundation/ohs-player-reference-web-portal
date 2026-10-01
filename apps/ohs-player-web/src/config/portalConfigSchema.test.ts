@@ -44,6 +44,39 @@ describe('portal config schema', () => {
     );
   });
 
+  it('lets a document switch off, place and restrict the audit log', () => {
+    const document = {
+      flags: { auditLog: false },
+      navigation: [
+        {
+          id: 'audit',
+          to: '/audit',
+          labelKey: 'navAudit',
+          order: 5,
+          requires: { flag: 'auditLog', permission: 'audit.view' },
+        },
+      ],
+      permissionMap: { 'audit.view': ['admin', 'auditor'] },
+    };
+    expect(validatePortalConfig(document)).toEqual({ success: true, data: document });
+  });
+
+  it('names the flag when a nav entry requires one the app does not have', () => {
+    expect(
+      rejection({
+        navigation: [
+          {
+            id: 'audit',
+            to: '/audit',
+            labelKey: 'navAudit',
+            order: 80,
+            requires: { flag: 'audit' },
+          },
+        ],
+      }),
+    ).toContain('navigation[0].requires.flag');
+  });
+
   it('only accepts documents the library type describes', () => {
     expectTypeOf<PortalConfig>().toMatchTypeOf<PortalConfigDocument>();
   });

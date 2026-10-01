@@ -74,7 +74,7 @@ export type {
 } from './theme/sysTokens';
 
 export { FhirClient, rebaseFhirUrl } from './client/FhirClient';
-export type { SearchAllOptions } from './client/FhirClient';
+export type { SearchAllOptions, SearchParams } from './client/FhirClient';
 export { FhirError, isOperationOutcome } from './client/FhirError';
 
 export {
@@ -127,7 +127,9 @@ export type { FhirJsonViewProps } from './ui/primitives/FhirJsonView';
 export { FhirJsonEditor } from './ui/primitives/FhirJsonEditor';
 export type { FhirJsonEditorProps } from './ui/primitives/FhirJsonEditor';
 
-export { writeAuditEvent } from './audit/writeAudit';
+export { RESOURCE_TYPES_SYSTEM, writeAuditEvent } from './audit/writeAudit';
+export { activityItemFromAuditEvent } from './audit/auditActivity';
+export type { ActivityItem, AuditAction } from './audit/auditActivity';
 
 export type {
   Questionnaire,

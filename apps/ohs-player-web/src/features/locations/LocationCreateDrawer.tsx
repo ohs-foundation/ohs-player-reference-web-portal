@@ -13,6 +13,7 @@ import { locationBodyFromAnswers } from '../sdc/resourceFromAnswers';
 import { toErrorMessage } from '../sdc/toErrorMessage';
 import { LocationFormFields } from './LocationForm';
 import { answersToDraftLocation } from './locationDraft';
+import { locationOptions } from '../users/userFormOptions';
 import { useAllLocationsLean } from './useLocationRoots';
 
 const FORM_ID = 'location-create-form';
@@ -36,13 +37,9 @@ export function LocationCreateDrawer({
 
   const parentOptions = useMemo(() => {
     const root = { value: '__root__', label: t('rootLocation') };
-    const rest = locList
-      .filter((l) => l.id)
-      .map((l) => ({
-        value: `Location/${l.id as string}`,
-        label: l.name?.trim() ? l.name : (l.id as string),
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+    const rest = locationOptions(locList, t).sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+    );
     return [root, ...rest];
   }, [locList, t]);
 

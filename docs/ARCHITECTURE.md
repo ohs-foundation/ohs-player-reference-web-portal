@@ -44,12 +44,16 @@ Dependencies point one way. The library never imports the shell or an app, and t
 | `action` | `C` / `U` / `D` | Mapped from `params.action` (`create`/`update`/`delete`). The R4 value set also has `R` (read) and `E` (execute); the portal only audits **mutations**, so reads/executes are intentionally not emitted. |
 | `recorded` | ISO timestamp | Set at write time. |
 | `agent[0].who.display` | `params.agentDisplay` (else `"Portal user"`) | **Open item:** this is a *display string*, not a `Practitioner/{id}` reference. A real actor reference needs a `fhirUser` token claim (or a Practitioner lookup) — tracked separately; until then the agent is best-effort display. |
+| `agent[0].name` | Same value as `agent[0].who.display` | The R4 `agent-name` search parameter reads `agent.name`, not `who.display`; writing it lets the audit log filter by agent. |
 | `agent[0].type` | `author` (`provenance-participant-type`), `requestor: true` | The signed-in portal user is the requesting author. |
 | `source.observer.display` | `"OHS Player Web"` | Fixed source label for the reference app. |
 | `entity[0].what.reference` | `{resourceType}/{resourceId}` | Present only when `resourceId` is given; omitted (`entity: []`) otherwise. |
+| `entity[0].type` | `{ system: 'http://hl7.org/fhir/resource-types', code: resourceType }` (`RESOURCE_TYPES_SYSTEM`) | The R4 `entity-type` search parameter reads `entity.type`; the audit-entity-type value set includes every resource type, so this lets the audit log filter by resource type. Events written before `0.2.0` carry `audit-entity-type\|2` (System Object) and match only the action and date filters. |
 | `entity[0].description` | `params.description` | Optional free-text (e.g. "Linked to Organization/o1"); omitted when absent. |
 
-Decisions of note: `outcome` is **not** recorded (the call rejects on failure, so a written `AuditEvent` always represents a success — there are no failed-write audit entries by design). The function does **not** swallow errors — a failed `client.create` rejects to the caller. Per-mutation wiring (which flows call it, with what `description`) is the consumer's responsibility.
+Decisions of note: `outcome` is **not** recorded (the call rejects on failure, so a written `AuditEvent` always represents a success — there are no failed-write audit entries by design). The function does **not** swallow errors — a failed `client.create` rejects to the caller. Per-mutation wiring (which flows call it, with what `description`) is the consumer's responsibility. HAPI enforces referential integrity on write, so the POST fails when `entity[0].what` names a resource that does not exist.
+
+The read side is `activityItemFromAuditEvent(resource)` (`src/audit/auditActivity.ts`), which normalises both this shape and the gateway's IHE BALP events for the shell's activity feed and the app's audit log.
 
 ## `ohs-player-web-shell`
 
@@ -93,7 +97,7 @@ Location and organization editing uses FHIR `Questionnaire` JSON **bundled in th
 ### Layer split
 
 - **Library (`ohs-player-web-core`)** ships only **behavior + Radix wrappers** and the theme engine — `OhsDialog`, `OhsDropdownMenu`, `OhsTabs`, `OhsToast`, `OhsTooltip`, `StatusBar`, the SDC `QuestionnaireForm`/`QuestionnaireFields`, and `themeCss`/`installThemeCss`. It does **not** export `Button`, `Card`, `TextField`, etc.
-- **Shell (`packages/ohs-player-web-shell/src/components/ui/`)** owns the **presentational primitives**: `Button`, `Card`, `Field`/`TextField`/`SelectField`/`TextAreaField`, `Combobox`, `Listbox`, `SearchField`, `DataTable`, `Drawer`, `Popover`, `Layout` (`Page`/`PageHeader`/`Stack`/`Inline`), `States` (`EmptyState`/`ErrorState`/`Spinner`/`LinearProgress`/`StatusBadge`), `Switch`, `Checkbox`, `Chips`, `Avatar`, `KpiBadge`, `DonutChart`, and the icon set.
+- **Shell (`packages/ohs-player-web-shell/src/components/ui/`)** owns the **presentational primitives**: `Button`, `Card`, `Field`/`TextField`/`SelectField`/`TextAreaField`, `Combobox`, `Listbox`, `SearchField`, `DataTable` (client paging, or server paging through `serverPagination`), `DetailField`, `Drawer`, `Popover`, `Layout` (`Page`/`PageHeader`/`Stack`/`Inline`), `States` (`EmptyState`/`ErrorState`/`Spinner`/`LinearProgress`/`StatusBadge`), `Switch`, `Checkbox`, `Chips`, `Avatar`, `KpiBadge`, `DonutChart`, and the icon set.
 
 The library must never import from the shell or an app, and the shell must never import from an app. Feature code imports primitives from `'ohs-player-web-shell'`.
 

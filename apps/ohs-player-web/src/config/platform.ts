@@ -24,6 +24,7 @@ const permissionMap: PermissionMap = {
   // FHIR Viewer: read for admins + care-team managers; edit/delete (raw-JSON mutations) admin-only.
   'fhir-viewer.view': ['admin', 'care-team-manager'],
   'fhir-viewer.edit': ['admin'],
+  'audit.view': ['admin'],
 };
 
 const FHIR_VERSIONS: readonly FhirVersion[] = ['R4', 'R5', 'STU3'];
@@ -52,6 +53,7 @@ export const platformConfig: CorePlatformConfig = {
       orgMgmt: env.flags.orgMgmt,
       setupWizard: env.flags.setupWizard,
       fhirViewer: env.flags.fhirViewer,
+      auditLog: env.flags.auditLog,
     },
   },
   i18n: {
