@@ -113,11 +113,38 @@ Sign in as `manager-user`. Schedules is gone from the sidebar, the dashboard and
 `messages` overrides any message by key, and `locale` sets the locale for dates and numbers.
 
 ```json
-"messages": { "navUsers": "Staff", "navSchedules": "Rosters", "schedulesTitle": "Rosters" },
+"messages": {
+  "navUsers": "Staff",
+  "kpiTotalUsers": "Total Staff",
+  "recentUsersTitle": "Recently Added Staff",
+  "recentUsersSubtitle": "Most recently created or updated staff.",
+  "distributionUsers": "Staff Distribution",
+  "pageUsers": "Staff",
+  "resourceTypePractitioner": "Staff member",
+  "navSchedules": "Rosters",
+  "schedulesTitle": "Rosters"
+},
 "locale": "en-GB"
 ```
 
-The sidebar now says Staff and Rosters, and the Schedules page is titled Rosters, with planning horizons formatted as British dates. Each label has its own key, so renaming a screen everywhere means overriding each one. For Schedules, `navSchedules` is the sidebar entry, `schedulesTitle` the page heading, `schedulesKpi` the dashboard tile and `schedulesViewForUser` the row action, all listed in `apps/ohs-player-web-example/src/extensions/schedules/messages.ts`. A key can also label more than one place. `navUsers` names the Users sidebar entry, its option in Customize Widgets and its group in the global search results, so all three say Staff. Keys come from the library catalogue (`packages/ohs-player-web-core/src/i18n/locales/en.ts`), the app's messages and each extension's messages. A key a component asks for that exists nowhere renders as the key itself, which makes a missing message easy to spot. A misspelled key in `messages` is caught at startup instead. The schema accepts any key, because an extension's keys are only known once its manifest loads, so the host checks every key against the library, the app and each installed extension. A key none of them declares shows a warning toast on every load, naming the key and the closest declared one, for example `navSchedles (did you mean navSchedules?)`, and goes to the platform `onError` callback. `locale` does not translate: supply translated `messages` for another language.
+The sidebar now says Staff and Rosters. The Staff page heading, the Total Staff card, the Recently Added Staff table and the Staff Distribution card agree with it. The Schedules page is titled Rosters, with planning horizons formatted as British dates. When the server holds audit events for practitioners, such as those the reference app writes, the notifications panel reads Created Staff member followed by the practitioner's id.
+
+A rename is made key by key. Each label has its own key, so renaming a screen everywhere means overriding each one. For Schedules, `navSchedules` is the sidebar entry, `schedulesTitle` the page heading, `schedulesKpi` the dashboard tile and `schedulesViewForUser` the row action, all listed in `apps/ohs-player-web-example/src/extensions/schedules/messages.ts`. For the four built-in screens, these are the keys that carry the name, as declared in `apps/ohs-player-web/src/i18n/appMessages.ts`. The example app declares the same sidebar, dashboard and notification keys, and `pageUsers` for its only page.
+
+| Screen | Sidebar, search and Customize Widgets | Dashboard | Page heading | Notifications |
+| --- | --- | --- | --- | --- |
+| Users | `navUsers` | `kpiTotalUsers`, `recentUsersTitle`, `recentUsersSubtitle`, `distributionUsers` | `pageUsers` | `resourceTypePractitioner` |
+| Locations | `navLocations` | `kpiTotalLocations`, `recentLocationsTitle`, `recentLocationsSubtitle`, `distributionLocations` | `pageLocations` | `resourceTypeLocation` |
+| Organisations | `navOrganizations` | `kpiTotalOrganizations`, `recentOrganizationsTitle`, `recentOrganizationsSubtitle`, `distributionOrganizations` | `pageOrganizations` | `resourceTypeOrganization` |
+| Care Teams | `navCareTeams` | `kpiTotalCareTeams`, `recentCareTeamsTitle`, `recentCareTeamsSubtitle`, `distributionCareTeams` | `pageCareTeams` | `resourceTypeCareTeam` |
+
+Drawers, empty states and toasts carry the name in keys of their own, such as `createUser`, `usersEmptyTitle` and `userCreated`. Search `appMessages.ts` for the word to find them all.
+
+A key can also label more than one place. `navUsers` names the Users sidebar entry, its option in Customize Widgets and its group in the global search results, so all three say Staff. A `resourceType` key names the resource in the notifications panel and in the resource type column of the reference app's audit log, so overriding `resourceTypePractitioner` alone changes those two and leaves the sidebar as it was. The audit log's resource type filter still takes the FHIR type name, which the event drawer shows in its reference. The noun key is `resourceType` followed by the FHIR type, and a type with no key shows its FHIR name, such as Schedule. To name another type, declare its key in the app's messages or in the messages of the extension that owns the type, for example `resourceTypeSchedule`, rather than only in the document, because the startup warning below checks document keys against those catalogues. An extension shows the same noun with the shell's `resourceTypeLabel(t, type)`. The line under each notification is the description stored in the audit event when it was written, so no message changes it and it is not translated.
+
+There is no single term per screen that the other messages share. A shared term reads well in English but cannot carry plurals or grammatical agreement in other languages, so each string keeps its own key and the table above is the list to override.
+
+Keys come from the library catalogue (`packages/ohs-player-web-core/src/i18n/locales/en.ts`), the app's messages and each extension's messages. A key a component asks for that exists nowhere renders as the key itself, which makes a missing message easy to spot. A misspelled key in `messages` is caught at startup instead. The schema accepts any key, because an extension's keys are only known once its manifest loads, so the host checks every key against the library, the app and each installed extension. A key none of them declares shows a warning toast on every load, naming the key and the closest declared one, for example `navSchedles (did you mean navSchedules?)`, and goes to the platform `onError` callback. `locale` does not translate: supply translated `messages` for another language.
 
 The import drawer shared by Users, Organisations and Locations reads `bulkImport*` keys. Before users and organisations import, the locations drawer read `locationsDropzone`, `locationsDropzoneHint`, `locationsUploadFile`, `locationsExpectedColumns`, `locationsTemplateHint`, `locationsDownloadTemplate`, `locationsStartImport`, `locationsImportProgress`, `locationsImportComplete`, `locationsImportPartial`, `locationsImportTotal`, `locationsImportProcessed`, `locationsImportFailed` and `locationsImportFailedNotice`. A document that overrides any of those should move the override to the matching `bulkImport*` key (`locationsDropzone` becomes `bulkImportDropzone`, `locationsImportTotal` becomes `bulkImportTotal`, and `locationsStartImport` becomes `bulkImportStart`).
 
