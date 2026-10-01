@@ -264,13 +264,13 @@ const widgets: ExtensionWidget<DashboardRegion>[] = [
   { id: 'reports.trend', region: 'side', order: 15, load: loads(() => <p>Reports trend</p>) },
 ];
 
-function renderWithWidgets() {
+function renderWithWidgets(contributed: ExtensionWidget<DashboardRegion>[] = widgets) {
   return render(
     <MemoryRouter>
       <CorePlatformProvider config={testPlatformConfig}>
         <PortalConfigContext.Provider value={portalConfig}>
           <ExtensionsContext.Provider
-            value={{ nav: [], routes: [], slots: [], questionnaires: {}, widgets }}
+            value={{ nav: [], routes: [], slots: [], questionnaires: {}, widgets: contributed }}
           >
             <DashboardPage />
           </ExtensionsContext.Provider>
@@ -301,6 +301,37 @@ describe('DashboardPage regions', () => {
     expect(await within(rows[1]).findByText('Reports trend')).toBeInTheDocument();
     expect(within(rows[0]).getByText('recentUsersTitle')).toBeInTheDocument();
     expect(within(rows[2]).getByText('recentLocationsTitle')).toBeInTheDocument();
+  });
+
+  it('sorts extension KPI tiles in among the built-in cards by order', async () => {
+    const { container } = renderWithWidgets([
+      { id: 'practice.late', region: 'kpi', order: 50, load: loads(() => <p>Late KPI</p>) },
+      { id: 'practice.early', region: 'kpi', order: 5, load: loads(() => <p>Early KPI</p>) },
+    ]);
+
+    const kpi = container.querySelector('.ohs-kpi-grid') as HTMLElement;
+    expect(await within(kpi).findByText('Early KPI')).toBeInTheDocument();
+    expect(await within(kpi).findByText('Late KPI')).toBeInTheDocument();
+    expect(kpi.firstElementChild).toHaveTextContent('Early KPI');
+    expect(kpi.lastElementChild).toHaveTextContent('Late KPI');
+    expect(kpiLabels(container)).toEqual(KPI_LABELS);
+  });
+
+  it('pairs main and side widgets at the same order and gives a lone widget a side-only row', async () => {
+    const { container } = renderWithWidgets([
+      { id: 'practice.main', region: 'main', order: 25, load: loads(() => <p>Paired main</p>) },
+      { id: 'practice.side', region: 'side', order: 25, load: loads(() => <p>Paired side</p>) },
+      { id: 'practice.lone', region: 'side', order: 50, load: loads(() => <p>Lone side</p>) },
+    ]);
+
+    const rows = container.querySelectorAll<HTMLElement>('.ohs-dash-row');
+    expect(rows).toHaveLength(6);
+    expect(await within(rows[2]).findByText('Paired main')).toBeInTheDocument();
+    expect(await within(rows[2]).findByText('Paired side')).toBeInTheDocument();
+    expect(rows[2]).not.toHaveAttribute('data-side-only');
+    expect(await within(rows[5]).findByText('Lone side')).toBeInTheDocument();
+    expect(rows[5]).toHaveAttribute('data-side-only');
+    expect([...rows].filter((row) => row.hasAttribute('data-side-only'))).toEqual([rows[5]]);
   });
 
   it('shows a failed tile for a widget that throws while the rest of the dashboard renders', async () => {
