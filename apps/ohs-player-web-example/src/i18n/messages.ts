@@ -2,6 +2,7 @@ import type { MessageCatalog } from 'ohs-player-web-core';
 
 export const messages = {
   activityEmpty: 'No recent activity yet.',
+  activityLine: '{{verb}} {{resource}} {{id}}',
   activityTitle: 'Recent activity',
   appTopbarTitle: 'OHS Example Portal',
   clear: 'Clear',
@@ -63,6 +64,10 @@ export const messages = {
   recentOrganizationsTitle: 'Recently Added Organisations',
   recentUsersSubtitle: 'Most recently created or updated users.',
   recentUsersTitle: 'Recently Added Users',
+  resourceTypeCareTeam: 'Care team',
+  resourceTypeLocation: 'Location',
+  resourceTypeOrganization: 'Organisation',
+  resourceTypePractitioner: 'User',
   rowActions: 'Row actions',
   searchNoResults: 'No matches found.',
   skipToContent: 'Skip to main content',

@@ -29,6 +29,7 @@ export {
   type SlotContexts,
   type SlotName,
 } from './host/types';
+export { resourceTypeLabel } from './features/activity/resourceTypeLabel';
 export { StatCard, type StatCardProps } from './features/dashboard/StatCard';
 export type { PortalRoute } from './routes/types';
 

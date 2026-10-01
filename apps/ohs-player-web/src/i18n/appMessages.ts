@@ -35,6 +35,11 @@ export const appMessageOverrides = {
   activityDeleted: 'Deactivated',
   activityViewed: 'Viewed',
   activityChanged: 'Changed',
+  activityLine: '{{verb}} {{resource}} {{id}}',
+  resourceTypePractitioner: 'User',
+  resourceTypeLocation: 'Location',
+  resourceTypeOrganization: 'Organisation',
+  resourceTypeCareTeam: 'Care team',
   themeDark: 'Switch to dark mode',
   themeLight: 'Switch to light mode',
 

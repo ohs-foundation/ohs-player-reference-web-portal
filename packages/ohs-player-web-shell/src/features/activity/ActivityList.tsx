@@ -1,5 +1,6 @@
 import { useTranslation } from 'ohs-player-web-core';
 import { Spinner } from '../../components/ui';
+import { resourceTypeLabel } from './resourceTypeLabel';
 import { type ActivityItem } from './useRecentActivity';
 
 const ACTION_KEY: Record<NonNullable<ActivityItem['action']>, string> = {
@@ -49,8 +50,9 @@ export function ActivityList({ items, loading, error }: Readonly<ActivityListPro
 
   const sentence = (item: ActivityItem): string => {
     const verb = t(item.action ? ACTION_KEY[item.action] : 'activityChanged');
-    const subject = item.resourceId ? `${item.resourceType} ${item.resourceId}` : item.resourceType;
-    return `${verb} ${subject}`.trim();
+    if (!item.resourceType) return verb;
+    const resource = resourceTypeLabel(t, item.resourceType);
+    return t('activityLine', { verb, resource, id: item.resourceId });
   };
 
   return (
