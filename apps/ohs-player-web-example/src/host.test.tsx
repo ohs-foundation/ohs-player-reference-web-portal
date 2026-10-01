@@ -136,6 +136,6 @@ describe('the example portal with the schedules extension', () => {
 
     const panel = await screen.findByRole('menu');
     expect(within(panel).getByText('Created User p1')).toBeInTheDocument();
-    expect(panel.textContent).not.toMatch(/\b(activity|resourceType)[A-Z]/);
+    expect(within(panel).queryAllByText(/\b(activity|resourceType)[A-Z]/)).toEqual([]);
   });
 });
