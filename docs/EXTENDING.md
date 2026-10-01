@@ -192,6 +192,8 @@ Extension "schedules" is invalid: widgets[0].region must be one of "kpi", "main"
 
 In production the same error goes to the platform's `onError` callback and that manifest is dropped. The shell and every valid extension still render.
 
+The host also checks the configuration document's `messages` once every manifest is merged. A key that neither the library, the app nor an installed extension declares is listed on `host.unknownMessageKeys` with the closest declared key, reported through `onError` and shown by `PortalHost` as a warning toast in every build. It never throws, so a typo in the document cannot stop the app. A document that still overrides the copy of an extension that was removed, or dropped at startup, gets the same warning. The toast's own copy uses `configUnknownMessageKeys` and `configUnknownMessageKeySuggestion` (with `{{key}}` and `{{suggestion}}`). Like the shell's other messages, an application declares both in its catalogue, otherwise the toast shows the key names.
+
 ### Testing an extension
 
 - Run the manifest through the validator with the shell's rules, as [`manifest.test.ts`](../apps/ohs-player-web-example/src/extensions/schedules/manifest.test.ts) does:

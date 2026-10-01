@@ -86,9 +86,10 @@ Maps such as `flags`, `permissionMap`, `messages`, `customEndpoints` and the bra
 
 - **Missing or unreachable** (404, network error, not JSON): the app starts without an error, on the last valid document this browser loaded or, failing that, on the build-time values. With the reference document, the build-time values render identically.
 - **Invalid** (unknown field, wrong type, missing `order` on a navigation entry, and so on): the app still starts on the fallback values. The error names the field and the expected type, for example `✖ Invalid input: expected boolean, received string → at flags.userMgmt`. It goes to the platform `onError` callback, and in development it also appears as an error toast.
+- **Unknown message key** (a `messages` key that neither the library, the app nor an installed extension declares): the document still applies, and the key has no effect. In every build a warning toast names the key on each load, with the closest declared key when one is near, and the same text goes to the platform `onError` callback. The schema cannot catch this, because extension keys are only known once the manifests load.
 - **The checked-in document** is validated when the image is built: `pnpm build` fails on an invalid `portal-config.json`, and `pnpm config:check` runs the same check on its own. After changing the schema, regenerate `portal-config.schema.json` with `pnpm config-schema:generate`.
 
-This section describes the reference application. The example application (`apps/ohs-player-web-example`) loads its own `public/portal-config.json` the same way, with three differences: its schema accepts any flag name and any colour role, its build does not check the document, and an invalid document is reported only through `onError`, with no toast.
+This section describes the reference application. The example application (`apps/ohs-player-web-example`) loads its own `public/portal-config.json` the same way, with three differences: its schema accepts any flag name and any colour role, its build does not check the document, and an invalid document is reported only through `onError`, with no toast. The unknown message key warning comes from the shell, so it is the same in both applications.
 
 **Changing it on a running deployment.** Mount your own document over the image's copy and reload the browser; no rebuild is needed:
 
