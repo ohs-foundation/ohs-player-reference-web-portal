@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import type { ExtensionWidget } from 'ohs-player-web-core';
 import type { ComponentType } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -32,8 +32,23 @@ const recent: Record<string, { entry: { resource: Record<string, unknown> }[] }>
       },
     ],
   },
-  Location: { entry: [{ resource: { resourceType: 'Location', id: 'l1', name: 'Clinic A', status: 'active' } }] },
-  Organization: { entry: [{ resource: { resourceType: 'Organization', id: 'o1', name: 'Ministry of Health', active: true } }] },
+  Location: {
+    entry: [
+      { resource: { resourceType: 'Location', id: 'l1', name: 'Clinic A', status: 'active' } },
+    ],
+  },
+  Organization: {
+    entry: [
+      {
+        resource: {
+          resourceType: 'Organization',
+          id: 'o1',
+          name: 'Ministry of Health',
+          active: true,
+        },
+      },
+    ],
+  },
   CareTeam: { entry: [] },
 };
 
@@ -73,23 +88,40 @@ const { ExtensionsContext } = await import('../host/extensionsContext');
 const { testPlatformConfig, testPortalDefaults } = await import('../test/testPlatformConfig');
 const { PortalConfigContext } = await import('../config/portalConfigContext');
 const { resolvePortalConfig } = await import('../config/resolvePortalConfig');
-const { KPI_STORAGE_PREFIX } = await import('../features/dashboard/useDashboardKpis');
+const { LAYOUT_STORAGE_PREFIX, LEGACY_KPI_STORAGE_PREFIX } =
+  await import('../features/dashboard/useDashboardLayout');
 const { DashboardPage } = await import('./DashboardPage');
 
 const portalConfig = resolvePortalConfig(testPortalDefaults, {});
-const KPI_LABELS = ['kpiTotalUsers', 'kpiTotalLocations', 'kpiTotalOrganizations', 'kpiTotalCareTeams'];
+const KPI_LABELS = [
+  'kpiTotalUsers',
+  'kpiTotalLocations',
+  'kpiTotalOrganizations',
+  'kpiTotalCareTeams',
+];
 
-function storeKpis(ids: string[]): void {
-  window.localStorage.setItem(`${KPI_STORAGE_PREFIX}u1`, JSON.stringify(ids));
+const LISTS = [
+  'recentUsersTitle',
+  'recentLocationsTitle',
+  'recentOrganizationsTitle',
+  'recentCareTeamsTitle',
+];
+
+function storeLayout(layout: { kpi?: string[]; main?: string[]; side?: string[] }): void {
+  window.localStorage.setItem(
+    `${LAYOUT_STORAGE_PREFIX}u1`,
+    JSON.stringify({ version: 1, layout: { kpi: [], main: [], side: [], ...layout } }),
+  );
 }
 
 function kpiLabels(container: HTMLElement): (string | null)[] {
   return [...container.querySelectorAll('.ohs-kpi__label')].map((label) => label.textContent);
 }
 
-async function openPicker(): Promise<HTMLElement> {
-  fireEvent.click(screen.getByRole('button', { name: 'kpiCustomize' }));
-  return screen.findByRole('dialog');
+function listTitles(container: HTMLElement): (string | null)[] {
+  return [...container.querySelectorAll('.ohs-dash-card .ohs-card-header__title')].map(
+    (title) => title.textContent,
+  );
 }
 
 function renderPage() {
@@ -140,95 +172,96 @@ describe('DashboardPage', () => {
   });
 });
 
-describe('DashboardPage KPI selection', () => {
-  it('shows all four KPIs in catalogue order when nothing is stored', () => {
+describe('DashboardPage layout', () => {
+  it('shows four KPIs, four lists and four charts in catalogue order when nothing is stored', () => {
     const { container } = renderPage();
 
     expect(kpiLabels(container)).toEqual(KPI_LABELS);
+    expect(listTitles(container)).toEqual(LISTS);
+    expect(container.querySelectorAll('.ohs-dist-card')).toHaveLength(4);
+    expect(container.querySelectorAll('.ohs-dash-row[data-side-only]')).toHaveLength(0);
   });
 
   it.each([
-    [['careTeams'], ['kpiTotalCareTeams']],
-    [['organizations', 'users'], ['kpiTotalUsers', 'kpiTotalOrganizations']],
-    [['careTeams', 'locations', 'users'], ['kpiTotalUsers', 'kpiTotalLocations', 'kpiTotalCareTeams']],
-    [['careTeams', 'organizations', 'locations', 'users'], KPI_LABELS],
-  ])('renders the stored selection %j in catalogue order', (stored, expected) => {
-    storeKpis(stored);
+    [['kpi.careTeams'], ['kpiTotalCareTeams']],
+    [
+      ['kpi.organizations', 'kpi.users'],
+      ['kpiTotalOrganizations', 'kpiTotalUsers'],
+    ],
+    [
+      ['kpi.careTeams', 'kpi.locations', 'kpi.users'],
+      ['kpiTotalCareTeams', 'kpiTotalLocations', 'kpiTotalUsers'],
+    ],
+  ])('renders the stored KPIs %j in stored order', (kpi, expected) => {
+    storeLayout({ kpi });
     const { container } = renderPage();
 
     expect(kpiLabels(container)).toEqual(expected);
     expect(container.querySelectorAll('.ohs-kpi-grid > .ohs-kpi')).toHaveLength(expected.length);
   });
 
-  it('hides the KPI row when nothing is selected, and keeps the rest of the dashboard', () => {
-    storeKpis([]);
+  it('renders stored lists and charts in stored order and drops the ones the user removed', () => {
+    storeLayout({ main: ['recent.careTeams', 'recent.users'], side: ['chart.locationsByStatus'] });
+    const { container } = renderPage();
+
+    expect(listTitles(container)).toEqual(['recentCareTeamsTitle', 'recentUsersTitle']);
+    expect(screen.getByText('distributionLocations')).toBeInTheDocument();
+    expect(screen.queryByText('distributionUsers')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.ohs-dash-row')).toHaveLength(2);
+  });
+
+  it('hides the KPI row when the layout has no KPI, and keeps the rest of the dashboard', () => {
+    storeLayout({ main: ['recent.users'] });
     const { container } = renderPage();
 
     expect(container.querySelector('.ohs-kpi-grid')).toBeNull();
     expect(screen.getByText('recentUsersTitle')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'kpiCustomize' })).toBeInTheDocument();
   });
 
-  it('trims an over-limit stored selection to four cards', () => {
-    storeKpis(['users', 'locations', 'organizations', 'careTeams', 'users', 'bogus']);
+  it('trims an over-limit stored KPI list to four cards', () => {
+    storeLayout({
+      kpi: [
+        'kpi.users',
+        'kpi.locations',
+        'kpi.organizations',
+        'kpi.careTeams',
+        'kpi.users',
+        'bogus',
+      ],
+    });
     const { container } = renderPage();
 
     expect(container.querySelectorAll('.ohs-kpi-grid > .ohs-kpi')).toHaveLength(4);
   });
 
-  it('hides a KPI from the row and the picker when its screen flag is off', async () => {
+  it('hides every card of a screen whose flag is off', () => {
     flagsOff = new Set(['careTeams']);
     const { container } = renderPage();
 
     expect(kpiLabels(container)).not.toContain('kpiTotalCareTeams');
-    const panel = await openPicker();
-    expect(within(panel).queryByText('navCareTeams')).not.toBeInTheDocument();
-    expect(within(panel).queryByText('kpiPickerLimit')).not.toBeInTheDocument();
+    expect(listTitles(container)).not.toContain('recentCareTeamsTitle');
+    expect(screen.queryByText('distributionCareTeams')).not.toBeInTheDocument();
   });
 
-  it('applies a saved selection, persists it across a reload and reports success', async () => {
-    const first = renderPage();
-    const panel = await openPicker();
-
-    fireEvent.click(within(panel).getByRole('checkbox', { name: 'navUsers' }));
-    fireEvent.click(within(panel).getByRole('checkbox', { name: 'navLocations' }));
-    fireEvent.click(within(panel).getByRole('button', { name: 'save' }));
-
-    expect(notify).toHaveBeenCalledWith({ tone: 'success', title: 'kpiSaved' });
-    expect(kpiLabels(first.container)).toEqual(['kpiTotalOrganizations', 'kpiTotalCareTeams']);
-
-    first.unmount();
-    const { container } = renderPage();
-    expect(kpiLabels(container)).toEqual(['kpiTotalOrganizations', 'kpiTotalCareTeams']);
-  });
-
-  it('keeps a gated KPI selected through a save, so it returns with its flag', async () => {
+  it('keeps a gated card in the stored layout, so it returns with its flag', () => {
+    storeLayout({ kpi: ['kpi.careTeams', 'kpi.users'] });
     flagsOff = new Set(['careTeams']);
     const first = renderPage();
-    const panel = await openPicker();
-
-    fireEvent.click(within(panel).getByRole('checkbox', { name: 'navUsers' }));
-    fireEvent.click(within(panel).getByRole('button', { name: 'save' }));
+    expect(kpiLabels(first.container)).toEqual(['kpiTotalUsers']);
     first.unmount();
 
     flagsOff = new Set();
     const { container } = renderPage();
-    expect(kpiLabels(container)).toEqual([
-      'kpiTotalLocations',
-      'kpiTotalOrganizations',
-      'kpiTotalCareTeams',
-    ]);
+    expect(kpiLabels(container)).toEqual(['kpiTotalCareTeams', 'kpiTotalUsers']);
   });
 
-  it('keeps the row unchanged when the picker is cancelled', async () => {
+  it('moves the old KPI selection into the layout and keeps the lists and charts', () => {
+    window.localStorage.setItem(`${LEGACY_KPI_STORAGE_PREFIX}u1`, '["organizations","users"]');
     const { container } = renderPage();
-    const panel = await openPicker();
 
-    fireEvent.click(within(panel).getByRole('checkbox', { name: 'navUsers' }));
-    fireEvent.click(within(panel).getByRole('button', { name: 'cancel' }));
-
-    expect(kpiLabels(container)).toEqual(KPI_LABELS);
-    expect(notify).not.toHaveBeenCalled();
+    expect(kpiLabels(container)).toEqual(['kpiTotalOrganizations', 'kpiTotalUsers']);
+    expect(listTitles(container)).toEqual(LISTS);
+    expect(window.localStorage.getItem(`${LEGACY_KPI_STORAGE_PREFIX}u1`)).toBeNull();
   });
 
   it('shows a spinner while a count loads and a dash when it fails', () => {
@@ -240,15 +273,6 @@ describe('DashboardPage KPI selection', () => {
     const locations = screen.getByText('kpiTotalLocations').closest('.ohs-kpi') as HTMLElement;
     expect(within(users).getByRole('status')).toBeInTheDocument();
     expect(within(locations).getByText('—')).toBeInTheDocument();
-  });
-
-  it('has no critical a11y violations with the picker open', async () => {
-    renderPage();
-    await screen.findByText('Jane Smith');
-    await openPicker();
-
-    const result = await axe(document.body, { rules: { 'color-contrast': { enabled: false } } });
-    expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
   });
 });
 
@@ -290,6 +314,7 @@ describe('DashboardPage regions', () => {
   });
 
   it('renders contributed widgets in their declared region, sorted by order', async () => {
+    flagsOff = new Set(['careTeams']);
     const { container } = renderWithWidgets();
 
     const kpi = container.querySelector('.ohs-kpi-grid') as HTMLElement;
@@ -297,13 +322,13 @@ describe('DashboardPage regions', () => {
     expect(kpi.lastElementChild).toHaveTextContent('Reports KPI');
 
     const rows = container.querySelectorAll<HTMLElement>('.ohs-dash-row');
-    expect(rows).toHaveLength(5);
+    expect(rows).toHaveLength(4);
     expect(await within(rows[1]).findByText('Reports trend')).toBeInTheDocument();
     expect(within(rows[0]).getByText('recentUsersTitle')).toBeInTheDocument();
     expect(within(rows[2]).getByText('recentLocationsTitle')).toBeInTheDocument();
   });
 
-  it('sorts extension KPI tiles in among the built-in cards by order', async () => {
+  it('sorts extension KPI tiles in among the built-in cards and caps the strip at four', async () => {
     const { container } = renderWithWidgets([
       { id: 'practice.late', region: 'kpi', order: 50, load: loads(() => <p>Late KPI</p>) },
       { id: 'practice.early', region: 'kpi', order: 5, load: loads(() => <p>Early KPI</p>) },
@@ -311,13 +336,12 @@ describe('DashboardPage regions', () => {
 
     const kpi = container.querySelector('.ohs-kpi-grid') as HTMLElement;
     expect(await within(kpi).findByText('Early KPI')).toBeInTheDocument();
-    expect(await within(kpi).findByText('Late KPI')).toBeInTheDocument();
     expect(kpi.firstElementChild).toHaveTextContent('Early KPI');
-    expect(kpi.lastElementChild).toHaveTextContent('Late KPI');
-    expect(kpiLabels(container)).toEqual(KPI_LABELS);
+    expect(kpiLabels(container)).toEqual(KPI_LABELS.slice(0, 3));
+    expect(within(kpi).queryByText('Late KPI')).not.toBeInTheDocument();
   });
 
-  it('pairs main and side widgets at the same order and gives a lone widget a side-only row', async () => {
+  it('pairs main and side cards by position and gives a trailing side card a side-only row', async () => {
     const { container } = renderWithWidgets([
       { id: 'practice.main', region: 'main', order: 25, load: loads(() => <p>Paired main</p>) },
       { id: 'practice.side', region: 'side', order: 25, load: loads(() => <p>Paired side</p>) },
@@ -332,6 +356,19 @@ describe('DashboardPage regions', () => {
     expect(await within(rows[5]).findByText('Lone side')).toBeInTheDocument();
     expect(rows[5]).toHaveAttribute('data-side-only');
     expect([...rows].filter((row) => row.hasAttribute('data-side-only'))).toEqual([rows[5]]);
+  });
+
+  it('pairs by position, so an unpaired main widget moves the side cards below it up a row', async () => {
+    const { container } = renderWithWidgets([
+      { id: 'practice.visits', region: 'main', order: 15, load: loads(() => <p>Visits</p>) },
+    ]);
+
+    const rows = container.querySelectorAll<HTMLElement>('.ohs-dash-row');
+    expect(rows).toHaveLength(5);
+    expect(await within(rows[1]).findByText('Visits')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('distributionLocations')).toBeInTheDocument();
+    expect(within(rows[4]).getByText('recentCareTeamsTitle')).toBeInTheDocument();
+    expect(within(rows[4]).queryByText(/^distribution/)).not.toBeInTheDocument();
   });
 
   it('shows a failed tile for a widget that throws while the rest of the dashboard renders', async () => {
