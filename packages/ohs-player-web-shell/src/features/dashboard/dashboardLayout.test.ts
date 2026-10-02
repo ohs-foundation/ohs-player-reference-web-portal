@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_NAVIGATION } from '../../config/navigation';
 import {
   addWidget,
+  allowedBy,
   defaultLayout,
   EMPTY_LAYOUT,
   isAtKpiCap,
@@ -178,5 +179,26 @@ describe('editing helpers', () => {
       'recent.users',
     ]);
     expect(moveWidget(layout, 'recent.organizations', 1, isVisible)).toBe(layout);
+  });
+});
+
+describe('allowedBy', () => {
+  it('allows every id when available is absent', () => {
+    expect(allowedBy(undefined)('anything.at.all')).toBe(true);
+  });
+
+  it('matches exact ids and prefix patterns, nothing else', () => {
+    const allowed = allowedBy(['kpi.*', 'recent.users', 'chart.updatedByMonth.*']);
+
+    expect(['kpi.users', 'recent.users', 'chart.updatedByMonth.users'].map(allowed)).toEqual([
+      true,
+      true,
+      true,
+    ]);
+    expect(['recent.locations', 'kpis.users', 'chart.usersByStatus'].map(allowed)).toEqual([
+      false,
+      false,
+      false,
+    ]);
   });
 });

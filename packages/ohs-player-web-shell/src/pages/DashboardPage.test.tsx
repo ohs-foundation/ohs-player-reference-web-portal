@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import type { ExtensionWidget } from 'ohs-player-web-core';
+import type { ExtensionWidget, PortalDashboardConfig } from 'ohs-player-web-core';
 import type { ComponentType } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'vitest-axe';
@@ -130,10 +130,10 @@ function listTitles(container: HTMLElement): (string | null)[] {
   );
 }
 
-function renderPage() {
+function renderPage(config = portalConfig) {
   return render(
     <MemoryRouter>
-      <PortalConfigContext.Provider value={portalConfig}>
+      <PortalConfigContext.Provider value={config}>
         <DashboardPage />
       </PortalConfigContext.Provider>
     </MemoryRouter>,
@@ -446,6 +446,133 @@ describe('DashboardPage editor', () => {
     await openAddDrawer();
 
     const result = await axe(document.body, { rules: { 'color-contrast': { enabled: false } } });
+    expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
+  });
+});
+
+function withDashboard(dashboard: PortalDashboardConfig) {
+  return resolvePortalConfig(testPortalDefaults, { dashboard });
+}
+
+describe('DashboardPage document layout', () => {
+  const curated = withDashboard({
+    layout: {
+      kpi: ['kpi.careTeams', 'kpi.users'],
+      main: ['recent.organizations'],
+      side: ['chart.usersByStatus'],
+    },
+  });
+
+  it('renders the document layout in the listed order', () => {
+    const { container } = renderPage(curated);
+
+    expect(kpiLabels(container)).toEqual(['kpiTotalCareTeams', 'kpiTotalUsers']);
+    expect(listTitles(container)).toEqual(['recentOrganizationsTitle']);
+    expect(container.querySelectorAll('.ohs-dash-row')).toHaveLength(1);
+    expect(screen.getByText('distributionUsers')).toBeInTheDocument();
+  });
+
+  it('skips a document card the session cannot see and shows it again with its flag', () => {
+    flagsOff = new Set(['careTeams']);
+    const first = renderPage(curated);
+    expect(kpiLabels(first.container)).toEqual(['kpiTotalUsers']);
+    first.unmount();
+
+    flagsOff = new Set();
+    expect(kpiLabels(renderPage(curated).container)).toEqual([
+      'kpiTotalCareTeams',
+      'kpiTotalUsers',
+    ]);
+  });
+
+  it('marks the document cards as starting cards and resets to them', async () => {
+    const { container } = renderPage(curated);
+    configure();
+    fireEvent.click(screen.getByRole('button', { name: 'widgetRemove kpiTotalUsers' }));
+
+    const drawer = await openAddDrawer();
+    expect(within(drawer).getAllByText('widgetStartingCard')).toHaveLength(4);
+    fireEvent.click(within(drawer).getByRole('button', { name: 'close' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'dashboardReset' }));
+    expect(kpiLabels(container)).toEqual(['kpiTotalCareTeams', 'kpiTotalUsers']);
+  });
+
+  it('starts from a clean slate with an empty state and an Add widget action', async () => {
+    const { container } = renderPage(withDashboard({ layout: {} }));
+
+    expect(screen.getByText('dashboardEmptyTitle')).toBeInTheDocument();
+    expect(screen.getByText('dashboardEmptyDescription')).toBeInTheDocument();
+    expect(container.querySelector('.ohs-kpi-grid')).toBeNull();
+    expect(container.querySelectorAll('.ohs-dash-row')).toHaveLength(0);
+
+    const drawer = await openAddDrawer();
+    expect(within(drawer).queryByText('widgetStartingCard')).not.toBeInTheDocument();
+    fireEvent.click(
+      within(drawer).getByRole('button', { name: 'widgetAddNamed recentUsersTitle' }),
+    );
+    fireEvent.click(within(drawer).getByRole('button', { name: 'close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    expect(storedLayout()).toEqual({ kpi: [], main: ['recent.users'], side: [] });
+    expect(listTitles(container)).toEqual(['recentUsersTitle']);
+  });
+
+  it('offers only the available cards, while a layout card outside them still renders', async () => {
+    renderPage(
+      withDashboard({
+        layout: { kpi: ['kpi.users'], main: ['recent.users'] },
+        available: ['chart.*', 'recent.locations'],
+      }),
+    );
+    expect(screen.getByText('kpiTotalUsers')).toBeInTheDocument();
+
+    configure();
+    const drawer = await openAddDrawer();
+    expect(
+      within(drawer)
+        .getAllByRole('button', { name: /^widgetAddNamed/ })
+        .map((button) => button.getAttribute('aria-label')),
+    ).toEqual([
+      'widgetAddNamed recentLocationsTitle',
+      'widgetAddNamed distributionUsers',
+      'widgetAddNamed distributionLocations',
+      'widgetAddNamed distributionOrganizations',
+      'widgetAddNamed distributionCareTeams',
+    ]);
+  });
+
+  it('trims a stored card the deployment no longer allows', () => {
+    storeLayout({ kpi: ['kpi.locations'], main: ['recent.users', 'recent.careTeams'] });
+    const { container } = renderPage(
+      withDashboard({ layout: { main: ['recent.users'] }, available: ['chart.*'] }),
+    );
+
+    expect(kpiLabels(container)).toEqual([]);
+    expect(listTitles(container)).toEqual(['recentUsersTitle']);
+  });
+
+  it('hides the editing controls and ignores a stored layout when customization is off', () => {
+    storeLayout({ kpi: ['kpi.locations'] });
+    const { container } = renderPage(
+      withDashboard({ layout: { kpi: ['kpi.users'] }, userCustomization: false }),
+    );
+
+    expect(kpiLabels(container)).toEqual(['kpiTotalUsers']);
+    expect(screen.queryByRole('button', { name: 'dashboardConfigure' })).not.toBeInTheDocument();
+  });
+
+  it('says the deployment set up an empty dashboard, with no action, when customization is off', () => {
+    renderPage(withDashboard({ layout: {}, userCustomization: false }));
+
+    expect(screen.getByText('dashboardEmptyLocked')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'dashboardAddWidget' })).not.toBeInTheDocument();
+  });
+
+  it('has no critical a11y violations on a clean slate', async () => {
+    const { container } = renderPage(withDashboard({ layout: {} }));
+
+    const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
   });
 });

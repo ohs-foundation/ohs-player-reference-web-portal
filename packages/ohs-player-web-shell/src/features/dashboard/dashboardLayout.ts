@@ -14,6 +14,20 @@ export type IdTest = (id: string) => boolean;
 
 const always: IdTest = () => true;
 
+/** Whether `entry` is a `<prefix>.*` pattern rather than an exact widget id. */
+export function isWidgetPattern(entry: string): boolean {
+  return entry.endsWith('.*');
+}
+
+function matches(entry: string, id: string): boolean {
+  return isWidgetPattern(entry) ? id.startsWith(entry.slice(0, -1)) : entry === id;
+}
+
+/** The ids an `available` list lets a user add. Absent allows every id. */
+export function allowedBy(available: readonly string[] | undefined): IdTest {
+  return available ? (id) => available.some((entry) => matches(entry, id)) : always;
+}
+
 export const EMPTY_LAYOUT: DashboardLayout = { kpi: [], main: [], side: [] };
 
 function mapRegions(map: (region: DashboardRegion) => readonly string[]): DashboardLayout {

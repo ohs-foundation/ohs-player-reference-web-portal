@@ -22,6 +22,8 @@ export interface DashboardLayoutOptions {
   /** Which ids a user may place beyond the deployment layout. Absent allows every id. */
   allowed?: IdTest;
   isVisible?: IdTest;
+  /** `false` ignores any stored layout and shows `defaults`. */
+  customizable?: boolean;
 }
 
 export interface DashboardLayoutState {
@@ -91,6 +93,7 @@ export function useDashboardLayout({
   defaults,
   allowed,
   isVisible,
+  customizable = true,
 }: DashboardLayoutOptions): DashboardLayoutState {
   const { user } = useAuth();
   const sub = user?.sub ?? '';
@@ -101,11 +104,14 @@ export function useDashboardLayout({
     const placed = new Set(DASHBOARD_REGIONS.flatMap((region) => defaults[region]));
     const userAllowed: IdTest = (id) => placed.has(id) || (allowed?.(id) ?? true);
     return (
-      sanitizeLayout(raw, catalogue, { allowed: userAllowed, isVisible }) ??
+      sanitizeLayout(customizable ? raw : undefined, catalogue, {
+        allowed: userAllowed,
+        isVisible,
+      }) ??
       sanitizeLayout(defaults, catalogue, { isVisible }) ??
       EMPTY_LAYOUT
     );
-  }, [raw, catalogue, defaults, allowed, isVisible]);
+  }, [raw, catalogue, defaults, allowed, isVisible, customizable]);
 
   const save = useCallback(
     (next: DashboardLayout) => {

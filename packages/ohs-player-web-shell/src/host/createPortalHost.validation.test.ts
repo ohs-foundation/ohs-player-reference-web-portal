@@ -172,4 +172,26 @@ describe('createPortalHost startup validation', () => {
     expect(host.portal.platform.i18n?.messages).not.toHaveProperty('reportsTwin');
     expect(host.portal.navigation.length).toBeGreaterThan(0);
   });
+
+  it('fails an unknown dashboard id in the document, naming its path and the known ids', () => {
+    const document = { dashboard: { layout: { main: ['recent.users', 'recent.visits'] } } };
+
+    expect(inDevelopment({ document, extensions: [reports] })).toThrow(
+      /^Configuration document: dashboard\.layout\.main\[1\] "recent\.visits" is not a dashboard widget\. Known ids: kpi\.users, .*reports\.count$/,
+    );
+  });
+
+  it('in production drops an unknown dashboard id and keeps the rest of the layout', () => {
+    const document = {
+      dashboard: { layout: { kpi: ['reports.count', 'kpi.gone'] }, available: ['nothing.*'] },
+    };
+    const { host, onError } = inProduction({ document, extensions: [reports] });
+
+    expect(host.portal.dashboard?.layout).toEqual({ kpi: ['reports.count'], main: [], side: [] });
+    expect(host.portal.dashboard?.available).toEqual([]);
+    expect(reportedMessages(onError)).toEqual([
+      expect.stringMatching(/^Configuration document: dashboard\.layout\.kpi\[1\] "kpi\.gone"/),
+      'Configuration document: dashboard.available[0] "nothing.*" matches no dashboard widget',
+    ]);
+  });
 });

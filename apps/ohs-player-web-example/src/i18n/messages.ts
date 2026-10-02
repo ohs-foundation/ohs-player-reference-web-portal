@@ -38,6 +38,7 @@ export const messages = {
   dashboardSaved: 'Dashboard updated',
   dashboardEmptyTitle: 'Your dashboard is empty',
   dashboardEmptyDescription: 'Add widgets to build the dashboard you need.',
+  dashboardEmptyLocked: 'This dashboard has been set up with no cards.',
   widgetMoveUp: 'Move {{title}} up',
   widgetMoveDown: 'Move {{title}} down',
   widgetRemove: 'Remove {{title}}',

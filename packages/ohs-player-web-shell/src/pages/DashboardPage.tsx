@@ -9,8 +9,10 @@ import {
   type DashboardCard,
 } from '../features/dashboard/DashboardRegions';
 import {
+  allowedBy,
   defaultLayout,
   isAtKpiCap,
+  sanitizeLayout,
   type DashboardLayout,
 } from '../features/dashboard/dashboardLayout';
 import { EditableTile } from '../features/dashboard/EditableTile';
@@ -18,6 +20,7 @@ import { useDashboardEditor, type DashboardEditor } from '../features/dashboard/
 import { useDashboardLayout } from '../features/dashboard/useDashboardLayout';
 import { VisibleWidgets } from '../features/dashboard/VisibleWidgets';
 import { useWidgetCatalogue, type WidgetDefinition } from '../features/dashboard/widgetCatalogue';
+import { usePortalConfig } from '../config/portalConfigContext';
 import { DASHBOARD_REGIONS, type DashboardRegion } from '../host/types';
 
 interface DashboardViewProps {
@@ -31,11 +34,17 @@ function idsIn(layout: DashboardLayout): Set<string> {
 
 function DashboardView({ catalogue, visible }: Readonly<DashboardViewProps>): ReactNode {
   const { t } = useTranslation();
+  const { dashboard } = usePortalConfig();
+  const customizable = dashboard?.userCustomization !== false;
   const byId = useMemo(() => new Map(visible.map((entry) => [entry.id, entry])), [visible]);
   const isVisible = useCallback((id: string) => byId.has(id), [byId]);
+  const allowed = useMemo(() => allowedBy(dashboard?.available), [dashboard]);
   const titleOf = (id: string): string => t(byId.get(id)?.titleKey ?? id);
-  const defaults = useMemo(() => defaultLayout(visible), [visible]);
-  const saved = useDashboardLayout({ catalogue, defaults, isVisible });
+  const defaults = useMemo(
+    () => sanitizeLayout(dashboard?.layout, catalogue, { isVisible }) ?? defaultLayout(visible),
+    [dashboard, catalogue, isVisible, visible],
+  );
+  const saved = useDashboardLayout({ catalogue, defaults, allowed, isVisible, customizable });
   const editor = useDashboardEditor({ saved, defaults, isVisible, titleOf });
 
   const cardsIn = (region: DashboardRegion): DashboardCard[] =>
@@ -56,7 +65,7 @@ function DashboardView({ catalogue, visible }: Readonly<DashboardViewProps>): Re
         title={t('pageDashboard')}
         description={t('pageDashboardDescription')}
         actions={
-          editor.editing ? null : (
+          editor.editing || !customizable ? null : (
             <Button variant="outlined" onClick={editor.start}>
               {t('dashboardConfigure')}
             </Button>
@@ -77,9 +86,9 @@ function DashboardView({ catalogue, visible }: Readonly<DashboardViewProps>): Re
           {kpi.length + main.length + side.length === 0 ? (
             <EmptyState
               title={t('dashboardEmptyTitle')}
-              description={t('dashboardEmptyDescription')}
+              description={t(customizable ? 'dashboardEmptyDescription' : 'dashboardEmptyLocked')}
               action={
-                editor.editing ? null : (
+                editor.editing || !customizable ? null : (
                   <Button onClick={editor.openAdd}>{t('dashboardAddWidget')}</Button>
                 )
               }
@@ -96,7 +105,7 @@ function DashboardView({ catalogue, visible }: Readonly<DashboardViewProps>): Re
       <AddWidgetDrawer
         open={editor.adding}
         onClose={editor.closeAdd}
-        entries={visible}
+        entries={visible.filter((entry) => allowed(entry.id))}
         placed={idsIn(editor.layout)}
         starting={idsIn(defaults)}
         atKpiCap={isAtKpiCap(editor.layout, isVisible)}

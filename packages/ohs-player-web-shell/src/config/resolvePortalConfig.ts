@@ -1,4 +1,10 @@
-import type { CorePlatformConfig, PortalConfigDocument, ThemeConfigV2 } from 'ohs-player-web-core';
+import type {
+  CorePlatformConfig,
+  PortalConfigDocument,
+  PortalDashboardConfig,
+  ThemeConfigV2,
+} from 'ohs-player-web-core';
+import type { DashboardLayout } from '../features/dashboard/dashboardLayout';
 import { DEFAULT_NAVIGATION, type NavEntry } from './navigation';
 
 /** The configuration document as the shell reads it: navigation entries name shell screens. */
@@ -13,11 +19,34 @@ export interface PortalDefaults {
   questionnaireVariant: string;
 }
 
+/** The document's dashboard field with every region present and `userCustomization` defaulted. */
+export interface ResolvedDashboardConfig {
+  /** The deployment layout. Absent means the layout derived from the widget catalogue. */
+  layout?: DashboardLayout;
+  /** Widget ids and `<prefix>.*` patterns a user may add. Absent allows every widget. */
+  available?: readonly string[];
+  userCustomization: boolean;
+}
+
 export interface ResolvedPortalConfig {
   platform: CorePlatformConfig;
   theme: ThemeConfigV2;
   navigation: readonly NavEntry[];
   questionnaireVariant: string;
+  /** Present only when the document has a `dashboard` field. */
+  dashboard?: ResolvedDashboardConfig;
+}
+
+function resolveDashboard({
+  layout,
+  available,
+  userCustomization,
+}: PortalDashboardConfig): ResolvedDashboardConfig {
+  return {
+    layout: layout && { kpi: layout.kpi ?? [], main: layout.main ?? [], side: layout.side ?? [] },
+    available,
+    userCustomization: userCustomization ?? true,
+  };
 }
 
 function definedValues<T>(record: Partial<Record<string, T>> = {}): Record<string, T> {
@@ -70,5 +99,6 @@ export function resolvePortalConfig(
     },
     navigation: document.navigation ?? DEFAULT_NAVIGATION,
     questionnaireVariant: document.questionnaireVariant ?? defaults.questionnaireVariant,
+    ...(document.dashboard ? { dashboard: resolveDashboard(document.dashboard) } : {}),
   };
 }
