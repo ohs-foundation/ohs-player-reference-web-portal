@@ -278,6 +278,91 @@
     "questionnaireVariant": {
       "type": "string",
       "minLength": 1
+    },
+    "dashboard": {
+      "type": "object",
+      "properties": {
+        "layout": {
+          "type": "object",
+          "properties": {
+            "kpi": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z][\\w-]*(\\.[\\w-]+)+$",
+                "examples": [
+                  "kpi.users",
+                  "kpi.locations",
+                  "kpi.organizations",
+                  "kpi.careTeams",
+                  "recent.users",
+                  "recent.locations",
+                  "recent.organizations",
+                  "recent.careTeams",
+                  "chart.usersByStatus",
+                  "chart.locationsByStatus",
+                  "chart.organizationsByStatus",
+                  "chart.careTeamsByStatus"
+                ]
+              }
+            },
+            "main": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z][\\w-]*(\\.[\\w-]+)+$",
+                "examples": [
+                  "kpi.users",
+                  "kpi.locations",
+                  "kpi.organizations",
+                  "kpi.careTeams",
+                  "recent.users",
+                  "recent.locations",
+                  "recent.organizations",
+                  "recent.careTeams",
+                  "chart.usersByStatus",
+                  "chart.locationsByStatus",
+                  "chart.organizationsByStatus",
+                  "chart.careTeamsByStatus"
+                ]
+              }
+            },
+            "side": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z][\\w-]*(\\.[\\w-]+)+$",
+                "examples": [
+                  "kpi.users",
+                  "kpi.locations",
+                  "kpi.organizations",
+                  "kpi.careTeams",
+                  "recent.users",
+                  "recent.locations",
+                  "recent.organizations",
+                  "recent.careTeams",
+                  "chart.usersByStatus",
+                  "chart.locationsByStatus",
+                  "chart.organizationsByStatus",
+                  "chart.careTeamsByStatus"
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "available": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][\\w-]*(\\.[\\w-]+)*\\.([\\w-]+|\\*)$"
+          }
+        },
+        "userCustomization": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
