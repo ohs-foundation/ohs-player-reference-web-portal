@@ -66,7 +66,7 @@ function DashboardView({ catalogue, visible }: Readonly<DashboardViewProps>): Re
         description={t('pageDashboardDescription')}
         actions={
           editor.editing || !customizable ? null : (
-            <Button variant="outlined" onClick={editor.start}>
+            <Button ref={editor.configureRef} variant="outlined" onClick={editor.start}>
               {t('dashboardConfigure')}
             </Button>
           )

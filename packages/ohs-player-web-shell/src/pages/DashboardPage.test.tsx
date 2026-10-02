@@ -313,6 +313,20 @@ describe('DashboardPage editor', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
+  it('moves focus into the edit bar on Configure and back to Configure on Save or Cancel', () => {
+    renderPage();
+
+    configure();
+    expect(screen.getByRole('button', { name: 'dashboardAddWidget' })).toHaveFocus();
+
+    fireEvent.click(screen.getByRole('button', { name: 'cancel' }));
+    expect(screen.getByRole('button', { name: 'dashboardConfigure' })).toHaveFocus();
+
+    configure();
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+    expect(screen.getByRole('button', { name: 'dashboardConfigure' })).toHaveFocus();
+  });
+
   it('moves a card with the keyboard, keeps focus on it and announces the new position', () => {
     const { container } = renderPage();
     configure();

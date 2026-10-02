@@ -1,5 +1,5 @@
 import { useStatusBar, useTranslation } from 'ohs-player-web-core';
-import { useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
   addWidget,
   moveWidget,
@@ -27,6 +27,7 @@ export interface DashboardEditor {
   focusRequest?: FocusRequest;
   announcement: string;
   addRef: RefObject<HTMLButtonElement>;
+  configureRef: RefObject<HTMLButtonElement>;
   start: () => void;
   openAdd: () => void;
   closeAdd: () => void;
@@ -52,7 +53,15 @@ export function useDashboardEditor({
   const [focusRequest, setFocusRequest] = useState<FocusRequest>();
   const [announcement, setAnnouncement] = useState('');
   const addRef = useRef<HTMLButtonElement>(null);
+  const configureRef = useRef<HTMLButtonElement>(null);
+  const wasEditing = useRef(false);
   const layout = draft.layout;
+
+  useEffect(() => {
+    if (draft.editing === wasEditing.current) return;
+    wasEditing.current = draft.editing;
+    (draft.editing ? addRef : configureRef).current?.focus();
+  }, [draft.editing]);
 
   const stop = (): void => {
     draft.stop();
@@ -67,6 +76,7 @@ export function useDashboardEditor({
     focusRequest,
     announcement,
     addRef,
+    configureRef,
     start: draft.start,
     openAdd: () => {
       if (!draft.editing) draft.start();
