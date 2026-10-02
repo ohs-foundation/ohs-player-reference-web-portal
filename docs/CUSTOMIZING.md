@@ -48,7 +48,11 @@ The example app starts with this document:
 {
   "product": { "name": "OHS Example Portal" },
   "brand": {
-    "overrides": { "primary": "#0F766E", "primary-container": "#CCFBF1" },
+    "overrides": {
+      "primary": "#0F766E",
+      "primary-container": "#CCFBF1",
+      "secondary-container": "#CCFBF1"
+    },
     "darkOverrides": { "primary": "#5EEAD4" }
   },
   "navigation": [
@@ -79,12 +83,16 @@ Set `"product": { "name": "Acme Health" }`. The name replaces the `appTopbarTitl
 
 ```json
 "brand": {
-  "overrides": { "primary": "#7C3AED", "primary-container": "#EDE9FE" },
+  "overrides": {
+    "primary": "#7C3AED",
+    "primary-container": "#EDE9FE",
+    "secondary-container": "#EDE9FE"
+  },
   "darkOverrides": { "primary": "#C4B5FD" }
 }
 ```
 
-Reload, then use the sun and moon button in the top bar to switch schemes. Everything drawn in the primary role changes colour, such as the Schedules KPI badge. The role names are listed in [THEMING.md](./THEMING.md) section 3; the reference app's schema rejects any other name.
+The active sidebar entry draws `primary` text on a `secondary-container` fill, so pin the two together and keep them at a contrast of 4.5 to 1 or more. The generated `secondary-container` is a pale blue, and a new `primary` on it can fall short. Reload, then use the sun and moon button in the top bar to switch schemes. Everything drawn in the primary role changes colour, such as the Schedules KPI badge. The role names are listed in [THEMING.md](./THEMING.md) section 3; the reference app's schema rejects any other name.
 
 ### 3. Sidebar order and visibility
 
