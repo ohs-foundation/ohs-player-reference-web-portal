@@ -158,10 +158,28 @@ Other choices made while building.
 
 | Phase | Automated gates | Live stack |
 | --- | --- | --- |
-| 1 | shell build, typecheck, lint, test, example build and test green at every commit | deferred to the final walkthrough |
-| 2 | as above plus `pnpm bundle:check`, `pnpm config-schema:generate` and `pnpm config:check` | deferred to the final walkthrough |
-| 3 | as above | deferred to the final walkthrough |
-| 4 | as above | see below |
+| 1 | shell build, typecheck, lint, test, example build and test green at every commit | covered by the final walkthrough |
+| 2 | as above plus `pnpm bundle:check`, `pnpm config-schema:generate` and `pnpm config:check` | covered by the final walkthrough |
+| 3 | as above | covered by the final walkthrough |
+| 4 | as above, plus a full `pnpm build` | see below |
+
+### Final walkthrough on the local stack, 2 October 2026
+
+HAPI, Keycloak and the gateway ran locally with the seed data (10 practitioners, 5 locations, 1 organisation, 2 care teams). Both apps were driven in headless Chrome as `admin-user` and `manager-user`, in light and dark, with axe and colour contrast on.
+
+| Check | Result |
+| --- | --- |
+| Reference app, no `dashboard` field, nothing stored, against `main` | Pixel identical below the page header in light and dark. The header differs only where Configure dashboard replaces Customize Widgets. |
+| Example app, against `main` | The curated document layout (Active Schedules, Total Users, the users table and the users donut) where `main` showed every table and donut, as D8 and D9 intend |
+| Keyboard only through configure mode | Configure dashboard moves focus to Add widget. A move keeps focus on the moved card's control and announces the new position. A removal moves focus to Add widget and announces it. Escape closes the drawer and returns focus to Add widget. Save and Cancel return focus to Configure dashboard. |
+| Add widget drawer | Grouped by kind, starting cards and placed cards marked, KPIs blocked with the reason at four, the example app's Schedules group shown and location cards absent |
+| Save, reload, Reset to default | The saved layout survives a reload. Reset and Save clear the stored copy. |
+| New charts | Users Updated by Month and Locations Updated by Month show 10 and 5 in October, matching direct `_lastUpdated` count searches against HAPI. Active Share shows one bar per screen. Both read clearly in light and dark. |
+| Document cases | `"layout": {}` shows the empty dashboard with Add widget. `"userCustomization": false` hides Configure dashboard and ignores the stored layout. An unknown id stops the dev build with `Configuration document: dashboard.layout.main[1] "recent.visits" is not a dashboard widget. Known ids: ...` |
+| `manager-user` | The same default dashboard as `admin-user`, since the local realm grants both every screen |
+| axe | No new violations. `page-has-heading-one` (moderate) on every page and the example app's active sidebar label contrast (serious, from its teal brand pins) are both present on `main`. |
+
+Two defects found on the stack were fixed with their own commits. Configure dashboard dropped focus to the page body when its button unmounted, which now has a regression test. The chart card title margin lost to the root heading reset (`[data-ohs-root] h3`), which moved each donut up 6px, and was caught by the pixel diff.
 
 The JSON Schema must be regenerated after the shell is built, because the reference schema reads `BUILTIN_WIDGET_IDS` from the shell's `dist`.
 
