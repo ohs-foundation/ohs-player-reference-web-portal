@@ -91,6 +91,7 @@ function renderAt(path: string) {
 
 describe('the example portal with the schedules extension', () => {
   beforeEach(() => {
+    window.localStorage.clear();
     window.localStorage.setItem('ohs-theme', 'light');
   });
 
@@ -107,7 +108,7 @@ describe('the example portal with the schedules extension', () => {
     expect(links.map((link) => link.textContent)).toEqual(['Users', 'Schedules', 'Dashboard']);
   });
 
-  it('renders the active schedules widget in the KPI strip', async () => {
+  it('renders the curated KPI strip from the document, schedules first', async () => {
     renderAt('/');
 
     const kpiStrip = await screen.findByRole('region', { name: 'Dashboard' }, LAZY_PAGE);
@@ -115,6 +116,37 @@ describe('the example portal with the schedules extension', () => {
     expect(within(kpiStrip).getByText('Total Users')).toBeInTheDocument();
     expect(within(kpiStrip).queryByText('Total Locations')).not.toBeInTheDocument();
     expect(within(kpiStrip).getAllByText('3')).toHaveLength(2);
+    expect(kpiStrip.firstElementChild).toHaveTextContent('Active Schedules');
+  });
+
+  it('shows only the users table and the users donut below the strip', async () => {
+    const { container } = renderAt('/');
+
+    expect(await screen.findByText('Recently Added Users', {}, LAZY_PAGE)).toBeInTheDocument();
+    expect(screen.getByText('User Distribution')).toBeInTheDocument();
+    expect(screen.queryByText('Recently Added Locations')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.ohs-dash-row')).toHaveLength(1);
+  });
+
+  it('removes the schedules tile and adds it back from its own group in the picker', async () => {
+    renderAt('/');
+    const kpiStrip = await screen.findByRole('region', { name: 'Dashboard' }, LAZY_PAGE);
+    await within(kpiStrip).findByText('Active Schedules');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Configure dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Active Schedules' }));
+    expect(within(kpiStrip).queryByText('Active Schedules')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add widget' }));
+    const drawer = await screen.findByRole('dialog');
+    expect(within(drawer).getByRole('heading', { name: 'Schedules' })).toBeInTheDocument();
+    expect(within(drawer).queryByText('Recently Added Locations')).not.toBeInTheDocument();
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Add Active Schedules' }));
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await within(kpiStrip).findByText('Active Schedules')).toBeInTheDocument();
+    expect(kpiStrip.lastElementChild).toHaveTextContent('Active Schedules');
   });
 
   it("adds the schedules action to a users row's menu", async () => {

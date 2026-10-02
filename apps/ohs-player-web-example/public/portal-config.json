@@ -32,5 +32,26 @@
         "permission": "dashboard.view"
       }
     }
-  ]
+  ],
+  "dashboard": {
+    "layout": {
+      "kpi": [
+        "schedules.active",
+        "kpi.users"
+      ],
+      "main": [
+        "recent.users"
+      ],
+      "side": [
+        "chart.usersByStatus"
+      ]
+    },
+    "available": [
+      "kpi.*",
+      "recent.users",
+      "chart.*",
+      "schedules.*"
+    ],
+    "userCustomization": true
+  }
 }
