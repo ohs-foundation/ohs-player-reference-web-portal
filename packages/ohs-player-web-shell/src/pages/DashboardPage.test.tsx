@@ -480,6 +480,43 @@ describe('DashboardPage editor', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('drops a dragged card in the place of another card in its region and announces it', () => {
+    const { container } = renderPage();
+    configure();
+    const tileOf = (label: string) =>
+      screen.getByRole('group', { name: label }).closest('.ohs-dash-tile') as HTMLElement;
+    const dataTransfer = { setData: vi.fn(), effectAllowed: 'none' };
+
+    fireEvent.dragStart(tileOf('kpiTotalUsers'), { dataTransfer });
+    fireEvent.dragOver(tileOf('kpiTotalOrganizations'), { dataTransfer });
+    expect(tileOf('kpiTotalOrganizations')).toHaveAttribute('data-drop-target');
+    fireEvent.drop(tileOf('kpiTotalOrganizations'), { dataTransfer });
+
+    expect(kpiLabels(container)).toEqual([
+      'kpiTotalLocations',
+      'kpiTotalOrganizations',
+      'kpiTotalUsers',
+      'kpiTotalCareTeams',
+    ]);
+    expect(screen.getByText('widgetMoved kpiTotalUsers 3')).toBeInTheDocument();
+  });
+
+  it('refuses a drop on a card in another region', () => {
+    const { container } = renderPage();
+    configure();
+    const tileOf = (label: string) =>
+      screen.getByRole('group', { name: label }).closest('.ohs-dash-tile') as HTMLElement;
+    const dataTransfer = { setData: vi.fn(), effectAllowed: 'none' };
+
+    fireEvent.dragStart(tileOf('kpiTotalUsers'), { dataTransfer });
+    fireEvent.dragOver(tileOf('recentUsersTitle'), { dataTransfer });
+    fireEvent.drop(tileOf('recentUsersTitle'), { dataTransfer });
+
+    expect(tileOf('recentUsersTitle')).not.toHaveAttribute('data-drop-target');
+    expect(kpiLabels(container)).toEqual(KPI_LABELS);
+    expect(listTitles(container)).toEqual(LISTS);
+  });
+
   it('resets the draft to the default layout without saving', () => {
     storeLayout({ main: ['recent.users'] });
     const { container } = renderPage();

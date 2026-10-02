@@ -108,6 +108,7 @@ export const SHELL_MESSAGES: Readonly<Record<string, string>> = {
   widgetCategoryCharts: 'Charts',
   widgetCategoryKpi: 'Key figures',
   widgetCategoryLists: 'Lists',
+  widgetDragHint: 'Drag onto another card to take its place',
   widgetMoveDown: 'Move {{title}} down',
   widgetMoveUp: 'Move {{title}} up',
   widgetMoved: '{{title}} moved to position {{position}}',

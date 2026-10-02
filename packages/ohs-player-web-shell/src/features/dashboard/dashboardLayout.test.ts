@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_NAVIGATION } from '../../config/navigation';
 import {
   addWidget,
+  placeWidget,
   pairRows,
   allowedBy,
   defaultLayout,
@@ -231,5 +232,32 @@ describe('pairRows', () => {
       ['m1', undefined],
       [undefined, 's1'],
     ]);
+  });
+});
+
+describe('placeWidget', () => {
+  const layout: DashboardLayout = {
+    kpi: ['kpi.users', 'kpi.locations', 'kpi.organizations'],
+    main: ['recent.users'],
+    side: [],
+  };
+
+  it('takes the place of the card it is dropped on, moving down or up', () => {
+    expect(placeWidget(layout, 'kpi.users', 'kpi.organizations').kpi).toEqual([
+      'kpi.locations',
+      'kpi.organizations',
+      'kpi.users',
+    ]);
+    expect(placeWidget(layout, 'kpi.organizations', 'kpi.users').kpi).toEqual([
+      'kpi.organizations',
+      'kpi.users',
+      'kpi.locations',
+    ]);
+  });
+
+  it('changes nothing across regions, onto itself or for an unplaced card', () => {
+    expect(placeWidget(layout, 'kpi.users', 'recent.users')).toBe(layout);
+    expect(placeWidget(layout, 'kpi.users', 'kpi.users')).toBe(layout);
+    expect(placeWidget(layout, 'kpi.careTeams', 'kpi.users')).toBe(layout);
   });
 });

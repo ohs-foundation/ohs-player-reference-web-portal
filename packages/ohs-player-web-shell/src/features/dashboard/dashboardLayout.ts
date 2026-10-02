@@ -131,6 +131,19 @@ export function moveWidget(
   return { ...layout, [region]: ids };
 }
 
+/** Moves `id` to the place of `targetId` when both sit in the same region, else changes nothing. */
+export function placeWidget(
+  layout: DashboardLayout,
+  id: string,
+  targetId: string,
+): DashboardLayout {
+  const region = regionOf(layout, id);
+  if (!region || id === targetId || regionOf(layout, targetId) !== region) return layout;
+  const ids = layout[region].filter((current) => current !== id);
+  ids.splice(layout[region].indexOf(targetId), 0, id);
+  return { ...layout, [region]: ids };
+}
+
 export function sameLayout(a: DashboardLayout, b: DashboardLayout): boolean {
   return DASHBOARD_REGIONS.every(
     (region) =>

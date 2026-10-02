@@ -2274,10 +2274,24 @@
 .ohs-dash-row > .ohs-dash-tile {
   height: 100%;
 }
+.ohs-dash-tile[draggable='true'] {
+  cursor: grab;
+}
+.ohs-dash-tile[data-drop-target] {
+  border-style: solid;
+  border-color: var(--ohs-sys-color-primary, #094f9a);
+  background: var(--ohs-sys-color-primary-container, #dce5fe);
+}
 .ohs-dash-tile__bar {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--ohs-sys-spacing-1, 4px);
+}
+.ohs-dash-tile__handle {
+  display: inline-flex;
+  margin-right: auto;
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
 }
 .ohs-dash-tile__bar .ohs-icon-button:disabled {
   opacity: var(--ohs-sys-state-disabled-content-opacity, 0.38);

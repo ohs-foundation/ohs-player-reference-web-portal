@@ -148,6 +148,12 @@ function tile(
       focusRequest={editor.focusRequest?.id === entry.id ? editor.focusRequest : undefined}
       onMove={(direction) => editor.move(entry.id, direction)}
       onRemove={() => editor.remove(entry.id)}
+      drag={{
+        onStart: () => editor.startDrag(entry.id),
+        onEnd: editor.endDrag,
+        accepts: editor.acceptsDrop(entry.id),
+        onDrop: () => editor.dropOn(entry.id),
+      }}
       renderSettings={entry.settings.length > 0 ? renderSettings : undefined}
     >
       {entry.render(values)}
