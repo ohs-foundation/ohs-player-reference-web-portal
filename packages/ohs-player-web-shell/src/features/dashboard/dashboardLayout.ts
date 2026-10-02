@@ -43,11 +43,11 @@ function capKpis(ids: readonly string[], isVisible: IdTest): string[] {
   });
 }
 
-/** Every entry in `catalogue` in its first region, by `order`, KPIs cut to `MAX_KPIS`. */
+/** Each starting entry in `catalogue` in its first region, by `order`, KPIs cut to `MAX_KPIS`. */
 export function defaultLayout(catalogue: readonly WidgetDefinition[]): DashboardLayout {
   const layout = mapRegions((region) =>
     catalogue
-      .filter((entry) => entry.regions[0] === region)
+      .filter((entry) => entry.startsOnDashboard && entry.regions[0] === region)
       .sort((a, b) => a.order - b.order)
       .map((entry) => entry.id),
   );

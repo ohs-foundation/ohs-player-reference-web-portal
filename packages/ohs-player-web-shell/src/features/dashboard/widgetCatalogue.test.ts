@@ -50,6 +50,25 @@ describe('builtinWidgets', () => {
   });
 });
 
+describe('chart entries', () => {
+  it('lets the new charts be added without placing them on a default dashboard', () => {
+    const added = builtinWidgets(DEFAULT_NAVIGATION).filter((widget) => !widget.startsOnDashboard);
+
+    expect(added.map((widget) => [widget.id, widget.regions, widget.order])).toEqual([
+      ['chart.updatedByMonth.users', ['side'], 50],
+      ['chart.updatedByMonth.locations', ['side'], 60],
+      ['chart.updatedByMonth.organizations', ['side'], 70],
+      ['chart.updatedByMonth.careTeams', ['side'], 80],
+      ['chart.activeShare', ['side', 'main'], 90],
+    ]);
+    expect(entry(DEFAULT_NAVIGATION, 'chart.updatedByMonth.users')?.requires).toEqual({
+      flag: 'userMgmt',
+      permission: 'users.view',
+    });
+    expect(entry(DEFAULT_NAVIGATION, 'chart.activeShare')?.requires).toBeUndefined();
+  });
+});
+
 describe('extensionWidgets', () => {
   const widget = (overrides: Partial<ExtensionWidget<DashboardRegion>>) => ({
     id: 'schedules.active',

@@ -11,6 +11,7 @@ export interface ResourceStats {
   /** Active count; inactive is derived as `total - active` so the split always covers the population. */
   active: number | undefined;
   loading: boolean;
+  error: string | null;
 }
 
 function countOf(data: unknown): number | undefined {
@@ -38,6 +39,7 @@ export function useResourceStats(
     total: countOf(totalQ.data),
     active: countOf(activeQ.data),
     loading: totalQ.isLoading || activeQ.isLoading,
+    error: errorText(totalQ.error ?? activeQ.error),
   };
 }
 

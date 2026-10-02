@@ -6,11 +6,13 @@ import type { NavEntry } from '../../config/navigation';
 import { useExtensions } from '../../host/extensionsContext';
 import type { DashboardRegion } from '../../host/types';
 import {
+  ActiveShare,
   RecentCareTeams,
   RecentLocations,
   RecentOrganizations,
   RecentUsers,
   StatusDistribution,
+  UpdatedByMonth,
   type RecentWidgetProps,
 } from './builtinWidgets';
 import { ExtensionWidgetTile } from './ExtensionWidgetTile';
@@ -31,6 +33,11 @@ export const BUILTIN_WIDGET_IDS = [
   'chart.locationsByStatus',
   'chart.organizationsByStatus',
   'chart.careTeamsByStatus',
+  'chart.updatedByMonth.users',
+  'chart.updatedByMonth.locations',
+  'chart.updatedByMonth.organizations',
+  'chart.updatedByMonth.careTeams',
+  'chart.activeShare',
 ] as const;
 
 /** One of the shell's own dashboard card ids. */
@@ -47,6 +54,8 @@ export interface WidgetDefinition {
   regions: readonly DashboardRegion[];
   order: number;
   requires?: Requirement;
+  /** Whether the derived default layout places this card. Cards without it are only added. */
+  startsOnDashboard: boolean;
   render: () => ReactNode;
 }
 
@@ -60,6 +69,7 @@ interface EntityCards {
   recent: ComponentType<RecentWidgetProps>;
   recentKeys: RecentWidgetProps;
   distributionTitleKey: string;
+  monthlyTitleKey: string;
 }
 
 const ENTITY_CARDS: Readonly<Record<KpiId, EntityCards>> = {
@@ -67,11 +77,13 @@ const ENTITY_CARDS: Readonly<Record<KpiId, EntityCards>> = {
     recent: RecentUsers,
     recentKeys: { titleKey: 'recentUsersTitle', subtitleKey: 'recentUsersSubtitle' },
     distributionTitleKey: 'distributionUsers',
+    monthlyTitleKey: 'chartUpdatedByMonthUsers',
   },
   locations: {
     recent: RecentLocations,
     recentKeys: { titleKey: 'recentLocationsTitle', subtitleKey: 'recentLocationsSubtitle' },
     distributionTitleKey: 'distributionLocations',
+    monthlyTitleKey: 'chartUpdatedByMonthLocations',
   },
   organizations: {
     recent: RecentOrganizations,
@@ -80,11 +92,13 @@ const ENTITY_CARDS: Readonly<Record<KpiId, EntityCards>> = {
       subtitleKey: 'recentOrganizationsSubtitle',
     },
     distributionTitleKey: 'distributionOrganizations',
+    monthlyTitleKey: 'chartUpdatedByMonthOrganizations',
   },
   careTeams: {
     recent: RecentCareTeams,
     recentKeys: { titleKey: 'recentCareTeamsTitle', subtitleKey: 'recentCareTeamsSubtitle' },
     distributionTitleKey: 'distributionCareTeams',
+    monthlyTitleKey: 'chartUpdatedByMonthCareTeams',
   },
 };
 
@@ -97,6 +111,7 @@ function kpiWidget(kpi: GatedKpi): WidgetDefinition {
     regions: ['kpi'],
     order: kpi.order,
     requires: kpi.requires,
+    startsOnDashboard: true,
     render: () => createElement(KpiCard, { kpi }),
   };
 }
@@ -111,6 +126,7 @@ function recentWidget(kpi: GatedKpi): WidgetDefinition {
     regions: ['main'],
     order: kpi.order,
     requires: kpi.requires,
+    startsOnDashboard: true,
     render: () => createElement(recent, recentKeys),
   };
 }
@@ -125,14 +141,51 @@ function statusWidget(kpi: GatedKpi): WidgetDefinition {
     regions: ['side'],
     order: kpi.order,
     requires: kpi.requires,
+    startsOnDashboard: true,
     render: () => createElement(StatusDistribution, { kpi, titleKey }),
+  };
+}
+
+function monthlyWidget(kpi: GatedKpi): WidgetDefinition {
+  const titleKey = ENTITY_CARDS[kpi.id].monthlyTitleKey;
+  return {
+    id: `chart.updatedByMonth.${kpi.id}`,
+    kind: 'chart',
+    categoryKey: CATEGORY_KEY.chart,
+    titleKey,
+    regions: ['side'],
+    order: kpi.order + 40,
+    requires: kpi.requires,
+    startsOnDashboard: false,
+    render: () => createElement(UpdatedByMonth, { kpi, titleKey }),
+  };
+}
+
+function activeShareWidget(kpis: readonly GatedKpi[]): WidgetDefinition {
+  const byId = Object.fromEntries(kpis.map((kpi) => [kpi.id, kpi])) as Record<KpiId, GatedKpi>;
+  const titleKey = 'chartActiveShare';
+  return {
+    id: 'chart.activeShare',
+    kind: 'chart',
+    categoryKey: CATEGORY_KEY.chart,
+    titleKey,
+    regions: ['side', 'main'],
+    order: 90,
+    startsOnDashboard: false,
+    render: () => createElement(ActiveShare, { ...byId, titleKey }),
   };
 }
 
 /** The shell's own cards, each gated by its screen's nav entry in `navigation`. */
 export function builtinWidgets(navigation: readonly NavEntry[]): WidgetDefinition[] {
   const kpis = gatedKpis(navigation);
-  return [...kpis.map(kpiWidget), ...kpis.map(recentWidget), ...kpis.map(statusWidget)];
+  return [
+    ...kpis.map(kpiWidget),
+    ...kpis.map(recentWidget),
+    ...kpis.map(statusWidget),
+    ...kpis.map(monthlyWidget),
+    activeShareWidget(kpis),
+  ];
 }
 
 /** Namespaced extension widgets as catalogue entries, grouped under their manifest id. */
@@ -147,6 +200,7 @@ export function extensionWidgets(
     regions: [widget.region],
     order: widget.order,
     requires: widget.requires,
+    startsOnDashboard: true,
     render: () => createElement(ExtensionWidgetTile, { widget }),
   }));
 }

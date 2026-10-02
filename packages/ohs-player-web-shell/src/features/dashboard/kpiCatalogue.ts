@@ -23,7 +23,8 @@ export interface KpiDefinition {
   glyph: IconComponent;
 }
 
-export type GatedKpi = KpiDefinition & { requires: Requirement };
+/** A KPI with its nav entry's `requires`, and the entry's label to name the entity in charts. */
+export type GatedKpi = KpiDefinition & { requires: Requirement; entityKey: string };
 
 /* Badge fills are decorative per-KPI colours from the design, so they sit outside the themed roles. */
 export const KPI_CATALOGUE: readonly KpiDefinition[] = [
@@ -75,6 +76,6 @@ export function gatedKpis(navigation: readonly NavEntry[]): GatedKpi[] {
     const entry =
       navigation.find((e) => e.id === kpi.navId) ??
       DEFAULT_NAVIGATION.find((e) => e.id === kpi.navId);
-    return { ...kpi, requires: entry?.requires };
+    return { ...kpi, requires: entry?.requires, entityKey: entry?.labelKey ?? kpi.labelKey };
   });
 }

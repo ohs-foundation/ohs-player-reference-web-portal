@@ -8,11 +8,25 @@ import type {
 import { useTranslation } from 'ohs-player-web-core';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar, StatusBadge, type DataTableColumn, type DonutSegment } from '../../components/ui';
+import {
+  Avatar,
+  BarChart,
+  StackedBar,
+  StatusBadge,
+  type DataTableColumn,
+  type DonutSegment,
+} from '../../components/ui';
+import { useRequirement } from '../../auth/useRequirement';
+import { ChartCard } from './ChartCard';
 import { DistributionCard } from './DistributionCard';
-import type { KpiDefinition } from './kpiCatalogue';
+import type { GatedKpi, KpiDefinition, KpiId } from './kpiCatalogue';
 import { RecentCard } from './RecentCard';
-import { useRecent, useResourceStats } from './useDashboardData';
+import {
+  useMonthlyCounts,
+  useResourceStats,
+  useRecent,
+  type ResourceStats,
+} from './useDashboardData';
 
 type Translate = ReturnType<typeof useTranslation>['t'];
 
@@ -29,6 +43,7 @@ interface RecentSpec<Row extends { id?: string }> {
 
 const ACTIVE_COLOR = 'var(--ohs-sys-color-success)';
 const INACTIVE_COLOR = 'var(--ohs-sys-color-surface-container)';
+const INACTIVE_BAR_COLOR = 'var(--ohs-sys-color-outline)';
 
 function fullName(p: Practitioner): string {
   const n = p.name?.[0];
@@ -180,7 +195,86 @@ export function StatusDistribution({
     <DistributionCard
       title={t(titleKey)}
       loading={stats.loading}
+      error={stats.error}
       segments={activeSplit(stats.total, stats.active, t)}
     />
+  );
+}
+
+export function UpdatedByMonth({
+  kpi,
+  titleKey,
+}: Readonly<{ kpi: KpiDefinition; titleKey: string }>): ReactNode {
+  const { t, locale } = useTranslation();
+  const counts = useMonthlyCounts(kpi.resourceType);
+  const month = new Intl.DateTimeFormat(locale, { month: 'short' });
+  const title = t(titleKey);
+  return (
+    <ChartCard
+      title={title}
+      loading={counts.loading}
+      error={counts.error}
+      empty={counts.points.every((point) => point.value === 0)}
+      emptyText={t('chartEmpty')}
+    >
+      <BarChart
+        points={counts.points.map((point) => ({
+          label: month.format(point.start),
+          value: point.value,
+        }))}
+        ariaLabel={title}
+        labelHeader={t('chartMonth')}
+        valueHeader={t('chartRecordsUpdated')}
+      />
+    </ChartCard>
+  );
+}
+
+interface EntityShare {
+  kpi: GatedKpi;
+  stats: ResourceStats;
+  visible: boolean;
+}
+
+function useShare(kpi: GatedKpi): EntityShare {
+  const stats = useResourceStats(kpi.resourceType, kpi.activeParam);
+  const visible = useRequirement(kpi.requires);
+  return { kpi, stats, visible };
+}
+
+export type ActiveShareProps = Readonly<Record<KpiId, GatedKpi>> & { titleKey: string };
+
+export function ActiveShare({
+  users,
+  locations,
+  organizations,
+  careTeams,
+  titleKey,
+}: Readonly<ActiveShareProps>): ReactNode {
+  const { t } = useTranslation();
+  const shares = [
+    useShare(users),
+    useShare(locations),
+    useShare(organizations),
+    useShare(careTeams),
+  ].filter((share) => share.visible);
+  const title = t(titleKey);
+  const rows = shares.map(({ kpi, stats }) => {
+    const [active, inactive] = activeSplit(stats.total, stats.active, t);
+    return {
+      label: t(kpi.entityKey),
+      segments: [active, { ...inactive, color: INACTIVE_BAR_COLOR }],
+    };
+  });
+  return (
+    <ChartCard
+      title={title}
+      loading={shares.some((share) => share.stats.loading)}
+      error={shares.map((share) => share.stats.error).find(Boolean)}
+      empty={shares.every((share) => !share.stats.total)}
+      emptyText={t('chartEmpty')}
+    >
+      <StackedBar rows={rows} ariaLabel={title} labelHeader={t('chartRecordType')} />
+    </ChartCard>
   );
 }
