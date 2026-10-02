@@ -184,10 +184,8 @@
   cursor: not-allowed;
 }
 
-.ohs-page-header__title {
-  font-size: var(--ohs-sys-typescale-display-small-size, 40px);
-  line-height: var(--ohs-sys-typescale-display-small-line-height, 48px);
-  font-weight: var(--ohs-sys-typescale-display-small-weight, 500);
+[data-ohs-root] .ohs-page-header__title {
+  font-size: var(--ohs-sys-typescale-headline-medium-size, 24px);
   letter-spacing: var(--ohs-sys-typescale-display-small-letter-spacing, -1px);
 }
 .ohs-page-header__description {
