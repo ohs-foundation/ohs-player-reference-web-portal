@@ -27,7 +27,7 @@ export function ChartCard({
 
   return (
     <Card className="ohs-dist-card">
-      <h3 className="ohs-card-header__title ohs-dist-card__title">{title}</h3>
+      <h2 className="ohs-card-header__title ohs-dist-card__title">{title}</h2>
       <div className="ohs-dist-card__body">{body}</div>
     </Card>
   );

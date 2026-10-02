@@ -133,6 +133,11 @@
 [data-ohs-root] h3 {
   font-size: var(--ohs-sys-typescale-text-l-size, 18px);
 }
+[data-ohs-root] .ohs-card-header__title,
+[data-ohs-root] .ohs-empty__title,
+[data-ohs-root] .ohs-error-state__title {
+  font-size: var(--ohs-sys-typescale-text-l-size, 18px);
+}
 [data-ohs-root] p {
   margin: 0;
 }

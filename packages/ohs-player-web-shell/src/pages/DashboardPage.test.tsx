@@ -175,6 +175,17 @@ describe('DashboardPage', () => {
     expect((await screen.findAllByText('distributionEmpty')).length).toBeGreaterThan(0);
   });
 
+  it('opens with one level one heading and never skips a level below it', () => {
+    renderPage();
+    const levels = screen
+      .getAllByRole('heading')
+      .map((heading) => Number(heading.tagName.slice(1)));
+
+    expect(levels[0]).toBe(1);
+    expect(levels.filter((level) => level === 1)).toHaveLength(1);
+    expect(levels.every((level, i) => i === 0 || level <= levels[i - 1] + 1)).toBe(true);
+  });
+
   it('has no critical a11y violations', async () => {
     const { container } = renderPage();
     await screen.findByText('Jane Smith');
