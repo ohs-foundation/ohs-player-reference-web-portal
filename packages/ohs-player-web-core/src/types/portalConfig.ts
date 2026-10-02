@@ -12,6 +12,24 @@ export interface PortalNavigationEntry {
   };
 }
 
+/** Dashboard cards per region, by widget id, in render order. */
+export interface PortalDashboardLayout {
+  kpi?: readonly string[];
+  main?: readonly string[];
+  side?: readonly string[];
+}
+
+/**
+ * The dashboard a deployment starts users from. `layout` replaces the default layout as a whole,
+ * a region it leaves out is empty. `available` lists the widget ids, or `<prefix>.*` patterns, a
+ * user may add. `userCustomization: false` hides the editing controls.
+ */
+export interface PortalDashboardConfig {
+  layout?: PortalDashboardLayout;
+  available?: readonly string[];
+  userCustomization?: boolean;
+}
+
 export interface PortalConfigDocument {
   $schema?: string;
   product?: {
@@ -29,4 +47,5 @@ export interface PortalConfigDocument {
   messages?: Readonly<Record<string, string>>;
   customEndpoints?: Readonly<Record<string, string>>;
   questionnaireVariant?: string;
+  dashboard?: PortalDashboardConfig;
 }

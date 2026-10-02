@@ -24,7 +24,12 @@ export type {
   UsePermissionResult,
   UserProfile,
 } from './types/config';
-export type { PortalConfigDocument, PortalNavigationEntry } from './types/portalConfig';
+export type {
+  PortalConfigDocument,
+  PortalDashboardConfig,
+  PortalDashboardLayout,
+  PortalNavigationEntry,
+} from './types/portalConfig';
 export type {
   ExtensionManifest,
   ExtensionNavEntry,
