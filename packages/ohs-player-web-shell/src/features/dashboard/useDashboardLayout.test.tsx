@@ -41,7 +41,7 @@ describe('useDashboardLayout', () => {
 
   it('persists a saved layout per user and reads it back after a reload', () => {
     const first = renderHook(() => useDashboardLayout(options));
-    act(() => first.result.current.save(usersOnly));
+    act(() => first.result.current.save({ layout: usersOnly, settings: {} }));
 
     expect(first.result.current.layout).toEqual(usersOnly);
     expect(stored()).toEqual({ version: 1, layout: usersOnly });
@@ -55,8 +55,8 @@ describe('useDashboardLayout', () => {
 
   it('forgets the stored layout when a save equals the defaults', () => {
     const { result } = renderHook(() => useDashboardLayout(options));
-    act(() => result.current.save(usersOnly));
-    act(() => result.current.save(defaults));
+    act(() => result.current.save({ layout: usersOnly, settings: {} }));
+    act(() => result.current.save({ layout: defaults, settings: {} }));
 
     expect(stored()).toBeNull();
     expect(result.current.layout).toEqual(defaults);
@@ -131,8 +131,41 @@ describe('useDashboardLayout', () => {
     });
     const { result } = renderHook(() => useDashboardLayout(options));
 
-    act(() => result.current.save(usersOnly));
+    act(() => result.current.save({ layout: usersOnly, settings: {} }));
 
     expect(result.current.layout).toEqual(usersOnly);
+  });
+
+  it('keeps card settings beside the layout and drops ones the catalogue does not know', () => {
+    const first = renderHook(() => useDashboardLayout(options));
+    const settings = { 'recent.users': { rows: '10', width: 'full' } };
+    act(() => first.result.current.save({ layout: defaults, settings }));
+
+    expect(stored()).toEqual({ version: 1, layout: defaults, settings });
+    first.unmount();
+
+    window.localStorage.setItem(
+      `${LAYOUT_STORAGE_PREFIX}u1`,
+      JSON.stringify({
+        version: 1,
+        layout: defaults,
+        settings: { ...settings, 'kpi.users': { width: 'full' }, 'gone.card': { rows: '10' } },
+      }),
+    );
+    expect(renderHook(() => useDashboardLayout(options)).result.current.settings).toEqual(settings);
+  });
+
+  it('ignores stored settings when customization is off', () => {
+    window.localStorage.setItem(
+      `${LAYOUT_STORAGE_PREFIX}u1`,
+      JSON.stringify({
+        version: 1,
+        layout: defaults,
+        settings: { 'recent.users': { rows: '10' } },
+      }),
+    );
+
+    const { result } = renderHook(() => useDashboardLayout({ ...options, customizable: false }));
+    expect(result.current.settings).toEqual({});
   });
 });

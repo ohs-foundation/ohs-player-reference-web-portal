@@ -19,7 +19,8 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     }),
     useFlag: (flag: string) => !flagsOff.has(flag),
     usePermission: () => ({ can: true }),
-    useSearch: (_resourceType: string, params: Params) => {
+    useSearch: (resourceType: string | undefined, params: Params) => {
+      if (!resourceType) return { data: undefined, isLoading: false, error: null };
       if (state === 'loading') return { data: undefined, isLoading: true, error: null };
       if (state === 'error') return { data: undefined, isLoading: false, error: new Error('down') };
       const total = state === 'zero' ? 0 : params.active || params.status ? 3 : 4;
@@ -29,11 +30,12 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
 });
 
 const { builtinWidgets } = await import('./widgetCatalogue');
+const { settingsOf } = await import('./widgetSettings');
 
 function renderWidget(id: string) {
   const entry = builtinWidgets(DEFAULT_NAVIGATION).find((widget) => widget.id === id);
   if (!entry) throw new Error(`no widget ${id}`);
-  return render(<>{entry.render()}</>);
+  return render(<>{entry.render(settingsOf(entry, {}))}</>);
 }
 
 describe('chart widgets', () => {
@@ -108,5 +110,17 @@ describe('chart widgets', () => {
     expect(new Set(colours)).toEqual(
       new Set(['var(--ohs-sys-color-success)', 'var(--ohs-sys-color-outline)']),
     );
+  });
+
+  it('draws the window a user chose for the monthly chart', () => {
+    const entry = builtinWidgets(DEFAULT_NAVIGATION).find(
+      (widget) => widget.id === 'chart.updatedByMonth.users',
+    );
+    if (!entry) throw new Error('no monthly chart');
+    const { container } = render(
+      <>{entry.render(settingsOf(entry, { [entry.id]: { months: '12' } }))}</>,
+    );
+
+    expect(container.querySelectorAll('.ohs-bar-chart__bar')).toHaveLength(12);
   });
 });

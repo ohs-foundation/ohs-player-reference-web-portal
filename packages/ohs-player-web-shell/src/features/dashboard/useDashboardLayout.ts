@@ -9,6 +9,12 @@ import {
   type IdTest,
 } from './dashboardLayout';
 import type { WidgetDefinition } from './widgetCatalogue';
+import {
+  EMPTY_SETTINGS,
+  hasSettings,
+  sanitizeSettings,
+  type DashboardSettings,
+} from './widgetSettings';
 
 export const LAYOUT_STORAGE_PREFIX = 'ohs-dashboard-layout:';
 export const LEGACY_KPI_STORAGE_PREFIX = 'ohs-dashboard-kpis:';
@@ -26,17 +32,29 @@ export interface DashboardLayoutOptions {
   customizable?: boolean;
 }
 
-export interface DashboardLayoutState {
+/** What a user has arranged: the cards per region and the settings chosen for them. */
+export interface DashboardArrangement {
   layout: DashboardLayout;
-  save: (layout: DashboardLayout) => void;
+  settings: DashboardSettings;
 }
 
-function readStored(key: string): unknown {
+export interface DashboardLayoutState extends DashboardArrangement {
+  save: (arrangement: DashboardArrangement) => void;
+}
+
+interface StoredArrangement {
+  layout: unknown;
+  settings?: unknown;
+}
+
+function readStored(key: string): StoredArrangement | undefined {
   try {
     const raw = window.localStorage.getItem(key);
     if (raw === null) return undefined;
-    const stored = JSON.parse(raw) as { version?: unknown; layout?: unknown } | null;
-    return stored?.version === LAYOUT_VERSION ? stored.layout : undefined;
+    const stored = JSON.parse(raw) as { version?: unknown; layout?: unknown; settings?: unknown };
+    return stored?.version === LAYOUT_VERSION
+      ? { layout: stored.layout, settings: stored.settings }
+      : undefined;
   } catch {
     return undefined;
   }
@@ -50,10 +68,17 @@ function withStorage(action: (storage: Storage) => void): void {
   }
 }
 
-function writeStored(key: string, layout: DashboardLayout | undefined): void {
+function writeStored(key: string, arrangement: DashboardArrangement | undefined): void {
   withStorage((storage) => {
-    if (layout) storage.setItem(key, JSON.stringify({ version: LAYOUT_VERSION, layout }));
-    else storage.removeItem(key);
+    if (!arrangement) {
+      storage.removeItem(key);
+      return;
+    }
+    const { layout, settings } = arrangement;
+    const record = hasSettings(settings)
+      ? { version: LAYOUT_VERSION, layout, settings }
+      : { version: LAYOUT_VERSION, layout };
+    storage.setItem(key, JSON.stringify(record));
   });
 }
 
@@ -70,23 +95,24 @@ function legacyKpis(sub: string): string[] | undefined {
   }
 }
 
-function migrateLegacy(sub: string, defaults: DashboardLayout): DashboardLayout | undefined {
+function migrateLegacy(sub: string, defaults: DashboardLayout): StoredArrangement | undefined {
   const kpi = legacyKpis(sub);
   if (!kpi) return undefined;
   const layout = { ...defaults, kpi };
-  const kept = sameLayout(layout, defaults) ? undefined : layout;
+  const kept = sameLayout(layout, defaults) ? undefined : { layout, settings: EMPTY_SETTINGS };
   writeStored(`${LAYOUT_STORAGE_PREFIX}${sub}`, kept);
   withStorage((storage) => storage.removeItem(`${LEGACY_KPI_STORAGE_PREFIX}${sub}`));
   return kept;
 }
 
-function readLayout(sub: string, defaults: DashboardLayout): unknown {
+function readArrangement(sub: string, defaults: DashboardLayout): StoredArrangement | undefined {
   return readStored(`${LAYOUT_STORAGE_PREFIX}${sub}`) ?? migrateLegacy(sub, defaults);
 }
 
 /**
- * The signed in user's dashboard layout, kept in this browser per user `sub`, trimmed on read to
- * what the catalogue holds and the deployment allows. With nothing stored it is `defaults`.
+ * The signed in user's dashboard layout and card settings, kept in this browser per user `sub`,
+ * trimmed on read to what the catalogue holds and the deployment allows. With nothing stored the
+ * layout is `defaults` and every card uses its default settings.
  */
 export function useDashboardLayout({
   catalogue,
@@ -97,30 +123,34 @@ export function useDashboardLayout({
 }: DashboardLayoutOptions): DashboardLayoutState {
   const { user } = useAuth();
   const sub = user?.sub ?? '';
-  const [stored, setStored] = useState(() => ({ sub, raw: readLayout(sub, defaults) }));
-  const raw = stored.sub === sub ? stored.raw : readLayout(sub, defaults);
+  const [stored, setStored] = useState(() => ({ sub, raw: readArrangement(sub, defaults) }));
+  const current = stored.sub === sub ? stored.raw : readArrangement(sub, defaults);
+  const raw = customizable ? current : undefined;
 
   const layout = useMemo(() => {
     const placed = new Set(DASHBOARD_REGIONS.flatMap((region) => defaults[region]));
     const userAllowed: IdTest = (id) => placed.has(id) || (allowed?.(id) ?? true);
     return (
-      sanitizeLayout(customizable ? raw : undefined, catalogue, {
+      sanitizeLayout(raw?.layout, catalogue, {
         allowed: userAllowed,
         isVisible,
       }) ??
       sanitizeLayout(defaults, catalogue, { isVisible }) ??
       EMPTY_LAYOUT
     );
-  }, [raw, catalogue, defaults, allowed, isVisible, customizable]);
+  }, [raw, catalogue, defaults, allowed, isVisible]);
+
+  const settings = useMemo(() => sanitizeSettings(raw?.settings, catalogue), [raw, catalogue]);
 
   const save = useCallback(
-    (next: DashboardLayout) => {
-      const kept = sameLayout(next, defaults) ? undefined : next;
+    (next: DashboardArrangement) => {
+      const isDefault = sameLayout(next.layout, defaults) && !hasSettings(next.settings);
+      const kept = isDefault ? undefined : next;
       writeStored(`${LAYOUT_STORAGE_PREFIX}${sub}`, kept);
       setStored({ sub, raw: kept });
     },
     [sub, defaults],
   );
 
-  return { layout, save };
+  return { layout, settings, save };
 }

@@ -30,10 +30,12 @@ import {
 
 type Translate = ReturnType<typeof useTranslation>['t'];
 
-export interface RecentWidgetProps {
+export interface RecentWidgetKeys {
   titleKey: string;
   subtitleKey: string;
 }
+
+export type RecentWidgetProps = RecentWidgetKeys & { rows: number };
 
 interface RecentSpec<Row extends { id?: string }> {
   resourceType: string;
@@ -152,9 +154,10 @@ function RecentWidget<Row extends { id?: string }>({
   spec,
   titleKey,
   subtitleKey,
+  rows,
 }: Readonly<RecentWidgetProps & { spec: RecentSpec<Row> }>): ReactNode {
   const { t } = useTranslation();
-  const recent = useRecent<Row>(spec.resourceType);
+  const recent = useRecent<Row>(spec.resourceType, rows);
   return (
     <RecentCard
       title={t(titleKey)}
@@ -204,9 +207,10 @@ export function StatusDistribution({
 export function UpdatedByMonth({
   kpi,
   titleKey,
-}: Readonly<{ kpi: KpiDefinition; titleKey: string }>): ReactNode {
+  months,
+}: Readonly<{ kpi: KpiDefinition; titleKey: string; months: number }>): ReactNode {
   const { t, locale } = useTranslation();
-  const counts = useMonthlyCounts(kpi.resourceType);
+  const counts = useMonthlyCounts(kpi.resourceType, months);
   const month = new Intl.DateTimeFormat(locale, { month: 'short' });
   const title = t(titleKey);
   return (

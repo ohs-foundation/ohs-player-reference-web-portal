@@ -12,6 +12,12 @@ import type { FocusRequest, MoveDirection } from './EditableTile';
 import { useDashboardDraft } from './useDashboardDraft';
 import type { DashboardLayoutState } from './useDashboardLayout';
 import type { WidgetDefinition } from './widgetCatalogue';
+import {
+  EMPTY_SETTINGS,
+  withoutWidget,
+  withSetting,
+  type DashboardSettings,
+} from './widgetSettings';
 
 export interface DashboardEditorOptions {
   saved: DashboardLayoutState;
@@ -23,6 +29,7 @@ export interface DashboardEditorOptions {
 export interface DashboardEditor {
   editing: boolean;
   layout: DashboardLayout;
+  settings: DashboardSettings;
   adding: boolean;
   focusRequest?: FocusRequest;
   announcement: string;
@@ -34,6 +41,7 @@ export interface DashboardEditor {
   add: (entry: WidgetDefinition) => void;
   move: (id: string, direction: MoveDirection) => void;
   remove: (id: string) => void;
+  setSetting: (entry: WidgetDefinition, key: string, value: string) => void;
   reset: () => void;
   cancel: () => void;
   save: () => void;
@@ -48,14 +56,15 @@ export function useDashboardEditor({
 }: DashboardEditorOptions): DashboardEditor {
   const { t } = useTranslation();
   const { notify } = useStatusBar();
-  const draft = useDashboardDraft(saved.layout);
+  const draft = useDashboardDraft({ layout: saved.layout, settings: saved.settings });
   const [adding, setAdding] = useState(false);
   const [focusRequest, setFocusRequest] = useState<FocusRequest>();
   const [announcement, setAnnouncement] = useState('');
   const addRef = useRef<HTMLButtonElement>(null);
   const configureRef = useRef<HTMLButtonElement>(null);
   const wasEditing = useRef(false);
-  const layout = draft.layout;
+  const { layout, settings } = draft.arrangement;
+  const setLayout = (next: DashboardLayout): void => draft.update({ layout: next, settings });
 
   useEffect(() => {
     if (draft.editing === wasEditing.current) return;
@@ -72,6 +81,7 @@ export function useDashboardEditor({
   return {
     editing: draft.editing,
     layout,
+    settings,
     adding,
     focusRequest,
     announcement,
@@ -83,11 +93,11 @@ export function useDashboardEditor({
       setAdding(true);
     },
     closeAdd: () => setAdding(false),
-    add: (entry) => draft.update(addWidget(layout, entry.regions[0], entry.id, isVisible)),
+    add: (entry) => setLayout(addWidget(layout, entry.regions[0], entry.id, isVisible)),
     move: (id, direction) => {
       const next = moveWidget(layout, id, direction, isVisible);
       const region = regionOf(next, id);
-      draft.update(next);
+      setLayout(next);
       setFocusRequest({ id, direction });
       if (region) {
         const position = next[region].filter(isVisible).indexOf(id) + 1;
@@ -95,14 +105,16 @@ export function useDashboardEditor({
       }
     },
     remove: (id) => {
-      draft.update(removeWidget(layout, id));
+      draft.update({ layout: removeWidget(layout, id), settings: withoutWidget(settings, id) });
       addRef.current?.focus();
       setAnnouncement(t('widgetRemoved', { title: titleOf(id) }));
     },
-    reset: () => draft.update(defaults),
+    setSetting: (entry, key, value) =>
+      draft.update({ layout, settings: withSetting(settings, entry, key, value) }),
+    reset: () => draft.update({ layout: defaults, settings: EMPTY_SETTINGS }),
     cancel: stop,
     save: () => {
-      saved.save(layout);
+      saved.save(draft.arrangement);
       stop();
       notify({ tone: 'success', title: t('dashboardSaved') });
     },

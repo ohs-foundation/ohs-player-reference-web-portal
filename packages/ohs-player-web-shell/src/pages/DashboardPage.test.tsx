@@ -9,6 +9,7 @@ import type { DashboardRegion } from '../host/types';
 let flagsOff = new Set<string>();
 let failingCounts = new Set<string>();
 let loadingCounts = new Set<string>();
+let searches: { resourceType: string; params?: Record<string, string> }[] = [];
 const notify = vi.fn();
 
 const counts: Record<string, { total: number; active: number }> = {
@@ -69,6 +70,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useStatusBar: () => ({ notify, saving: vi.fn() }),
     PermissionGuard: ({ children }: { children: React.ReactNode }) => children,
     useSearch: (resourceType: string, params?: Record<string, string>) => {
+      searches.push({ resourceType, params });
       const isCount = params?._summary === 'count';
       if (isCount && failingCounts.has(resourceType)) {
         return { data: undefined, isLoading: false, error: new Error('down'), refetch: vi.fn() };
@@ -140,12 +142,15 @@ function renderPage(config = portalConfig) {
   );
 }
 
+Element.prototype.scrollIntoView = vi.fn();
+
 beforeEach(() => {
   vi.clearAllMocks();
   window.localStorage.clear();
   flagsOff = new Set();
   failingCounts = new Set();
   loadingCounts = new Set();
+  searches = [];
 });
 
 describe('DashboardPage', () => {
@@ -424,6 +429,55 @@ describe('DashboardPage editor', () => {
 
     expect(within(drawer).getByText('kpiPickerLimit 4')).toBeInTheDocument();
     expect(container.querySelectorAll('.ohs-kpi-grid .ohs-kpi')).toHaveLength(4);
+  });
+
+  it("changes a card's rows and width from its settings, and saves them with the layout", async () => {
+    const { container } = renderPage();
+    configure();
+
+    fireEvent.click(screen.getByRole('button', { name: 'widgetSettings recentUsersTitle' }));
+    const panel = await screen.findByRole('dialog', {
+      name: 'widgetSettingsTitle recentUsersTitle',
+    });
+    fireEvent.keyDown(within(panel).getByRole('combobox', { name: 'widgetSettingRows' }), {
+      key: 'Enter',
+    });
+    fireEvent.click(await screen.findByRole('option', { name: 'widgetRowsOption 10' }));
+    fireEvent.keyDown(within(panel).getByRole('combobox', { name: 'widgetSettingWidth' }), {
+      key: 'Enter',
+    });
+    fireEvent.click(await screen.findByRole('option', { name: 'widgetWidthFull full' }));
+
+    expect(searches).toContainEqual({
+      resourceType: 'Practitioner',
+      params: { _count: '10', _sort: '-_lastUpdated' },
+    });
+    const [first, second] = container.querySelectorAll<HTMLElement>('.ohs-dash-row');
+    expect(first).toHaveAttribute('data-full');
+    expect(within(first).queryByText('distributionUsers')).not.toBeInTheDocument();
+    expect(within(second).getByText('distributionUsers')).toBeInTheDocument();
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+    expect(
+      (
+        JSON.parse(window.localStorage.getItem(`${LAYOUT_STORAGE_PREFIX}u1`) ?? '{}') as {
+          settings?: unknown;
+        }
+      ).settings,
+    ).toEqual({ 'recent.users': { rows: '10', width: 'full' } });
+  });
+
+  it('offers settings only on cards that have them', () => {
+    renderPage();
+    configure();
+
+    expect(
+      screen.getByRole('button', { name: 'widgetSettings recentUsersTitle' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'widgetSettings kpiTotalUsers' }),
+    ).not.toBeInTheDocument();
   });
 
   it('resets the draft to the default layout without saving', () => {

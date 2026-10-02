@@ -13,11 +13,19 @@ import {
   RecentUsers,
   StatusDistribution,
   UpdatedByMonth,
+  type RecentWidgetKeys,
   type RecentWidgetProps,
 } from './builtinWidgets';
 import { ExtensionWidgetTile } from './ExtensionWidgetTile';
 import { KpiCard } from './KpiCard';
 import { gatedKpis, type GatedKpi, type KpiId } from './kpiCatalogue';
+import {
+  MONTHS_SETTING,
+  ROWS_SETTING,
+  WIDTH_SETTING,
+  type WidgetSetting,
+  type WidgetSettings,
+} from './widgetSettings';
 
 /** Ids of the dashboard cards the shell ships, for a configuration document's `dashboard` field. */
 export const BUILTIN_WIDGET_IDS = [
@@ -56,7 +64,9 @@ export interface WidgetDefinition {
   requires?: Requirement;
   /** Whether the derived default layout places this card. Cards without it are only added. */
   startsOnDashboard: boolean;
-  render: () => ReactNode;
+  /** The choices a user can make for this card in configure mode. */
+  settings: readonly WidgetSetting[];
+  render: (settings: WidgetSettings) => ReactNode;
 }
 
 const CATEGORY_KEY: Readonly<Record<WidgetKind, string>> = {
@@ -67,7 +77,7 @@ const CATEGORY_KEY: Readonly<Record<WidgetKind, string>> = {
 
 interface EntityCards {
   recent: ComponentType<RecentWidgetProps>;
-  recentKeys: RecentWidgetProps;
+  recentKeys: RecentWidgetKeys;
   distributionTitleKey: string;
   monthlyTitleKey: string;
 }
@@ -112,6 +122,7 @@ function kpiWidget(kpi: GatedKpi): WidgetDefinition {
     order: kpi.order,
     requires: kpi.requires,
     startsOnDashboard: true,
+    settings: [],
     render: () => createElement(KpiCard, { kpi }),
   };
 }
@@ -127,7 +138,8 @@ function recentWidget(kpi: GatedKpi): WidgetDefinition {
     order: kpi.order,
     requires: kpi.requires,
     startsOnDashboard: true,
-    render: () => createElement(recent, recentKeys),
+    settings: [ROWS_SETTING, WIDTH_SETTING],
+    render: (settings) => createElement(recent, { ...recentKeys, rows: Number(settings.rows) }),
   };
 }
 
@@ -142,6 +154,7 @@ function statusWidget(kpi: GatedKpi): WidgetDefinition {
     order: kpi.order,
     requires: kpi.requires,
     startsOnDashboard: true,
+    settings: [WIDTH_SETTING],
     render: () => createElement(StatusDistribution, { kpi, titleKey }),
   };
 }
@@ -157,7 +170,9 @@ function monthlyWidget(kpi: GatedKpi): WidgetDefinition {
     order: kpi.order + 40,
     requires: kpi.requires,
     startsOnDashboard: false,
-    render: () => createElement(UpdatedByMonth, { kpi, titleKey }),
+    settings: [MONTHS_SETTING, WIDTH_SETTING],
+    render: (settings) =>
+      createElement(UpdatedByMonth, { kpi, titleKey, months: Number(settings.months) }),
   };
 }
 
@@ -172,6 +187,7 @@ function activeShareWidget(kpis: readonly GatedKpi[]): WidgetDefinition {
     regions: ['side', 'main'],
     order: 90,
     startsOnDashboard: false,
+    settings: [WIDTH_SETTING],
     render: () => createElement(ActiveShare, { ...byId, titleKey }),
   };
 }
@@ -201,6 +217,7 @@ export function extensionWidgets(
     order: widget.order,
     requires: widget.requires,
     startsOnDashboard: true,
+    settings: widget.region === 'kpi' ? [] : [WIDTH_SETTING],
     render: () => createElement(ExtensionWidgetTile, { widget }),
   }));
 }
