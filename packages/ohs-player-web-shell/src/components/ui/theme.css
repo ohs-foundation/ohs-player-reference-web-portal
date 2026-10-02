@@ -2303,7 +2303,7 @@
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
   line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
 }
-.ohs-widget-picker__category {
+.ohs-widget-picker .ohs-widget-picker__category {
   margin: 0 0 var(--ohs-sys-spacing-2, 8px);
   color: var(--ohs-sys-color-on-surface-variant, #696969);
   font-size: var(--ohs-sys-typescale-title-medium-size, 16px);
@@ -2386,7 +2386,7 @@
   display: flex;
   flex-direction: column;
 }
-.ohs-dist-card__title {
+.ohs-dist-card .ohs-dist-card__title {
   margin-bottom: var(--ohs-sys-spacing-3, 12px);
 }
 .ohs-dist-card__body {
