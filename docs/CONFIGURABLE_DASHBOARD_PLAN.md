@@ -130,9 +130,40 @@ Every card is a catalogue entry, the user can remove, add back and reorder all o
 * The reference `public/portal-config.json` (D8).
 * `DASHBOARD_REGIONS` and `SLOT_NAMES`.
 
+## Decisions as implemented
+
+| # | As built |
+| --- | --- |
+| D1 | As decided. The migration runs on the first read for a user. An old selection equal to the default stores nothing, so that user keeps following the deployment layout. |
+| D2 | `DashboardRows` pairs by position. The #105 pin now reads "pairs main and side cards by position", and a new test shows an unpaired `main` widget moving the side cards below it up a row. |
+| D3 | `checkDashboard` in `host/dashboardChecks.ts`, run by `createPortalHost`. The reference schema offers the built in ids through JSON Schema `examples` rather than an `anyOf` of an enum and the pattern. Editors still suggest the ids, and a bad id keeps one clear rejection message instead of a union error. |
+| D4 | The cap counts visible cards in `kpi`. A hidden KPI stays stored and does not count. The derived default is cut to four from the visible entries, so a gated built in card never pushes out a visible extension tile. |
+| D5 | `allowedBy` in `dashboardLayout.ts`. A stored layout is trimmed by `available`, except for cards the deployment layout lists, so a starting card outside `available` never vanishes on reload. |
+| D6 | Configure dashboard in the page header, then a sticky bar with Add widget, Reset to default, Cancel and Save. Focus stays on the move button after a move, moves to Add widget after a removal, and a polite live region announces both. Add buttons use `aria-disabled` so focus is not lost when a card becomes added. |
+| D7 | `BarChart` (SVG columns) and `StackedBar` (flex rows) in `components/ui`. `useMonthlyCounts` makes six explicit `useSearch` calls because the window is fixed at six months and a loop fails `react-hooks/rules-of-hooks`. `ActiveShare` takes one prop per entity and calls `useShare` four times for the same reason. |
+| D8 | As decided. |
+| D9 | As decided. |
+
+Other choices made while building.
+
+* Catalogue entries carry `startsOnDashboard`. The five new charts are false, so the derived default is unchanged.
+* The Add widget list titles a built in KPI by its card label (`kpiTotalUsers`). `KpiDefinition.optionKey` was removed with the picker.
+* The page level `LinearProgress` was removed. Each card shows its own loading state and fetches only while mounted.
+* `IconArrowUp` and `IconArrowDown` were added through `scripts/generate-icons.ts`.
+* `Popover` stays in the kit although the picker was its only user, because the shell index exports it.
+* `kpiCustomize`, `kpiPickerTitle` and `kpiSaved` were removed from both catalogues. A document that overrides them now gets the unknown message key warning. `kpiPickerLimit` is reused as the reason a fifth KPI cannot be added.
+* `pnpm bundle:check` moved from 50,570 to 50,622 bytes gzip, from the two validator checks for `category` and `titleKey`.
+
 ## Verification
 
-Filled in at each phase gate.
+| Phase | Automated gates | Live stack |
+| --- | --- | --- |
+| 1 | shell build, typecheck, lint, test, example build and test green at every commit | deferred to the final walkthrough |
+| 2 | as above plus `pnpm bundle:check`, `pnpm config-schema:generate` and `pnpm config:check` | deferred to the final walkthrough |
+| 3 | as above | deferred to the final walkthrough |
+| 4 | as above | see below |
+
+The JSON Schema must be regenerated after the shell is built, because the reference schema reads `BUILTIN_WIDGET_IDS` from the shell's `dist`.
 
 ## Follow ups
 
