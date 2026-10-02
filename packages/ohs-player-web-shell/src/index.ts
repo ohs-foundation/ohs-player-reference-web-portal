@@ -31,6 +31,7 @@ export {
 } from './host/types';
 export { resourceTypeLabel } from './features/activity/resourceTypeLabel';
 export { StatCard, type StatCardProps } from './features/dashboard/StatCard';
+export { BUILTIN_WIDGET_IDS, type BuiltinWidgetId } from './features/dashboard/widgetCatalogue';
 export type { PortalRoute } from './routes/types';
 
 export { useClearFilterParams, useFilterParam } from './features/search/useFilterParam';
