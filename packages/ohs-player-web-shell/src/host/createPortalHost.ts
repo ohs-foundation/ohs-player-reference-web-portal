@@ -11,6 +11,7 @@ import {
   type UnknownMessageKey,
 } from '../config/unknownMessageKeys';
 import { builtinWidgets, extensionWidgets } from '../features/dashboard/widgetCatalogue';
+import { SHELL_MESSAGES } from '../i18n/shellMessages';
 import type { PortalRoute } from '../routes/types';
 import { checkDashboard } from './dashboardChecks';
 import { missingPermission, validManifests } from './extensionChecks';
@@ -56,7 +57,11 @@ function withExtensions(
       ...platform,
       i18n: {
         ...platform.i18n,
-        messages: { ...fromExtensions(manifests, (m) => m.messages), ...platform.i18n?.messages },
+        messages: {
+          ...SHELL_MESSAGES,
+          ...fromExtensions(manifests, (m) => m.messages),
+          ...platform.i18n?.messages,
+        },
       },
       flags: {
         ...platform.flags,
@@ -104,6 +109,7 @@ function declaredMessageKeys(
 ): Set<string> {
   return new Set([
     ...Object.keys(defaultMessageCatalog),
+    ...Object.keys(SHELL_MESSAGES),
     ...Object.keys(defaults.platform.i18n?.messages ?? {}),
     ...manifests.flatMap((manifest) => Object.keys(manifest.messages ?? {})),
   ]);

@@ -12,6 +12,7 @@ export {
   type ResolvedPortalConfig,
 } from './config/resolvePortalConfig';
 export type { UnknownMessageKey } from './config/unknownMessageKeys';
+export { SHELL_MESSAGES } from './i18n/shellMessages';
 
 export {
   createPortalHost,

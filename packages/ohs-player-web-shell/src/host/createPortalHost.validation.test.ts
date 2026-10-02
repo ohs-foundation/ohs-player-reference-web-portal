@@ -194,4 +194,12 @@ describe('createPortalHost startup validation', () => {
       'Configuration document: dashboard.available[0] "nothing.*" matches no dashboard widget',
     ]);
   });
+
+  it('fails an extension that redeclares a message the shell provides', () => {
+    const clash = extension('reports', { messages: { navDashboard: 'Home' } });
+
+    expect(inDevelopment({ extensions: [clash] })).toThrow(
+      'Extension "reports" declares message key "navDashboard", which the host already declares.',
+    );
+  });
 });

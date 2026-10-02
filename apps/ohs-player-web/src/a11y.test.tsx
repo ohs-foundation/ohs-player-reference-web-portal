@@ -30,17 +30,19 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
 });
 
 const { CorePlatformProvider } = await import('ohs-player-web-core');
-const { platformConfig, portalDefaults } = await import('./config/platform');
-const { AppLayout, LoginPage, PortalConfigContext, resolvePortalConfig } = await import(
-  'ohs-player-web-shell'
-);
+const { portalDefaults } = await import('./config/platform');
+const { AppLayout, LoginPage, PortalConfigContext, createPortalHost } =
+  await import('ohs-player-web-shell');
+
+const { portal } = createPortalHost({ defaults: portalDefaults, development: true });
+const platformConfig = portal.platform;
 
 function renderShell() {
   authStatus = 'authenticated';
   return render(
     <MemoryRouter>
       <CorePlatformProvider config={platformConfig}>
-        <PortalConfigContext.Provider value={resolvePortalConfig(portalDefaults)}>
+        <PortalConfigContext.Provider value={portal}>
           <AppLayout />
         </PortalConfigContext.Provider>
       </CorePlatformProvider>
@@ -98,7 +100,9 @@ describe('a11y', () => {
   it('places the skip link before every other focusable element', () => {
     const { container } = renderShell();
 
-    const focusable = container.querySelectorAll('a[href], button, input, [tabindex]:not([tabindex="-1"])');
+    const focusable = container.querySelectorAll(
+      'a[href], button, input, [tabindex]:not([tabindex="-1"])',
+    );
     expect(focusable[0]).toHaveClass('app-skip-link');
   });
 });
