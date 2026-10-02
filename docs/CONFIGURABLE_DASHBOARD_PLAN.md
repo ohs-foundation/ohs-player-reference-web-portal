@@ -189,7 +189,7 @@ Four of the follow ups needed no backend and were built here after the walkthrou
 
 | Follow up | As built |
 | --- | --- |
-| Page heading | `PageHeader` renders its title as the page's `h1`, keeping the 24 pixel size the root heading rule gave it as an `h2`, so axe no longer reports `page-has-heading-one`. |
+| Page heading | `PageHeader` renders its title as the page's `h1`, keeping the 24 pixel size the root heading rule gave it as an `h2`, so axe no longer reports `page-has-heading-one`. The headings directly below it moved from `h3` to `h2` so no level is skipped, which covers the dashboard cards, the empty and error states and the FHIR Viewer panel. Each keeps its rendered size. The dashboard stays pixel identical to `main` below the header. |
 | Example sidebar contrast | The example document pins `secondary-container` to its teal container. Teal on the generated pale blue was 4.25 to 1, and is 4.86 to 1 now. `brandContrast.test.ts` fails if the pair drops below 4.5 to 1. The guide's violet example had the same fault and pins it too. |
 | Shell message defaults | `SHELL_MESSAGES` holds English copy for all 119 keys the shell renders. `createPortalHost` merges it below the app's messages, the host treats its keys as declared for the clash and unknown key checks, and the example catalogue went from 109 keys to 4. A shell test fails when the shell renders a key the catalogue lacks. |
 | Card settings and width | Each catalogue entry declares its settings as data. Recently Added offers 5 or 10 rows, Updated by month offers 3, 6 or 12 months, and every card below the strip offers column or full width. Settings are saved per user beside the layout, only when they differ from the default. The monthly chart reserves twelve count searches and leaves the ones outside its window idle, because hooks cannot loop. |
@@ -197,6 +197,7 @@ Four of the follow ups needed no backend and were built here after the walkthrou
 
 ## Follow ups
 
+* Two accessibility findings remain that this branch does not touch. On the FHIR Viewer, the monospaced identifier cells fail colour contrast (serious). On the Users, Organisations and Care Teams lists, the row actions column has an empty header (minor).
 * Server side storage of the layout and card settings, so they follow the user across devices. Raised as ohs-foundation/ohs-player-reference-backend#96.
 * Card settings in the configuration document, if deployments ask for them.
 
