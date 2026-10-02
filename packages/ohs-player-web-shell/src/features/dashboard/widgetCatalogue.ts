@@ -188,15 +188,15 @@ export function builtinWidgets(navigation: readonly NavEntry[]): WidgetDefinitio
   ];
 }
 
-/** Namespaced extension widgets as catalogue entries, grouped under their manifest id. */
+/** Namespaced extension widgets as catalogue entries, grouped under their `category` or manifest id. */
 export function extensionWidgets(
   widgets: readonly ExtensionWidget<DashboardRegion>[],
 ): WidgetDefinition[] {
   return widgets.map((widget) => ({
     id: widget.id,
     kind: widget.region === 'kpi' ? 'kpi' : 'list',
-    categoryKey: widget.id.slice(0, widget.id.indexOf('.')),
-    titleKey: widget.id,
+    categoryKey: widget.category ?? widget.id.slice(0, widget.id.indexOf('.')),
+    titleKey: widget.titleKey ?? widget.id,
     regions: [widget.region],
     order: widget.order,
     requires: widget.requires,

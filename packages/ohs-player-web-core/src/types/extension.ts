@@ -34,6 +34,10 @@ export interface ExtensionWidget<Region extends string = string> {
   order: number;
   load: () => Promise<{ default: ComponentType }>;
   requires?: ExtensionRequirements;
+  /** Message key of the group the Add widget list shows this tile under. Defaults to the manifest id. */
+  category?: string;
+  /** Message key naming this tile in the Add widget list. Defaults to the namespaced id. */
+  titleKey?: string;
 }
 
 /** A component rendered into the named slot, receiving that slot's context. */

@@ -93,6 +93,17 @@ describe('extensionWidgets', () => {
     });
   });
 
+  it("takes the picker title and group from the widget's titleKey and category", () => {
+    const [mapped] = extensionWidgets([
+      widget({ titleKey: 'schedulesKpi', category: 'widgetCategorySchedules' }),
+    ]);
+
+    expect(mapped).toMatchObject({
+      titleKey: 'schedulesKpi',
+      categoryKey: 'widgetCategorySchedules',
+    });
+  });
+
   it('treats a main or side widget as a list card', () => {
     const mapped = extensionWidgets([
       widget({ id: 'practice.visits', region: 'main' }),

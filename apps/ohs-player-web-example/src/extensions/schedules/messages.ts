@@ -10,4 +10,5 @@ export const schedulesMessages = {
   schedulesEmptyDescription: 'Schedules appear here once they are published to the FHIR server.',
   schedulesKpi: 'Active Schedules',
   schedulesViewForUser: 'View schedules',
+  widgetCategorySchedules: 'Schedules',
 };

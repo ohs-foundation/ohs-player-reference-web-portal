@@ -168,6 +168,14 @@ function widgetCheck(regions: readonly string[]): ItemCheck {
       `${path}.load`,
       'must be a function that imports the widget',
     );
+    for (const key of ['category', 'titleKey']) {
+      requireThat(
+        issues,
+        widget[key] === undefined || isText(widget[key]),
+        `${path}.${key}`,
+        'must be a non-empty message key',
+      );
+    }
     checkRequires(issues, widget.requires, `${path}.requires`);
   };
 }
