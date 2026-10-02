@@ -2438,6 +2438,72 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Bar charts: recessive track and baseline, text in ink roles, never the series colour. */
+.ohs-bar-chart,
+.ohs-stacked-bar {
+  width: 100%;
+  margin: 0;
+}
+.ohs-bar-chart svg {
+  display: block;
+  overflow: visible;
+}
+.ohs-bar-chart__baseline {
+  stroke: var(--ohs-sys-color-outline-variant, #ededed);
+  stroke-width: 1;
+}
+.ohs-bar-chart__hit {
+  fill: transparent;
+}
+.ohs-bar-chart__track {
+  fill: var(--ohs-sys-color-surface-container, #efedf1);
+}
+.ohs-bar-chart__value,
+.ohs-bar-chart__label {
+  fill: var(--ohs-sys-color-on-surface-variant, #696969);
+  font-size: var(--ohs-sys-typescale-label-small-size, 12px);
+  font-variant-numeric: tabular-nums;
+}
+.ohs-bar-chart__value {
+  fill: var(--ohs-sys-color-on-surface, #0d0d0d);
+}
+.ohs-stacked-bar__row {
+  display: grid;
+  grid-template-columns: minmax(0, 7rem) minmax(0, 1fr) 3rem;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-3, 12px);
+  margin-bottom: var(--ohs-sys-spacing-3, 12px);
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+}
+.ohs-stacked-bar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ohs-stacked-bar__track {
+  display: flex;
+  gap: 2px;
+  height: var(--ohs-sys-spacing-4, 16px);
+  overflow: hidden;
+  border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
+  background: var(--ohs-sys-color-surface-container, #efedf1);
+}
+.ohs-stacked-bar__segment {
+  flex-basis: 0;
+  min-width: 2px;
+}
+.ohs-stacked-bar__share {
+  text-align: end;
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
+  font-variant-numeric: tabular-nums;
+}
+.ohs-stacked-bar__legend {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--ohs-sys-spacing-4, 16px);
+}
+
 /* ---------- Login screen ---------- */
 /* Full-viewport: the exported dark gradient fills the screen behind one centred card. The gradient
    is a fixed dark image (same for light/dark); only the card flips via the surface/text tokens. */
