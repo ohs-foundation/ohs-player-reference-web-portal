@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ExtensionWidget } from 'ohs-player-web-core';
 import type { ComponentType } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -56,7 +56,13 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
   return {
     ...actual,
-    useTranslation: () => ({ t: (key: string) => key, dir: 'ltr', locale: 'en' }),
+    useTranslation: () => ({
+      t: (key: string, vars?: Record<string, string | number>) =>
+        vars ? [key, ...Object.values(vars)].join(' ') : key,
+      dir: 'ltr',
+      locale: 'en',
+      formatNumber: (n: number) => String(n),
+    }),
     useAuth: () => ({ status: 'authenticated', user: { sub: 'u1' } }),
     useFlag: (flag: string) => !flagsOff.has(flag),
     usePermission: () => ({ can: true }),
@@ -273,6 +279,174 @@ describe('DashboardPage layout', () => {
     const locations = screen.getByText('kpiTotalLocations').closest('.ohs-kpi') as HTMLElement;
     expect(within(users).getByRole('status')).toBeInTheDocument();
     expect(within(locations).getByText('—')).toBeInTheDocument();
+  });
+});
+
+function configure(): void {
+  fireEvent.click(screen.getByRole('button', { name: 'dashboardConfigure' }));
+}
+
+async function openAddDrawer(): Promise<HTMLElement> {
+  fireEvent.click(screen.getByRole('button', { name: 'dashboardAddWidget' }));
+  return screen.findByRole('dialog');
+}
+
+function storedLayout(): unknown {
+  const raw = window.localStorage.getItem(`${LAYOUT_STORAGE_PREFIX}u1`);
+  return raw === null ? null : (JSON.parse(raw) as { layout: unknown }).layout;
+}
+
+describe('DashboardPage editor', () => {
+  it('removes a card in configure mode and discards the change on Cancel', () => {
+    const { container } = renderPage();
+    configure();
+
+    fireEvent.click(screen.getByRole('button', { name: 'widgetRemove recentUsersTitle' }));
+    expect(listTitles(container)).toEqual(LISTS.slice(1));
+    expect(screen.getByText('widgetRemoved recentUsersTitle')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'dashboardAddWidget' })).toHaveFocus();
+
+    fireEvent.click(screen.getByRole('button', { name: 'cancel' }));
+    expect(listTitles(container)).toEqual(LISTS);
+    expect(screen.queryByRole('button', { name: /^widgetRemove/ })).not.toBeInTheDocument();
+    expect(storedLayout()).toBeNull();
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('moves a card with the keyboard, keeps focus on it and announces the new position', () => {
+    const { container } = renderPage();
+    configure();
+
+    expect(screen.getByRole('button', { name: 'widgetMoveUp kpiTotalUsers' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'widgetMoveDown kpiTotalCareTeams' })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'widgetMoveDown kpiTotalUsers' }));
+
+    expect(kpiLabels(container)).toEqual([
+      'kpiTotalLocations',
+      'kpiTotalUsers',
+      'kpiTotalOrganizations',
+      'kpiTotalCareTeams',
+    ]);
+    expect(screen.getByRole('button', { name: 'widgetMoveDown kpiTotalUsers' })).toHaveFocus();
+    expect(screen.getByText('widgetMoved kpiTotalUsers 2')).toBeInTheDocument();
+  });
+
+  it('moves a list into the next row and keeps focus on its control', () => {
+    const { container } = renderPage();
+    configure();
+
+    fireEvent.click(screen.getByRole('button', { name: 'widgetMoveDown recentUsersTitle' }));
+
+    expect(listTitles(container).slice(0, 2)).toEqual(['recentLocationsTitle', 'recentUsersTitle']);
+    expect(screen.getByRole('button', { name: 'widgetMoveDown recentUsersTitle' })).toHaveFocus();
+  });
+
+  it('adds a removed card back from the drawer, saves it and keeps it after a reload', async () => {
+    const first = renderPage();
+    configure();
+    fireEvent.click(screen.getByRole('button', { name: 'widgetRemove distributionUsers' }));
+    fireEvent.click(screen.getByRole('button', { name: 'widgetRemove recentCareTeamsTitle' }));
+
+    const drawer = await openAddDrawer();
+    const option = within(drawer).getByRole('button', {
+      name: 'widgetAddNamed recentCareTeamsTitle',
+    });
+    fireEvent.click(option);
+    expect(option).toHaveAttribute('aria-disabled', 'true');
+    expect(
+      within(drawer).getByText('widgetAddedAnnouncement recentCareTeamsTitle'),
+    ).toBeInTheDocument();
+    fireEvent.click(within(drawer).getByRole('button', { name: 'close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    expect(notify).toHaveBeenCalledWith({ tone: 'success', title: 'dashboardSaved' });
+    expect(storedLayout()).toMatchObject({
+      main: ['recent.users', 'recent.locations', 'recent.organizations', 'recent.careTeams'],
+      side: ['chart.locationsByStatus', 'chart.organizationsByStatus', 'chart.careTeamsByStatus'],
+    });
+    first.unmount();
+
+    renderPage();
+    expect(screen.queryByText('distributionUsers')).not.toBeInTheDocument();
+    expect(screen.getByText('recentCareTeamsTitle')).toBeInTheDocument();
+  });
+
+  it('groups the drawer by category, marks starting and placed cards, and blocks a fifth KPI', async () => {
+    renderPage();
+    configure();
+    fireEvent.click(screen.getByRole('button', { name: 'widgetRemove recentUsersTitle' }));
+
+    const drawer = await openAddDrawer();
+    expect(
+      within(drawer)
+        .getAllByRole('heading', { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual(['widgetCategoryKpi', 'widgetCategoryLists', 'widgetCategoryCharts']);
+    expect(within(drawer).getAllByText('widgetStartingCard')).toHaveLength(12);
+    expect(within(drawer).getAllByText('widgetAdded')).toHaveLength(11);
+    expect(within(drawer).getByText('kpiPickerLimit 4')).toBeInTheDocument();
+
+    const kpi = within(drawer).getByRole('button', { name: 'widgetAddNamed kpiTotalUsers' });
+    expect(kpi).toHaveAttribute('aria-disabled', 'true');
+    expect(
+      within(drawer).getByRole('button', { name: 'widgetAddNamed recentUsersTitle' }),
+    ).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('frees a KPI place once a KPI is removed, and refuses a fifth card', async () => {
+    const { container } = renderPage();
+    configure();
+    fireEvent.click(screen.getByRole('button', { name: 'widgetRemove kpiTotalLocations' }));
+
+    const drawer = await openAddDrawer();
+    expect(within(drawer).queryByText('kpiPickerLimit 4')).not.toBeInTheDocument();
+    fireEvent.click(
+      within(drawer).getByRole('button', { name: 'widgetAddNamed kpiTotalLocations' }),
+    );
+    fireEvent.click(
+      within(drawer).getByRole('button', { name: 'widgetAddNamed kpiTotalLocations' }),
+    );
+
+    expect(within(drawer).getByText('kpiPickerLimit 4')).toBeInTheDocument();
+    expect(container.querySelectorAll('.ohs-kpi-grid .ohs-kpi')).toHaveLength(4);
+  });
+
+  it('resets the draft to the default layout without saving', () => {
+    storeLayout({ main: ['recent.users'] });
+    const { container } = renderPage();
+    configure();
+
+    fireEvent.click(screen.getByRole('button', { name: 'dashboardReset' }));
+    expect(kpiLabels(container)).toEqual(KPI_LABELS);
+    expect(storedLayout()).toEqual({ kpi: [], main: ['recent.users'], side: [] });
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+    expect(storedLayout()).toBeNull();
+    expect(listTitles(container)).toEqual(LISTS);
+  });
+
+  it('shows an empty dashboard with an Add widget action when the layout is empty', async () => {
+    storeLayout({});
+    renderPage();
+
+    expect(screen.getByText('dashboardEmptyTitle')).toBeInTheDocument();
+    const drawer = await openAddDrawer();
+    fireEvent.click(within(drawer).getByRole('button', { name: 'widgetAddNamed kpiTotalUsers' }));
+    fireEvent.click(within(drawer).getByRole('button', { name: 'close' }));
+
+    expect(screen.queryByText('dashboardEmptyTitle')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'save' })).toBeInTheDocument();
+  });
+
+  it('has no critical a11y violations in configure mode, with the drawer open', async () => {
+    renderPage();
+    await screen.findByText('Jane Smith');
+    configure();
+    await openAddDrawer();
+
+    const result = await axe(document.body, { rules: { 'color-contrast': { enabled: false } } });
+    expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
   });
 });
 

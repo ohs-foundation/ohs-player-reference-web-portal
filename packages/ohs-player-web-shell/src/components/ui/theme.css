@@ -2240,6 +2240,100 @@
   }
 }
 
+/* Configure mode: a sticky action bar, and each card framed with its move and remove controls. */
+.ohs-dash-editbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-2, 8px);
+  padding: var(--ohs-sys-spacing-3, 12px) var(--ohs-sys-spacing-4, 16px);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
+  border-radius: var(--ohs-sys-shape-corner-large, 16px);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
+  box-shadow: var(--ohs-sys-elevation-level2);
+}
+.ohs-dash-editbar__spacer {
+  flex: 1;
+}
+.ohs-dash-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-sys-spacing-2, 8px);
+  min-width: 0;
+  padding: var(--ohs-sys-spacing-2, 8px);
+  border: 1px dashed var(--ohs-sys-color-outline, #74777f);
+  border-radius: var(--ohs-sys-shape-corner-extra-large, 28px);
+}
+.ohs-dash-tile > .ohs-card {
+  flex: 1;
+}
+.ohs-dash-row > .ohs-dash-tile {
+  height: 100%;
+}
+.ohs-dash-tile__bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ohs-sys-spacing-1, 4px);
+}
+.ohs-dash-tile__bar .ohs-icon-button:disabled {
+  opacity: var(--ohs-sys-state-disabled-content-opacity, 0.38);
+  cursor: not-allowed;
+}
+@media (max-width: 900px) {
+  .ohs-dash-row > .ohs-dash-tile {
+    height: auto;
+  }
+}
+
+.ohs-widget-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-sys-spacing-6, 24px);
+  padding: var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-10, 40px);
+}
+.ohs-widget-picker__notice {
+  margin: 0;
+  padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-6, 24px);
+  border-radius: var(--ohs-sys-shape-corner-large, 16px);
+  background: var(--ohs-sys-color-warning-container, #fff5cc);
+  color: var(--ohs-sys-color-on-warning-container, #5c4a00);
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+  line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
+}
+.ohs-widget-picker__category {
+  margin: 0 0 var(--ohs-sys-spacing-2, 8px);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
+  font-size: var(--ohs-sys-typescale-title-medium-size, 16px);
+  line-height: var(--ohs-sys-typescale-title-medium-line-height, 24px);
+  font-weight: var(--ohs-sys-typescale-title-medium-weight, 500);
+}
+.ohs-widget-picker__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ohs-widget-picker__option {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-3, 12px);
+  min-height: var(--ohs-sys-spacing-14, 56px);
+  border-bottom: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
+}
+.ohs-widget-picker__title {
+  flex: 1;
+  min-width: 0;
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
+  line-height: var(--ohs-sys-typescale-body-large-line-height, 24px);
+}
+.ohs-widget-picker__option .ohs-button[aria-disabled='true'] {
+  opacity: var(--ohs-sys-state-disabled-content-opacity, 0.38);
+  cursor: not-allowed;
+}
+
 /* Card is flush (no padding) so the table spans edge-to-edge and shares the card's L/R/bottom borders.
    The header carries its own padding; the table runs full-width directly beneath it. */
 .ohs-dash-card__head {

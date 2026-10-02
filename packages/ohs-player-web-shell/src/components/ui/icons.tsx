@@ -49,6 +49,14 @@ export const IconArrowRight = makeIcon(
   'M686-450H160v-60h526L438-758l42-42 320 320-320 320-42-42 248-248Z',
 );
 
+export const IconArrowUp = makeIcon(
+  'M450-160v-526L202-438l-42-42 320-320 320 320-42 42-248-248v526h-60Z',
+);
+
+export const IconArrowDown = makeIcon(
+  'M450-800v526L202-522l-42 42 320 320 320-320-42-42-248 248v-526h-60Z',
+);
+
 export const IconArrowUpRight = makeIcon(
   'm202-160-42-42 498-498H364v-60h396v396h-60v-294L202-160Z',
 );
