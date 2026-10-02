@@ -183,13 +183,22 @@ Two defects found on the stack were fixed with their own commits. Configure dash
 
 The JSON Schema must be regenerated after the shell is built, because the reference schema reads `BUILTIN_WIDGET_IDS` from the shell's `dist`.
 
+## Follow ups implemented on this branch
+
+Four of the follow ups needed no backend and were built here after the walkthrough.
+
+| Follow up | As built |
+| --- | --- |
+| Page heading | `PageHeader` renders its title as the page's `h1`, keeping the 24 pixel size the root heading rule gave it as an `h2`, so axe no longer reports `page-has-heading-one`. |
+| Example sidebar contrast | The example document pins `secondary-container` to its teal container. Teal on the generated pale blue was 4.25 to 1, and is 4.86 to 1 now. `brandContrast.test.ts` fails if the pair drops below 4.5 to 1. The guide's violet example had the same fault and pins it too. |
+| Shell message defaults | `SHELL_MESSAGES` holds English copy for all 119 keys the shell renders. `createPortalHost` merges it below the app's messages, the host treats its keys as declared for the clash and unknown key checks, and the example catalogue went from 109 keys to 4. A shell test fails when the shell renders a key the catalogue lacks. |
+| Card settings and width | Each catalogue entry declares its settings as data. Recently Added offers 5 or 10 rows, Updated by month offers 3, 6 or 12 months, and every card below the strip offers column or full width. Settings are saved per user beside the layout, only when they differ from the default. The monthly chart reserves twelve count searches and leaves the ones outside its window idle, because hooks cannot loop. |
+| Drag and drop | Native HTML5 drag and drop, no dependency. A card dropped on another card in the same region takes its place, and the move is announced. Touch screens keep the move buttons. |
+
 ## Follow ups
 
-* Server side layout persistence once a backend preference contract exists.
-* Per card settings such as a date range.
-* Column spans and resizing.
-* Drag and drop on top of the keyboard controls.
-* Shell defaults for shell message keys, so a second app does not copy every dashboard key.
+* Server side storage of the layout and card settings, so they follow the user across devices. Raised as ohs-foundation/ohs-player-reference-backend#96.
+* Card settings in the configuration document, if deployments ask for them.
 
 ## Risks
 

@@ -208,9 +208,17 @@ To start from a clean slate, give an empty layout.
 
 The dashboard then shows an empty state with an Add widget button, and each user builds their own.
 
-Users change their dashboard with Configure dashboard. Every card gets move up, move down and remove buttons, and Add widget lists the cards they may add, grouped by kind, marking the deployment's starting cards and the ones already placed. The top strip holds at most four cards, extension tiles included. Nothing changes until Save, Cancel discards the changes, and Reset to default returns to the deployment layout.
+Users change their dashboard with Configure dashboard. Every card gets move up, move down and remove buttons, and with a mouse a card can also be dragged onto another card in the same region to take its place. Add widget lists the cards they may add, grouped by kind, marking the deployment's starting cards and the ones already placed. The top strip holds at most four cards, extension tiles included. Cards below the strip have a settings button.
 
-A user's layout is kept in that browser, under `ohs-dashboard-layout:<sub>` in local storage. Another browser starts from the deployment layout, and with two tabs open the last Save wins. On each load the stored layout is trimmed to cards that still exist and that `available` still allows, without an error. A card hidden by a flag or a permission stays in the layout and comes back when access returns. Saving a layout equal to the deployment layout clears the stored copy, so that user follows later changes to the document. The KPI selection users made before this release is moved into the new layout once.
+| Card | Settings |
+| --- | --- |
+| Recently Added tables | 5 or 10 rows, and the width |
+| Updated by month charts | the last 3, 6 or 12 months, and the width |
+| Donuts, Active Share and extension widgets in `main` or `side` | the width |
+
+The width is column width or full width. A full width card takes a row of its own at its place in its column, and the cards in the other column move down a row. Nothing changes until Save, Cancel discards the changes, and Reset to default returns to the deployment layout.
+
+A user's layout and card settings are kept in that browser, under `ohs-dashboard-layout:<sub>` in local storage. Another browser starts from the deployment layout, and with two tabs open the last Save wins. On each load the stored layout is trimmed to cards that still exist and that `available` still allows, without an error. A card hidden by a flag or a permission stays in the layout and comes back when access returns. Saving a layout equal to the deployment layout, with every setting at its default, clears the stored copy, so that user follows later changes to the document. The KPI selection users made before this release is moved into the new layout once.
 
 Try each change below and reload.
 
@@ -707,5 +715,5 @@ To test your own extension, follow [EXTENDING.md](./EXTENDING.md#testing-an-exte
 - **Slots.** `users.rowActions` is the only slot. More need a shell change.
 - **Replacing components.** An extension adds UI; it cannot replace a built-in component.
 - **Sidebar ids.** The document's `navigation` only positions the shell's own screens. Extension entries are positioned by their manifest `order`.
-- **Dashboard layouts.** A user's layout lives in one browser, and two open tabs do not merge their changes. Cards cannot be resized or dragged, and they have no settings of their own.
+- **Dashboard layouts.** A user's layout and card settings live in one browser, and two open tabs do not merge their changes. Dragging cards needs a mouse, so touch screens use the move buttons. A deployment cannot set card settings in the document.
 - **Extension flags in the reference app.** The reference app's document only accepts its own flag names until an extension's flag is added to `FLAG_NAMES`.
