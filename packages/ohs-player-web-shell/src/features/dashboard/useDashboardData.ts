@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useSearch } from 'ohs-player-web-core';
+import { monthWindows, type MonthWindow } from './monthWindows';
 
 type CountBundle = { total?: number };
 type SearchBundle<Row> = { entry?: { resource?: Row }[] };
@@ -40,6 +41,10 @@ export function useResourceStats(
   };
 }
 
+function errorText(error: Error | null): string | null {
+  return error ? error.message : null;
+}
+
 export interface RecentResult<Row> {
   rows: Row[];
   loading: boolean;
@@ -53,6 +58,45 @@ export function useRecent<Row>(resourceType: string, count = 5): RecentResult<Ro
   return {
     rows,
     loading: q.isLoading,
-    error: q.error ? (q.error instanceof Error ? q.error.message : String(q.error)) : null,
+    error: errorText(q.error),
+  };
+}
+
+export interface MonthlyCount {
+  start: Date;
+  value: number;
+}
+
+export interface MonthlyCounts {
+  points: MonthlyCount[];
+  loading: boolean;
+  error: string | null;
+}
+
+function lastUpdatedIn(window: MonthWindow): Record<string, string | readonly string[]> {
+  return { _summary: 'count', _lastUpdated: [window.ge, window.lt] };
+}
+
+/**
+ * Records of `resourceType` last updated in each of the last six calendar months, one count search
+ * per month. FHIR keeps no creation date on these resources, so `_lastUpdated` is the only date.
+ */
+export function useMonthlyCounts(resourceType: string): MonthlyCounts {
+  const windows = useMemo(() => monthWindows(new Date()), []);
+  const months = [
+    useSearch(resourceType, lastUpdatedIn(windows[0])),
+    useSearch(resourceType, lastUpdatedIn(windows[1])),
+    useSearch(resourceType, lastUpdatedIn(windows[2])),
+    useSearch(resourceType, lastUpdatedIn(windows[3])),
+    useSearch(resourceType, lastUpdatedIn(windows[4])),
+    useSearch(resourceType, lastUpdatedIn(windows[5])),
+  ];
+  return {
+    points: windows.map((window, index) => ({
+      start: window.start,
+      value: countOf(months[index].data) ?? 0,
+    })),
+    loading: months.some((month) => month.isLoading),
+    error: months.map((month) => errorText(month.error)).find(Boolean) ?? null,
   };
 }
