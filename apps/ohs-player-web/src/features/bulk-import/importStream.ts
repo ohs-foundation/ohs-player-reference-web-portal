@@ -20,7 +20,7 @@ export interface ImportResult {
 }
 
 export type ImportFailure =
-  | { kind: 'request'; message: string }
+  | { kind: 'request'; error: unknown }
   | { kind: 'empty' }
   | { kind: 'interrupted'; processed: number; rowErrors: RowError[] };
 

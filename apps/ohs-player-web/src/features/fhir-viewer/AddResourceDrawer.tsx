@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import {
-  FhirError,
-  formatOperationOutcomeMessage,
   useCreateResource,
   useRefreshResources,
   useStatusBar,
@@ -10,6 +8,9 @@ import {
 } from 'ohs-player-web-core';
 import {
   Button,
+  describeError,
+  ErrorDetails,
+  type ErrorDescription,
   IconButton,
   TextAreaField,
   IconClose,
@@ -65,7 +66,7 @@ export function AddResourceDrawer({
   const update = useUpdateResource(def.resourceType);
 
   const [text, setText] = useState('');
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<ErrorDescription | null>(null);
 
   const typeLabel = t(def.labelKey);
   const parsed = text.trim() ? parseDraft(text, def.resourceType) : undefined;
@@ -91,10 +92,12 @@ export function AddResourceDrawer({
     setSubmitError(null);
     const resource = parsed.resource;
     const id = typeof resource.id === 'string' && resource.id ? resource.id : undefined;
+    let saved = false;
     try {
       const created = id
         ? await update.mutateAsync({ id, body: resource })
         : await create.mutateAsync(resource);
+      saved = true;
       const resourceId = id ?? (created as { id?: string } | undefined)?.id;
       if (!resourceId) throw new Error('Create did not return an id');
 
@@ -103,14 +106,13 @@ export function AddResourceDrawer({
       await refresh(def.resourceType);
       close();
     } catch (e) {
-      const message =
-        e instanceof FhirError
-          ? formatOperationOutcomeMessage(e.outcome) || e.message
-          : e instanceof Error
-            ? e.message
-            : t('fhirViewerAddFailed');
-      setSubmitError(message);
-      status.notify({ tone: 'error', title: t('fhirViewerAddFailed'), description: message });
+      const failure = describeError(e, t, {
+        action: 'save',
+        saved,
+        titleKey: saved ? undefined : 'fhirViewerAddFailed',
+      });
+      setSubmitError(failure);
+      status.notify({ tone: 'error', title: failure.title, description: failure.description });
     }
   };
 
@@ -164,7 +166,7 @@ export function AddResourceDrawer({
         <TextAreaField
           label={t('fhirViewerJsonLabel')}
           instructions={t('fhirViewerAddIdHint')}
-          error={validationError ?? submitError ?? undefined}
+          error={validationError ?? submitError?.description}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
@@ -174,6 +176,7 @@ export function AddResourceDrawer({
           placeholder={t('fhirViewerAddPlaceholder', { type: def.resourceType })}
           className="flex-1 min-h-[360px] font-mono text-sm leading-relaxed"
         />
+        <ErrorDetails>{submitError?.detail}</ErrorDetails>
       </div>
     </Drawer>
   );

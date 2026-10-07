@@ -1,5 +1,5 @@
 import { useTranslation } from 'ohs-player-web-core';
-import { Button, Stack } from 'ohs-player-web-shell';
+import { Button, ErrorState, type ErrorDescription, Stack } from 'ohs-player-web-shell';
 import { DraftList } from '../DraftList';
 import { draftResourceName, type DraftUser, type SetupWizardDraft } from '../types';
 
@@ -18,7 +18,7 @@ export function ReviewStep({
   onRemoveUser: (localId: string) => void;
   onRetryUser: (localId: string) => void;
   committing: boolean;
-  commitError: string | null;
+  commitError: ErrorDescription | null;
   commitStatus: string | null;
   phase1Done: boolean;
 }>): React.ReactElement {
@@ -43,11 +43,7 @@ export function ReviewStep({
           {commitStatus}
         </p>
       ) : null}
-      {commitError ? (
-        <p role="alert" className="ohs-setup-commit-error">
-          {commitError}
-        </p>
-      ) : null}
+      {commitError ? <ErrorState {...commitError} /> : null}
 
       <ReviewBlock
         title={t('setupStepLocations')}

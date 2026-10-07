@@ -151,9 +151,9 @@ describe('importWroteRows', () => {
   });
 
   it('is false when nothing reached the server or nothing was written', () => {
-    expect(importWroteRows({ ok: false, failure: { kind: 'request', message: 'HTTP 403' } })).toBe(
-      false,
-    );
+    expect(
+      importWroteRows({ ok: false, failure: { kind: 'request', error: new Error('HTTP 403') } }),
+    ).toBe(false);
     expect(importWroteRows({ ok: false, failure: { kind: 'empty' } })).toBe(false);
     expect(importWroteRows(outcomeFromFrames([rowError(1, 'boom')], 'done'))).toBe(false);
   });

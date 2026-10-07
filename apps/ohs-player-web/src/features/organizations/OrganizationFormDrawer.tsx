@@ -13,8 +13,10 @@ import {
 import { useWriteAudit } from '../audit/useWriteAudit';
 import {
   Button,
+  describeError,
   Drawer,
   ErrorState,
+  type ErrorDescription,
   IconButton,
   Stack,
   IconBuilding,
@@ -26,7 +28,6 @@ import {
   locationManagingOrgPatch,
   organizationFromForm,
 } from '../sdc/resourceFromAnswers';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 import { ORGANIZATION_TYPE_OPTIONS } from '../../config/organizations';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
@@ -89,7 +90,7 @@ export function OrganizationFormDrawer({
   const [locationIds, setLocationIds] = useState<string[]>(originalLocationRefs);
   const [partOf, setPartOf] = useState('');
   const [nameError, setNameError] = useState<string | undefined>(undefined);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorDescription | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const locId = (ref: string): string => ref.replace(/^Location\//, '');
@@ -147,6 +148,7 @@ export function OrganizationFormDrawer({
     };
     void (async () => {
       setSubmitting(true);
+      let saved = false;
       try {
         if (mode === 'wizard' && onEmit) {
           const orgRef = editing && org?.id ? `Organization/${org.id}` : newUrnUuid();
@@ -165,6 +167,7 @@ export function OrganizationFormDrawer({
           return;
         }
         const { id, linked, unlinked } = await commit(fields);
+        saved = true;
         const orgRef = `Organization/${id}`;
         await writeAudit({
           action: editing ? 'update' : 'create',
@@ -183,7 +186,7 @@ export function OrganizationFormDrawer({
         else insert('Organization', { ...organizationFromForm(fields), id }, { also: ['Location'] });
         onSuccess();
       } catch (err) {
-        setError(toErrorMessage(err));
+        setError(describeError(err, t, { action: 'save', saved, nothingSavedKey: 'organizationNothingSaved' }));
       } finally {
         setSubmitting(false);
       }
@@ -226,7 +229,7 @@ export function OrganizationFormDrawer({
       footer={footer}
     >
       <form id={FORM_ID} className="ohs-detail-body" onSubmit={onFormSubmit}>
-        {error ? <ErrorState description={error} /> : null}
+        {error ? <ErrorState {...error} /> : null}
 
         <Section icon={IconBuilding} title={t('sectionBasicInfo')}>
           <Stack gap={5}>

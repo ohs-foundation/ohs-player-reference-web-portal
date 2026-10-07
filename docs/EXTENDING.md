@@ -63,6 +63,8 @@ A route has an `id`, a `path` and `load`, a function that imports a module whose
 
 `requires` gates it in a fixed order: the feature **flag** first (a switched-off page renders nothing), then the **session** (a signed-out visitor goes to sign-in), then the **permission**. A path the host already serves, or another extension's path, fails startup. Paths may carry route parameters, such as `/schedules/:id`, which the page reads with `useParams`.
 
+When a load or a save fails, show it with the shell's `describeError` rather than the error's own text: `<ErrorState {...describeError(error, t)} />`. It turns the failure into a plain heading and sentence (no permission, a conflict, a server problem, no connection) and keeps the server's text behind a collapsed Technical details disclosure. For a save, pass `{ action: 'save', saved }`, where `saved` is `true` once the first write succeeded, so the message says whether anything was saved. The Schedules page in the example app shows the load case.
+
 ### Sidebar entries
 
 A nav entry has an `id`, `to`, a `labelKey` from your messages, an integer `order` and optional `requires`. The shell's entries are spaced ten apart (the reference sidebar runs 10 to 70), so an order of 25 lands between the entries at 20 and 30. `icon` and `activeIcon` take any component with a `size` prop, such as the shell's icons; without them the entry uses a default icon.

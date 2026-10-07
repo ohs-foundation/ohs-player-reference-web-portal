@@ -5,6 +5,7 @@ import { axe } from 'vitest-axe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type BulkImportState } from './useBulkImport';
 import { type ImportOutcome, type ImportResult } from './importStream';
+import { FhirError } from 'ohs-player-web-core';
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
@@ -158,12 +159,18 @@ describe('BulkImportDrawer', () => {
     hookState = {
       ...idle,
       phase: 'error',
-      failure: { kind: 'request', message: 'Insufficient permissions' },
+      failure: {
+        kind: 'request',
+        error: new FhirError('Insufficient permissions', 403, { error: 'x' }),
+      },
     };
     const { unmount } = render(
       <BulkImportDrawer template={locationTemplate} open onClose={vi.fn()} onComplete={vi.fn()} />,
     );
-    expect(screen.getByText('Insufficient permissions')).toBeInTheDocument();
+    expect(screen.getByText('errorCauseForbidden bulkImportNothingImported')).toBeInTheDocument();
+    expect(screen.getByText('errorTechnicalDetails').closest('details')).toHaveTextContent(
+      'Insufficient permissions',
+    );
     unmount();
 
     hookState = {
@@ -211,7 +218,10 @@ describe('BulkImportDrawer', () => {
   });
 
   it('does not refresh the page when the upload is rejected before any row', async () => {
-    mockStart.mockResolvedValue({ ok: false, failure: { kind: 'request', message: 'HTTP 400' } });
+    mockStart.mockResolvedValue({
+      ok: false,
+      failure: { kind: 'request', error: new Error('HTTP 400') },
+    });
     const { onComplete } = renderDrawer();
     pickFile();
     await submitAndSettle();

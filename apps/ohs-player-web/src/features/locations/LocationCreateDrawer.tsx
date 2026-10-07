@@ -7,10 +7,16 @@ import {
   useStatusBar,
   useTranslation,
 } from 'ohs-player-web-core';
-import { Drawer, ErrorState, IconButton, IconClose } from 'ohs-player-web-shell';
+import {
+  describeError,
+  Drawer,
+  ErrorState,
+  type ErrorDescription,
+  IconButton,
+  IconClose,
+} from 'ohs-player-web-shell';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { locationBodyFromAnswers } from '../sdc/resourceFromAnswers';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 import { LocationFormFields } from './LocationForm';
 import { answersToDraftLocation } from './locationDraft';
 import { locationOptions } from '../users/userFormOptions';
@@ -32,7 +38,7 @@ export function LocationCreateDrawer({
   const statusBar = useStatusBar();
   const all = useAllLocationsLean(true);
   const locList = useMemo(() => all.data ?? [], [all.data]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorDescription | null>(null);
   const [saving, setSaving] = useState(false);
 
   const parentOptions = useMemo(() => {
@@ -48,6 +54,7 @@ export function LocationCreateDrawer({
     setError(null);
     void (async () => {
       setSaving(true);
+      let saved = false;
       try {
         const draft = answersToDraftLocation(answers);
         const body = locationBodyFromAnswers(answers);
@@ -55,6 +62,7 @@ export function LocationCreateDrawer({
         const result = await commitBundle(client, [
           bundleEntry({ method: 'POST', url: 'Location' }, resource),
         ]);
+        saved = true;
         const id = committedId(result, 0);
         if (!id) throw new Error('Create did not return an id');
         await writeAudit({ action: 'create', resourceType: 'Location', resourceId: id });
@@ -62,7 +70,7 @@ export function LocationCreateDrawer({
         onSuccess({ id, name: draft.resource.name });
         onClose();
       } catch (err) {
-        setError(toErrorMessage(err));
+        setError(describeError(err, t, { action: 'save', saved }));
       } finally {
         setSaving(false);
       }
@@ -82,7 +90,7 @@ export function LocationCreateDrawer({
 
   return (
     <Drawer open onClose={onClose} title={t('dialogCreateLocation')} header={header}>
-      {error ? <ErrorState description={error} /> : null}
+      {error ? <ErrorState {...error} /> : null}
       {saving ? <p>{t('saving')}</p> : null}
       <LocationFormFields
         formId={FORM_ID}

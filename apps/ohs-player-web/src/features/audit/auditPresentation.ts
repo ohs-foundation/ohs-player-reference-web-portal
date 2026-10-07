@@ -1,6 +1,10 @@
 import { type AuditAction, FhirError } from 'ohs-player-web-core';
-import type { StatusTone } from 'ohs-player-web-shell';
-import { toErrorMessage } from '../sdc/toErrorMessage';
+import {
+  describeError,
+  type ErrorDescription,
+  errorDetail,
+  type StatusTone,
+} from 'ohs-player-web-shell';
 
 const ACTION_LABEL_KEY: Record<AuditAction, string> = {
   C: 'activityCreated',
@@ -27,10 +31,15 @@ export function actionTone(action: AuditAction | undefined): StatusTone {
   return action ? ACTION_TONE[action] : 'neutral';
 }
 
-export function auditErrorMessage(error: unknown, t: (key: string) => string): string {
-  if (error instanceof FhirError && ACCESS_DENIED.has(error.status))
-    return t('auditErrorForbidden');
-  return toErrorMessage(error) || t('auditErrorDescription');
+export function auditError(error: unknown, t: (key: string) => string): ErrorDescription {
+  if (error instanceof FhirError && ACCESS_DENIED.has(error.status)) {
+    return {
+      title: t('auditErrorTitle'),
+      description: t('auditErrorForbidden'),
+      detail: errorDetail(error),
+    };
+  }
+  return describeError(error, t, { titleKey: 'auditErrorTitle' });
 }
 
 export function recordedDate(recorded: string | undefined): Date | undefined {

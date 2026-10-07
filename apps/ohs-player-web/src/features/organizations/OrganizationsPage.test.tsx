@@ -106,6 +106,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   };
 });
 
+const { FhirError } = await import('ohs-player-web-core');
 const { OrganizationsPage } = await import('./OrganizationsPage');
 
 const renderPage = () => render(<OrganizationsPage />, { wrapper: MemoryRouter });
@@ -183,6 +184,32 @@ describe('OrganizationsPage', () => {
     ]);
     const addValue = ops[1].part.find((p) => p.name === 'value')?.valueReference?.reference;
     expect(addValue).toBe(bundle.entry[0].fullUrl);
+  });
+
+  it('explains a refused save in plain words and says the organisation was not changed', async () => {
+    mockTransaction.mockRejectedValueOnce(
+      new FhirError('User is not authorized to POST http://localhost/fhir', 403, {
+        error: 'User is not authorized to POST http://localhost/fhir',
+      }),
+    );
+    renderPage();
+    fireEvent.click(screen.getByText('addOrganization'));
+    const drawer = await screen.findByRole('dialog');
+    fireEvent.change(within(drawer).getByLabelText(/organizationName/i), {
+      target: { value: 'New Org' },
+    });
+    fireEvent.click(within(drawer).getByText('save'));
+
+    expect(
+      await within(drawer).findByRole('heading', { name: 'saveFailedTitle' }),
+    ).toBeInTheDocument();
+    expect(
+      within(drawer).getByText('errorCauseForbidden organizationNothingSaved'),
+    ).toBeInTheDocument();
+    const details = within(drawer).getByText('errorTechnicalDetails').closest('details');
+    expect(details).not.toHaveAttribute('open');
+    expect(details).toHaveTextContent('User is not authorized to POST http://localhost/fhir');
+    expect(mockWriteAuditEvent).not.toHaveBeenCalled();
   });
 
   // Regression: the link lives on Location.managingOrganization, so deriving it from the Location

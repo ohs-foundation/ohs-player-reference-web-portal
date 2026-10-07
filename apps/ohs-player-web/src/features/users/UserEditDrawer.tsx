@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import {
+  describeError,
   IconBriefcase,
   IconBuilding,
   IconClose,
@@ -30,7 +31,7 @@ import {
   type NewUserFields,
   usernameFromEmail,
 } from '../sdc/resourceFromAnswers';
-import { toErrorMessage, userErrorMessage } from '../sdc/toErrorMessage';
+import { userErrorMessage } from '../sdc/toErrorMessage';
 import {
   MultiSelect,
   RadioRow,
@@ -259,7 +260,7 @@ export function UserEditDrawer({
       {isLoading || !hydrated ? (
         <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
           {loadError ? (
-            <ErrorState description={toErrorMessage(loadError)} />
+            <ErrorState {...describeError(loadError, t)} />
           ) : (
             <Spinner label={t('loading')} />
           )}

@@ -13,6 +13,7 @@ import {
   Avatar,
   Button,
   DataTable,
+  describeError,
   EmptyState,
   ErrorState,
   FilterChip,
@@ -118,10 +119,7 @@ export function CareTeamsPage() {
     // isActive is a pure derivation of stable inputs
   }, [teamList, q, statusFilter]);
 
-  let teamsError: string | null = null;
-  if (teams.error) {
-    teamsError = teams.error instanceof Error ? teams.error.message : String(teams.error);
-  }
+  const teamsError = teams.error ? describeError(teams.error, t) : null;
 
   const isFiltering = q.trim() !== '' || statusFilter !== null;
   const noTeams = !teams.isLoading && !teamsError && teamList.length === 0 && !isFiltering;
@@ -358,7 +356,7 @@ export function CareTeamsPage() {
           pagination
           initialPageSize={10}
           pageResetKey={statusFilter ?? ''}
-          errorState={teamsError ? <ErrorState description={teamsError} /> : undefined}
+          errorState={teamsError ? <ErrorState {...teamsError} /> : undefined}
           emptyState={
             <EmptyState
               title={t('careTeamsEmptyTitle')}

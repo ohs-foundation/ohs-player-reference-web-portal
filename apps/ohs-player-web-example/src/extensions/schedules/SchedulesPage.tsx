@@ -1,6 +1,7 @@
 import type { Bundle, Schedule } from '@medplum/fhirtypes';
 import { useSearch, useTranslation } from 'ohs-player-web-core';
 import {
+  describeError,
   DataTable,
   EmptyState,
   ErrorState,
@@ -14,10 +15,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 function actorsOf(schedule: Schedule): string {
   const actors = (schedule.actor ?? []).map((actor) => actor.display ?? actor.reference);
   return actors.filter(Boolean).join(', ') || '—';
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 export default function SchedulesPage(): React.ReactElement {
@@ -63,9 +60,7 @@ export default function SchedulesPage(): React.ReactElement {
         rows={schedules}
         rowKey={(s) => s.id ?? ''}
         loading={search.isLoading}
-        errorState={
-          search.error ? <ErrorState description={errorMessage(search.error)} /> : undefined
-        }
+        errorState={search.error ? <ErrorState {...describeError(search.error, t)} /> : undefined}
         emptyState={
           <EmptyState
             title={t('schedulesEmptyTitle')}

@@ -5,6 +5,7 @@ import {
   IconUpload,
   Button,
   Drawer,
+  ErrorDetails,
   IconButton,
   Stack,
 } from 'ohs-player-web-shell';
@@ -14,7 +15,7 @@ import { useBulkImport } from './useBulkImport';
 import { useImportAudit } from './useImportAudit';
 import { importWroteRows, type RowError } from './importStream';
 import { type ImportTemplate } from './importTemplates';
-import { type FileProblem, importErrorText } from './importMessages';
+import { type FileProblem, importErrorDetail, importErrorText } from './importMessages';
 import { prepareUpload } from './importFile';
 import {
   ColumnsSection,
@@ -85,14 +86,18 @@ function Dropzone({
 function Notice({
   tone,
   message,
-}: Readonly<{ tone: 'error' | 'warning'; message: string }>): React.ReactElement {
+  detail,
+}: Readonly<{ tone: 'error' | 'warning'; message: string; detail?: string }>): React.ReactElement {
   return (
     <div
       className={`flex items-start gap-2 rounded border border-border-tertiary bg-surface-variant p-3 text-sm
         ${tone === 'error' ? 'text-error' : 'text-text'}`}
     >
       <IconErrorFill size={18} className={`shrink-0 ${tone === 'warning' ? 'text-warning' : ''}`} />
-      <span>{message}</span>
+      <div className="flex min-w-0 flex-col gap-1">
+        <span>{message}</span>
+        <ErrorDetails>{detail}</ErrorDetails>
+      </div>
     </div>
   );
 }
@@ -202,7 +207,9 @@ export function BulkImportDrawer({
             <Section icon={IconUpload} title={t('bulkImportUploadFile')}>
               <Stack gap={4}>
                 <Dropzone file={file} onPick={pick} />
-                {error ? <Notice tone="error" message={error} /> : null}
+                {error ? (
+                  <Notice tone="error" message={error} detail={importErrorDetail(failure)} />
+                ) : null}
               </Stack>
             </Section>
             {interruptedErrors.length > 0 ? (

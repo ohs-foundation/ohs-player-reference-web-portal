@@ -14,6 +14,7 @@ import {
   Avatar,
   Button,
   DataTable,
+  describeError,
   EmptyState,
   ErrorState,
   FilterChip,
@@ -205,10 +206,7 @@ export function UsersPage() {
     });
   }, [rawRows, statusFilter, roleFilter, roleMap]);
 
-  let searchError: string | null = null;
-  if (search.error) {
-    searchError = search.error instanceof Error ? search.error.message : String(search.error);
-  }
+  const searchError = search.error ? describeError(search.error, t) : null;
 
   const openCreate = (): void => {
     setCreateOpen(true);
@@ -463,7 +461,7 @@ export function UsersPage() {
           pagination
           initialPageSize={10}
           pageResetKey={`${statusFilter ?? ''}|${roleFilter ?? ''}`}
-          errorState={searchError ? <ErrorState description={searchError} /> : undefined}
+          errorState={searchError ? <ErrorState {...searchError} /> : undefined}
           emptyState={
             <EmptyState
               title={t('emptyTitle')}

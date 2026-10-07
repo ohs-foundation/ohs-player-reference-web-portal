@@ -19,10 +19,12 @@ export type HierarchyErrorStatus = 400 | 401 | 403 | 404 | 500 | 502 | 0;
 
 export class HierarchyError extends Error {
   readonly status: HierarchyErrorStatus;
-  constructor(status: HierarchyErrorStatus, message: string) {
+  readonly source: unknown;
+  constructor(status: HierarchyErrorStatus, message: string, source?: unknown) {
     super(message);
     this.name = 'HierarchyError';
     this.status = status;
+    this.source = source;
   }
 }
 
@@ -37,12 +39,12 @@ function messageFromBody(body: unknown, fallback: string): string {
 function toHierarchyError(err: unknown): HierarchyError {
   if (err instanceof HierarchyError) return err;
   if (err instanceof FhirError) {
-    return new HierarchyError(err.status as HierarchyErrorStatus, messageFromBody(err.outcome, err.message));
+    return new HierarchyError(err.status as HierarchyErrorStatus, messageFromBody(err.outcome, err.message), err);
   }
   let message = 'Request failed';
   if (err instanceof Error) message = err.message;
   else if (typeof err === 'string') message = err;
-  return new HierarchyError(0, message);
+  return new HierarchyError(0, message, err);
 }
 
 /** `refresh=true` evicts the gateway's cached tree so the rebuild reflects recent FHIR writes. */

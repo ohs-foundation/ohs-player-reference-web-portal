@@ -1,5 +1,11 @@
 import { useMemo } from 'react';
-import { activityItemFromAuditEvent, type ActivityItem, useSearch } from 'ohs-player-web-core';
+import {
+  activityItemFromAuditEvent,
+  type ActivityItem,
+  useSearch,
+  useTranslation,
+} from 'ohs-player-web-core';
+import { describeError } from '../../lib/describeError';
 
 export type { ActivityItem };
 
@@ -13,6 +19,7 @@ export function useRecentActivity(): {
   loading: boolean;
   error: string | null;
 } {
+  const { t } = useTranslation();
   const q = useSearch('AuditEvent', { _sort: '-date', _count: String(FEED_COUNT) });
 
   const items = useMemo<ActivityItem[]>(
@@ -27,6 +34,6 @@ export function useRecentActivity(): {
   return {
     items,
     loading: q.isLoading,
-    error: q.error ? (q.error instanceof Error ? q.error.message : String(q.error)) : null,
+    error: q.error ? describeError(q.error, t).description : null,
   };
 }

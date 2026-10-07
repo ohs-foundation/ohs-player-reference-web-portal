@@ -1,5 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import {
+  describeError,
   IconBriefcase,
   IconBuilding,
   IconChevronDown,
@@ -26,7 +27,6 @@ import {
 } from 'ohs-player-web-core';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { buildDeactivateBundle, NATIONAL_ID_IDENTIFIER_SYSTEM } from '../sdc/resourceFromAnswers';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 import { usePractitionerDetails } from './usePractitionerDetails';
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
@@ -179,7 +179,7 @@ export function UserDetailsDrawer({
         </div>
       ) : error ? (
         <div style={{ padding: 'var(--ohs-sys-spacing-8, 32px)' }}>
-          <ErrorState description={toErrorMessage(error)} />
+          <ErrorState {...describeError(error, t)} />
         </div>
       ) : (
         <div className="ohs-detail-body">

@@ -1,14 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  FhirError,
-  formatOperationOutcomeMessage,
-  usePagedSearch,
-  useTranslation,
-} from 'ohs-player-web-core';
+import { FhirError, usePagedSearch, useTranslation } from 'ohs-player-web-core';
 import {
   Button,
   DataTable,
   type DataTableColumn,
+  describeError,
   EmptyState,
   ErrorState,
   FilterChip,
@@ -41,18 +37,13 @@ const SINCE_LABEL_KEY: Record<SincePreset, string> = {
   '30d': 'fhirViewerSince30d',
 };
 
-type ErrorClass = { kind: 'unsupported' } | { kind: 'error'; message?: string } | null;
+type ErrorClass = { kind: 'unsupported' } | { kind: 'error'; error: unknown } | null;
 
 function classifyError(error: unknown): ErrorClass {
   if (!error) return null;
-  if (error instanceof FhirError) {
-    if (UNSUPPORTED_STATUSES.has(error.status)) return { kind: 'unsupported' };
-    return {
-      kind: 'error',
-      message: formatOperationOutcomeMessage(error.outcome) || error.message,
-    };
-  }
-  return { kind: 'error', message: error instanceof Error ? error.message : undefined };
+  if (error instanceof FhirError && UNSUPPORTED_STATUSES.has(error.status))
+    return { kind: 'unsupported' };
+  return { kind: 'error', error };
 }
 
 interface ResourceListPanelProps {
@@ -179,7 +170,7 @@ export function ResourceListPanel({
         description={t('fhirViewerUnsupportedDescription')}
       />
     ) : classified?.kind === 'error' ? (
-      <ErrorState description={classified.message ?? t('fhirViewerErrorDescription')} />
+      <ErrorState {...describeError(classified.error, t)} />
     ) : undefined;
 
   const hasChipFilters = statusValue !== null || sinceValue !== null;

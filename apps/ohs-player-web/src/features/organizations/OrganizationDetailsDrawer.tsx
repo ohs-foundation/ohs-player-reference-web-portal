@@ -9,7 +9,10 @@ import {
 import { useWriteAudit } from '../audit/useWriteAudit';
 import {
   Button,
+  describeError,
   Drawer,
+  ErrorState,
+  type ErrorDescription,
   IconButton,
   Inline,
   Stack,
@@ -19,7 +22,6 @@ import {
   IconMapPin,
 } from 'ohs-player-web-shell';
 import { Section } from '../users/userFormControls';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 
 /** A managed Location (id + display name), resolved by the page from `Location.managingOrganization`. */
 export type ManagedLocation = { id: string; name: string };
@@ -69,19 +71,28 @@ export function OrganizationDetailsDrawer({
   const update = useUpdateResource('Organization');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [failure, setFailure] = useState<ErrorDescription | null>(null);
+
+  const openConfirm = (): void => {
+    setFailure(null);
+    setConfirmOpen(true);
+  };
 
   const locations = org.managedLocations ?? [];
 
   const onConfirmDeactivate = (): void => {
     const id = org.id;
     if (!id) return;
+    setFailure(null);
     void (async () => {
       setSaving(true);
+      let saved = false;
       try {
         // `managedLocations` is a UI-only field the page attaches to the row; never send it to the server.
         const body: Record<string, unknown> = { ...org, resourceType: 'Organization', active: false };
         delete body.managedLocations;
         await update.mutateAsync({ id, body });
+        saved = true;
         await writeAudit({
           action: 'update',
           resourceType: 'Organization',
@@ -93,7 +104,8 @@ export function OrganizationDetailsDrawer({
         onChanged();
         onClose();
       } catch (err) {
-        status.notify({ tone: 'error', title: toErrorMessage(err) });
+        setFailure(describeError(err, t, { action: 'save', saved }));
+        if (saved) onChanged();
       } finally {
         setSaving(false);
       }
@@ -120,7 +132,7 @@ export function OrganizationDetailsDrawer({
   const footer = (
     <div className="ohs-user-drawer__foot">
       <PermissionGuard permission="orgs.create">
-        <Button variant="ghost" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)} disabled={saving}>
+        <Button variant="ghost" className="ohs-btn-danger" type="button" onClick={openConfirm} disabled={saving}>
           {t('deactivateOrganization')}
         </Button>
       </PermissionGuard>
@@ -172,6 +184,7 @@ export function OrganizationDetailsDrawer({
       >
         <Stack gap={4}>
           <p style={{ margin: 0, color: 'var(--ohs-sys-color-on-surface-variant, #696969)' }}>{t('confirmDeactivateOrgBody')}</p>
+          {failure ? <ErrorState {...failure} /> : null}
           <Inline justify="end" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}

@@ -1,6 +1,14 @@
 export * from './components/ui';
 export * from './components/ui/icons';
 export { cn } from './lib/cn';
+export {
+  describeError,
+  errorCause,
+  errorDetail,
+  type DescribeErrorOptions,
+  type ErrorCause,
+  type ErrorDescription,
+} from './lib/describeError';
 
 export { DEFAULT_NAVIGATION, NAV_IDS, type NavEntry, type NavId } from './config/navigation';
 export { PortalConfigContext, usePortalConfig } from './config/portalConfigContext';
