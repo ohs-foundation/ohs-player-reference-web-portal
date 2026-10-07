@@ -107,7 +107,6 @@ function DashboardView({ catalogue, visible }: Readonly<DashboardViewProps>): Re
         onClose={editor.closeAdd}
         entries={visible.filter((entry) => allowed(entry.id))}
         placed={idsIn(editor.layout)}
-        starting={idsIn(defaults)}
         atKpiCap={isAtKpiCap(editor.layout, isVisible)}
         onAdd={editor.add}
       />

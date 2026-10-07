@@ -104,5 +104,4 @@ export const SHELL_MESSAGES: Readonly<Record<string, string>> = {
   widgetMoved: '{{title}} moved to position {{position}}',
   widgetRemove: 'Remove {{title}}',
   widgetRemoved: '{{title}} removed',
-  widgetStartingCard: 'Starting card',
 };

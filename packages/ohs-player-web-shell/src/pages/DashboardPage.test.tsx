@@ -94,8 +94,7 @@ const { ExtensionsContext } = await import('../host/extensionsContext');
 const { testPlatformConfig, testPortalDefaults } = await import('../test/testPlatformConfig');
 const { PortalConfigContext } = await import('../config/portalConfigContext');
 const { resolvePortalConfig } = await import('../config/resolvePortalConfig');
-const { LAYOUT_STORAGE_PREFIX, LEGACY_KPI_STORAGE_PREFIX } =
-  await import('../features/dashboard/useDashboardLayout');
+const { LAYOUT_STORAGE_PREFIX } = await import('../features/dashboard/useDashboardLayout');
 const { DashboardPage } = await import('./DashboardPage');
 
 const portalConfig = resolvePortalConfig(testPortalDefaults, {});
@@ -272,15 +271,6 @@ describe('DashboardPage layout', () => {
     expect(kpiLabels(container)).toEqual(['kpiTotalCareTeams', 'kpiTotalUsers']);
   });
 
-  it('moves the old KPI selection into the layout and keeps the lists and charts', () => {
-    window.localStorage.setItem(`${LEGACY_KPI_STORAGE_PREFIX}u1`, '["organizations","users"]');
-    const { container } = renderPage();
-
-    expect(kpiLabels(container)).toEqual(['kpiTotalOrganizations', 'kpiTotalUsers']);
-    expect(listTitles(container)).toEqual(LISTS);
-    expect(window.localStorage.getItem(`${LEGACY_KPI_STORAGE_PREFIX}u1`)).toBeNull();
-  });
-
   it('shows a spinner while a count loads and a dash when it fails', () => {
     loadingCounts = new Set(['Practitioner']);
     failingCounts = new Set(['Location']);
@@ -397,7 +387,7 @@ describe('DashboardPage editor', () => {
     expect(screen.getByText('recentCareTeamsTitle')).toBeInTheDocument();
   });
 
-  it('groups the drawer by category, marks starting and placed cards, and blocks a fifth KPI', async () => {
+  it('groups the drawer by category, marks placed cards, and blocks a fifth KPI', async () => {
     renderPage();
     configure();
     fireEvent.click(screen.getByRole('button', { name: 'widgetRemove recentUsersTitle' }));
@@ -408,7 +398,6 @@ describe('DashboardPage editor', () => {
         .getAllByRole('heading', { level: 3 })
         .map((h) => h.textContent),
     ).toEqual(['widgetCategoryKpi', 'widgetCategoryLists', 'widgetCategoryCharts']);
-    expect(within(drawer).getAllByText('widgetStartingCard')).toHaveLength(12);
     expect(within(drawer).getAllByText('widgetAdded')).toHaveLength(11);
     expect(within(drawer).getByText('kpiPickerLimit 4')).toBeInTheDocument();
 
@@ -510,14 +499,12 @@ describe('DashboardPage document layout', () => {
     ]);
   });
 
-  it('marks the document cards as starting cards and resets to them', async () => {
+  it('resets to the document layout', () => {
     const { container } = renderPage(curated);
     configure();
     fireEvent.click(screen.getByRole('button', { name: 'widgetRemove kpiTotalUsers' }));
 
-    const drawer = await openAddDrawer();
-    expect(within(drawer).getAllByText('widgetStartingCard')).toHaveLength(4);
-    fireEvent.click(within(drawer).getByRole('button', { name: 'close' }));
+    expect(kpiLabels(container)).toEqual(['kpiTotalCareTeams']);
 
     fireEvent.click(screen.getByRole('button', { name: 'dashboardReset' }));
     expect(kpiLabels(container)).toEqual(['kpiTotalCareTeams', 'kpiTotalUsers']);
@@ -532,7 +519,6 @@ describe('DashboardPage document layout', () => {
     expect(container.querySelectorAll('.ohs-dash-row')).toHaveLength(0);
 
     const drawer = await openAddDrawer();
-    expect(within(drawer).queryByText('widgetStartingCard')).not.toBeInTheDocument();
     fireEvent.click(
       within(drawer).getByRole('button', { name: 'widgetAddNamed recentUsersTitle' }),
     );

@@ -11,7 +11,6 @@ export interface AddWidgetDrawerProps {
   /** The cards this user may add, in catalogue order. */
   entries: readonly WidgetDefinition[];
   placed: ReadonlySet<string>;
-  starting: ReadonlySet<string>;
   atKpiCap: boolean;
   onAdd: (entry: WidgetDefinition) => void;
 }
@@ -31,7 +30,6 @@ function byCategory(entries: readonly WidgetDefinition[]): WidgetGroup[] {
 
 interface WidgetOptionProps {
   title: string;
-  starting: boolean;
   added: boolean;
   capped: boolean;
   capNoticeId: string;
@@ -40,7 +38,6 @@ interface WidgetOptionProps {
 
 function WidgetOption({
   title,
-  starting,
   added,
   capped,
   capNoticeId,
@@ -51,7 +48,6 @@ function WidgetOption({
   return (
     <li className="ohs-widget-picker__option">
       <span className="ohs-widget-picker__title">{title}</span>
-      {starting ? <StatusBadge tone="info">{t('widgetStartingCard')}</StatusBadge> : null}
       {added ? <StatusBadge tone="success">{t('widgetAdded')}</StatusBadge> : null}
       <Button
         variant="outlined"
@@ -69,13 +65,12 @@ function WidgetOption({
   );
 }
 
-/** The catalogue a user may add from, grouped by category, marking starting and placed cards. */
+/** The catalogue a user may add from, grouped by category, marking the cards already placed. */
 export function AddWidgetDrawer({
   open,
   onClose,
   entries,
   placed,
-  starting,
   atKpiCap,
   onAdd,
 }: Readonly<AddWidgetDrawerProps>): ReactNode {
@@ -113,7 +108,6 @@ export function AddWidgetDrawer({
                 <WidgetOption
                   key={entry.id}
                   title={t(entry.titleKey)}
-                  starting={starting.has(entry.id)}
                   added={placed.has(entry.id)}
                   capped={atKpiCap && entry.regions[0] === 'kpi'}
                   capNoticeId={capNoticeId}

@@ -11,7 +11,6 @@ import {
 import type { WidgetDefinition } from './widgetCatalogue';
 
 export const LAYOUT_STORAGE_PREFIX = 'ohs-dashboard-layout:';
-export const LEGACY_KPI_STORAGE_PREFIX = 'ohs-dashboard-kpis:';
 
 const LAYOUT_VERSION = 1;
 
@@ -29,6 +28,10 @@ export interface DashboardLayoutOptions {
 export interface DashboardLayoutState {
   layout: DashboardLayout;
   save: (layout: DashboardLayout) => void;
+}
+
+function storageKey(sub: string): string {
+  return `${LAYOUT_STORAGE_PREFIX}${sub}`;
 }
 
 function readStored(key: string): unknown {
@@ -57,33 +60,6 @@ function writeStored(key: string, layout: DashboardLayout | undefined): void {
   });
 }
 
-function legacyKpis(sub: string): string[] | undefined {
-  try {
-    const raw = window.localStorage.getItem(`${LEGACY_KPI_STORAGE_PREFIX}${sub}`);
-    if (raw === null) return undefined;
-    const ids: unknown = JSON.parse(raw);
-    return Array.isArray(ids)
-      ? ids.filter((id): id is string => typeof id === 'string').map((id) => `kpi.${id}`)
-      : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function migrateLegacy(sub: string, defaults: DashboardLayout): DashboardLayout | undefined {
-  const kpi = legacyKpis(sub);
-  if (!kpi) return undefined;
-  const layout = { ...defaults, kpi };
-  const kept = sameLayout(layout, defaults) ? undefined : layout;
-  writeStored(`${LAYOUT_STORAGE_PREFIX}${sub}`, kept);
-  withStorage((storage) => storage.removeItem(`${LEGACY_KPI_STORAGE_PREFIX}${sub}`));
-  return kept;
-}
-
-function readLayout(sub: string, defaults: DashboardLayout): unknown {
-  return readStored(`${LAYOUT_STORAGE_PREFIX}${sub}`) ?? migrateLegacy(sub, defaults);
-}
-
 /**
  * The signed in user's dashboard layout, kept in this browser per user `sub`, trimmed on read to
  * what the catalogue holds and the deployment allows. With nothing stored it is `defaults`.
@@ -97,8 +73,8 @@ export function useDashboardLayout({
 }: DashboardLayoutOptions): DashboardLayoutState {
   const { user } = useAuth();
   const sub = user?.sub ?? '';
-  const [stored, setStored] = useState(() => ({ sub, raw: readLayout(sub, defaults) }));
-  const current = stored.sub === sub ? stored.raw : readLayout(sub, defaults);
+  const [stored, setStored] = useState(() => ({ sub, raw: readStored(storageKey(sub)) }));
+  const current = stored.sub === sub ? stored.raw : readStored(storageKey(sub));
   const raw = customizable ? current : undefined;
 
   const layout = useMemo(() => {
@@ -117,7 +93,7 @@ export function useDashboardLayout({
   const save = useCallback(
     (next: DashboardLayout) => {
       const kept = sameLayout(next, defaults) ? undefined : next;
-      writeStored(`${LAYOUT_STORAGE_PREFIX}${sub}`, kept);
+      writeStored(storageKey(sub), kept);
       setStored({ sub, raw: kept });
     },
     [sub, defaults],

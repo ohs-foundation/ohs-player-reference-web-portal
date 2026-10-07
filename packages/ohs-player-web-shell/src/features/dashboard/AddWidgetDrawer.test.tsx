@@ -25,7 +25,6 @@ function headings(entries: Parameters<typeof AddWidgetDrawer>[0]['entries']): st
       onClose={vi.fn()}
       entries={entries}
       placed={new Set()}
-      starting={new Set()}
       atKpiCap={false}
       onAdd={vi.fn()}
     />,

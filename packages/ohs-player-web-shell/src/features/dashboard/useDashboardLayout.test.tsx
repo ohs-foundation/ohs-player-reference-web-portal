@@ -11,8 +11,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   return { ...actual, useAuth: () => ({ status: 'authenticated', user: { sub } }) };
 });
 
-const { LAYOUT_STORAGE_PREFIX, LEGACY_KPI_STORAGE_PREFIX, useDashboardLayout } =
-  await import('./useDashboardLayout');
+const { LAYOUT_STORAGE_PREFIX, useDashboardLayout } = await import('./useDashboardLayout');
 
 const catalogue = builtinWidgets(DEFAULT_NAVIGATION);
 const defaults = defaultLayout(catalogue);
@@ -101,28 +100,6 @@ describe('useDashboardLayout', () => {
         }),
       ).result.current.layout.side,
     ).toEqual(['chart.usersByStatus']);
-  });
-
-  it('moves the old KPI selection into the layout once and removes the old key', () => {
-    window.localStorage.setItem(`${LEGACY_KPI_STORAGE_PREFIX}u1`, '["careTeams","users"]');
-
-    const { result } = renderHook(() => useDashboardLayout(options));
-
-    const migrated = { ...defaults, kpi: ['kpi.careTeams', 'kpi.users'] };
-    expect(result.current.layout).toEqual(migrated);
-    expect(stored()).toEqual({ version: 1, layout: migrated });
-    expect(window.localStorage.getItem(`${LEGACY_KPI_STORAGE_PREFIX}u1`)).toBeNull();
-  });
-
-  it('removes an old selection equal to the default without storing a layout', () => {
-    window.localStorage.setItem(
-      `${LEGACY_KPI_STORAGE_PREFIX}u1`,
-      '["users","locations","organizations","careTeams"]',
-    );
-
-    expect(renderHook(() => useDashboardLayout(options)).result.current.layout).toEqual(defaults);
-    expect(stored()).toBeNull();
-    expect(window.localStorage.getItem(`${LEGACY_KPI_STORAGE_PREFIX}u1`)).toBeNull();
   });
 
   it('applies a save for the session when storage is blocked', () => {
