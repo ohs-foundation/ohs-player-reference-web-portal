@@ -30,7 +30,7 @@ FHIR data-access option shapes: `SearchParams`, `SearchAllOptions`, `PagedSearch
 
 Audit read model: `ActivityItem`, `AuditAction`.
 
-UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, etc. — belong to the shell package, `ohs-player-web-shell`, not the library.)
+UI types: `OhsDialogProps`, `StatusTone` (the tone of a `useStatusBar().notify` message). (Presentational primitive prop types — `ButtonProps`, `CardProps`, `DataTableProps`, `StatusBadgeProps`, `RecordStatusBadgeProps`, etc. — belong to the shell package, `ohs-player-web-shell`, not the library. The shell exports its own `StatusTone` for `StatusBadge`, with the same five values.)
 
 ---
 
@@ -226,6 +226,8 @@ Supported item types for rendering include `string`, `text`, `integer`, `decimal
 ## UI exports
 
 The library ships **behavior + Radix wrappers only** — it does **not** export presentational primitives (`Button`, `Card`, `TextField`, `DataTable`, etc.); those live in the shell package (`packages/ohs-player-web-shell/src/components/ui/`). See **UI primitives & theming** in [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+For a record's status, use the shell's `RecordStatusBadge` rather than a hand-picked `StatusBadge` tone. It maps `active` to success, `suspended` to warning and `inactive` to neutral, so every screen and extension shows a status the same way. A boolean `active` is passed as `active ? 'active' : 'inactive'`, and a caller can pass its own label as `children` without changing the tone.
 
 | Export | Description |
 | --- | --- |
