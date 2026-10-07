@@ -23,7 +23,7 @@ export function EmptyState({ title, description, action, icon, illustration }: R
           {icon ?? <DefaultEmptyIcon />}
         </span>
       )}
-      <h3 className="ohs-empty__title">{title ?? t('emptyTitle')}</h3>
+      <h2 className="ohs-empty__title">{title ?? t('emptyTitle')}</h2>
       <p className="ohs-empty__description">{description ?? t('emptyDescription')}</p>
       {action}
     </div>
@@ -44,7 +44,7 @@ export function ErrorState({ title, description, action, icon }: Readonly<ErrorS
       <span className="ohs-error-state__icon" aria-hidden="true">
         {icon ?? <DefaultErrorIcon />}
       </span>
-      <h3 className="ohs-error-state__title">{title ?? t('errorTitle')}</h3>
+      <h2 className="ohs-error-state__title">{title ?? t('errorTitle')}</h2>
       <p className="ohs-error-state__description">{description ?? t('errorDescription')}</p>
       {action}
     </div>

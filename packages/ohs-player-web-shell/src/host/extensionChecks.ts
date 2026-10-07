@@ -4,6 +4,7 @@ import {
   type PermissionMap,
 } from 'ohs-player-web-core';
 import type { PortalDefaults } from '../config/resolvePortalConfig';
+import { SHELL_MESSAGES } from '../i18n/shellMessages';
 import type { PortalRoute } from '../routes/types';
 import { DASHBOARD_REGIONS, SLOT_NAMES, type PortalExtension } from './types';
 
@@ -55,6 +56,7 @@ function hostClaims(defaults: PortalDefaults, routes: readonly PortalRoute[]): C
   const paths = [...HOST_PATHS, ...routes.map((route) => route.path)];
   return [
     ...keysOf('message key', defaultMessageCatalog),
+    ...keysOf('message key', SHELL_MESSAGES),
     ...keysOf('message key', platform.i18n?.messages),
     ...keysOf('flag', platform.flags?.flags),
     ...keysOf('permission', platform.rbac?.permissionMap),

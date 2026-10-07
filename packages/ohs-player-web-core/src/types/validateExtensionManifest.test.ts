@@ -58,6 +58,17 @@ describe('validateExtensionManifest', () => {
     ]);
   });
 
+  it('accepts a widget category and title key, and rejects ones that are not message keys', () => {
+    const named = [{ id: 'active', region: 'kpi', order: 50, load, category: 'c', titleKey: 't' }];
+    const unnamed = [{ id: 'active', region: 'kpi', order: 50, load, category: '', titleKey: 7 }];
+
+    expect(errorsOf(manifest({ widgets: named }))).toEqual([]);
+    expect(errorsOf(manifest({ widgets: unnamed }))).toEqual([
+      { path: 'widgets[0].category', message: 'must be a non-empty message key' },
+      { path: 'widgets[0].titleKey', message: 'must be a non-empty message key' },
+    ]);
+  });
+
   it('reports a slot contribution that names no declared slot', () => {
     const slots = [{ id: 'view', slot: 'users.rowAction', order: 10, component: () => null }];
 

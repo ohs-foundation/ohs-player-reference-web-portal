@@ -10,6 +10,7 @@ export interface ResourceStats {
   /** Active count; inactive is derived as `total - active` so the split always covers the population. */
   active: number | undefined;
   loading: boolean;
+  error: string | null;
 }
 
 function countOf(data: unknown): number | undefined {
@@ -37,7 +38,12 @@ export function useResourceStats(
     total: countOf(totalQ.data),
     active: countOf(activeQ.data),
     loading: totalQ.isLoading || activeQ.isLoading,
+    error: errorText(totalQ.error ?? activeQ.error),
   };
+}
+
+function errorText(error: Error | null): string | null {
+  return error ? error.message : null;
 }
 
 export interface RecentResult<Row> {
@@ -53,6 +59,6 @@ export function useRecent<Row>(resourceType: string, count = 5): RecentResult<Ro
   return {
     rows,
     loading: q.isLoading,
-    error: q.error ? (q.error instanceof Error ? q.error.message : String(q.error)) : null,
+    error: errorText(q.error),
   };
 }

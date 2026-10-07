@@ -231,9 +231,9 @@ export function ResourceListPanel({
       className="flex-1 min-w-0 flex flex-col gap-5"
       aria-labelledby="fhir-viewer-panel-heading"
     >
-      <h3 id="fhir-viewer-panel-heading" className="m-0 text-2xl font-medium text-text">
+      <h2 id="fhir-viewer-panel-heading" className="ohs-card-header__title m-0 text-text">
         {t('fhirViewerTypeResources', { type: typeLabel })}
-      </h3>
+      </h2>
       <DataTable<FhirRecord>
         columns={columns}
         rows={tableRows}

@@ -77,6 +77,38 @@ describe('portal config schema', () => {
     ).toContain('navigation[0].requires.flag');
   });
 
+  it('accepts a dashboard layout, available ids and patterns, and the customization switch', () => {
+    const dashboard = {
+      layout: { kpi: ['kpi.users', 'schedules.active'], main: [], side: ['chart.usersByStatus'] },
+      available: ['kpi.*', 'recent.users', 'chart.updatedByMonth.*'],
+      userCustomization: false,
+    };
+
+    expect(validatePortalConfig({ dashboard })).toEqual({ success: true, data: { dashboard } });
+  });
+
+  it('names the path when a dashboard widget id is malformed', () => {
+    const error = rejection({ dashboard: { layout: { main: ['recent.users', 'visits'] } } });
+
+    expect(error).toContain('must be a widget id such as kpi.users or schedules.active');
+    expect(error).toContain('dashboard.layout.main[1]');
+  });
+
+  it.each(['*', '.*', 'kpi.*.users', 'kpi'])('rejects the available entry %s', (entry) => {
+    const error = rejection({ dashboard: { available: [entry] } });
+
+    expect(error).toContain('must be a widget id such as kpi.users, or a pattern such as chart.*');
+    expect(error).toContain('dashboard.available[0]');
+  });
+
+  it('rejects an unknown dashboard field', () => {
+    expect(rejection({ dashboard: { layout: { top: [] } } })).toContain('dashboard.layout');
+  });
+
+  it('offers the built in widget ids to editors through the JSON Schema', () => {
+    expect(JSON.stringify(portalConfigJsonSchema())).toContain('"examples":["kpi.users"');
+  });
+
   it('only accepts documents the library type describes', () => {
     expectTypeOf<PortalConfig>().toMatchTypeOf<PortalConfigDocument>();
   });

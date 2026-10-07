@@ -1,33 +1,25 @@
 import { Fragment, type ReactNode } from 'react';
 
-export interface RegionItem {
+export interface DashboardCard {
   key: string;
-  order: number;
   node: ReactNode;
 }
 
-export function RegionItems({ items }: Readonly<{ items: readonly RegionItem[] }>): ReactNode {
-  return [...items]
-    .sort((a, b) => a.order - b.order)
-    .map((item) => <Fragment key={item.key}>{item.node}</Fragment>);
+export function RegionCards({ cards }: Readonly<{ cards: readonly DashboardCard[] }>): ReactNode {
+  return cards.map((card) => <Fragment key={card.key}>{card.node}</Fragment>);
 }
 
+/** One row per position, pairing `main[i]` with `side[i]`; a row with no main card is side only. */
 export function DashboardRows({
   main,
   side,
-}: Readonly<{ main: readonly RegionItem[]; side: readonly RegionItem[] }>): ReactNode {
-  const orders = [...new Set([...main, ...side].map((item) => item.order))].sort((a, b) => a - b);
-  return orders.map((order) => {
-    const mainItems = main.filter((item) => item.order === order);
-    const sideItems = side.filter((item) => item.order === order);
+}: Readonly<{ main: readonly DashboardCard[]; side: readonly DashboardCard[] }>): ReactNode {
+  return Array.from({ length: Math.max(main.length, side.length) }, (_, index) => {
+    const mainCard = main.at(index);
+    const sideCard = side.at(index);
     return (
-      <div
-        key={order}
-        className="ohs-dash-row"
-        data-side-only={mainItems.length === 0 ? true : undefined}
-      >
-        <RegionItems items={mainItems} />
-        <RegionItems items={sideItems} />
+      <div key={index} className="ohs-dash-row" data-side-only={mainCard ? undefined : true}>
+        <RegionCards cards={[mainCard, sideCard].filter((card) => card !== undefined)} />
       </div>
     );
   });

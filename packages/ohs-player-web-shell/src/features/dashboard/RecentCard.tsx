@@ -66,7 +66,7 @@ export function RecentCard<Row>({
     <Card flush className="ohs-dash-card">
       <div className="ohs-dash-card__head">
         <div>
-          <h3 className="ohs-card-header__title">{title}</h3>
+          <h2 className="ohs-card-header__title">{title}</h2>
           <p className="ohs-card-header__description">{subtitle}</p>
         </div>
         <Link to={viewAllTo} className="ohs-dash-card__viewall">

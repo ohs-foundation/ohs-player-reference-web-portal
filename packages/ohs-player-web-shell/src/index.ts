@@ -8,9 +8,11 @@ export {
   resolvePortalConfig,
   type PortalDefaults,
   type PortalDocument,
+  type ResolvedDashboardConfig,
   type ResolvedPortalConfig,
 } from './config/resolvePortalConfig';
 export type { UnknownMessageKey } from './config/unknownMessageKeys';
+export { SHELL_MESSAGES } from './i18n/shellMessages';
 
 export {
   createPortalHost,
@@ -31,6 +33,8 @@ export {
 } from './host/types';
 export { resourceTypeLabel } from './features/activity/resourceTypeLabel';
 export { StatCard, type StatCardProps } from './features/dashboard/StatCard';
+export type { DashboardLayout } from './features/dashboard/dashboardLayout';
+export { BUILTIN_WIDGET_IDS, type BuiltinWidgetId } from './features/dashboard/widgetCatalogue';
 export type { PortalRoute } from './routes/types';
 
 export { useClearFilterParams, useFilterParam } from './features/search/useFilterParam';

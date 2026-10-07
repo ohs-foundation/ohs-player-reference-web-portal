@@ -24,6 +24,8 @@ export const schedulesExtension: PortalExtension = {
       order: 50,
       load: () => import('./ActiveSchedulesWidget'),
       requires,
+      titleKey: 'schedulesKpi',
+      category: 'widgetCategorySchedules',
     },
   ],
   slots: [{ id: 'view', slot: 'users.rowActions', order: 10, component: ViewSchedulesAction }],

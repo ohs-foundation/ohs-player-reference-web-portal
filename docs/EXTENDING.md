@@ -44,6 +44,8 @@ export const schedulesExtension: PortalExtension = {
       order: 50,
       load: () => import('./ActiveSchedulesWidget'),
       requires,
+      titleKey: 'schedulesKpi',
+      category: 'widgetCategorySchedules',
     },
   ],
   slots: [{ id: 'view', slot: 'users.rowActions', order: 10, component: ViewSchedulesAction }],
@@ -69,13 +71,15 @@ The configuration document's `navigation` list positions the shell's own entries
 
 ### Dashboard widgets
 
-A widget has an `id`, a `region`, an integer `order`, `load` (a module whose default export is the tile) and optional `requires`.
+A widget has an `id`, a `region`, an integer `order`, `load` (a module whose default export is the tile) and optional `requires`. It can also carry a `titleKey` and a `category`, both message keys, which name it and group it in the dashboard's Add widget list. A widget without `titleKey` shows its namespaced id there, so give every widget one.
 
 | Region | Where |
 | --- | --- |
-| `kpi` | The strip of totals across the top. The built-in cards are at orders 10 to 40, and the shell's `StatCard` renders a matching card. Each user picks up to four built-in cards with Customize Widgets. An extension tile is sorted in among the chosen cards by `order` and does not count toward the four. |
+| `kpi` | The strip of totals across the top. The built-in cards are at orders 10 to 40, and the shell's `StatCard` renders a matching card. The strip holds at most four cards, built in and extension alike. |
 | `main` | The wide column of the rows below. |
-| `side` | The narrow column. A `main` and a `side` widget with the same `order` share a row. The built-in rows are at 10 to 40, and an `order` no built-in row uses starts a row of its own. A widget with no partner at its order still gets a row, with the other column empty. |
+| `side` | The narrow column. Rows pair the `main` and `side` cards by position, so the first `main` card sits beside the first `side` card. The built-in cards are at 10 to 40 in both columns. A widget that has no partner at its position still gets a row, with the other column empty, and the cards below it in the other column move up one row. |
+
+Every widget is a card in the dashboard catalogue. Users can remove an extension tile and add it back with Configure dashboard, and a deployment places it, or leaves it out, through the configuration document's `dashboard.layout` and `dashboard.available` ([CUSTOMIZING.md](./CUSTOMIZING.md) Part 1 step 9). Without a document layout, widgets join the default layout by `order`.
 
 ```tsx
 import type { Bundle } from '@medplum/fhirtypes';

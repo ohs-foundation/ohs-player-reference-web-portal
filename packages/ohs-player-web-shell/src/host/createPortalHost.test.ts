@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { resolvePortalConfig } from '../config/resolvePortalConfig';
 import type { PortalRoute } from '../routes/types';
 import { testPortalDefaults } from '../test/testPlatformConfig';
+import { SHELL_MESSAGES } from '../i18n/shellMessages';
 import { createPortalHost } from './createPortalHost';
 import type { PortalExtension } from './types';
 
@@ -25,7 +26,15 @@ describe('createPortalHost', () => {
     const document = { product: { name: 'County Health' } };
     const host = createPortalHost({ defaults: testPortalDefaults, document, development: true });
 
-    expect(host.portal).toEqual(resolvePortalConfig(testPortalDefaults, document));
+    const { platform } = testPortalDefaults;
+    const withShellCopy = {
+      ...testPortalDefaults,
+      platform: {
+        ...platform,
+        i18n: { ...platform.i18n, messages: { ...SHELL_MESSAGES, ...platform.i18n?.messages } },
+      },
+    };
+    expect(host.portal).toEqual(resolvePortalConfig(withShellCopy, document));
   });
 
   it("merges an extension's messages, flag defaults, permissions and endpoints", () => {
@@ -121,5 +130,27 @@ describe('createPortalHost', () => {
     });
 
     expect(host.routes.map((route) => route.path)).toEqual(['/users', '/schedules']);
+  });
+
+  it("gives every app the shell's copy below its own messages and the document's", () => {
+    const defaults = {
+      ...testPortalDefaults,
+      platform: {
+        ...testPortalDefaults.platform,
+        i18n: { locale: 'en', messages: { navUsers: 'Staff' } },
+      },
+    };
+    const host = createPortalHost({
+      defaults,
+      document: { messages: { dashboardConfigure: 'Arrange dashboard' } },
+      development: true,
+    });
+
+    expect(host.portal.platform.i18n?.messages).toMatchObject({
+      navDashboard: 'Dashboard',
+      navUsers: 'Staff',
+      dashboardConfigure: 'Arrange dashboard',
+    });
+    expect(host.unknownMessageKeys).toEqual([]);
   });
 });

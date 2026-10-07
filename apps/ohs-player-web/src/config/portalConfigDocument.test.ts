@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { appMessageOverrides } from '../i18n/appMessages';
 import { sysTheme } from '../theme/sysTheme';
-import { DEFAULT_NAVIGATION, resolvePortalConfig } from 'ohs-player-web-shell';
+import { createPortalHost, DEFAULT_NAVIGATION, SHELL_MESSAGES } from 'ohs-player-web-shell';
 import { platformConfig, portalDefaults } from './platform';
 import { validatePortalConfig, type PortalConfig } from './portalConfigSchema';
 
@@ -27,9 +26,9 @@ describe('reference configuration document', () => {
   });
 
   it('resolves to exactly the baked configuration', () => {
-    expect(resolvePortalConfig(portalDefaults, referenceDocument())).toEqual(
-      resolvePortalConfig(portalDefaults),
-    );
+    const resolve = (document?: PortalConfig) =>
+      createPortalHost({ defaults: portalDefaults, document, development: true }).portal;
+    expect(resolve(referenceDocument())).toEqual(resolve());
   });
 
   it('holds the baked sidebar, spaced ten apart in the current order', () => {
@@ -42,7 +41,7 @@ describe('reference configuration document', () => {
     const document = referenceDocument();
     expect(document.brand?.overrides).toEqual(sysTheme.overrides);
     expect(document.brand?.darkOverrides).toEqual(sysTheme.darkOverrides);
-    expect(document.product?.name).toBe(appMessageOverrides.appTopbarTitle);
+    expect(document.product?.name).toBe(SHELL_MESSAGES.appTopbarTitle);
   });
 
   it('leaves environment-specific values to VITE_*', () => {

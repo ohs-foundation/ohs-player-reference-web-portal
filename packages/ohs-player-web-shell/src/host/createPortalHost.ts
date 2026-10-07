@@ -10,7 +10,10 @@ import {
   unknownMessageKeys,
   type UnknownMessageKey,
 } from '../config/unknownMessageKeys';
+import { builtinWidgets, extensionWidgets } from '../features/dashboard/widgetCatalogue';
+import { SHELL_MESSAGES } from '../i18n/shellMessages';
 import type { PortalRoute } from '../routes/types';
+import { checkDashboard } from './dashboardChecks';
 import { missingPermission, validManifests } from './extensionChecks';
 import type { ExtensionContributions, PortalExtension } from './types';
 
@@ -54,7 +57,11 @@ function withExtensions(
       ...platform,
       i18n: {
         ...platform.i18n,
-        messages: { ...fromExtensions(manifests, (m) => m.messages), ...platform.i18n?.messages },
+        messages: {
+          ...SHELL_MESSAGES,
+          ...fromExtensions(manifests, (m) => m.messages),
+          ...platform.i18n?.messages,
+        },
       },
       flags: {
         ...platform.flags,
@@ -102,6 +109,7 @@ function declaredMessageKeys(
 ): Set<string> {
   return new Set([
     ...Object.keys(defaultMessageCatalog),
+    ...Object.keys(SHELL_MESSAGES),
     ...Object.keys(defaults.platform.i18n?.messages ?? {}),
     ...manifests.flatMap((manifest) => Object.keys(manifest.messages ?? {})),
   ]);
@@ -132,6 +140,20 @@ function withPermissionsMet(
     : withPermissionsMet(met, resolve, report);
 }
 
+function withCheckedDashboard(
+  portal: ResolvedPortalConfig,
+  contributions: ExtensionContributions,
+  report: (message: string) => void,
+): ResolvedPortalConfig {
+  if (!portal.dashboard) return portal;
+  const { dashboard, problems } = checkDashboard(portal.dashboard, [
+    ...builtinWidgets(portal.navigation),
+    ...extensionWidgets(contributions.widgets),
+  ]);
+  problems.forEach(report);
+  return { ...portal, dashboard };
+}
+
 /**
  * Merges extension contributions over the host's defaults, then the configuration document over
  * both, so a deployment can still override an extension. Call once at startup, before render.
@@ -155,7 +177,7 @@ export function createPortalHost({
     defaults.platform.onError?.(new Error(describeUnknownMessageKeys(unknown)));
   }
   return {
-    portal,
+    portal: withCheckedDashboard(portal, contributions, report),
     routes: [...routes, ...contributions.routes],
     contributions,
     unknownMessageKeys: unknown,

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NAV_IDS } from 'ohs-player-web-shell';
+import { BUILTIN_WIDGET_IDS, NAV_IDS } from 'ohs-player-web-shell';
 
 export const FLAG_NAMES = [
   'userMgmt',
@@ -76,6 +76,28 @@ const navEntrySchema = z.strictObject({
     .optional(),
 });
 
+const WIDGET_ID = /^[A-Za-z][\w-]*(\.[\w-]+)+$/;
+const AVAILABLE_ENTRY = /^[A-Za-z][\w-]*(\.[\w-]+)*\.([\w-]+|\*)$/;
+
+const widgetId = z
+  .string()
+  .regex(WIDGET_ID, { error: 'must be a widget id such as kpi.users or schedules.active' })
+  .meta({ examples: [...BUILTIN_WIDGET_IDS] });
+
+const widgetIds = z.array(widgetId).optional();
+
+const dashboardSchema = z.strictObject({
+  layout: z.strictObject({ kpi: widgetIds, main: widgetIds, side: widgetIds }).optional(),
+  available: z
+    .array(
+      z.string().regex(AVAILABLE_ENTRY, {
+        error: 'must be a widget id such as kpi.users, or a pattern such as chart.*',
+      }),
+    )
+    .optional(),
+  userCustomization: z.boolean().optional(),
+});
+
 export const portalConfigSchema = z.strictObject({
   $schema: z.string().optional(),
   product: z.strictObject({ name: z.string().min(1).optional() }).optional(),
@@ -93,6 +115,7 @@ export const portalConfigSchema = z.strictObject({
   messages: z.record(z.string(), z.string()).optional(),
   customEndpoints: z.record(z.string(), z.string().startsWith('/')).optional(),
   questionnaireVariant: z.string().min(1).optional(),
+  dashboard: dashboardSchema.optional(),
 });
 
 export type PortalConfig = z.infer<typeof portalConfigSchema>;

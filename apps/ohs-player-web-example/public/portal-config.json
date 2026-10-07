@@ -5,7 +5,8 @@
   "brand": {
     "overrides": {
       "primary": "#0F766E",
-      "primary-container": "#CCFBF1"
+      "primary-container": "#CCFBF1",
+      "secondary-container": "#CCFBF1"
     },
     "darkOverrides": {
       "primary": "#5EEAD4"
@@ -32,5 +33,26 @@
         "permission": "dashboard.view"
       }
     }
-  ]
+  ],
+  "dashboard": {
+    "layout": {
+      "kpi": [
+        "schedules.active",
+        "kpi.users"
+      ],
+      "main": [
+        "recent.users"
+      ],
+      "side": [
+        "chart.usersByStatus"
+      ]
+    },
+    "available": [
+      "kpi.*",
+      "recent.users",
+      "chart.*",
+      "schedules.*"
+    ],
+    "userCustomization": true
+  }
 }

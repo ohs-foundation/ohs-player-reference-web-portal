@@ -21,6 +21,8 @@ const ICONS: Record<string, string> = {
   IconAddCircle: 'add_circle',
   IconArrowOutward: 'arrow_outward',
   IconArrowRight: 'arrow_forward',
+  IconArrowUp: 'arrow_upward',
+  IconArrowDown: 'arrow_downward',
   // Trend arrows: Figma uses Remix arrow-right-up-line / arrow-left-down-line; these are the
   // geometrically equivalent Material Symbols, so the dashboard keeps one icon dependency.
   IconArrowUpRight: 'north_east',

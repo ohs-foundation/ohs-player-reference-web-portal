@@ -17,7 +17,6 @@ export interface KpiDefinition {
   navId: NavId;
   order: number;
   labelKey: string;
-  optionKey: string;
   resourceType: string;
   activeParam: Record<string, string>;
   badgeColor: string;
@@ -33,7 +32,6 @@ export const KPI_CATALOGUE: readonly KpiDefinition[] = [
     navId: 'users',
     order: 10,
     labelKey: 'kpiTotalUsers',
-    optionKey: 'navUsers',
     resourceType: 'Practitioner',
     activeParam: { active: 'true' },
     badgeColor: '#D398E6',
@@ -44,7 +42,6 @@ export const KPI_CATALOGUE: readonly KpiDefinition[] = [
     navId: 'locations',
     order: 20,
     labelKey: 'kpiTotalLocations',
-    optionKey: 'navLocations',
     resourceType: 'Location',
     activeParam: { status: 'active' },
     badgeColor: '#E89271',
@@ -55,7 +52,6 @@ export const KPI_CATALOGUE: readonly KpiDefinition[] = [
     navId: 'organizations',
     order: 30,
     labelKey: 'kpiTotalOrganizations',
-    optionKey: 'navOrganizations',
     resourceType: 'Organization',
     activeParam: { active: 'true' },
     badgeColor: '#70A1E5',
@@ -66,7 +62,6 @@ export const KPI_CATALOGUE: readonly KpiDefinition[] = [
     navId: 'careTeams',
     order: 40,
     labelKey: 'kpiTotalCareTeams',
-    optionKey: 'navCareTeams',
     resourceType: 'CareTeam',
     activeParam: { status: 'active' },
     badgeColor: '#F0C274',

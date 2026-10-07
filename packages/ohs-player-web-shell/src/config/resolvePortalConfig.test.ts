@@ -81,4 +81,32 @@ describe('resolvePortalConfig', () => {
     const ids = resolvePortalConfig(testPortalDefaults, {}).navigation.map((entry) => entry.id);
     expect(ids.slice(-2)).toEqual(['setup', 'audit']);
   });
+
+  it('leaves the dashboard unset when the document has no dashboard field', () => {
+    expect(resolvePortalConfig(testPortalDefaults, {}).dashboard).toBeUndefined();
+  });
+
+  it('reads a region the document layout leaves out as empty and allows customization', () => {
+    const resolved = resolvePortalConfig(testPortalDefaults, {
+      dashboard: { layout: { kpi: ['kpi.users'] }, available: ['chart.*'] },
+    });
+
+    expect(resolved.dashboard).toEqual({
+      layout: { kpi: ['kpi.users'], main: [], side: [] },
+      available: ['chart.*'],
+      userCustomization: true,
+    });
+  });
+
+  it('keeps the layout unset when the dashboard field only turns customization off', () => {
+    const resolved = resolvePortalConfig(testPortalDefaults, {
+      dashboard: { userCustomization: false },
+    });
+
+    expect(resolved.dashboard).toEqual({
+      layout: undefined,
+      available: undefined,
+      userCustomization: false,
+    });
+  });
 });

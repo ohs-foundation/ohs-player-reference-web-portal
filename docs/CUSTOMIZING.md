@@ -48,7 +48,11 @@ The example app starts with this document:
 {
   "product": { "name": "OHS Example Portal" },
   "brand": {
-    "overrides": { "primary": "#0F766E", "primary-container": "#CCFBF1" },
+    "overrides": {
+      "primary": "#0F766E",
+      "primary-container": "#CCFBF1",
+      "secondary-container": "#CCFBF1"
+    },
     "darkOverrides": { "primary": "#5EEAD4" }
   },
   "navigation": [
@@ -56,7 +60,16 @@ The example app starts with this document:
       "requires": { "flag": "userMgmt", "permission": "users.view" } },
     { "id": "dashboard", "to": "/", "labelKey": "navDashboard", "order": 20,
       "requires": { "flag": "dashboard", "permission": "dashboard.view" } }
-  ]
+  ],
+  "dashboard": {
+    "layout": {
+      "kpi": ["schedules.active", "kpi.users"],
+      "main": ["recent.users"],
+      "side": ["chart.usersByStatus"]
+    },
+    "available": ["kpi.*", "recent.users", "chart.*", "schedules.*"],
+    "userCustomization": true
+  }
 }
 ```
 
@@ -70,12 +83,16 @@ Set `"product": { "name": "Acme Health" }`. The name replaces the `appTopbarTitl
 
 ```json
 "brand": {
-  "overrides": { "primary": "#7C3AED", "primary-container": "#EDE9FE" },
+  "overrides": {
+    "primary": "#7C3AED",
+    "primary-container": "#EDE9FE",
+    "secondary-container": "#EDE9FE"
+  },
   "darkOverrides": { "primary": "#C4B5FD" }
 }
 ```
 
-Reload, then use the sun and moon button in the top bar to switch schemes. Everything drawn in the primary role changes colour, such as the Schedules KPI badge. The role names are listed in [THEMING.md](./THEMING.md) section 3; the reference app's schema rejects any other name.
+The active sidebar entry draws `primary` text on a `secondary-container` fill, so pin the two together and keep them at a contrast of 4.5 to 1 or more. The generated `secondary-container` is a pale blue, and a new `primary` on it can fall short. Reload, then use the sun and moon button in the top bar to switch schemes. Everything drawn in the primary role changes colour, such as the Schedules KPI badge. The role names are listed in [THEMING.md](./THEMING.md) section 3; the reference app's schema rejects any other name.
 
 ### 3. Sidebar order and visibility
 
@@ -129,22 +146,22 @@ Sign in as `manager-user`. Schedules is gone from the sidebar, the dashboard and
 
 The sidebar now says Staff and Rosters. The Staff page heading, the Total Staff card, the Recently Added Staff table and the Staff Distribution card agree with it. The Schedules page is titled Rosters, with planning horizons formatted as British dates. When the server holds audit events for practitioners, such as those the reference app writes, the notifications panel reads Created Staff member followed by the practitioner's id.
 
-A rename is made key by key. Each label has its own key, so renaming a screen everywhere means overriding each one. For Schedules, `navSchedules` is the sidebar entry, `schedulesTitle` the page heading, `schedulesKpi` the dashboard tile and `schedulesViewForUser` the row action, all listed in `apps/ohs-player-web-example/src/extensions/schedules/messages.ts`. For the four built-in screens, these are the keys that carry the name, as declared in `apps/ohs-player-web/src/i18n/appMessages.ts`. The example app declares the same sidebar, dashboard and notification keys, and `pageUsers` for its only page.
+A rename is made key by key. Each label has its own key, so renaming a screen everywhere means overriding each one. For Schedules, `navSchedules` is the sidebar entry, `schedulesTitle` the page heading, `schedulesKpi` the dashboard tile and `schedulesViewForUser` the row action, all listed in `apps/ohs-player-web-example/src/extensions/schedules/messages.ts`. For the four built-in screens, these are the keys that carry the name. The shell declares the sidebar, dashboard and notification keys in `packages/ohs-player-web-shell/src/i18n/shellMessages.ts`, so every app has them, and each app declares its page headings, in `apps/ohs-player-web/src/i18n/appMessages.ts` for the reference app. The example app declares only `pageUsers` for its one page and the few keys it words differently.
 
-| Screen | Sidebar, search and Customize Widgets | Dashboard | Page heading | Notifications |
+| Screen | Sidebar and search | Dashboard | Page heading | Notifications |
 | --- | --- | --- | --- | --- |
 | Users | `navUsers` | `kpiTotalUsers`, `recentUsersTitle`, `recentUsersSubtitle`, `distributionUsers` | `pageUsers` | `resourceTypePractitioner` |
 | Locations | `navLocations` | `kpiTotalLocations`, `recentLocationsTitle`, `recentLocationsSubtitle`, `distributionLocations` | `pageLocations` | `resourceTypeLocation` |
 | Organisations | `navOrganizations` | `kpiTotalOrganizations`, `recentOrganizationsTitle`, `recentOrganizationsSubtitle`, `distributionOrganizations` | `pageOrganizations` | `resourceTypeOrganization` |
 | Care Teams | `navCareTeams` | `kpiTotalCareTeams`, `recentCareTeamsTitle`, `recentCareTeamsSubtitle`, `distributionCareTeams` | `pageCareTeams` | `resourceTypeCareTeam` |
 
-Drawers, empty states and toasts carry the name in keys of their own, such as `createUser`, `usersEmptyTitle` and `userCreated`. Search `appMessages.ts` for the word to find them all.
+Drawers, empty states and toasts carry the name in keys of their own, such as `createUser`, `usersEmptyTitle` and `userCreated`. Search `appMessages.ts` and `shellMessages.ts` for the word to find them all.
 
-A key can also label more than one place. `navUsers` names the Users sidebar entry, its option in Customize Widgets and its group in the global search results, so all three say Staff. A `resourceType` key names the resource in the notifications panel and in the resource type column of the reference app's audit log, so overriding `resourceTypePractitioner` alone changes those two and leaves the sidebar as it was. The audit log's resource type filter still takes the FHIR type name, which the event drawer shows in its reference. The noun key is `resourceType` followed by the FHIR type, and a type with no key shows its FHIR name, such as Schedule. To name another type, declare its key in the app's messages or in the messages of the extension that owns the type, for example `resourceTypeSchedule`, rather than only in the document, because the startup warning below checks document keys against those catalogues. An extension shows the same noun with the shell's `resourceTypeLabel(t, type)`. The line under each notification is the description stored in the audit event when it was written, so no message changes it and it is not translated.
+A key can also label more than one place. `navUsers` names the Users sidebar entry and its group in the global search results, so both say Staff. The dashboard's Add widget list names each card by its own title, such as `kpiTotalUsers`. A `resourceType` key names the resource in the notifications panel and in the resource type column of the reference app's audit log, so overriding `resourceTypePractitioner` alone changes those two and leaves the sidebar as it was. The audit log's resource type filter still takes the FHIR type name, which the event drawer shows in its reference. The noun key is `resourceType` followed by the FHIR type, and a type with no key shows its FHIR name, such as Schedule. To name another type, declare its key in the app's messages or in the messages of the extension that owns the type, for example `resourceTypeSchedule`, rather than only in the document, because the startup warning below checks document keys against those catalogues. An extension shows the same noun with the shell's `resourceTypeLabel(t, type)`. The line under each notification is the description stored in the audit event when it was written, so no message changes it and it is not translated.
 
 There is no single term per screen that the other messages share. A shared term reads well in English but cannot carry plurals or grammatical agreement in other languages, so each string keeps its own key and the table above is the list to override.
 
-Keys come from the library catalogue (`packages/ohs-player-web-core/src/i18n/locales/en.ts`), the app's messages and each extension's messages. A key a component asks for that exists nowhere renders as the key itself, which makes a missing message easy to spot. A misspelled key in `messages` is caught at startup instead. The schema accepts any key, because an extension's keys are only known once its manifest loads, so the host checks every key against the library, the app and each installed extension. A key none of them declares shows a warning toast on every load, naming the key and the closest declared one, for example `navSchedles (did you mean navSchedules?)`, and goes to the platform `onError` callback. `locale` does not translate: supply translated `messages` for another language.
+Keys come from the library catalogue (`packages/ohs-player-web-core/src/i18n/locales/en.ts`), the shell catalogue (`shellMessages.ts`, exported as `SHELL_MESSAGES`), the app's messages and each extension's messages. An app's message replaces the shell's copy of the same key, so an app declares only the keys it adds or words differently. A key a component asks for that exists nowhere renders as the key itself, which makes a missing message easy to spot. A misspelled key in `messages` is caught at startup instead. The schema accepts any key, because an extension's keys are only known once its manifest loads, so the host checks every key against the library, the app and each installed extension. A key none of them declares shows a warning toast on every load, naming the key and the closest declared one, for example `navSchedles (did you mean navSchedules?)`, and goes to the platform `onError` callback. `locale` does not translate: supply translated `messages` for another language.
 
 The import drawer shared by Users, Organisations and Locations reads `bulkImport*` keys. Before users and organisations import, the locations drawer read `locationsDropzone`, `locationsDropzoneHint`, `locationsUploadFile`, `locationsExpectedColumns`, `locationsTemplateHint`, `locationsDownloadTemplate`, `locationsStartImport`, `locationsImportProgress`, `locationsImportComplete`, `locationsImportPartial`, `locationsImportTotal`, `locationsImportProcessed`, `locationsImportFailed` and `locationsImportFailedNotice`. A document that overrides any of those should move the override to the matching `bulkImport*` key (`locationsDropzone` becomes `bulkImportDropzone`, `locationsImportTotal` becomes `bulkImportTotal`, and `locationsStartImport` becomes `bulkImportStart`).
 
@@ -163,6 +180,46 @@ Set `"order": "ten"` on a navigation entry and reload.
 - A `messages` key that nothing declares does not make the document invalid. The rest of the document still applies, and the warning toast from step 6 names the key on every load until it is fixed, in development and production builds alike.
 
 Fix the document before moving on.
+
+### 9. Dashboard layout
+
+The `dashboard` field sets the cards every user starts from. Without it the dashboard shows each built-in KPI, Recently Added table and donut whose screen the user can open, then every extension widget, with at most four cards in the top strip.
+
+Each card has an id.
+
+| Cards | Ids | Region |
+| --- | --- | --- |
+| Totals | `kpi.users`, `kpi.locations`, `kpi.organizations`, `kpi.careTeams` | `kpi` |
+| Recently Added tables | `recent.users`, `recent.locations`, `recent.organizations`, `recent.careTeams` | `main` |
+| Active and inactive donuts | `chart.usersByStatus`, `chart.locationsByStatus`, `chart.organizationsByStatus`, `chart.careTeamsByStatus` | `side` |
+| Extension widgets | `<manifestId>.<id>`, such as `schedules.active` | the widget's own `region` |
+
+Each card follows its screen's `requires`, so a user who cannot open Locations sees no location card. A deployment that needs a card the shell does not ship, such as another chart, contributes it as an extension widget (Part 4), and it joins this catalogue under its own id.
+
+The example app's document above starts every user from a curated dashboard. `layout` lists ids per region in render order and replaces the default as a whole, so a region it leaves out is empty. The first `main` card shares a row with the first `side` card, the second with the second, and so on. `available` lists what a user may add. An entry is an exact id or a prefix ending in `.*`, such as `chart.*`, and leaving the field out offers every card the user can see. A card that `layout` lists still renders when `available` leaves it out, but a user who removes it cannot add it back. `"userCustomization": false` hides Configure dashboard, and every user sees the deployment layout whatever they saved before.
+
+To start from a clean slate, give an empty layout.
+
+```json
+"dashboard": { "layout": {} }
+```
+
+The dashboard then shows an empty state with an Add widget button, and each user builds their own.
+
+Users change their dashboard with Configure dashboard. Every card gets move up, move down and remove buttons, and Add widget lists the cards they may add, grouped by kind, marking the ones already placed. The top strip holds at most four cards, extension tiles included. Nothing changes until Save, Cancel discards the changes, and Reset to default returns to the deployment layout.
+
+A user's layout is kept in that browser, under `ohs-dashboard-layout:<sub>` in local storage. Another browser starts from the deployment layout, and with two tabs open the last Save wins. On each load the stored layout is trimmed to cards that still exist and that `available` still allows, without an error. A card hidden by a flag or a permission stays in the layout and comes back when access returns. Saving a layout equal to the deployment layout clears the stored copy, so that user follows later changes to the document. The KPI selection kept by earlier releases is not carried over, so users start from the deployment layout once.
+
+Try each change below and reload.
+
+| Change | Result |
+| --- | --- |
+| `"layout": { "kpi": ["kpi.users"] }` | One KPI card, no tables and no charts |
+| `"main": ["recent.visits"]` in `layout` | In development the page stays blank and the console reads `Configuration document: dashboard.layout.main[0] "recent.visits" is not a dashboard widget. Known ids: ...` In production the same text goes to `onError` and the rest of the layout renders. |
+| `"side": ["recent.users"]` in `layout` | Reported the same way, as `cannot sit in side, it belongs in main` |
+| `"available": ["reports.*"]` | Reported the same way, as `matches no dashboard widget` |
+| `"main": ["visits"]` in `layout` | The document is invalid, as in step 8, with `must be a widget id such as kpi.users or schedules.active` |
+| `"userCustomization": false` | No Configure dashboard button |
 
 ## Part 2: Logo, favicon and page title
 
@@ -341,9 +398,11 @@ A widget's `load` imports a module whose default export is the tile. There are t
 | `main` | The wide column of the rows below | 10 to 40 |
 | `side` | The narrow column beside it | 10 to 40 |
 
-A `main` and a `side` widget with the same `order` share a row, and an `order` no built-in row uses starts a row of its own. A widget with no partner at its order still gets a row, with the other column empty.
+When the document has no `dashboard` layout, each region lists the built-in cards and the extension widgets by `order`. Rows then pair the cards by position, so the first `main` card sits beside the first `side` card. A `main` and a `side` widget at the same `order` share a row when every card above them is paired. A widget whose column runs longer than the other still gets a row, with the other column empty. A deployment with an unpaired `main` or `side` widget therefore sees the side cards below it move up one row.
 
-The built-in KPI cards follow their sidebar entry's `requires`, so switching off a screen's flag, or denying its permission, hides its card as well. Each user chooses up to four of the remaining cards with Customize Widgets, and the choice is kept per user in that browser. Extension tiles in `kpi` are sorted in among the chosen cards by `order`, with the built-in cards at 10 to 40, so a tile at order 5 renders first and one at 50 renders last. They do not count toward the four.
+The built-in cards follow their sidebar entry's `requires`, so switching off a screen's flag, or denying its permission, hides its cards as well. The top strip holds at most four cards, built in and extension alike, so a tile at order 5 renders first and pushes the fourth built-in card out of the default strip. Users can remove that tile and add the card back with Configure dashboard, and a deployment places widgets directly through the document's `dashboard` field from Part 1 step 9.
+
+Add `titleKey` and `category` to a widget to name it in the Add widget list and group it there. Both are message keys. Without them the list shows the namespaced id, such as `practice.kpi`, under the manifest id.
 
 `PracticeKpiWidget.tsx` uses the shell's `StatCard` to match the built-in cards:
 
@@ -499,9 +558,33 @@ export const practiceExtension: PortalExtension = {
     { id: 'list', to: '/practice', labelKey: 'navPractice', order: 12, icon: IconGroup, requires },
   ],
   widgets: [
-    { id: 'kpi', region: 'kpi', order: 5, load: () => import('./PracticeKpiWidget'), requires },
-    { id: 'main', region: 'main', order: 25, load: () => import('./PracticeMainWidget'), requires },
-    { id: 'side', region: 'side', order: 25, load: () => import('./PracticeSideWidget'), requires },
+    {
+      id: 'kpi',
+      region: 'kpi',
+      order: 5,
+      load: () => import('./PracticeKpiWidget'),
+      requires,
+      titleKey: 'practiceKpi',
+      category: 'widgetCategoryPractice',
+    },
+    {
+      id: 'main',
+      region: 'main',
+      order: 25,
+      load: () => import('./PracticeMainWidget'),
+      requires,
+      titleKey: 'practiceMainTitle',
+      category: 'widgetCategoryPractice',
+    },
+    {
+      id: 'side',
+      region: 'side',
+      order: 25,
+      load: () => import('./PracticeSideWidget'),
+      requires,
+      titleKey: 'practiceSideTitle',
+      category: 'widgetCategoryPractice',
+    },
   ],
   slots: [{ id: 'open', slot: 'users.rowActions', order: 20, component: OpenPracticeAction }],
   questionnaires: { intake: intakeQuestionnaire },
@@ -516,6 +599,7 @@ export const practiceExtension: PortalExtension = {
     practiceSideTitle: 'Side column widget',
     practiceWidgetBody: 'Contributed by the practice extension',
     practiceOpen: 'Open in practice',
+    widgetCategoryPractice: 'Practice',
   },
   flags: { practice: true },
   permissions: { 'practice.view': ['admin'] },
@@ -542,6 +626,22 @@ export const extensions: readonly PortalExtension[] = [schedulesExtension, pract
 
 To install it in the reference app instead, add it to `apps/ohs-player-web/src/extensions.ts`, which is empty.
 
+The example app's document lists its dashboard cards, so the practice widgets only appear once the document places or allows them. Add them to its `dashboard` field.
+
+```json
+"dashboard": {
+  "layout": {
+    "kpi": ["practice.kpi", "schedules.active", "kpi.users"],
+    "main": ["recent.users", "practice.main"],
+    "side": ["chart.usersByStatus", "practice.side"]
+  },
+  "available": ["kpi.*", "recent.users", "chart.*", "schedules.*", "practice.*"],
+  "userCustomization": true
+}
+```
+
+The reference app has no `dashboard` field, so there the widgets join the default layout by their `order`.
+
 #### Check it
 
 Sign in as `admin-user`:
@@ -551,8 +651,9 @@ Sign in as `admin-user`:
 | Sidebar | Users (10), Practice (12), Schedules (15), Dashboard (20) |
 | `/practice` | A list of practitioners; each id links to `/practice/<id>` |
 | `/practice/intake` | A form with a required Reason field and a Notes field |
-| Dashboard, top strip | Practitioners first, at order 5, before the built-in cards |
-| Dashboard rows | A new row at order 25 between the recent locations (20) and recent organizations (30) rows, with the main widget on the left and the side widget on the right |
+| Dashboard, top strip | Practitioners, then Active Schedules, then Total Users, in the document's order |
+| Dashboard rows | Recently Added Users beside User Distribution, then the main widget beside the side widget |
+| Configure dashboard, Add widget | A Practice group listing Practitioners, Main column widget and Side column widget |
 | Users, row ⋮ menu | View schedules (10), then Open in practice (20) |
 | Sign in as `manager-user` | All of the above is hidden: `practice.view` only lists `admin` |
 | Document `"permissionMap": { "practice.view": ["admin", "care-team-manager"] }` | `manager-user` now sees it all |
@@ -604,4 +705,5 @@ To test your own extension, follow [EXTENDING.md](./EXTENDING.md#testing-an-exte
 - **Slots.** `users.rowActions` is the only slot. More need a shell change.
 - **Replacing components.** An extension adds UI; it cannot replace a built-in component.
 - **Sidebar ids.** The document's `navigation` only positions the shell's own screens. Extension entries are positioned by their manifest `order`.
+- **Dashboard layouts.** A user's layout lives in one browser, and two open tabs do not merge their changes. Cards are reordered with buttons, not by dragging, and have no settings of their own. A deployment that wants more extends the shell in its own codebase.
 - **Extension flags in the reference app.** The reference app's document only accepts its own flag names until an extension's flag is added to `FLAG_NAMES`.

@@ -70,6 +70,7 @@ The image serves `apps/ohs-player-web/public/portal-config.json` at `/portal-con
 | `locale`, `messages` | Locale and message overrides by key | `en`, the built-in messages |
 | `customEndpoints` | Gateway route alias to path: `users`, `groups`, `roles`, `locationHierarchy`, `practitionerDetails`, and the bulk import routes `usersBulkImport`, `organizationsBulkImport`, `locationsBulkImport` | the built-in aliases |
 | `questionnaireVariant` | Bundled questionnaire set | `VITE_QUESTIONNAIRE_VARIANT` |
+| `dashboard` | The starting dashboard. `layout` lists card ids per region (`kpi`, `main`, `side`), `available` lists the ids or `<prefix>.*` patterns users may add, and `userCustomization: false` hides the editing controls (see [CUSTOMIZING.md](./CUSTOMIZING.md) Part 1 step 9) | every card the user can see, with users free to change it |
 
 Every field is optional. The reference document carries the product name, brand pins, sidebar, permission map, locale and endpoint aliases. It leaves the connection settings, flags and questionnaire variant to `VITE_*`, so each environment's build args keep applying until you add them.
 
@@ -80,12 +81,13 @@ Every field is optional. The reference document carries the product name, brand 
 3. The `VITE_*` value baked in at build time.
 4. The default in `apps/ohs-player-web/src/config/env.ts` or `platform.ts`.
 
-Maps such as `flags`, `permissionMap`, `messages`, `customEndpoints` and the brand pins combine key by key, so a document can override one flag and leave the rest to the fallback. A `navigation` list replaces the whole sidebar, because its order matters. Entries are sorted by `order`, and the built-in entries are spaced ten apart so a new one can slot in between.
+Maps such as `flags`, `permissionMap`, `messages`, `customEndpoints` and the brand pins combine key by key, so a document can override one flag and leave the rest to the fallback. A `navigation` list replaces the whole sidebar, because its order matters. A `dashboard.layout` replaces the whole default layout for the same reason, and a region it leaves out is empty. Entries are sorted by `order`, and the built-in entries are spaced ten apart so a new one can slot in between.
 
 **When the document is missing or bad:**
 
 - **Missing or unreachable** (404, network error, not JSON): the app starts without an error, on the last valid document this browser loaded or, failing that, on the build-time values. With the reference document, the build-time values render identically.
 - **Invalid** (unknown field, wrong type, missing `order` on a navigation entry, and so on): the app still starts on the fallback values. The error names the field and the expected type, for example `✖ Invalid input: expected boolean, received string → at flags.userMgmt`. It goes to the platform `onError` callback, and in development it also appears as an error toast.
+- **Unknown dashboard id** (a `dashboard` id that is well formed but names no built-in card or installed extension widget, a card placed in a region it cannot sit in, or an `available` pattern that matches nothing). The schema cannot catch it, so the host checks it at startup. In development the app throws with the field path, for example `dashboard.layout.main[1]`. In production the message goes to `onError`, the id is dropped and the rest of the dashboard renders.
 - **Unknown message key** (a `messages` key that neither the library, the app nor an installed extension declares): the document still applies, and the key has no effect. In every build a warning toast names the key on each load, with the closest declared key when one is near, and the same text goes to the platform `onError` callback. The schema cannot catch this, because extension keys are only known once the manifests load.
 - **The checked-in document** is validated when the image is built: `pnpm build` fails on an invalid `portal-config.json`, and `pnpm config:check` runs the same check on its own. After changing the schema, regenerate `portal-config.schema.json` with `pnpm config-schema:generate`.
 

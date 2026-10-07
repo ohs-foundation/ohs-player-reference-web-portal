@@ -133,6 +133,11 @@
 [data-ohs-root] h3 {
   font-size: var(--ohs-sys-typescale-text-l-size, 18px);
 }
+[data-ohs-root] .ohs-card-header__title,
+[data-ohs-root] .ohs-empty__title,
+[data-ohs-root] .ohs-error-state__title {
+  font-size: var(--ohs-sys-typescale-text-l-size, 18px);
+}
 [data-ohs-root] p {
   margin: 0;
 }
@@ -184,10 +189,8 @@
   cursor: not-allowed;
 }
 
-.ohs-page-header__title {
-  font-size: var(--ohs-sys-typescale-display-small-size, 40px);
-  line-height: var(--ohs-sys-typescale-display-small-line-height, 48px);
-  font-weight: var(--ohs-sys-typescale-display-small-weight, 500);
+[data-ohs-root] .ohs-page-header__title {
+  font-size: var(--ohs-sys-typescale-headline-medium-size, 24px);
   letter-spacing: var(--ohs-sys-typescale-display-small-letter-spacing, -1px);
 }
 .ohs-page-header__description {
@@ -2143,96 +2146,6 @@
   }
 }
 
-/* M3 outlined split button, medium: two segments 2px apart with small inner corners. */
-.ohs-split-button {
-  display: inline-flex;
-  align-items: stretch;
-  gap: calc(var(--ohs-sys-spacing-1, 4px) / 2);
-  height: var(--ohs-sys-spacing-14, 56px);
-  padding: 0;
-  border: none;
-  border-radius: var(--ohs-sys-shape-corner-full, 9999px);
-  background: none;
-  color: var(--ohs-sys-color-on-surface-variant, #696969);
-  font-family: var(--ohs-sys-typescale-label-large-font, inherit);
-  font-size: var(--ohs-sys-typescale-label-large-size, 16px);
-  line-height: var(--ohs-sys-typescale-label-large-line-height, 24px);
-  font-weight: var(--ohs-sys-typescale-label-large-weight, 500);
-  letter-spacing: var(--ohs-sys-typescale-label-large-letter-spacing, -0.5px);
-  cursor: pointer;
-}
-.ohs-split-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ohs-sys-color-focus-ring, rgba(31, 111, 235, 0.35));
-}
-.ohs-split-button__segment {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--ohs-sys-spacing-6, 24px);
-  border: 1px solid var(--ohs-sys-color-outline, #74777f);
-  border-radius: var(--ohs-sys-shape-corner-full, 9999px) var(--ohs-sys-shape-corner-extra-small, 4px)
-    var(--ohs-sys-shape-corner-extra-small, 4px) var(--ohs-sys-shape-corner-full, 9999px);
-  white-space: nowrap;
-}
-.ohs-split-button__segment--icon {
-  padding: 0 var(--ohs-sys-spacing-4, 16px);
-  border-radius: var(--ohs-sys-shape-corner-extra-small, 4px) var(--ohs-sys-shape-corner-full, 9999px)
-    var(--ohs-sys-shape-corner-full, 9999px) var(--ohs-sys-shape-corner-extra-small, 4px);
-}
-.ohs-split-button__segment--icon svg {
-  transition: transform var(--ohs-sys-motion-duration-short4, 200ms)
-    var(--ohs-sys-motion-easing-standard, ease);
-}
-.ohs-split-button[data-state='open'] .ohs-split-button__segment--icon svg {
-  transform: rotate(180deg);
-}
-
-.ohs-kpi-picker {
-  width: 424px;
-  padding: var(--ohs-sys-spacing-2, 8px) 0;
-}
-.ohs-kpi-picker__title {
-  margin: 0;
-  padding: var(--ohs-sys-spacing-6, 24px);
-  color: var(--ohs-sys-color-on-surface-variant, #696969);
-  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-  line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
-  font-weight: var(--ohs-sys-typescale-body-medium-weight, 400);
-}
-.ohs-kpi-picker__notice {
-  margin: 0 var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-2, 8px);
-  padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-6, 24px);
-  border-radius: var(--ohs-sys-shape-corner-extra-large-decreased, 24px);
-  background: var(--ohs-sys-color-warning-container, #fff5cc);
-  color: var(--ohs-sys-color-on-warning-container, #5c4a00);
-  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-  line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
-  font-weight: var(--ohs-sys-typescale-body-medium-weight, 400);
-}
-.ohs-kpi-picker__option {
-  display: flex;
-  align-items: center;
-  gap: var(--ohs-sys-spacing-4, 16px);
-  height: var(--ohs-sys-spacing-14, 56px);
-  padding: 0 var(--ohs-sys-spacing-6, 24px);
-  color: var(--ohs-sys-color-on-surface, #0d0d0d);
-  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
-  line-height: var(--ohs-sys-typescale-body-large-line-height, 24px);
-  cursor: pointer;
-}
-.ohs-kpi-picker__option[data-disabled] {
-  cursor: not-allowed;
-}
-.ohs-kpi-picker__option[data-disabled] .ohs-kpi-picker__option-label {
-  opacity: var(--ohs-sys-state-disabled-content-opacity, 0.38);
-}
-.ohs-kpi-picker__actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--ohs-sys-spacing-3, 12px);
-  padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-2, 8px);
-}
-
 /* Card radius is extra-large here; the dashboard's inner table boxes stay on the Card default
    (extra-large-decreased), so the two nesting levels stay visually distinct. */
 .ohs-kpi {
@@ -2330,6 +2243,101 @@
   }
 }
 
+/* Configure mode: a sticky action bar, and each card framed with its move and remove controls. */
+.ohs-dash-editbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-2, 8px);
+  padding: var(--ohs-sys-spacing-3, 12px) var(--ohs-sys-spacing-4, 16px);
+  border: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
+  border-radius: var(--ohs-sys-shape-corner-large, 16px);
+  background: var(--ohs-sys-color-surface-container-lowest, #fff);
+  box-shadow: var(--ohs-sys-elevation-level2);
+}
+.ohs-dash-editbar__spacer {
+  flex: 1;
+}
+.ohs-dash-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-sys-spacing-2, 8px);
+  min-width: 0;
+  padding: var(--ohs-sys-spacing-2, 8px);
+  border: 1px dashed var(--ohs-sys-color-outline, #74777f);
+  border-radius: var(--ohs-sys-shape-corner-extra-large, 28px);
+}
+.ohs-dash-tile > .ohs-card {
+  flex: 1;
+}
+.ohs-dash-row > .ohs-dash-tile {
+  height: 100%;
+}
+.ohs-dash-tile__bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ohs-sys-spacing-1, 4px);
+}
+.ohs-dash-tile__bar .ohs-icon-button:disabled {
+  opacity: var(--ohs-sys-state-disabled-content-opacity, 0.38);
+  cursor: not-allowed;
+}
+@media (max-width: 900px) {
+  .ohs-dash-row > .ohs-dash-tile {
+    height: auto;
+  }
+}
+
+.ohs-widget-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ohs-sys-spacing-6, 24px);
+  padding: var(--ohs-sys-spacing-6, 24px) var(--ohs-sys-spacing-10, 40px);
+}
+.ohs-widget-picker__notice {
+  margin: 0;
+  padding: var(--ohs-sys-spacing-4, 16px) var(--ohs-sys-spacing-6, 24px);
+  border-radius: var(--ohs-sys-shape-corner-large, 16px);
+  background: var(--ohs-sys-color-warning-container, #fff5cc);
+  color: var(--ohs-sys-color-on-warning-container, #5c4a00);
+  font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
+  line-height: var(--ohs-sys-typescale-body-medium-line-height, 20px);
+}
+.ohs-widget-picker .ohs-widget-picker__category {
+  margin: 0 0 var(--ohs-sys-spacing-2, 8px);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
+  font-size: var(--ohs-sys-typescale-title-medium-size, 16px);
+  line-height: var(--ohs-sys-typescale-title-medium-line-height, 24px);
+  font-weight: var(--ohs-sys-typescale-title-medium-weight, 500);
+}
+.ohs-widget-picker__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ohs-widget-picker__option {
+  display: flex;
+  align-items: center;
+  gap: var(--ohs-sys-spacing-3, 12px);
+  min-height: var(--ohs-sys-spacing-14, 56px);
+  border-bottom: 1px solid var(--ohs-sys-color-outline-variant, #ededed);
+}
+.ohs-widget-picker__title {
+  flex: 1;
+  min-width: 0;
+  color: var(--ohs-sys-color-on-surface, #0d0d0d);
+  font-size: var(--ohs-sys-typescale-body-large-size, 16px);
+  line-height: var(--ohs-sys-typescale-body-large-line-height, 24px);
+}
+.ohs-widget-picker__option .ohs-button[aria-disabled='true'] {
+  opacity: var(--ohs-sys-state-disabled-content-opacity, 0.38);
+  cursor: not-allowed;
+}
+
 /* Card is flush (no padding) so the table spans edge-to-edge and shares the card's L/R/bottom borders.
    The header carries its own padding; the table runs full-width directly beneath it. */
 .ohs-dash-card__head {
@@ -2381,6 +2389,9 @@
 .ohs-dist-card {
   display: flex;
   flex-direction: column;
+}
+.ohs-dist-card .ohs-dist-card__title {
+  margin-bottom: var(--ohs-sys-spacing-3, 12px);
 }
 .ohs-dist-card__body {
   flex: 1;
