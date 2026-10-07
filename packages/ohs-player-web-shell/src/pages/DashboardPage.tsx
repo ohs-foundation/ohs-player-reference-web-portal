@@ -19,8 +19,6 @@ import { EditableTile } from '../features/dashboard/EditableTile';
 import { useDashboardEditor, type DashboardEditor } from '../features/dashboard/useDashboardEditor';
 import { useDashboardLayout } from '../features/dashboard/useDashboardLayout';
 import { VisibleWidgets } from '../features/dashboard/VisibleWidgets';
-import { WidgetSettingsPanel } from '../features/dashboard/WidgetSettingsPanel';
-import { isFullWidth, settingsOf, type WidgetSettings } from '../features/dashboard/widgetSettings';
 import { useWidgetCatalogue, type WidgetDefinition } from '../features/dashboard/widgetCatalogue';
 import { usePortalConfig } from '../config/portalConfigContext';
 import { DASHBOARD_REGIONS, type DashboardRegion } from '../host/types';
@@ -54,10 +52,7 @@ function DashboardView({ catalogue, visible }: Readonly<DashboardViewProps>): Re
       const entry = byId.get(id);
       if (!entry) return [];
       const shown = ids.filter(isVisible);
-      const values = settingsOf(entry, editor.settings);
-      const position = { index: shown.indexOf(id), count: shown.length };
-      const node = tile(editor, entry, titleOf(id), values, position);
-      return [{ key: id, node, full: isFullWidth(values) }];
+      return [{ key: id, node: tile(editor, entry, titleOf(id), shown.indexOf(id), shown.length) }];
     });
 
   const kpi = cardsIn('kpi');
@@ -127,19 +122,10 @@ function tile(
   editor: DashboardEditor,
   entry: WidgetDefinition,
   title: string,
-  values: WidgetSettings,
-  { index, count }: Readonly<{ index: number; count: number }>,
+  index: number,
+  count: number,
 ): ReactNode {
-  if (!editor.editing) return entry.render(values);
-  const renderSettings = (headingId: string): ReactNode => (
-    <WidgetSettingsPanel
-      headingId={headingId}
-      title={title}
-      settings={entry.settings}
-      values={values}
-      onChange={(key, value) => editor.setSetting(entry, key, value)}
-    />
-  );
+  if (!editor.editing) return entry.render();
   return (
     <EditableTile
       title={title}
@@ -148,15 +134,8 @@ function tile(
       focusRequest={editor.focusRequest?.id === entry.id ? editor.focusRequest : undefined}
       onMove={(direction) => editor.move(entry.id, direction)}
       onRemove={() => editor.remove(entry.id)}
-      drag={{
-        onStart: () => editor.startDrag(entry.id),
-        onEnd: editor.endDrag,
-        accepts: editor.acceptsDrop(entry.id),
-        onDrop: () => editor.dropOn(entry.id),
-      }}
-      renderSettings={entry.settings.length > 0 ? renderSettings : undefined}
     >
-      {entry.render(values)}
+      {entry.render()}
     </EditableTile>
   );
 }

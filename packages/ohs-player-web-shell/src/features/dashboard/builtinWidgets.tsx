@@ -16,12 +16,10 @@ import { useRecent, useResourceStats } from './useDashboardData';
 
 type Translate = ReturnType<typeof useTranslation>['t'];
 
-export interface RecentWidgetKeys {
+export interface RecentWidgetProps {
   titleKey: string;
   subtitleKey: string;
 }
-
-export type RecentWidgetProps = RecentWidgetKeys & { rows: number };
 
 interface RecentSpec<Row extends { id?: string }> {
   resourceType: string;
@@ -139,10 +137,9 @@ function RecentWidget<Row extends { id?: string }>({
   spec,
   titleKey,
   subtitleKey,
-  rows,
 }: Readonly<RecentWidgetProps & { spec: RecentSpec<Row> }>): ReactNode {
   const { t } = useTranslation();
-  const recent = useRecent<Row>(spec.resourceType, rows);
+  const recent = useRecent<Row>(spec.resourceType);
   return (
     <RecentCard
       title={t(titleKey)}

@@ -27,14 +27,7 @@ function literalKeys(): string[] {
 function dataKeys(): string[] {
   return [
     ...DEFAULT_NAVIGATION.map((entry) => entry.labelKey),
-    ...builtinWidgets(DEFAULT_NAVIGATION).flatMap((entry) => [
-      entry.titleKey,
-      entry.categoryKey,
-      ...entry.settings.flatMap((setting) => [
-        setting.labelKey,
-        ...setting.options.map((option) => option.labelKey),
-      ]),
-    ]),
+    ...builtinWidgets(DEFAULT_NAVIGATION).flatMap((entry) => [entry.titleKey, entry.categoryKey]),
     ...['Practitioner', 'Location', 'Organization', 'CareTeam'].map(
       (type) => `resourceType${type}`,
     ),

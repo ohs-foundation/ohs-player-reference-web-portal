@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_NAVIGATION } from '../../config/navigation';
 import {
   addWidget,
-  placeWidget,
-  pairRows,
   allowedBy,
   defaultLayout,
   EMPTY_LAYOUT,
@@ -202,62 +200,5 @@ describe('allowedBy', () => {
       false,
       false,
     ]);
-  });
-});
-
-describe('pairRows', () => {
-  const card = (key: string, full = false) => ({ key, full });
-
-  it('pairs by position and leaves a longer column on its own', () => {
-    expect(pairRows([card('m1'), card('m2')], [card('s1')])).toEqual([
-      { main: card('m1'), side: card('s1'), full: false },
-      { main: card('m2'), side: undefined, full: false },
-    ]);
-  });
-
-  it('gives a full width card its own row and moves the other column down', () => {
-    const rows = pairRows([card('m1'), card('m2', true), card('m3')], [card('s1'), card('s2')]);
-
-    expect(rows.map((row) => [row.main?.key, row.side?.key, row.full])).toEqual([
-      ['m1', 's1', false],
-      ['m2', undefined, true],
-      ['m3', 's2', false],
-    ]);
-  });
-
-  it('puts a full width main card before a full width side card at the same position', () => {
-    const rows = pairRows([card('m1', true)], [card('s1', true)]);
-
-    expect(rows.map((row) => [row.main?.key, row.side?.key])).toEqual([
-      ['m1', undefined],
-      [undefined, 's1'],
-    ]);
-  });
-});
-
-describe('placeWidget', () => {
-  const layout: DashboardLayout = {
-    kpi: ['kpi.users', 'kpi.locations', 'kpi.organizations'],
-    main: ['recent.users'],
-    side: [],
-  };
-
-  it('takes the place of the card it is dropped on, moving down or up', () => {
-    expect(placeWidget(layout, 'kpi.users', 'kpi.organizations').kpi).toEqual([
-      'kpi.locations',
-      'kpi.organizations',
-      'kpi.users',
-    ]);
-    expect(placeWidget(layout, 'kpi.organizations', 'kpi.users').kpi).toEqual([
-      'kpi.organizations',
-      'kpi.users',
-      'kpi.locations',
-    ]);
-  });
-
-  it('changes nothing across regions, onto itself or for an unplaced card', () => {
-    expect(placeWidget(layout, 'kpi.users', 'recent.users')).toBe(layout);
-    expect(placeWidget(layout, 'kpi.users', 'kpi.users')).toBe(layout);
-    expect(placeWidget(layout, 'kpi.careTeams', 'kpi.users')).toBe(layout);
   });
 });

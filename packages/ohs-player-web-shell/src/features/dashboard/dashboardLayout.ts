@@ -131,58 +131,9 @@ export function moveWidget(
   return { ...layout, [region]: ids };
 }
 
-/** Moves `id` to the place of `targetId` when both sit in the same region, else changes nothing. */
-export function placeWidget(
-  layout: DashboardLayout,
-  id: string,
-  targetId: string,
-): DashboardLayout {
-  const region = regionOf(layout, id);
-  if (!region || id === targetId || regionOf(layout, targetId) !== region) return layout;
-  const ids = layout[region].filter((current) => current !== id);
-  ids.splice(layout[region].indexOf(targetId), 0, id);
-  return { ...layout, [region]: ids };
-}
-
 export function sameLayout(a: DashboardLayout, b: DashboardLayout): boolean {
   return DASHBOARD_REGIONS.every(
     (region) =>
       a[region].length === b[region].length && a[region].every((id, i) => id === b[region][i]),
   );
-}
-
-/** One dashboard row: a main card beside a side card, or one full width card on its own. */
-export interface DashboardRow<Card> {
-  main?: Card;
-  side?: Card;
-  full: boolean;
-}
-
-/**
- * Pairs `main[i]` with `side[i]` by position. A full width card takes a row of its own at its place
- * in its column, a main card first when both columns reach one, and the other column moves down.
- */
-export function pairRows<Card extends { full?: boolean }>(
-  main: readonly Card[],
-  side: readonly Card[],
-): DashboardRow<Card>[] {
-  const rows: DashboardRow<Card>[] = [];
-  let m = 0;
-  let s = 0;
-  while (m < main.length || s < side.length) {
-    const mainCard = main.at(m);
-    const sideCard = side.at(s);
-    if (mainCard?.full) {
-      rows.push({ main: mainCard, full: true });
-      m += 1;
-    } else if (sideCard?.full) {
-      rows.push({ side: sideCard, full: true });
-      s += 1;
-    } else {
-      rows.push({ main: mainCard, side: sideCard, full: false });
-      m += mainCard ? 1 : 0;
-      s += sideCard ? 1 : 0;
-    }
-  }
-  return rows;
 }

@@ -11,18 +11,11 @@ import {
   RecentOrganizations,
   RecentUsers,
   StatusDistribution,
-  type RecentWidgetKeys,
   type RecentWidgetProps,
 } from './builtinWidgets';
 import { ExtensionWidgetTile } from './ExtensionWidgetTile';
 import { KpiCard } from './KpiCard';
 import { gatedKpis, type GatedKpi, type KpiId } from './kpiCatalogue';
-import {
-  ROWS_SETTING,
-  WIDTH_SETTING,
-  type WidgetSetting,
-  type WidgetSettings,
-} from './widgetSettings';
 
 /** Ids of the dashboard cards the shell ships, for a configuration document's `dashboard` field. */
 export const BUILTIN_WIDGET_IDS = [
@@ -54,9 +47,7 @@ export interface WidgetDefinition {
   regions: readonly DashboardRegion[];
   order: number;
   requires?: Requirement;
-  /** The choices a user can make for this card in configure mode. */
-  settings: readonly WidgetSetting[];
-  render: (settings: WidgetSettings) => ReactNode;
+  render: () => ReactNode;
 }
 
 const CATEGORY_KEY: Readonly<Record<WidgetKind, string>> = {
@@ -67,7 +58,7 @@ const CATEGORY_KEY: Readonly<Record<WidgetKind, string>> = {
 
 interface EntityCards {
   recent: ComponentType<RecentWidgetProps>;
-  recentKeys: RecentWidgetKeys;
+  recentKeys: RecentWidgetProps;
   distributionTitleKey: string;
 }
 
@@ -106,7 +97,6 @@ function kpiWidget(kpi: GatedKpi): WidgetDefinition {
     regions: ['kpi'],
     order: kpi.order,
     requires: kpi.requires,
-    settings: [],
     render: () => createElement(KpiCard, { kpi }),
   };
 }
@@ -121,8 +111,7 @@ function recentWidget(kpi: GatedKpi): WidgetDefinition {
     regions: ['main'],
     order: kpi.order,
     requires: kpi.requires,
-    settings: [ROWS_SETTING, WIDTH_SETTING],
-    render: (settings) => createElement(recent, { ...recentKeys, rows: Number(settings.rows) }),
+    render: () => createElement(recent, recentKeys),
   };
 }
 
@@ -136,7 +125,6 @@ function statusWidget(kpi: GatedKpi): WidgetDefinition {
     regions: ['side'],
     order: kpi.order,
     requires: kpi.requires,
-    settings: [WIDTH_SETTING],
     render: () => createElement(StatusDistribution, { kpi, titleKey }),
   };
 }
@@ -159,7 +147,6 @@ export function extensionWidgets(
     regions: [widget.region],
     order: widget.order,
     requires: widget.requires,
-    settings: widget.region === 'kpi' ? [] : [WIDTH_SETTING],
     render: () => createElement(ExtensionWidgetTile, { widget }),
   }));
 }

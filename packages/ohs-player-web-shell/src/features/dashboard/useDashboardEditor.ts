@@ -3,7 +3,6 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
   addWidget,
   moveWidget,
-  placeWidget,
   regionOf,
   removeWidget,
   type DashboardLayout,
@@ -13,12 +12,6 @@ import type { FocusRequest, MoveDirection } from './EditableTile';
 import { useDashboardDraft } from './useDashboardDraft';
 import type { DashboardLayoutState } from './useDashboardLayout';
 import type { WidgetDefinition } from './widgetCatalogue';
-import {
-  EMPTY_SETTINGS,
-  withoutWidget,
-  withSetting,
-  type DashboardSettings,
-} from './widgetSettings';
 
 export interface DashboardEditorOptions {
   saved: DashboardLayoutState;
@@ -30,7 +23,6 @@ export interface DashboardEditorOptions {
 export interface DashboardEditor {
   editing: boolean;
   layout: DashboardLayout;
-  settings: DashboardSettings;
   adding: boolean;
   focusRequest?: FocusRequest;
   announcement: string;
@@ -41,12 +33,7 @@ export interface DashboardEditor {
   closeAdd: () => void;
   add: (entry: WidgetDefinition) => void;
   move: (id: string, direction: MoveDirection) => void;
-  startDrag: (id: string) => void;
-  endDrag: () => void;
-  acceptsDrop: (id: string) => boolean;
-  dropOn: (targetId: string) => void;
   remove: (id: string) => void;
-  setSetting: (entry: WidgetDefinition, key: string, value: string) => void;
   reset: () => void;
   cancel: () => void;
   save: () => void;
@@ -61,16 +48,14 @@ export function useDashboardEditor({
 }: DashboardEditorOptions): DashboardEditor {
   const { t } = useTranslation();
   const { notify } = useStatusBar();
-  const draft = useDashboardDraft({ layout: saved.layout, settings: saved.settings });
+  const draft = useDashboardDraft(saved.layout);
   const [adding, setAdding] = useState(false);
   const [focusRequest, setFocusRequest] = useState<FocusRequest>();
   const [announcement, setAnnouncement] = useState('');
-  const [dragging, setDragging] = useState<string>();
   const addRef = useRef<HTMLButtonElement>(null);
   const configureRef = useRef<HTMLButtonElement>(null);
   const wasEditing = useRef(false);
-  const { layout, settings } = draft.arrangement;
-  const setLayout = (next: DashboardLayout): void => draft.update({ layout: next, settings });
+  const layout = draft.layout;
 
   useEffect(() => {
     if (draft.editing === wasEditing.current) return;
@@ -94,7 +79,6 @@ export function useDashboardEditor({
   return {
     editing: draft.editing,
     layout,
-    settings,
     adding,
     focusRequest,
     announcement,
@@ -106,37 +90,22 @@ export function useDashboardEditor({
       setAdding(true);
     },
     closeAdd: () => setAdding(false),
-    add: (entry) => setLayout(addWidget(layout, entry.regions[0], entry.id, isVisible)),
+    add: (entry) => draft.update(addWidget(layout, entry.regions[0], entry.id, isVisible)),
     move: (id, direction) => {
       const next = moveWidget(layout, id, direction, isVisible);
-      setLayout(next);
+      draft.update(next);
       setFocusRequest({ id, direction });
       announcePosition(next, id);
     },
-    startDrag: setDragging,
-    endDrag: () => setDragging(undefined),
-    acceptsDrop: (id) =>
-      dragging !== undefined &&
-      dragging !== id &&
-      regionOf(layout, dragging) === regionOf(layout, id),
-    dropOn: (targetId) => {
-      if (!dragging) return;
-      const next = placeWidget(layout, dragging, targetId);
-      setLayout(next);
-      announcePosition(next, dragging);
-      setDragging(undefined);
-    },
     remove: (id) => {
-      draft.update({ layout: removeWidget(layout, id), settings: withoutWidget(settings, id) });
+      draft.update(removeWidget(layout, id));
       addRef.current?.focus();
       setAnnouncement(t('widgetRemoved', { title: titleOf(id) }));
     },
-    setSetting: (entry, key, value) =>
-      draft.update({ layout, settings: withSetting(settings, entry, key, value) }),
-    reset: () => draft.update({ layout: defaults, settings: EMPTY_SETTINGS }),
+    reset: () => draft.update(defaults),
     cancel: stop,
     save: () => {
-      saved.save(draft.arrangement);
+      saved.save(layout);
       stop();
       notify({ tone: 'success', title: t('dashboardSaved') });
     },
