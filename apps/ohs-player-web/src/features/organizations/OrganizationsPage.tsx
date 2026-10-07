@@ -21,7 +21,7 @@ import {
   Page,
   PageHeader,
   SearchField,
-  StatusBadge,
+  RecordStatusBadge,
   IconAddCircle,
   IconChevronDown,
   IconMore,
@@ -306,16 +306,7 @@ export function OrganizationsPage() {
               header: t('columnStatus'),
               sortable: true,
               sortValue: (o) => (isActive(o) ? 1 : 0),
-              render: (o) =>
-                isActive(o) ? (
-                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>
-                    {t('statusActive')}
-                  </StatusBadge>
-                ) : (
-                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>
-                    {t('statusInactive')}
-                  </StatusBadge>
-                ),
+              render: (o) => <RecordStatusBadge status={isActive(o) ? 'active' : 'inactive'} />,
             },
             {
               key: 'actions',

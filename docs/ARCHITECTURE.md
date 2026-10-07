@@ -98,7 +98,7 @@ Location and organization editing uses FHIR `Questionnaire` JSON **bundled in th
 ### Layer split
 
 - **Library (`ohs-player-web-core`)** ships only **behavior + Radix wrappers** and the theme engine — `OhsDialog`, `OhsDropdownMenu`, `OhsTabs`, `OhsToast`, `OhsTooltip`, `StatusBar`, the SDC `QuestionnaireForm`/`QuestionnaireFields`, and `themeCss`/`installThemeCss`. It does **not** export `Button`, `Card`, `TextField`, etc.
-- **Shell (`packages/ohs-player-web-shell/src/components/ui/`)** owns the **presentational primitives**: `Button`, `Card`, `Field`/`TextField`/`SelectField`/`TextAreaField`, `Combobox`, `Listbox`, `SearchField`, `DataTable` (client paging, or server paging through `serverPagination`), `DetailField`, `Drawer`, `Popover`, `Layout` (`Page`/`PageHeader`/`Stack`/`Inline`), `States` (`EmptyState`/`ErrorState`/`Spinner`/`LinearProgress`/`StatusBadge`), `Switch`, `Checkbox`, `Chips`, `Avatar`, `KpiBadge`, `DonutChart`, and the icon set.
+- **Shell (`packages/ohs-player-web-shell/src/components/ui/`)** owns the **presentational primitives**: `Button`, `Card`, `Field`/`TextField`/`SelectField`/`TextAreaField`, `Combobox`, `Listbox`, `SearchField`, `DataTable` (client paging, or server paging through `serverPagination`), `DetailField`, `Drawer`, `Popover`, `Layout` (`Page`/`PageHeader`/`Stack`/`Inline`), `States` (`EmptyState`/`ErrorState`/`Spinner`/`LinearProgress`/`StatusBadge`, and `RecordStatusBadge`, which gives each record status one tone across every screen), `Switch`, `Checkbox`, `Chips`, `Avatar`, `KpiBadge`, `DonutChart`, and the icon set.
 
 The library must never import from the shell or an app, and the shell must never import from an app. Feature code imports primitives from `'ohs-player-web-shell'`.
 

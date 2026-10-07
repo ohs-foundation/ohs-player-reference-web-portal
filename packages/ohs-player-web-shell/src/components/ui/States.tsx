@@ -84,6 +84,48 @@ export function StatusBadge({ tone = 'neutral', icon, children }: Readonly<Statu
   );
 }
 
+export interface RecordStatusBadgeProps {
+  /** A record status code: `active`, `suspended` or `inactive`. Map a boolean `active` to `'active' | 'inactive'`. Any other code renders neutral. */
+  status: string | null | undefined;
+  /** Replaces the default `statusActive` / `statusSuspended` / `statusInactive` label. */
+  children?: ReactNode;
+}
+
+function recordStatusTone(status: string | null | undefined): StatusTone {
+  switch (status) {
+    case 'active':
+      return 'success';
+    case 'suspended':
+      return 'warning';
+    default:
+      return 'neutral';
+  }
+}
+
+function useRecordStatusLabel(status: string | null | undefined): string {
+  const { t } = useTranslation();
+  switch (status) {
+    case 'active':
+      return t('statusActive');
+    case 'suspended':
+      return t('statusSuspended');
+    case 'inactive':
+      return t('statusInactive');
+    default:
+      return status ?? '';
+  }
+}
+
+/** The status badge for a record, with one tone per status across every screen. */
+export function RecordStatusBadge({ status, children }: Readonly<RecordStatusBadgeProps>): React.ReactElement {
+  const label = useRecordStatusLabel(status);
+  return (
+    <StatusBadge tone={recordStatusTone(status)} icon={<span className="ohs-badge__dot" />}>
+      {children ?? label}
+    </StatusBadge>
+  );
+}
+
 export function Spinner({ label }: Readonly<{ label?: string }>): React.ReactElement {
   const { t } = useTranslation();
   return (

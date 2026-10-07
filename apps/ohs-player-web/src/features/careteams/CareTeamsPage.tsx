@@ -23,7 +23,7 @@ import {
   Page,
   PageHeader,
   SearchField,
-  StatusBadge,
+  RecordStatusBadge,
   IconAddCircle,
   IconChevronDown,
   IconMore,
@@ -303,16 +303,7 @@ export function CareTeamsPage() {
               header: t('columnStatus'),
               sortable: true,
               sortValue: (tm) => (isActive(tm) ? 1 : 0),
-              render: (tm) =>
-                isActive(tm) ? (
-                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>
-                    {t('statusActive')}
-                  </StatusBadge>
-                ) : (
-                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>
-                    {t('statusInactive')}
-                  </StatusBadge>
-                ),
+              render: (tm) => <RecordStatusBadge status={isActive(tm) ? 'active' : 'inactive'} />,
             },
             {
               key: 'actions',

@@ -6,7 +6,7 @@ import {
   ErrorState,
   Page,
   PageHeader,
-  StatusBadge,
+  RecordStatusBadge,
   type DataTableColumn,
 } from 'ohs-player-web-shell';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -42,12 +42,7 @@ export default function SchedulesPage(): React.ReactElement {
     {
       key: 'status',
       header: t('columnStatus'),
-      render: (s) =>
-        s.active === false ? (
-          <StatusBadge tone="neutral">{t('statusInactive')}</StatusBadge>
-        ) : (
-          <StatusBadge tone="success">{t('statusActive')}</StatusBadge>
-        ),
+      render: (s) => <RecordStatusBadge status={s.active === false ? 'inactive' : 'active'} />,
     },
   ];
 

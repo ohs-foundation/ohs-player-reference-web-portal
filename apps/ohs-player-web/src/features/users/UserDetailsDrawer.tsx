@@ -14,7 +14,7 @@ import {
   ErrorState,
   IconButton,
   Spinner,
-  StatusBadge,
+  RecordStatusBadge,
 } from 'ohs-player-web-shell';
 import {
   commitBundle,
@@ -107,9 +107,7 @@ export function UserDetailsDrawer({
         <div>
           <div className="ohs-user-drawer__name-row">
             <h2 className="ohs-user-drawer__name">{details.fullName}</h2>
-            <StatusBadge tone={details.active ? 'success' : 'neutral'} icon={<span className="ohs-badge__dot" />}>
-              {details.active ? t('statusActive') : t('statusInactive')}
-            </StatusBadge>
+            <RecordStatusBadge status={details.active ? 'active' : 'inactive'} />
           </div>
           {details.role ? <p className="ohs-user-drawer__subtitle">{details.role}</p> : null}
           <span className="ohs-user-drawer__id-chip">{details.identifier}</span>
