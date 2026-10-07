@@ -35,6 +35,22 @@ Where the issue and the code disagree, the plan follows the code.
 
 ---
 
+## Scope trim, 7 October 2026
+
+The backend team declined per user preference storage as too nuanced for a generic reference application (ohs-foundation/ohs-player-reference-backend#96). The same test was then applied to this branch. A reference app ships the mechanisms a deployment configures or extends, and leaves product polish to the deployment's own codebase.
+
+| Part | Outcome |
+| --- | --- |
+| Widget catalogue, the `dashboard` document field, the startup id check, both schemas | Kept |
+| `titleKey` and `category` on extension widgets | Kept |
+| Shell message defaults, the heading and contrast fixes | Kept |
+| Configure mode | Reduced to add, remove, move up and down, Save, Cancel and Reset, with its keyboard and screen reader support. The Add widget list no longer marks starting cards. |
+| Per user layout storage | Kept, without the migration from the old `ohs-dashboard-kpis:<sub>` key |
+| Card settings, full width cards, drag and drop | Removed |
+| The five new chart widgets, `BarChart`, `StackedBar` and the monthly count searches | Removed. The four status donuts stay as the chart examples, and a deployment adds its own charts as extension widgets. |
+
+Sections below that describe the removed parts are kept as the record of what was built and tried. D7, D1's migration and Phase 3 are superseded by this table.
+
 ## Decisions
 
 | # | Question | Answer |
@@ -191,18 +207,17 @@ Four of the follow ups needed no backend and were built here after the walkthrou
 | --- | --- |
 | Page heading | `PageHeader` renders its title as the page's `h1`, keeping the 24 pixel size the root heading rule gave it as an `h2`, so axe no longer reports `page-has-heading-one`. The headings directly below it moved from `h3` to `h2` so no level is skipped, which covers the dashboard cards, the empty and error states and the FHIR Viewer panel. Each keeps its rendered size. The dashboard stays pixel identical to `main` below the header. |
 | Example sidebar contrast | The example document pins `secondary-container` to its teal container. Teal on the generated pale blue was 4.25 to 1, and is 4.86 to 1 now. `brandContrast.test.ts` fails if the pair drops below 4.5 to 1. The guide's violet example had the same fault and pins it too. |
-| Shell message defaults | `SHELL_MESSAGES` holds English copy for all 119 keys the shell renders. `createPortalHost` merges it below the app's messages, the host treats its keys as declared for the clash and unknown key checks, and the example catalogue went from 109 keys to 4. A shell test fails when the shell renders a key the catalogue lacks. |
-| Card settings and width | Each catalogue entry declares its settings as data. Recently Added offers 5 or 10 rows, Updated by month offers 3, 6 or 12 months, and every card below the strip offers column or full width. Settings are saved per user beside the layout, only when they differ from the default. The monthly chart reserves twelve count searches and leaves the ones outside its window idle, because hooks cannot loop. |
-| Drag and drop | Native HTML5 drag and drop, no dependency. A card dropped on another card in the same region takes its place, and the move is announced. Touch screens keep the move buttons. |
+| Shell message defaults | `SHELL_MESSAGES` holds English copy for every key the shell renders, 99 after the scope trim. `createPortalHost` merges it below the app's messages, the host treats its keys as declared for the clash and unknown key checks, and the example catalogue went from 109 keys to 4. A shell test fails when the shell renders a key the catalogue lacks. |
+| Card settings and width (removed in the scope trim) | Each catalogue entry declares its settings as data. Recently Added offers 5 or 10 rows, Updated by month offers 3, 6 or 12 months, and every card below the strip offers column or full width. Settings are saved per user beside the layout, only when they differ from the default. The monthly chart reserves twelve count searches and leaves the ones outside its window idle, because hooks cannot loop. |
+| Drag and drop (removed in the scope trim) | Native HTML5 drag and drop, no dependency. A card dropped on another card in the same region takes its place, and the move is announced. Touch screens keep the move buttons. |
 
 ## Follow ups
 
 * Two accessibility findings remain that this branch does not touch. On the FHIR Viewer, the monospaced identifier cells fail colour contrast (serious). On the Users, Organisations and Care Teams lists, the row actions column has an empty header (minor).
-* Server side storage of the layout and card settings, so they follow the user across devices. Raised as ohs-foundation/ohs-player-reference-backend#96.
-* Card settings in the configuration document, if deployments ask for them.
+* Server side storage of the layout was declined by the backend team (ohs-foundation/ohs-player-reference-backend#96). A deployment that needs it adds it in its own codebase.
 
 ## Risks
 
 * Position pairing changes rows for a deployment with an unpaired `main` or `side` extension widget. The guides say so.
 * Gating lists and charts (D9) hides cards a deployment with a screen switched off saw before.
-* Each monthly chart issues six count searches. Four of them on one dashboard is 24 small requests, cached by TanStack Query.
+* Users who chose KPIs with the old picker start from the deployment layout once, because the old key is no longer migrated.

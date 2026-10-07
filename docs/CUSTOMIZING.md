@@ -148,16 +148,16 @@ The sidebar now says Staff and Rosters. The Staff page heading, the Total Staff 
 
 A rename is made key by key. Each label has its own key, so renaming a screen everywhere means overriding each one. For Schedules, `navSchedules` is the sidebar entry, `schedulesTitle` the page heading, `schedulesKpi` the dashboard tile and `schedulesViewForUser` the row action, all listed in `apps/ohs-player-web-example/src/extensions/schedules/messages.ts`. For the four built-in screens, these are the keys that carry the name. The shell declares the sidebar, dashboard and notification keys in `packages/ohs-player-web-shell/src/i18n/shellMessages.ts`, so every app has them, and each app declares its page headings, in `apps/ohs-player-web/src/i18n/appMessages.ts` for the reference app. The example app declares only `pageUsers` for its one page and the few keys it words differently.
 
-| Screen | Sidebar, search and Active Share | Dashboard | Page heading | Notifications |
+| Screen | Sidebar and search | Dashboard | Page heading | Notifications |
 | --- | --- | --- | --- | --- |
-| Users | `navUsers` | `kpiTotalUsers`, `recentUsersTitle`, `recentUsersSubtitle`, `distributionUsers`, `chartUpdatedByMonthUsers` | `pageUsers` | `resourceTypePractitioner` |
-| Locations | `navLocations` | `kpiTotalLocations`, `recentLocationsTitle`, `recentLocationsSubtitle`, `distributionLocations`, `chartUpdatedByMonthLocations` | `pageLocations` | `resourceTypeLocation` |
-| Organisations | `navOrganizations` | `kpiTotalOrganizations`, `recentOrganizationsTitle`, `recentOrganizationsSubtitle`, `distributionOrganizations`, `chartUpdatedByMonthOrganizations` | `pageOrganizations` | `resourceTypeOrganization` |
-| Care Teams | `navCareTeams` | `kpiTotalCareTeams`, `recentCareTeamsTitle`, `recentCareTeamsSubtitle`, `distributionCareTeams`, `chartUpdatedByMonthCareTeams` | `pageCareTeams` | `resourceTypeCareTeam` |
+| Users | `navUsers` | `kpiTotalUsers`, `recentUsersTitle`, `recentUsersSubtitle`, `distributionUsers` | `pageUsers` | `resourceTypePractitioner` |
+| Locations | `navLocations` | `kpiTotalLocations`, `recentLocationsTitle`, `recentLocationsSubtitle`, `distributionLocations` | `pageLocations` | `resourceTypeLocation` |
+| Organisations | `navOrganizations` | `kpiTotalOrganizations`, `recentOrganizationsTitle`, `recentOrganizationsSubtitle`, `distributionOrganizations` | `pageOrganizations` | `resourceTypeOrganization` |
+| Care Teams | `navCareTeams` | `kpiTotalCareTeams`, `recentCareTeamsTitle`, `recentCareTeamsSubtitle`, `distributionCareTeams` | `pageCareTeams` | `resourceTypeCareTeam` |
 
 Drawers, empty states and toasts carry the name in keys of their own, such as `createUser`, `usersEmptyTitle` and `userCreated`. Search `appMessages.ts` and `shellMessages.ts` for the word to find them all.
 
-A key can also label more than one place. `navUsers` names the Users sidebar entry, its group in the global search results and its bar in the Active Share chart, so all three say Staff. The dashboard's Add widget list names each card by its own title, such as `kpiTotalUsers`. A `resourceType` key names the resource in the notifications panel and in the resource type column of the reference app's audit log, so overriding `resourceTypePractitioner` alone changes those two and leaves the sidebar as it was. The audit log's resource type filter still takes the FHIR type name, which the event drawer shows in its reference. The noun key is `resourceType` followed by the FHIR type, and a type with no key shows its FHIR name, such as Schedule. To name another type, declare its key in the app's messages or in the messages of the extension that owns the type, for example `resourceTypeSchedule`, rather than only in the document, because the startup warning below checks document keys against those catalogues. An extension shows the same noun with the shell's `resourceTypeLabel(t, type)`. The line under each notification is the description stored in the audit event when it was written, so no message changes it and it is not translated.
+A key can also label more than one place. `navUsers` names the Users sidebar entry and its group in the global search results, so both say Staff. The dashboard's Add widget list names each card by its own title, such as `kpiTotalUsers`. A `resourceType` key names the resource in the notifications panel and in the resource type column of the reference app's audit log, so overriding `resourceTypePractitioner` alone changes those two and leaves the sidebar as it was. The audit log's resource type filter still takes the FHIR type name, which the event drawer shows in its reference. The noun key is `resourceType` followed by the FHIR type, and a type with no key shows its FHIR name, such as Schedule. To name another type, declare its key in the app's messages or in the messages of the extension that owns the type, for example `resourceTypeSchedule`, rather than only in the document, because the startup warning below checks document keys against those catalogues. An extension shows the same noun with the shell's `resourceTypeLabel(t, type)`. The line under each notification is the description stored in the audit event when it was written, so no message changes it and it is not translated.
 
 There is no single term per screen that the other messages share. A shared term reads well in English but cannot carry plurals or grammatical agreement in other languages, so each string keeps its own key and the table above is the list to override.
 
@@ -192,11 +192,9 @@ Each card has an id.
 | Totals | `kpi.users`, `kpi.locations`, `kpi.organizations`, `kpi.careTeams` | `kpi` |
 | Recently Added tables | `recent.users`, `recent.locations`, `recent.organizations`, `recent.careTeams` | `main` |
 | Active and inactive donuts | `chart.usersByStatus`, `chart.locationsByStatus`, `chart.organizationsByStatus`, `chart.careTeamsByStatus` | `side` |
-| Updated by month | `chart.updatedByMonth.users`, `chart.updatedByMonth.locations`, `chart.updatedByMonth.organizations`, `chart.updatedByMonth.careTeams` | `side` |
-| Active share | `chart.activeShare` | `side` or `main` |
 | Extension widgets | `<manifestId>.<id>`, such as `schedules.active` | the widget's own `region` |
 
-Each card follows its screen's `requires`, so a user who cannot open Locations sees no location card. Active share shows one bar per screen the user can open. The updated by month charts count records whose last update falls in each of the last six months, through `_summary=count` searches on `_lastUpdated`. FHIR keeps no creation date on these resources, so a record edited this month counts in this month and not in the month it was created.
+Each card follows its screen's `requires`, so a user who cannot open Locations sees no location card. A deployment that needs a card the shell does not ship, such as another chart, contributes it as an extension widget (Part 4), and it joins this catalogue under its own id.
 
 The example app's document above starts every user from a curated dashboard. `layout` lists ids per region in render order and replaces the default as a whole, so a region it leaves out is empty. The first `main` card shares a row with the first `side` card, the second with the second, and so on. `available` lists what a user may add. An entry is an exact id or a prefix ending in `.*`, such as `chart.*`, and leaving the field out offers every card the user can see. A card that `layout` lists still renders when `available` leaves it out, but a user who removes it cannot add it back. `"userCustomization": false` hides Configure dashboard, and every user sees the deployment layout whatever they saved before.
 
@@ -208,17 +206,9 @@ To start from a clean slate, give an empty layout.
 
 The dashboard then shows an empty state with an Add widget button, and each user builds their own.
 
-Users change their dashboard with Configure dashboard. Every card gets move up, move down and remove buttons, and with a mouse a card can also be dragged onto another card in the same region to take its place. Add widget lists the cards they may add, grouped by kind, marking the deployment's starting cards and the ones already placed. The top strip holds at most four cards, extension tiles included. Cards below the strip have a settings button.
+Users change their dashboard with Configure dashboard. Every card gets move up, move down and remove buttons, and Add widget lists the cards they may add, grouped by kind, marking the ones already placed. The top strip holds at most four cards, extension tiles included. Nothing changes until Save, Cancel discards the changes, and Reset to default returns to the deployment layout.
 
-| Card | Settings |
-| --- | --- |
-| Recently Added tables | 5 or 10 rows, and the width |
-| Updated by month charts | the last 3, 6 or 12 months, and the width |
-| Donuts, Active Share and extension widgets in `main` or `side` | the width |
-
-The width is column width or full width. A full width card takes a row of its own at its place in its column, and the cards in the other column move down a row. Nothing changes until Save, Cancel discards the changes, and Reset to default returns to the deployment layout.
-
-A user's layout and card settings are kept in that browser, under `ohs-dashboard-layout:<sub>` in local storage. Another browser starts from the deployment layout, and with two tabs open the last Save wins. On each load the stored layout is trimmed to cards that still exist and that `available` still allows, without an error. A card hidden by a flag or a permission stays in the layout and comes back when access returns. Saving a layout equal to the deployment layout, with every setting at its default, clears the stored copy, so that user follows later changes to the document. The KPI selection users made before this release is moved into the new layout once.
+A user's layout is kept in that browser, under `ohs-dashboard-layout:<sub>` in local storage. Another browser starts from the deployment layout, and with two tabs open the last Save wins. On each load the stored layout is trimmed to cards that still exist and that `available` still allows, without an error. A card hidden by a flag or a permission stays in the layout and comes back when access returns. Saving a layout equal to the deployment layout clears the stored copy, so that user follows later changes to the document. The KPI selection kept by earlier releases is not carried over, so users start from the deployment layout once.
 
 Try each change below and reload.
 
@@ -715,5 +705,5 @@ To test your own extension, follow [EXTENDING.md](./EXTENDING.md#testing-an-exte
 - **Slots.** `users.rowActions` is the only slot. More need a shell change.
 - **Replacing components.** An extension adds UI; it cannot replace a built-in component.
 - **Sidebar ids.** The document's `navigation` only positions the shell's own screens. Extension entries are positioned by their manifest `order`.
-- **Dashboard layouts.** A user's layout and card settings live in one browser, and two open tabs do not merge their changes. Dragging cards needs a mouse, so touch screens use the move buttons. A deployment cannot set card settings in the document.
+- **Dashboard layouts.** A user's layout lives in one browser, and two open tabs do not merge their changes. Cards are reordered with buttons, not by dragging, and have no settings of their own. A deployment that wants more extends the shell in its own codebase.
 - **Extension flags in the reference app.** The reference app's document only accepts its own flag names until an extension's flag is added to `FLAG_NAMES`.
