@@ -44,10 +44,6 @@ export type { DetailFieldProps } from './DetailField';
 
 export { DonutChart } from './DonutChart';
 export type { DonutChartProps, DonutSegment } from './DonutChart';
-export { BarChart } from './BarChart';
-export type { BarChartProps, BarPoint } from './BarChart';
-export { StackedBar } from './StackedBar';
-export type { StackedBarProps, StackedBarRow, StackedBarSegment } from './StackedBar';
 
 export { EmptyState, ErrorState, LinearProgress, Spinner, StatusBadge } from './States';
 export type {

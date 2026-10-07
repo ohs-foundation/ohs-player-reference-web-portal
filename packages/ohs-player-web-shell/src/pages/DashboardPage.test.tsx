@@ -655,11 +655,6 @@ describe('DashboardPage document layout', () => {
       'widgetAddNamed distributionLocations',
       'widgetAddNamed distributionOrganizations',
       'widgetAddNamed distributionCareTeams',
-      'widgetAddNamed chartUpdatedByMonthUsers',
-      'widgetAddNamed chartUpdatedByMonthLocations',
-      'widgetAddNamed chartUpdatedByMonthOrganizations',
-      'widgetAddNamed chartUpdatedByMonthCareTeams',
-      'widgetAddNamed chartActiveShare',
     ]);
   });
 

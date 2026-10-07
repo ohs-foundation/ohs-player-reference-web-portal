@@ -4,7 +4,6 @@ import { defaultMessageCatalog } from 'ohs-player-web-core';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_NAVIGATION } from '../config/navigation';
 import { builtinWidgets } from '../features/dashboard/widgetCatalogue';
-import { gatedKpis } from '../features/dashboard/kpiCatalogue';
 import { SHELL_MESSAGES } from './shellMessages';
 
 const SOURCE = join(import.meta.dirname, '..');
@@ -36,7 +35,6 @@ function dataKeys(): string[] {
         ...setting.options.map((option) => option.labelKey),
       ]),
     ]),
-    ...gatedKpis(DEFAULT_NAVIGATION).map((kpi) => kpi.entityKey),
     ...['Practitioner', 'Location', 'Organization', 'CareTeam'].map(
       (type) => `resourceType${type}`,
     ),

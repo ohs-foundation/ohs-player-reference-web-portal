@@ -6,7 +6,7 @@ const widgets: DashboardWidgetShape[] = [
   { id: 'kpi.users', regions: ['kpi'] },
   { id: 'recent.users', regions: ['main'] },
   { id: 'chart.usersByStatus', regions: ['side'] },
-  { id: 'chart.activeShare', regions: ['side', 'main'] },
+  { id: 'reports.trend', regions: ['side', 'main'] },
   { id: 'schedules.active', regions: ['kpi'] },
 ];
 
@@ -24,7 +24,7 @@ const layout = (parts: { kpi?: string[]; main?: string[]; side?: string[] }) => 
 describe('checkDashboard', () => {
   it('accepts built in and extension ids in a region their widget allows', () => {
     const dashboard = {
-      layout: layout({ kpi: ['schedules.active', 'kpi.users'], main: ['chart.activeShare'] }),
+      layout: layout({ kpi: ['schedules.active', 'kpi.users'], main: ['reports.trend'] }),
       available: ['kpi.*', 'schedules.*', 'recent.users'],
     };
 
@@ -39,7 +39,7 @@ describe('checkDashboard', () => {
 
     expect(result.dashboard.layout?.main).toEqual(['recent.users']);
     expect(result.problems).toEqual([
-      'Configuration document: dashboard.layout.main[1] "recent.visits" is not a dashboard widget. Known ids: kpi.users, recent.users, chart.usersByStatus, chart.activeShare, schedules.active',
+      'Configuration document: dashboard.layout.main[1] "recent.visits" is not a dashboard widget. Known ids: kpi.users, recent.users, chart.usersByStatus, reports.trend, schedules.active',
     ]);
   });
 
@@ -54,12 +54,12 @@ describe('checkDashboard', () => {
 
   it('keeps the first placement of an id listed twice and names the earlier one', () => {
     const result = check({
-      layout: layout({ main: ['chart.activeShare'], side: ['chart.activeShare'] }),
+      layout: layout({ main: ['reports.trend'], side: ['reports.trend'] }),
     });
 
-    expect(result.dashboard.layout).toEqual(layout({ main: ['chart.activeShare'] }));
+    expect(result.dashboard.layout).toEqual(layout({ main: ['reports.trend'] }));
     expect(result.problems).toEqual([
-      'Configuration document: dashboard.layout.side[0] "chart.activeShare" is already placed at dashboard.layout.main[0]',
+      'Configuration document: dashboard.layout.side[0] "reports.trend" is already placed at dashboard.layout.main[0]',
     ]);
   });
 

@@ -190,9 +190,9 @@ describe('allowedBy', () => {
   });
 
   it('matches exact ids and prefix patterns, nothing else', () => {
-    const allowed = allowedBy(['kpi.*', 'recent.users', 'chart.updatedByMonth.*']);
+    const allowed = allowedBy(['kpi.*', 'recent.users', 'reports.monthly.*']);
 
-    expect(['kpi.users', 'recent.users', 'chart.updatedByMonth.users'].map(allowed)).toEqual([
+    expect(['kpi.users', 'recent.users', 'reports.monthly.users'].map(allowed)).toEqual([
       true,
       true,
       true,

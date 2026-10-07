@@ -302,12 +302,7 @@
                   "chart.usersByStatus",
                   "chart.locationsByStatus",
                   "chart.organizationsByStatus",
-                  "chart.careTeamsByStatus",
-                  "chart.updatedByMonth.users",
-                  "chart.updatedByMonth.locations",
-                  "chart.updatedByMonth.organizations",
-                  "chart.updatedByMonth.careTeams",
-                  "chart.activeShare"
+                  "chart.careTeamsByStatus"
                 ]
               }
             },
@@ -328,12 +323,7 @@
                   "chart.usersByStatus",
                   "chart.locationsByStatus",
                   "chart.organizationsByStatus",
-                  "chart.careTeamsByStatus",
-                  "chart.updatedByMonth.users",
-                  "chart.updatedByMonth.locations",
-                  "chart.updatedByMonth.organizations",
-                  "chart.updatedByMonth.careTeams",
-                  "chart.activeShare"
+                  "chart.careTeamsByStatus"
                 ]
               }
             },
@@ -354,12 +344,7 @@
                   "chart.usersByStatus",
                   "chart.locationsByStatus",
                   "chart.organizationsByStatus",
-                  "chart.careTeamsByStatus",
-                  "chart.updatedByMonth.users",
-                  "chart.updatedByMonth.locations",
-                  "chart.updatedByMonth.organizations",
-                  "chart.updatedByMonth.careTeams",
-                  "chart.activeShare"
+                  "chart.careTeamsByStatus"
                 ]
               }
             }
