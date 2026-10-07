@@ -92,6 +92,23 @@ describe('LocationTree', () => {
     expect(screen.getAllByText(/locationStatusActive/).length).toBeGreaterThan(0);
   });
 
+  it('mutes an inactive row name and shows its badge in the neutral tone', () => {
+    const tree = node({
+      id: 'ke',
+      name: 'Kenya',
+      partOf: null,
+      partOfLabel: null,
+      children: [node({ id: 'old', name: 'Old Ward', status: 'inactive' })],
+    });
+    render(
+      <LocationTree root={tree} expanded={new Set(['ke'])} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,
+    );
+    expect(screen.getByText('Old Ward')).toHaveClass('text-text-muted');
+    expect(screen.getByText('Old Ward')).not.toHaveClass('text-primary');
+    expect(screen.getByText('Kenya')).toHaveClass('text-primary');
+    expect(screen.getByText('locationStatusInactive')).toHaveClass('bg-neutral-surface');
+  });
+
   it('uses an expand toggle (not a checkbox) on expandable rows', () => {
     render(
       <LocationTree root={root} expanded={new Set()} selectedId={null} onToggle={vi.fn()} onSelect={vi.fn()} onLoadMore={vi.fn()} onEdit={vi.fn()} />,

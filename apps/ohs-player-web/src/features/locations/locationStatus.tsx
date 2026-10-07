@@ -8,8 +8,6 @@ function statusTone(status: string | null | undefined): StatusTone {
       return 'success';
     case 'suspended':
       return 'warning';
-    case 'inactive':
-      return 'error';
     default:
       return 'neutral';
   }
