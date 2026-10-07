@@ -86,6 +86,7 @@ export const SHELL_MESSAGES: Readonly<Record<string, string>> = {
   skipToContent: 'Skip to main content',
   statusActive: 'Active',
   statusInactive: 'Inactive',
+  statusSuspended: 'Suspended',
   tableItemsPerPage: 'Items per page:',
   tableShowing: 'Showing {{start}} to {{end}} of {{total}} results',
   tableShowingRange: 'Showing {{start}} to {{end}}',

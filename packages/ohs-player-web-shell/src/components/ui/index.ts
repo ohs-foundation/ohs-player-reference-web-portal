@@ -45,11 +45,12 @@ export type { DetailFieldProps } from './DetailField';
 export { DonutChart } from './DonutChart';
 export type { DonutChartProps, DonutSegment } from './DonutChart';
 
-export { EmptyState, ErrorState, LinearProgress, Spinner, StatusBadge } from './States';
+export { EmptyState, ErrorState, LinearProgress, RecordStatusBadge, Spinner, StatusBadge } from './States';
 export type {
   EmptyStateProps,
   ErrorStateProps,
   LinearProgressProps,
+  RecordStatusBadgeProps,
   StatusBadgeProps,
   StatusTone,
 } from './States';

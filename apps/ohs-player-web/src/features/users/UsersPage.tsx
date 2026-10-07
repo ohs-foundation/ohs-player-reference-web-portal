@@ -25,7 +25,7 @@ import {
   PageHeader,
   SearchField,
   Slot,
-  StatusBadge,
+  RecordStatusBadge,
   IconAddCircle,
   IconChevronDown,
   IconUpload,
@@ -395,16 +395,7 @@ export function UsersPage() {
               header: t('columnStatus'),
               sortable: true,
               sortValue: (p) => (p.active === false ? 0 : 1),
-              render: (p) =>
-                p.active === false ? (
-                  <StatusBadge tone="neutral" icon={<span className="ohs-badge__dot" />}>
-                    {t('statusInactive')}
-                  </StatusBadge>
-                ) : (
-                  <StatusBadge tone="success" icon={<span className="ohs-badge__dot" />}>
-                    {t('statusActive')}
-                  </StatusBadge>
-                ),
+              render: (p) => <RecordStatusBadge status={p.active === false ? 'inactive' : 'active'} />,
             },
             {
               key: 'actions',

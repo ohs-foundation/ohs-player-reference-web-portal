@@ -14,6 +14,7 @@ import type { LocationNode } from './hierarchy';
 import { levelFromType } from './locationLevel';
 import { LocationLevelBadge } from './LocationLevelBadge';
 import { LocationStatusBadge } from './locationStatus';
+import { locationNameClass } from './locationNameClass';
 import { LocationRowMenu } from './LocationRowMenu';
 import { flatten, visibleRowRange, TREE_ROW_HEIGHT, type FlatRow } from './treeWindow';
 
@@ -149,7 +150,7 @@ function TreeRow({
 
         <span className="ml-2 flex min-w-0 flex-1 flex-col gap-0.5 py-1">
           <span className="flex min-w-0 items-center gap-2">
-            <span className={`truncate text-sm font-semibold ${node.name ? 'text-primary' : 'italic text-text-muted'}`}>
+            <span className={`truncate text-sm font-semibold ${locationNameClass(node.name, node.status)}`}>
               {label}
             </span>
             <RowLevelBadge node={node} />

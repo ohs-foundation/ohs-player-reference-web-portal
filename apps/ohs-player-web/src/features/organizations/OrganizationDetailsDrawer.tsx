@@ -13,7 +13,7 @@ import {
   IconButton,
   Inline,
   Stack,
-  StatusBadge,
+  RecordStatusBadge,
   IconBuilding,
   IconClose,
   IconMapPin,
@@ -105,9 +105,7 @@ export function OrganizationDetailsDrawer({
       <div>
         <div className="ohs-user-drawer__name-row">
           <h2 className="ohs-form-drawer__title">{org.name ?? org.id}</h2>
-          <StatusBadge tone={active ? 'success' : 'neutral'} icon={<span className="ohs-badge__dot" />}>
-            {active ? t('statusActive') : t('statusInactive')}
-          </StatusBadge>
+          <RecordStatusBadge status={active ? 'active' : 'inactive'} />
         </div>
         {identifierValue ? <span className="ohs-user-drawer__id-chip">{identifierValue}</span> : null}
       </div>
