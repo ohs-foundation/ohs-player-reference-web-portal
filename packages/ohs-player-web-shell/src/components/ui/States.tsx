@@ -35,9 +35,23 @@ export interface ErrorStateProps {
   description?: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
+  /** The server's own text, shown collapsed behind "Technical details". Omitted when empty. */
+  detail?: string;
 }
 
-export function ErrorState({ title, description, action, icon }: Readonly<ErrorStateProps>): React.ReactElement {
+/** A collapsed "Technical details" disclosure holding an error's raw text. Renders nothing when empty. */
+export function ErrorDetails({ children }: Readonly<{ children?: string }>): React.ReactElement | null {
+  const { t } = useTranslation();
+  if (!children?.trim()) return null;
+  return (
+    <details className="ohs-error-details">
+      <summary>{t('errorTechnicalDetails')}</summary>
+      <p className="ohs-error-details__text">{children}</p>
+    </details>
+  );
+}
+
+export function ErrorState({ title, description, action, icon, detail }: Readonly<ErrorStateProps>): React.ReactElement {
   const { t } = useTranslation();
   return (
     <div className="ohs-error-state" role="alert">
@@ -46,6 +60,7 @@ export function ErrorState({ title, description, action, icon }: Readonly<ErrorS
       </span>
       <h2 className="ohs-error-state__title">{title ?? t('errorTitle')}</h2>
       <p className="ohs-error-state__description">{description ?? t('errorDescription')}</p>
+      <ErrorDetails>{detail}</ErrorDetails>
       {action}
     </div>
   );

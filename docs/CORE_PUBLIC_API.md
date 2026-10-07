@@ -227,6 +227,8 @@ Supported item types for rendering include `string`, `text`, `integer`, `decimal
 
 The library ships **behavior + Radix wrappers only** — it does **not** export presentational primitives (`Button`, `Card`, `TextField`, `DataTable`, etc.); those live in the shell package (`packages/ohs-player-web-shell/src/components/ui/`). See **UI primitives & theming** in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
+A thrown `FhirError` (or a `TypeError` from an unreachable server) is shown to people through the shell, not the library: `describeError(error, t, options?)` returns a plain `{ title, description, detail }` to spread into `ErrorState`, with `errorCause` and `errorDetail` for the parts. `ErrorState` takes `detail` and renders it inside a collapsed `ErrorDetails` disclosure. `formatOperationOutcomeMessage` below stays the way to read an `OperationOutcome`'s own text.
+
 | Export | Description |
 | --- | --- |
 | `OhsDialog`, `OhsToast`, `OhsTooltip` | Radix-based overlays (`ui/radix`). |

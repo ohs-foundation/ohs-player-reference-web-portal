@@ -1,7 +1,5 @@
 import { type FormEvent, useState } from 'react';
 import {
-  FhirError,
-  formatOperationOutcomeMessage,
   newUrnUuid,
   useCreateResource,
   useTranslation,
@@ -10,8 +8,10 @@ import {
 import { useWriteAudit } from '../audit/useWriteAudit';
 import {
   Button,
+  describeError,
   Drawer,
   ErrorState,
+  type ErrorDescription,
   IconButton,
   Stack,
   IconBuilding,
@@ -23,12 +23,6 @@ import { careTeamFromForm } from '../sdc/resourceFromAnswers';
 import { MultiSelect, RadioRow, Section, StackedInput, StackedSelect, StackedTextArea } from '../users/userFormControls';
 import type { Option } from '../users/userFormOptions';
 import type { CareTeamRow } from './CareTeamDetailsDrawer';
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome);
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
 
 const FORM_ID = 'careteam-form';
 
@@ -72,7 +66,7 @@ export function CareTeamFormDrawer({
   const [memberIds, setMemberIds] = useState<string[]>(memberIdsOf(team));
   const [organizationId, setOrganizationId] = useState(team?.managingOrganization?.[0]?.reference ?? '');
   const [nameError, setNameError] = useState<string | undefined>(undefined);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorDescription | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const submit = (): void => {
@@ -87,6 +81,7 @@ export function CareTeamFormDrawer({
     );
     void (async () => {
       setSubmitting(true);
+      let saved = false;
       try {
         if (mode === 'wizard' && onEmit) {
           const fullUrl = editing && team?.id ? `CareTeam/${team.id}` : newUrnUuid();
@@ -99,8 +94,9 @@ export function CareTeamFormDrawer({
           await update.mutateAsync({ id: team.id, body });
         } else {
           resourceId = ((await create.mutateAsync(body)) as { id?: string }).id;
-          if (!resourceId) throw new Error('Create did not return an id');
         }
+        saved = true;
+        if (!resourceId) throw new Error('Create did not return an id');
         await writeAudit({
           action: editing ? 'update' : 'create',
           resourceType: 'CareTeam',
@@ -108,7 +104,7 @@ export function CareTeamFormDrawer({
         });
         onSuccess(editing ? undefined : { ...body, id: resourceId });
       } catch (err) {
-        setError(toErrorMessage(err));
+        setError(describeError(err, t, { action: 'save', saved }));
       } finally {
         setSubmitting(false);
       }
@@ -151,7 +147,7 @@ export function CareTeamFormDrawer({
       footer={footer}
     >
       <form id={FORM_ID} className="ohs-detail-body" onSubmit={onFormSubmit}>
-        {error ? <ErrorState description={error} /> : null}
+        {error ? <ErrorState {...error} /> : null}
 
         <Section icon={IconTeam} title={t('sectionBasicInfo')}>
           <Stack gap={5}>

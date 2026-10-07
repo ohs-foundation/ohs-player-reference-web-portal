@@ -10,7 +10,10 @@ import { useWriteAudit } from '../audit/useWriteAudit';
 import {
   Avatar,
   Button,
+  describeError,
   Drawer,
+  ErrorState,
+  type ErrorDescription,
   IconButton,
   Inline,
   Stack,
@@ -69,6 +72,12 @@ export function CareTeamDetailsDrawer({
   const update = useUpdateResource('CareTeam');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [failure, setFailure] = useState<ErrorDescription | null>(null);
+
+  const openConfirm = (): void => {
+    setFailure(null);
+    setConfirmOpen(true);
+  };
 
   const members = (team.participant ?? [])
     .map((p) => {
@@ -83,10 +92,13 @@ export function CareTeamDetailsDrawer({
   const onConfirmRetire = (): void => {
     const id = team.id;
     if (!id) return;
+    setFailure(null);
     void (async () => {
       setSaving(true);
+      let saved = false;
       try {
         await update.mutateAsync({ id, body: { ...team, resourceType: 'CareTeam', status: 'inactive' } });
+        saved = true;
         await writeAudit({
           action: 'update',
           resourceType: 'CareTeam',
@@ -98,7 +110,8 @@ export function CareTeamDetailsDrawer({
         onChanged();
         onClose();
       } catch (err) {
-        status.notify({ tone: 'error', title: err instanceof Error ? err.message : t('saveFailed') });
+        setFailure(describeError(err, t, { action: 'save', saved }));
+        if (saved) onChanged();
       } finally {
         setSaving(false);
       }
@@ -125,7 +138,7 @@ export function CareTeamDetailsDrawer({
   const footer = (
     <div className="ohs-user-drawer__foot">
       <PermissionGuard permission="careteams.manage">
-        <Button variant="ghost" className="ohs-btn-danger" type="button" onClick={() => setConfirmOpen(true)} disabled={saving}>
+        <Button variant="ghost" className="ohs-btn-danger" type="button" onClick={openConfirm} disabled={saving}>
           {t('deleteCareTeam')}
         </Button>
       </PermissionGuard>
@@ -193,6 +206,7 @@ export function CareTeamDetailsDrawer({
       >
         <Stack gap={4}>
           <p style={{ margin: 0, color: 'var(--ohs-sys-color-on-surface-variant, #696969)' }}>{t('confirmRetireBody')}</p>
+          {failure ? <ErrorState {...failure} /> : null}
           <Inline justify="end" style={{ gap: 'var(--ohs-sys-spacing-3, 12px)' }}>
             <Button variant="outlined" type="button" onClick={() => setConfirmOpen(false)} disabled={saving}>
               {t('cancel')}

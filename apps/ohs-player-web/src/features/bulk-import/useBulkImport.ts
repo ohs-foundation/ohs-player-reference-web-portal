@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { type FhirClient, useFhirClient } from 'ohs-player-web-core';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 import {
   type ImportCompletion,
   type ImportFailure,
@@ -50,18 +49,25 @@ async function streamImport(
   file: File,
   { onReader, onProgress }: StreamHooks,
 ): Promise<ImportOutcome> {
+  let processed: number | null = null;
   try {
     const res = await client.customPostStream(alias, uploadForm(file));
     if (!res.ok) throw await client.errorFromResponse(res);
     if (!res.body) return { ok: false, failure: { kind: 'empty' } };
     const reader = res.body.getReader();
     onReader(reader);
+    processed = 0;
     const frames = await readFrames(reader, (frame) => {
-      if (frame.kind === 'progress') onProgress({ processed: frame.processed, total: frame.total });
+      if (frame.kind !== 'progress') return;
+      processed = frame.processed;
+      onProgress({ processed: frame.processed, total: frame.total });
     });
     return outcomeFromFrames(frames, completion);
   } catch (err) {
-    return { ok: false, failure: { kind: 'request', message: toErrorMessage(err) } };
+    if (processed !== null) {
+      return { ok: false, failure: { kind: 'interrupted', processed, rowErrors: [] } };
+    }
+    return { ok: false, failure: { kind: 'request', error: err } };
   }
 }
 

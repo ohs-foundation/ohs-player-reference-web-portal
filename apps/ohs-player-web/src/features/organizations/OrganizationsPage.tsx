@@ -11,6 +11,7 @@ import {
 import {
   Button,
   DataTable,
+  describeError,
   EmptyState,
   ErrorState,
   FilterChip,
@@ -148,10 +149,7 @@ export function OrganizationsPage() {
     });
   }, [orgList, q, statusFilter]);
 
-  let orgsError: string | null = null;
-  if (orgs.error) {
-    orgsError = orgs.error instanceof Error ? orgs.error.message : String(orgs.error);
-  }
+  const orgsError = orgs.error ? describeError(orgs.error, t) : null;
 
   const isFiltering = q.trim() !== '' || statusFilter !== null;
   const noOrgs = !orgs.isLoading && !orgsError && orgList.length === 0 && !isFiltering;
@@ -361,7 +359,7 @@ export function OrganizationsPage() {
           pagination
           initialPageSize={10}
           pageResetKey={statusFilter ?? ''}
-          errorState={orgsError ? <ErrorState description={orgsError} /> : undefined}
+          errorState={orgsError ? <ErrorState {...orgsError} /> : undefined}
           emptyState={
             <EmptyState
               title={t('emptyTitle')}

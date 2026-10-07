@@ -7,9 +7,15 @@ import {
   useStatusBar,
   useTranslation,
 } from 'ohs-player-web-core';
-import { Button, ErrorState, Page, PageHeader } from 'ohs-player-web-shell';
+import {
+  Button,
+  describeError,
+  ErrorState,
+  type ErrorDescription,
+  Page,
+  PageHeader,
+} from 'ohs-player-web-shell';
 import { useWriteAudit } from '../audit/useWriteAudit';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 import {
   locationOptions,
   locationsFromBundle,
@@ -43,7 +49,7 @@ export function SetupWizardPage(): React.ReactElement {
   const [draft, setDraft] = useState<SetupWizardDraft>(() => loadDraft());
   const [stepError, setStepError] = useState<string | null>(null);
   const [committing, setCommitting] = useState(false);
-  const [commitError, setCommitError] = useState<string | null>(null);
+  const [commitError, setCommitError] = useState<ErrorDescription | null>(null);
   const [commitStatus, setCommitStatus] = useState<string | null>(null);
 
   const locSearch = useSearch('Location', { _count: '500', status: 'active' });
@@ -99,8 +105,8 @@ export function SetupWizardPage(): React.ReactElement {
   const runCommit = async (retryLocalIds?: string[]): Promise<void> => {
     setCommitError(null);
     setCommitting(true);
+    let next = draft;
     try {
-      let next = draft;
       if (!next.phase1Complete) {
         setCommitStatus(t('setupCreatingStructure'));
         const phase1 = await commitPhase1(client, next);
@@ -157,7 +163,7 @@ export function SetupWizardPage(): React.ReactElement {
       }
       setCommitStatus(null);
     } catch (err) {
-      setCommitError(toErrorMessage(err));
+      setCommitError(describeError(err, t, { action: 'save', saved: next.phase1Complete }));
       setCommitStatus(null);
     } finally {
       setCommitting(false);

@@ -1,6 +1,7 @@
 import type { Bundle, Practitioner } from '@medplum/fhirtypes';
 import { OhsDropdownMenu, useSearch, useTranslation } from 'ohs-player-web-core';
 import {
+  describeError,
   DataTable,
   EmptyState,
   ErrorState,
@@ -15,10 +16,6 @@ import {
 function fullName(practitioner: Practitioner): string {
   const name = practitioner.name?.[0];
   return [name?.given?.join(' '), name?.family].filter(Boolean).join(' ');
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function RowActions({ practitioner }: Readonly<{ practitioner: Practitioner }>) {
@@ -65,9 +62,7 @@ export function UsersPage() {
         rows={practitioners}
         rowKey={(p) => p.id ?? ''}
         loading={search.isLoading}
-        errorState={
-          search.error ? <ErrorState description={errorMessage(search.error)} /> : undefined
-        }
+        errorState={search.error ? <ErrorState {...describeError(search.error, t)} /> : undefined}
         emptyState={<EmptyState title={t('emptyTitle')} description={t('emptyDescription')} />}
         pagination
         initialPageSize={10}
