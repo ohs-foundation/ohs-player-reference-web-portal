@@ -66,10 +66,11 @@ const { validatePortalConfig } = await import('./config/portalConfigSchema');
 const { portalDefaults } = await import('./config/platform');
 const { extensions } = await import('./extensions');
 
-function exampleDocument() {
-  const result = validatePortalConfig(
-    JSON.parse(readFileSync('public/portal-config.json', 'utf8')) as unknown,
-  );
+function exampleDocument(overrides: object = {}) {
+  const result = validatePortalConfig({
+    ...(JSON.parse(readFileSync('public/portal-config.json', 'utf8')) as object),
+    ...overrides,
+  });
   if (!result.success) throw new Error(result.error);
   return result.data;
 }
@@ -77,11 +78,11 @@ function exampleDocument() {
 // Pages load through the real lazy route table; a cold CI runner can take over a second to import one.
 const LAZY_PAGE = { timeout: 5000 };
 
-function renderAt(path: string) {
+function renderAt(path: string, overrides?: object) {
   window.history.pushState({}, '', path);
   const host = createPortalHost({
     defaults: portalDefaults,
-    document: exampleDocument(),
+    document: exampleDocument(overrides),
     extensions,
     routes: appRoutes,
     development: true,
@@ -106,6 +107,25 @@ describe('the example portal with the schedules extension', () => {
     const links = within(sidebar).getAllByRole('link');
     expect(links.map((link) => link.getAttribute('href'))).toEqual(['/users', '/schedules', '/']);
     expect(links.map((link) => link.textContent)).toEqual(['Users', 'Schedules', 'Dashboard']);
+  });
+
+  it("opens the schedules page on the manifest's flag default", async () => {
+    renderAt('/schedules');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Schedules', level: 1 }, LAZY_PAGE),
+    ).toBeInTheDocument();
+  });
+
+  it('removes the schedules page and its sidebar entry when the document turns the flag off', async () => {
+    renderAt('/schedules', { flags: { schedules: false } });
+
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    const sidebar = screen.getByLabelText('Primary navigation');
+    const hrefs = within(sidebar)
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+    expect(hrefs).toEqual(['/users', '/']);
   });
 
   it('renders the curated KPI strip from the document, schedules first', async () => {

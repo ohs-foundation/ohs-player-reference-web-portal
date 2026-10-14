@@ -118,6 +118,28 @@ For example, to point an image at another environment and turn a feature off:
 
 The app requests the document with `cache: no-cache`, so every page load revalidates it. If you change `oidcIssuer` or `clientId`, the Keycloak client needs the same redirect URIs and web origins as in section 2.
 
+### Feature flags
+
+A flag switches one feature on or off for the whole deployment. Its value comes from the first of these that sets it:
+
+1. `flags` in `portal-config.json`, or the last valid document as described above.
+2. The `VITE_FLAG_*` build value. `false` turns the feature off. Any other value, and no value at all, leaves it on.
+3. The default in an installed extension's manifest `flags` (see [EXTENDING.md](./EXTENDING.md)).
+4. Off, for a name that none of these declares.
+
+A route, its sidebar entry and its dashboard widget that declare the same `requires.flag` switch together. With the flag off, the address shows Page not found and the entry and the widget are left out. Changing the flag in the document and reloading is enough; nothing is rebuilt.
+
+**Adding a flag to the reference application:**
+
+1. Add the name to `FLAG_NAMES` in `apps/ohs-player-web/src/config/portalConfigSchema.ts`. The document rejects a name that is not listed there.
+2. Read its build value in `apps/ohs-player-web/src/config/env.ts`, for example `myFeature: import.meta.env.VITE_FLAG_MY_FEATURE !== 'false'`. `platform.ts` takes every flag from there. `portalConfigSchema.test.ts` fails when this list and `FLAG_NAMES` differ.
+3. Add `VITE_FLAG_MY_FEATURE=true` to `.env.example`.
+4. Run `pnpm config-schema:generate` so `portal-config.schema.json` accepts the name, then `pnpm config:check`.
+5. Gate the route, the sidebar entry and any widget with the same `requires: { flag: 'myFeature', permission: '…' }`.
+6. Set the flag in `public/portal-config.json` only if the reference document should pin its value. Otherwise leave it to the build value.
+
+An extension's flag needs none of these steps: the manifest declares its default.
+
 ---
 
 ## 5. Get the code on the VM
