@@ -5,6 +5,7 @@ import {
   useTranslation,
 } from 'ohs-player-web-core';
 import { Page, Spinner } from '../components/ui';
+import { NotFoundPage } from '../pages/NotFoundPage';
 import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
@@ -45,8 +46,15 @@ function SessionGate({ permission, permissionFallback, children }: SessionGatePr
 
 /**
  * Gate order: feature flag → authenticated session → RBAC permission.
+ * A switched-off flag shows the not-found page, so a disabled feature reads as one that does not exist.
  */
 export function ProtectedRoute({ flag, ...session }: SessionGateProps & { flag?: string }): ReactNode {
   const gated = <SessionGate {...session} />;
-  return flag ? <FeatureGuard flag={flag}>{gated}</FeatureGuard> : gated;
+  return flag ? (
+    <FeatureGuard flag={flag} fallback={<NotFoundPage />}>
+      {gated}
+    </FeatureGuard>
+  ) : (
+    gated
+  );
 }

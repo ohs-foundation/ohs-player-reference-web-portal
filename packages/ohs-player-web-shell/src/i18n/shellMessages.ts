@@ -76,6 +76,8 @@ export const SHELL_MESSAGES: Readonly<Record<string, string>> = {
   pageDashboard: 'Dashboard',
   pageDashboardDescription:
     'Overview of your digital health workforce, active locations, and system metrics.',
+  pageNotFound: 'Page not found',
+  pageNotFoundDescription: "This page doesn't exist, or it isn't available in this portal.",
   pageUnauthorized: 'Access denied',
   pageUnauthorizedDescription: 'You do not have permission to view this page.',
   paginationNext: 'Next page',

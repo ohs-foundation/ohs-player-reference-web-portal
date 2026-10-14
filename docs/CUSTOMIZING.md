@@ -111,7 +111,7 @@ The active sidebar entry draws `primary` text on a `secondary-container` fill, s
 "flags": { "schedules": false }
 ```
 
-Reload. The Schedules sidebar entry, its dashboard tile and the "View schedules" row action all disappear, and `/schedules` renders an empty page. The flag is checked before the session, so a signed-out visitor to a switched-off page is not sent to sign-in either. Set it back to `true`.
+Reload. The Schedules sidebar entry, its dashboard tile and the "View schedules" row action all disappear, and `/schedules` shows Page not found, the same page as an address nothing serves, so a switched-off feature reads as one that does not exist. The flag is checked before the session, so a signed-out visitor to a switched-off page sees the same page and is not sent to sign-in. Its copy comes from the shell keys `pageNotFound` and `pageNotFoundDescription`, which `messages` can override. Set it back to `true`.
 
 The example app accepts any flag name. The reference app accepts only its own eight flags, listed in [DEPLOYMENT.md](./DEPLOYMENT.md) section 4, until a name is added to its `FLAG_NAMES`.
 

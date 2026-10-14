@@ -61,7 +61,7 @@ export const schedulesExtension: PortalExtension = {
 
 A route has an `id`, a `path` and `load`, a function that imports a module whose **default export** is the page, as `React.lazy` expects. The host serves it under the portal frame, next to the application's own pages, and shows a spinner while the chunk loads.
 
-`requires` gates it in a fixed order: the feature **flag** first (a switched-off page renders nothing), then the **session** (a signed-out visitor goes to sign-in), then the **permission**. A path the host already serves, or another extension's path, fails startup. Paths may carry route parameters, such as `/schedules/:id`, which the page reads with `useParams`.
+`requires` gates it in a fixed order: the feature **flag** first (a switched-off page shows Page not found, the same page as an address nothing serves), then the **session** (a signed-out visitor goes to sign-in), then the **permission**. A path the host already serves, or another extension's path, fails startup. Paths may carry route parameters, such as `/schedules/:id`, which the page reads with `useParams`.
 
 When a load or a save fails, show it with the shell's `describeError` rather than the error's own text: `<ErrorState {...describeError(error, t)} />`. It turns the failure into a plain heading and sentence (no permission, a conflict, a server problem, no connection) and keeps the server's text behind a collapsed Technical details disclosure. For a save, pass `{ action: 'save', saved }`, where `saved` is `true` once the first write succeeded, so the message says whether anything was saved. The Schedules page in the example app shows the load case.
 

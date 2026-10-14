@@ -1,8 +1,9 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { AppLayout } from '../layout/AppLayout';
 import { lazyComponent } from '../lib/lazyComponent';
+import { NotFoundPage } from '../pages/NotFoundPage';
 import { RouteFallback } from './RouteFallback';
 import type { PortalRoute } from './types';
 
@@ -61,8 +62,8 @@ export function PortalRoutes({
           {routes.map((route) => (
             <Route key={route.id} path={route.path} element={<GatedPage route={route} />} />
           ))}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );
