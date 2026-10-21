@@ -26,7 +26,7 @@ export function ScopeIndicator(): React.ReactElement | null {
   }
 
   return (
-    <div className="w-48 shrink-0">
+    <div className="w-48 min-w-0 shrink">
       <Listbox
         compact
         label={t('scopeLabel')}

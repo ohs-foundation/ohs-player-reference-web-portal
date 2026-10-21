@@ -225,6 +225,12 @@ describe('scopedOptions', () => {
     ]);
   });
 
+  it('matches a selected value stored as a versioned reference', () => {
+    expect(
+      scopedOptions(options, new Set(['d1']), ['Location/x/_history/2']).map((o) => o.value),
+    ).toEqual(['Location/d1', 'Location/x']);
+  });
+
   it('matches a selected value stored as a bare id', () => {
     expect(scopedOptions(options, new Set(['d1']), ['x']).map((o) => o.value)).toEqual([
       'Location/d1',

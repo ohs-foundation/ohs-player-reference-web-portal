@@ -19,9 +19,13 @@ export interface DescendantIds {
   truncated: boolean;
 }
 
+function unversioned(reference: string): string {
+  return reference.replace(/\/_history\/.*$/, '');
+}
+
 export function idOf(reference: string | undefined, resourceType: string): string | undefined {
   if (!reference) return undefined;
-  const parts = reference.replace(/\/_history\/.*$/, '').split('/');
+  const parts = unversioned(reference).split('/');
   if (parts.length === 1) return parts[0] || undefined;
   const [type, id] = parts.slice(-2);
   return type === resourceType && id ? id : undefined;
@@ -129,9 +133,10 @@ export function scopedOptions<T extends { value: string }>(
   selected: readonly string[] = [],
 ): T[] {
   if (!inScopeIds) return [...options];
-  const kept = new Set(selected.map((value) => bareId(value) ?? value));
+  const idFrom = (value: string): string => bareId(unversioned(value)) ?? value;
+  const kept = new Set(selected.map(idFrom));
   return options.filter((option) => {
-    const id = bareId(option.value) ?? option.value;
+    const id = idFrom(option.value);
     return kept.has(id) || inScopeIds.has(id);
   });
 }
