@@ -146,6 +146,8 @@ export function ViewSchedulesAction({
 
 Contributions carry no `requires`; gate one yourself, as above. One that throws renders an error in its own place and the screen around it is untouched. The application that owns a screen places its slot with `<Slot name="users.rowActions" context={{ practitioner }} />`. The shell places `topbar.actions` itself, so a contribution there appears in the app bar on every signed in screen.
 
+The reference app contributes its district indicator to `topbar.actions` from an in app manifest, [`features/scope/manifest.ts`](../apps/ohs-player-web/src/features/scope/manifest.ts), installed in its `extensions.ts` like any extension. The indicator reads the app's own scope context, which the app provides through `PortalHost`'s `providers`, so it shows how an application adds to a shell screen without editing the shell. An extension meant to move between applications reads only the library and shell APIs instead.
+
 ### Messages, flags, permissions, endpoints and questionnaires
 
 - **`messages`**: flat camelCase keys, in the same style as the app's catalogue. Use them with `useTranslation().t(key)`.

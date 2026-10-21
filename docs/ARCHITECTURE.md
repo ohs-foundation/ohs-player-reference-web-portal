@@ -87,6 +87,16 @@ The read side is `activityItemFromAuditEvent(resource)` (`src/audit/auditActivit
 
 Location and organization editing uses FHIR `Questionnaire` JSON **bundled in the app** ([`apps/ohs-player-web/src/questionnaires/`](../apps/ohs-player-web/src/questionnaires/)), selected via `env.questionnaireVariant` / [`registry.ts`](../apps/ohs-player-web/src/questionnaires/registry.ts). On save, the UI posts a `QuestionnaireResponse` then creates or updates the target `Location` / `Organization` using small app-side mappers ([`resourceFromAnswers.ts`](../apps/ohs-player-web/src/features/sdc/resourceFromAnswers.ts)). Server-side `$extract` remains optional via `FhirClient.postOperation` when the FHIR stack supports it.
 
+### Admin scope
+
+A signed in user whose `PractitionerRole.location` names a location is scoped to it. `ScopeProvider` in [`features/scope/`](../apps/ohs-player-web/src/features/scope/) calls the self lookup form of `/api/practitioner-details` once per session, takes each distinct role location as a district, and expands the chosen district into its descendants through `/api/location-hierarchy`. A user with no practitioner, or with no role that names a location, is unscoped and sees what every user sees on an unscoped portal. The app mounts the provider through the `providers` prop of `PortalHost`, so every page, every drawer and the app bar read one value through `useAdminScope()`.
+
+For a scoped user the Users, Locations, Organisations and Care teams lists keep only in scope records, and the Locations tree starts at the district. The user drawers offer only in scope organisations and locations, and a new location's parent defaults to the district. A user with more than one district works in one at a time and switches in the app bar indicator, which the app contributes to the shell's `topbar.actions` slot through an in app manifest. The choice lives in `sessionStorage` per user, so it lasts for the tab.
+
+If the self lookup fails for any reason other than a missing practitioner, the user is unscoped and the indicator says the district was not loaded. If the district's tree cannot be read, or the gateway truncated it, the lists keep to what is known and say the scope may be incomplete. A failed request never widens what a scoped user sees.
+
+**This is a convenience filter, not access control.** The lists filter the rows they already read, which are capped at 500 practitioners, roles and locations and at 200 organisations and care teams, so a record past a cap reads as out of scope. The dashboard counts, global search and every direct API call stay unscoped. Enforcement belongs to the backend's role scoped endpoints, and until those land a scoped user calling the API directly still sees every record.
+
 ## Local infrastructure
 
 `docker-compose.yml` runs HAPI FHIR, Keycloak with an imported `ohs` realm, and a small nginx service on port **8180** that proxies `/fhir` to HAPI and returns **501** for `/custom/*` until a real OHS gateway image is configured.
