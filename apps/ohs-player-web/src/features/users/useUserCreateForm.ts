@@ -18,6 +18,8 @@ import {
   referenceOptions,
 } from './userFormOptions';
 import { type UserFormErrors, validateUserForm } from './userFormSchema';
+import { scopedOptions } from '../scope/scope';
+import { scopedIds, useAdminScope } from '../scope/useAdminScope';
 
 interface SearchBundle {
   entry?: { resource?: { id?: string; name?: string } }[];
@@ -72,10 +74,22 @@ export function useUserCreateForm(onSuccess: (created?: { id?: string } & Record
   const locSearch = useSearch('Location', { _count: '500', status: 'active' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
 
-  const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
+  const scope = useAdminScope();
+  const orgOptions = useMemo(
+    () =>
+      scopedOptions(
+        referenceOptions(orgSearch.data, 'Organization'),
+        scopedIds(scope, 'organizationIds'),
+      ),
+    [orgSearch.data, scope],
+  );
   const locOptions = useMemo(
-    () => locationOptions(locationsFromBundle(locSearch.data), t),
-    [locSearch.data, t],
+    () =>
+      scopedOptions(
+        locationOptions(locationsFromBundle(locSearch.data), t),
+        scopedIds(scope, 'locationIds'),
+      ),
+    [locSearch.data, t, scope],
   );
   const careTeamOptions = useMemo<Option[]>(
     () =>

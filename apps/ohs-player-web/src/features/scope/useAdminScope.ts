@@ -40,3 +40,10 @@ export function rowsInScope<T>(
   if (scope.status === 'loading') return [];
   return rows.filter(inScope);
 }
+
+export function scopedIds(
+  scope: AdminScope,
+  kind: 'locationIds' | 'organizationIds',
+): ReadonlySet<string> | null {
+  return scope.status === 'scoped' ? scope[kind] : null;
+}

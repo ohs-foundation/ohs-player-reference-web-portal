@@ -225,6 +225,13 @@ describe('scopedOptions', () => {
     ]);
   });
 
+  it('matches a selected value stored as a bare id', () => {
+    expect(scopedOptions(options, new Set(['d1']), ['x']).map((o) => o.value)).toEqual([
+      'Location/d1',
+      'Location/x',
+    ]);
+  });
+
   it('keeps a selected out of scope value so an existing link stays removable', () => {
     expect(scopedOptions(options, new Set(['d1']), ['Location/x']).map((o) => o.value)).toEqual([
       'Location/d1',

@@ -784,3 +784,89 @@ describe('UsersPage scope', () => {
     expect(screen.getByText('John Doe')).toBeInTheDocument();
   });
 });
+
+describe('user drawer pickers in a district', () => {
+  const kisumu = { id: 'd1', name: 'Kisumu' };
+  const originals = { Location: searchBundles.Location, Organization: searchBundles.Organization };
+  const inDistrict: AdminScope = {
+    ...UNSCOPED,
+    status: 'scoped',
+    districts: [kisumu],
+    current: kisumu,
+    locationIds: new Set(['l1']),
+    organizationIds: new Set(['o1']),
+  };
+
+  const entries = (type: string, names: Record<string, string>) => ({
+    entry: Object.entries(names).map(([id, name]) => ({
+      resource: { resourceType: type, id, name },
+    })),
+  });
+
+  function optionsOf(name: RegExp): (string | null)[] {
+    fireEvent.click(screen.getByRole('combobox', { name }));
+    const options = screen.getAllByRole('option').map((o) => o.textContent);
+    fireEvent.keyDown(screen.getByRole('combobox', { name }), { key: 'Escape' });
+    return options;
+  }
+
+  beforeEach(() => {
+    searchBundles.Location = entries('Location', { l1: 'Loc One', l2: 'Loc Two', l3: 'Loc Three' });
+    searchBundles.Organization = entries('Organization', {
+      o1: 'Org One',
+      o2: 'Org Two',
+      o3: 'Org Three',
+    });
+  });
+
+  afterEach(() => {
+    Object.assign(searchBundles, originals);
+  });
+
+  it('offers only in district locations and organisations when adding a user', () => {
+    render(
+      <MemoryRouter>
+        <AdminScopeContext.Provider value={inDistrict}>
+          <UserCreateDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+        </AdminScopeContext.Provider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('combobox', { name: /contextLocation/ })).not.toHaveTextContent(
+      'Loc One',
+    );
+    expect(optionsOf(/contextLocation/)).toEqual(['Loc One']);
+    expect(optionsOf(/contextOrganization/)).toEqual(['Org One']);
+  });
+
+  it('keeps an existing out of district link removable when editing a user', async () => {
+    setPractitionerDetails({
+      data: {
+        practitioner: mockPractitioner,
+        practitionerRoles: [
+          {
+            ...roleDetail,
+            practitionerRole: {
+              ...roleDetail.practitionerRole,
+              organization: { reference: 'Organization/o2' },
+              location: [{ reference: 'l2' }],
+            },
+            locations: [{ resourceType: 'Location', id: 'l2', name: 'Loc Two' }],
+          },
+        ],
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminScopeContext.Provider value={inDistrict}>
+          <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={vi.fn()} />
+        </AdminScopeContext.Provider>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByDisplayValue('Jane')).toBeInTheDocument();
+
+    expect(optionsOf(/contextLocation/)).toEqual(['Loc Two', 'Loc One']);
+    expect(optionsOf(/contextOrganization/)).toEqual(['Org One', 'Org Two']);
+  });
+});

@@ -129,8 +129,9 @@ export function scopedOptions<T extends { value: string }>(
   selected: readonly string[] = [],
 ): T[] {
   if (!inScopeIds) return [...options];
-  const kept = new Set(selected);
-  return options.filter(
-    (option) => kept.has(option.value) || has(inScopeIds, bareId(option.value) ?? undefined),
-  );
+  const kept = new Set(selected.map((value) => bareId(value) ?? value));
+  return options.filter((option) => {
+    const id = bareId(option.value) ?? option.value;
+    return kept.has(id) || inScopeIds.has(id);
+  });
 }
