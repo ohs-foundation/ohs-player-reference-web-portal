@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockCustomGet = vi.fn();
@@ -78,6 +78,25 @@ describe('useCustomResource', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(mockCustomGet).toHaveBeenCalledTimes(3);
+  });
+
+  it('stays put on window focus when the caller turns focus refetches off', async () => {
+    const { result } = renderHook(
+      () =>
+        useCustomResource('practitionerDetails', undefined, {
+          refetchOnWindowFocus: false,
+          refetchOnReconnect: false,
+        }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    act(() => focusManager.setFocused(false));
+    act(() => focusManager.setFocused(true));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+    focusManager.setFocused(undefined);
+
+    expect(mockCustomGet).toHaveBeenCalledTimes(1);
   });
 
   it('surfaces a rejected request as the query error', async () => {

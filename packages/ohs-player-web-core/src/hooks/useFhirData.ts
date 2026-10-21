@@ -392,6 +392,8 @@ export function useOptimisticInsert(): (
  *
  * The resolved value is `unknown` — narrow it at the call site. `retry` takes TanStack's retry value
  * and overrides the client default for this query, for example to stop retrying a definitive `404`.
+ * `refetchOnWindowFocus` and `refetchOnReconnect` set to `false` keep a once per session read from
+ * running again when the window regains focus or the network returns.
  *
  * @example
  * const q = useCustomResource('practitionerDetails', { 'practitioner-id': id }, { enabled: Boolean(id) });
@@ -402,13 +404,21 @@ export function useOptimisticInsert(): (
 export function useCustomResource(
   alias: string,
   params?: Record<string, string | number | boolean | undefined>,
-  options?: { enabled?: boolean; retry?: UseQueryOptions['retry'] },
+  options?: {
+    enabled?: boolean;
+    retry?: UseQueryOptions['retry'];
+    refetchOnWindowFocus?: boolean;
+    refetchOnReconnect?: boolean;
+  },
 ): UseQueryResult<unknown> {
   const client = useFhirClient();
+  const { enabled = true, retry, refetchOnWindowFocus, refetchOnReconnect } = options ?? {};
   return useQuery({
     queryKey: ['custom', alias, params],
-    enabled: options?.enabled ?? true,
-    ...(options?.retry === undefined ? {} : { retry: options.retry }),
+    enabled,
+    ...(retry === undefined ? {} : { retry }),
+    ...(refetchOnWindowFocus === undefined ? {} : { refetchOnWindowFocus }),
+    ...(refetchOnReconnect === undefined ? {} : { refetchOnReconnect }),
     queryFn: async () => client.customGet(alias, params),
   });
 }
