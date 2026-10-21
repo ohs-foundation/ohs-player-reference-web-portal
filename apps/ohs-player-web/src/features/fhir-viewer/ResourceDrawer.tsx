@@ -3,7 +3,6 @@ import {
   FhirError,
   FhirJsonEditor,
   FhirJsonView,
-  formatOperationOutcomeMessage,
   OhsDialog,
   useDeleteResource,
   usePermission,
@@ -16,7 +15,9 @@ import {
 import {
   Avatar,
   Button,
+  describeError,
   ErrorState,
+  type ErrorDescription,
   IconButton,
   LinearProgress,
   IconClose,
@@ -41,11 +42,6 @@ interface ResourceDrawerProps {
 
 function asRecord(value: unknown): FhirRecord {
   return value && typeof value === 'object' ? (value as FhirRecord) : {};
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof FhirError) return formatOperationOutcomeMessage(error.outcome) || error.message;
-  return error instanceof Error ? error.message : fallback;
 }
 
 /**
@@ -79,6 +75,8 @@ export function ResourceDrawer({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [conflict, setConflict] = useState(false);
+  const [saveError, setSaveError] = useState<ErrorDescription | null>(null);
+  const [deleteError, setDeleteError] = useState<ErrorDescription | null>(null);
 
   const resource = isExample ? example : read.data;
   const record = asRecord(resource);
@@ -92,6 +90,7 @@ export function ResourceDrawer({
     setDirty(false);
     setValid(true);
     setConflict(false);
+    setSaveError(null);
     setMode('edit');
   };
 
@@ -99,6 +98,7 @@ export function ResourceDrawer({
     setMode('view');
     setDirty(false);
     setConflict(false);
+    setSaveError(null);
   };
 
   const requestCancel = (): void => (dirty ? setConfirmDiscard(true) : leaveEdit());
@@ -106,8 +106,11 @@ export function ResourceDrawer({
   const save = async (): Promise<void> => {
     if (!valid || draft == null) return;
     setConflict(false);
+    setSaveError(null);
+    let saved = false;
     try {
       await update.mutateAsync({ id: resourceId, body: draft });
+      saved = true;
       await writeAudit({ action: 'update', resourceType: def.resourceType, resourceId });
       status.notify({ tone: 'success', title: t('fhirViewerSaved', { type: typeLabel }) });
       await refresh(def.resourceType);
@@ -117,29 +120,37 @@ export function ResourceDrawer({
         setConflict(true);
         return;
       }
-      status.notify({
-        tone: 'error',
-        title: t('fhirViewerSaveFailed'),
-        description: errorMessage(e, t('fhirViewerSaveFailed')),
-      });
+      setSaveError(
+        describeError(e, t, { action: 'save', saved, titleKey: saved ? undefined : 'fhirViewerSaveFailed' }),
+      );
     }
   };
 
+  const openDelete = (): void => {
+    setDeleteError(null);
+    setConfirmDelete(true);
+  };
+
   const doDelete = async (): Promise<void> => {
+    setDeleteError(null);
+    let saved = false;
     try {
       await del.mutateAsync(resourceId);
+      saved = true;
       await writeAudit({ action: 'delete', resourceType: def.resourceType, resourceId });
       status.notify({ tone: 'success', title: t('fhirViewerDeleted', { type: typeLabel }) });
       await refresh(def.resourceType);
       setConfirmDelete(false);
       onClose();
     } catch (e) {
-      setConfirmDelete(false);
-      status.notify({
-        tone: 'error',
-        title: t('fhirViewerDeleteFailed'),
-        description: errorMessage(e, t('fhirViewerDeleteFailed')),
-      });
+      setDeleteError(
+        describeError(e, t, {
+          action: 'save',
+          saved,
+          titleKey: saved ? undefined : 'fhirViewerDeleteFailed',
+          nothingSavedKey: 'fhirViewerNothingDeleted',
+        }),
+      );
     }
   };
 
@@ -180,7 +191,7 @@ export function ResourceDrawer({
           variant="danger"
           iconLeft={<IconDelete size={18} aria-hidden="true" />}
           aria-label={t('fhirViewerDelete', { type: typeLabel })}
-          onClick={() => setConfirmDelete(true)}
+          onClick={openDelete}
         >
           {t('fhirViewerActionDelete')}
         </Button>
@@ -205,7 +216,7 @@ export function ResourceDrawer({
             </div>
           ) : read.error ? (
             <div className="flex-1 grid place-items-center">
-              <ErrorState description={errorMessage(read.error, t('fhirViewerDrawerLoadError'))} />
+              <ErrorState {...describeError(read.error, t, { titleKey: 'fhirViewerDrawerLoadError' })} />
             </div>
           ) : mode === 'view' ? (
             <>
@@ -233,6 +244,7 @@ export function ResourceDrawer({
                   </Button>
                 </div>
               ) : null}
+              {saveError ? <ErrorState {...saveError} /> : null}
               <FhirJsonEditor
                 key={versionId}
                 className="flex-1 min-h-0 min-w-0"
@@ -267,6 +279,7 @@ export function ResourceDrawer({
         }
       >
         <p>{t('fhirViewerDeleteConfirmBody', { type: typeLabel, name: title || resourceId })}</p>
+        {deleteError ? <ErrorState {...deleteError} /> : null}
       </OhsDialog>
 
       <OhsDialog

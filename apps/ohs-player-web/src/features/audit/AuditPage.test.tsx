@@ -221,14 +221,16 @@ describe('AuditPage', () => {
     expect(screen.queryByRole('button', { name: 'paginationNext' })).toBeNull();
   });
 
-  it('shows fixed copy, not the server body, when access is denied', () => {
+  it('shows fixed copy when access is denied and keeps the server body collapsed', () => {
     paged.current = state({
       rows: [],
       error: new FhirError('missing role GET_AUDITEVENT', 403, undefined),
     });
     renderPage();
     expect(screen.getByText('auditErrorForbidden')).toBeInTheDocument();
-    expect(screen.queryByText(/GET_AUDITEVENT/)).toBeNull();
+    const details = screen.getByText(/GET_AUDITEVENT/).closest('details');
+    expect(details).not.toBeNull();
+    expect(details).not.toHaveAttribute('open');
   });
 
   it('turns every filter in the URL into its FHIR search parameter', () => {

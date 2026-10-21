@@ -174,8 +174,6 @@ export const appMessageOverrides = {
   locationsEmptyDescription:
     'This root exists but has no children yet. Import a CSV of locations or add them via the API.',
   locationsErrorTitle: "Couldn't load the hierarchy",
-  locationsErrorDescription:
-    'Something went wrong while building the location tree. This is usually temporary — try again in a moment.',
   locationsViewStatus: 'View status page',
   locationsNoAccessTitle: "You don't have access to the location hierarchy",
   locationsNoAccessDescription:
@@ -230,6 +228,7 @@ export const appMessageOverrides = {
     'For initial loads only. Use user management for changes to existing users: re-importing a user without a password resets it to the username followed by 123.',
   organizationsImport: 'Import Organisations',
   organizationsImportTitle: 'Import Organisations',
+  bulkImportNothingImported: 'Nothing was imported.',
   bulkImportStreamEmpty:
     'The server ended the import without reporting any rows. Nothing was imported.',
   bulkImportStreamInterrupted:
@@ -238,6 +237,7 @@ export const appMessageOverrides = {
   pageOrganizations: 'Organisations',
   pageOrganizationsDescription: 'Organisations available in your environment',
   organizationName: 'Organisation name',
+  organizationNothingSaved: 'The organisation and its location links were not changed.',
   organizationNameRequired: 'Organisation name is required.',
   organizationType: 'Organisation type',
   organizationsEmptyDescription: 'Get started by adding your first organisation to this workspace.',
@@ -382,7 +382,7 @@ export const appMessageOverrides = {
   fhirViewerAddNotAnObject: 'A FHIR resource must be a JSON object.',
   fhirViewerAddTypeMismatch: 'resourceType must be "{{type}}".',
   fhirViewerAdded: '{{type}} created',
-  fhirViewerAddFailed: 'Could not create the resource',
+  fhirViewerAddFailed: "Couldn't create the resource",
 
   fhirViewerExampleBadge: 'Example',
   fhirViewerExampleNote:
@@ -394,7 +394,6 @@ export const appMessageOverrides = {
   fhirViewerUnsupportedTitle: 'Not available from this backend yet',
   fhirViewerUnsupportedDescription:
     'This resource type is not served by the connected backend. Check the gateway configuration or try another type.',
-  fhirViewerErrorDescription: 'Could not load resources. Please try again.',
   // Drawer (view / edit / delete)
   fhirViewerCopyCode: 'Copy Code',
   fhirViewerCopied: 'Copied',
@@ -409,15 +408,16 @@ export const appMessageOverrides = {
   fhirViewerActionDelete: 'Delete',
   fhirViewerCancel: 'Cancel',
   fhirViewerSave: 'Save Resource',
-  fhirViewerDrawerLoadError: 'Could not load this resource.',
+  fhirViewerDrawerLoadError: "Couldn't load this resource",
   fhirViewerDeleteConfirmTitle: 'Delete this {{type}}?',
   fhirViewerDeleteConfirmBody:
     'This permanently deletes {{name}} from the FHIR server. This cannot be undone and may fail if other resources reference it.',
   fhirViewerDeleteConfirm: 'Delete',
   fhirViewerDeleted: '{{type}} deleted',
-  fhirViewerDeleteFailed: 'Could not delete the resource',
+  fhirViewerDeleteFailed: "Couldn't delete the resource",
+  fhirViewerNothingDeleted: 'Nothing was deleted.',
   fhirViewerSaved: '{{type}} updated',
-  fhirViewerSaveFailed: 'Could not save the resource',
+  fhirViewerSaveFailed: "Couldn't save the resource",
   fhirViewerConflict: 'This resource changed on the server. Reload it and re-apply your edit.',
   fhirViewerReload: 'Reload',
   fhirViewerDiscardEdit: 'Discard your changes?',
@@ -480,7 +480,6 @@ export const appMessageOverrides = {
   auditEmptyFilteredDescription: 'No audit events match these filters.',
   auditErrorTitle: 'Could not load the audit log',
   auditErrorForbidden: 'You do not have access to audit events on this server.',
-  auditErrorDescription: 'Something went wrong while loading audit events.',
   auditOpenDetails: 'Open details: {{action}} {{resource}}',
   auditOpenDetailsNoResource: 'Open details: {{action}}, no resource',
   auditNoResource: 'No resource',

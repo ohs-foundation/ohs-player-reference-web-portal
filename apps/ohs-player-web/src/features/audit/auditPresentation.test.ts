@@ -1,6 +1,6 @@
 import { FhirError } from 'ohs-player-web-core';
 import { describe, expect, it } from 'vitest';
-import { actionLabelKey, actionTone, auditErrorMessage, recordedDate } from './auditPresentation';
+import { actionLabelKey, actionTone, auditError, recordedDate } from './auditPresentation';
 
 const t = (key: string): string => key;
 
@@ -16,28 +16,30 @@ describe('audit presentation', () => {
     expect(actionTone(action)).toBe(tone);
   });
 
-  it.each([401, 403])('shows fixed copy, not the server body, on %s', (status) => {
+  it.each([401, 403])('shows fixed copy on %s and keeps the server body as a detail', (status) => {
     const error = new FhirError('Forbidden: missing role GET_AUDITEVENT', status, undefined);
-    expect(auditErrorMessage(error, t)).toBe('auditErrorForbidden');
+    expect(auditError(error, t)).toEqual({
+      title: 'auditErrorTitle',
+      description: 'auditErrorForbidden',
+      detail: 'Forbidden: missing role GET_AUDITEVENT',
+    });
   });
 
-  it('shows OperationOutcome diagnostics for a server error', () => {
+  it('describes a server error in plain words and keeps the diagnostics as a detail', () => {
     const outcome = {
       resourceType: 'OperationOutcome',
       issue: [{ severity: 'error', code: 'processing', diagnostics: 'HAPI-0389: database down' }],
     };
-    const message = auditErrorMessage(new FhirError('Internal Server Error', 500, outcome), t);
-    expect(message).toContain('HAPI-0389: database down');
+    expect(auditError(new FhirError('Internal Server Error', 500, outcome), t)).toEqual({
+      title: 'auditErrorTitle',
+      description: 'errorCauseServer',
+      detail: 'HAPI-0389: database down',
+    });
   });
 
-  it('shows the gateway { error } text carried on the error message', () => {
-    expect(
-      auditErrorMessage(new FhirError('gateway timeout', 504, { error: 'gateway timeout' }), t),
-    ).toBe('gateway timeout');
-  });
-
-  it('falls back to generic copy when there is no message at all', () => {
-    expect(auditErrorMessage(new Error(''), t)).toBe('auditErrorDescription');
+  it('keeps the gateway { error } text as the detail', () => {
+    const error = new FhirError('gateway timeout', 504, { error: 'gateway timeout' });
+    expect(auditError(error, t).detail).toBe('gateway timeout');
   });
 
   it('reads recorded instants and rejects missing or malformed ones', () => {

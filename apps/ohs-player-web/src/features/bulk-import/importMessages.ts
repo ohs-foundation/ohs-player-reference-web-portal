@@ -1,3 +1,4 @@
+import { describeError, errorDetail } from 'ohs-player-web-shell';
 import { type ImportFailure } from './importStream';
 
 export type FileProblem =
@@ -39,12 +40,19 @@ export function fileProblemMessage(problem: FileProblem, fileName: string, t: Tr
 export function failureMessage(failure: ImportFailure, t: Translate): string {
   switch (failure.kind) {
     case 'request':
-      return failure.message;
+      return describeError(failure.error, t, {
+        action: 'save',
+        nothingSavedKey: 'bulkImportNothingImported',
+      }).description;
     case 'empty':
       return t('bulkImportStreamEmpty');
     case 'interrupted':
       return t('bulkImportStreamInterrupted', { processed: failure.processed });
   }
+}
+
+export function importErrorDetail(failure: ImportFailure | null): string {
+  return failure?.kind === 'request' ? errorDetail(failure.error) : '';
 }
 
 export function importErrorText(

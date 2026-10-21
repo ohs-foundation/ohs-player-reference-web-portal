@@ -22,8 +22,15 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useFlag: (flag: string) => !flagsOff.has(flag),
     usePermission: (permission: string) => ({ can: !deniedPermissions.has(permission) }),
     useSearch: () => ({ data: undefined, isLoading: false, error: null }),
-    FeatureGuard: ({ flag, children }: { flag: string; children: ReactNode }) =>
-      flagsOff.has(flag) ? null : children,
+    FeatureGuard: ({
+      flag,
+      fallback,
+      children,
+    }: {
+      flag: string;
+      fallback?: ReactNode;
+      children: ReactNode;
+    }) => (flagsOff.has(flag) ? (fallback ?? null) : children),
     PermissionGuard: ({
       permission,
       fallback,
@@ -98,13 +105,39 @@ describe('PortalRoutes', () => {
     expect(screen.getByLabelText('Primary navigation')).toBeInTheDocument();
   });
 
-  it('renders nothing for a page whose flag is off', async () => {
+  it('shows page not found for a page whose flag is off', async () => {
     flagsOff = new Set(['guardedFlag']);
     renderAt('/guarded', [guardedRoute]);
 
-    await screen.findByLabelText('Primary navigation');
+    expect(await screen.findByRole('heading', { name: 'pageNotFound' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Primary navigation')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'goToDashboard' })).toBeInTheDocument();
     expect(screen.queryByText('Guarded page')).not.toBeInTheDocument();
     expect(screen.queryByText('No access to the guarded page')).not.toBeInTheDocument();
+  });
+
+  it('shows page not found to a signed-out visitor of a switched-off page', async () => {
+    authStatus = 'unauthenticated';
+    flagsOff = new Set(['guardedFlag']);
+    renderAt('/guarded', [guardedRoute]);
+
+    expect(await screen.findByRole('heading', { name: 'pageNotFound' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sign in' })).not.toBeInTheDocument();
+  });
+
+  it('shows page not found for an address no route serves', async () => {
+    renderAt('/nowhere', [guardedRoute]);
+
+    expect(await screen.findByRole('heading', { name: 'pageNotFound' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Primary navigation')).toBeInTheDocument();
+  });
+
+  it('leaves out the dashboard button when the dashboard is switched off', async () => {
+    flagsOff = new Set(['dashboard']);
+    renderAt('/', [guardedRoute]);
+
+    expect(await screen.findByRole('heading', { name: 'pageNotFound' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'goToDashboard' })).not.toBeInTheDocument();
   });
 
   it("renders the route's fallback when its permission is denied", async () => {

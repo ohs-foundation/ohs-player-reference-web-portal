@@ -43,9 +43,33 @@ vi.mock('./useLocationRoots', () => ({
 
 vi.mock('../audit/useWriteAudit', () => ({ useWriteAudit: () => vi.fn() }));
 
+const { FhirError } = await import('ohs-player-web-core');
 const { LocationEditDrawer } = await import('./LocationEditDrawer');
 
 describe('LocationEditDrawer', () => {
+  it('says nothing was saved when the location update is refused, with the server text as a detail', async () => {
+    mutateLocation.mockRejectedValueOnce(
+      new FhirError('User is not authorized to PUT http://localhost/fhir', 403, { error: 'x' }),
+    );
+    const onSaved = vi.fn();
+    render(<LocationEditDrawer nodeId="nrb" onClose={vi.fn()} onSaved={onSaved} />);
+    fireEvent.submit(document.getElementById('location-edit-form') as HTMLFormElement);
+    expect(await screen.findByRole('heading', { name: 'saveFailedTitle' })).toBeInTheDocument();
+    expect(screen.getByText('errorCauseForbidden saveNothingSaved')).toBeInTheDocument();
+    expect(screen.getByText('errorTechnicalDetails').closest('details')).toHaveTextContent(
+      'User is not authorized to PUT http://localhost/fhir',
+    );
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('says the location was saved when the form record fails afterwards', async () => {
+    mutateQr.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    render(<LocationEditDrawer nodeId="nrb" onClose={vi.fn()} onSaved={vi.fn()} />);
+    fireEvent.submit(document.getElementById('location-edit-form') as HTMLFormElement);
+    expect(await screen.findByRole('heading', { name: 'savePartlySavedTitle' })).toBeInTheDocument();
+    expect(screen.getByText('errorCauseNetwork savePartlySaved')).toBeInTheDocument();
+  });
+
   it('renders the SDC form prefilled from the FHIR resource, with a footer Save wired to the form', () => {
     render(<LocationEditDrawer nodeId="nrb" onClose={vi.fn()} onSaved={vi.fn()} />);
     expect(screen.getByDisplayValue('Nairobi County')).toBeInTheDocument();

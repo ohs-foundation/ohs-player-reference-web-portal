@@ -11,8 +11,10 @@ import type { Location } from '@medplum/fhirtypes';
 import {
   Button,
   Combobox,
+  describeError,
   Drawer,
   ErrorState,
+  type ErrorDescription,
   IconButton,
   Spinner,
   Stack,
@@ -22,7 +24,6 @@ import {
 } from 'ohs-player-web-shell';
 import { getBundledQuestionnaires } from '../../questionnaires/registry';
 import { useWriteAudit } from '../audit/useWriteAudit';
-import { toErrorMessage } from '../sdc/toErrorMessage';
 import { RadioRow, Section, StackedInput, StackedSelect } from '../users/userFormControls';
 import { locationOptions } from '../users/userFormOptions';
 import {
@@ -68,6 +69,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
   const locList = useMemo(() => all.data ?? [], [all.data]);
 
   const [formError, setFormError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<ErrorDescription | null>(null);
   const [saving, setSaving] = useState(false);
 
   const { questionnaireVariant } = usePortalConfig();
@@ -117,6 +119,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
   const onSave = (e: FormEvent): void => {
     e.preventDefault();
     setFormError(null);
+    setSaveError(null);
     setNameError(null);
 
     const missing = validateRequired();
@@ -133,6 +136,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
 
     void (async () => {
       setSaving(true);
+      let saved = false;
       try {
         // Spreading a body that omits `partOf` would leave the previous parent on the resource.
         const fields = locationBodyFromAnswers(answers);
@@ -141,6 +145,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
           delete body.partOf;
         }
         await updateLoc.mutateAsync({ id: nodeId, body });
+        saved = true;
         await writeAudit({ action: 'update', resourceType: 'Location', resourceId: nodeId });
         await createQr.mutateAsync(buildQuestionnaireResponse());
         await writeAudit({ action: 'create', resourceType: 'QuestionnaireResponse' });
@@ -148,7 +153,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
         onSaved({ id: nodeId, name: fields.name, status: fields.status, parentId: parentId ?? null });
         onClose();
       } catch (err) {
-        setFormError(toErrorMessage(err));
+        setSaveError(describeError(err, t, { action: 'save', saved }));
       } finally {
         setSaving(false);
       }
@@ -186,6 +191,7 @@ export function LocationEditDrawer({ nodeId, onClose, onSaved }: Readonly<Locati
       ) : (
         <form id={FORM_ID} className="ohs-detail-body" onSubmit={onSave}>
           {formError ? <ErrorState description={formError} /> : null}
+          {saveError ? <ErrorState {...saveError} /> : null}
           <Section icon={IconInfo} title={t('sectionBasicInfo')}>
             <Stack gap={5}>
               <div className="ohs-detail-grid">

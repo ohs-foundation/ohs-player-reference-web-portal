@@ -574,6 +574,28 @@
   color: var(--ohs-sys-color-on-surface-variant, #696969);
   max-width: 36ch;
 }
+.ohs-error-details {
+  max-width: 48ch;
+  font-size: var(--ohs-sys-typescale-body-small-size, 12px);
+  line-height: var(--ohs-sys-typescale-body-small-line-height, 16px);
+  color: var(--ohs-sys-color-on-surface-variant, #696969);
+  text-align: start;
+}
+.ohs-error-details > summary {
+  cursor: pointer;
+  border-radius: var(--ohs-sys-shape-corner-extra-small, 4px);
+}
+.ohs-error-details > summary:focus-visible {
+  outline: 2px solid var(--ohs-sys-color-primary, #1b6ef3);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--ohs-sys-color-focus-ring, rgba(27, 110, 243, 0.28));
+}
+.ohs-error-details__text {
+  margin: var(--ohs-sys-spacing-2, 8px) 0 0;
+  font-family: var(--ohs-ref-typeface-mono, monospace);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 
 /* ---------- Drawer ---------- */
 
@@ -2116,10 +2138,6 @@
   border-radius: var(--ohs-sys-shape-corner-small, 8px);
   background: var(--ohs-sys-color-surface-container-low, #f4f3f7);
   font-size: var(--ohs-sys-typescale-body-medium-size, 14px);
-}
-.ohs-setup-commit-error {
-  margin: 0;
-  color: var(--ohs-sys-color-error, #b3261e);
 }
 
 /* ---------- Dashboard ---------- */

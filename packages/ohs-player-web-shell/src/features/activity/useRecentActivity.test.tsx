@@ -8,9 +8,11 @@ vi.mock(
   async (): Promise<object> => ({
     ...(await vi.importActual<object>('ohs-player-web-core')),
     useSearch,
+    useTranslation: () => ({ t: (key: string) => key }),
   }),
 );
 
+const { FhirError } = await import('ohs-player-web-core');
 const { useRecentActivity } = await import('./useRecentActivity');
 
 function portalEvent(
@@ -199,14 +201,14 @@ describe('useRecentActivity', () => {
     expect(result.current.items).toEqual([]);
   });
 
-  it('reports loading and maps errors to a message string', () => {
+  it('reports loading and maps errors to a plain message', () => {
     useSearch.mockReturnValue(searchResult({ isLoading: true }));
     expect(renderHook(() => useRecentActivity()).result.current.loading).toBe(true);
 
-    useSearch.mockReturnValue(searchResult({ error: new Error('HAPI down') }));
-    expect(renderHook(() => useRecentActivity()).result.current.error).toBe('HAPI down');
+    useSearch.mockReturnValue(searchResult({ error: new FhirError('HAPI down', 503, null) }));
+    expect(renderHook(() => useRecentActivity()).result.current.error).toBe('errorCauseServer');
 
-    useSearch.mockReturnValue(searchResult({ error: 'offline' }));
-    expect(renderHook(() => useRecentActivity()).result.current.error).toBe('offline');
+    useSearch.mockReturnValue(searchResult({ error: new TypeError('Failed to fetch') }));
+    expect(renderHook(() => useRecentActivity()).result.current.error).toBe('errorCauseNetwork');
   });
 });

@@ -229,6 +229,8 @@ The library ships **behavior + Radix wrappers only** — it does **not** export 
 
 For a record's status, use the shell's `RecordStatusBadge` rather than a hand-picked `StatusBadge` tone. It maps `active` to success, `suspended` to warning and `inactive` to neutral, so every screen and extension shows a status the same way. A boolean `active` is passed as `active ? 'active' : 'inactive'`, and a caller can pass its own label as `children` without changing the tone.
 
+A thrown `FhirError` (or a `TypeError` from an unreachable server) is shown to people through the shell, not the library: `describeError(error, t, options?)` returns a plain `{ title, description, detail }` to spread into `ErrorState`, with `errorCause` and `errorDetail` for the parts. `ErrorState` takes `detail` and renders it inside a collapsed `ErrorDetails` disclosure. `formatOperationOutcomeMessage` below stays the way to read an `OperationOutcome`'s own text.
+
 | Export | Description |
 | --- | --- |
 | `OhsDialog`, `OhsToast`, `OhsTooltip` | Radix-based overlays (`ui/radix`). |

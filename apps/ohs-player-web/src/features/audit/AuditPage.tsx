@@ -14,7 +14,7 @@ import {
 } from 'ohs-player-web-shell';
 import { AuditDetailsDrawer } from './AuditDetailsDrawer';
 import { AuditFilterBar } from './AuditFilterBar';
-import { actionLabelKey, actionTone, auditErrorMessage, recordedDate } from './auditPresentation';
+import { actionLabelKey, actionTone, auditError, recordedDate } from './auditPresentation';
 import { useAuditFilters } from './useAuditFilters';
 import { type AuditRow, useAuditLog } from './useAuditLog';
 
@@ -120,14 +120,7 @@ export function AuditPage(): React.ReactElement {
             action={clearAction}
           />
         }
-        errorState={
-          log.error ? (
-            <ErrorState
-              title={t('auditErrorTitle')}
-              description={auditErrorMessage(log.error, t)}
-            />
-          ) : undefined
-        }
+        errorState={log.error ? <ErrorState {...auditError(log.error, t)} /> : undefined}
         serverPagination={!log.error && log.rows.length > 0 ? log.pagination : undefined}
       />
       {viewing ? <AuditDetailsDrawer event={viewing} onClose={() => setViewing(null)} /> : null}

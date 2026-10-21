@@ -145,7 +145,9 @@ describe('useBulkImport', () => {
     expect(result.current.phase).toBe('error');
     expect(result.current.failure).toEqual({
       kind: 'request',
-      message: 'Insufficient permissions. Required: bulk-import.manage',
+      error: new FhirError('Insufficient permissions. Required: bulk-import.manage', 403, {
+        error: 'x',
+      }),
     });
   });
 

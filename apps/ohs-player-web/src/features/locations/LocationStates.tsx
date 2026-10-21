@@ -1,6 +1,7 @@
 import { useTranslation } from 'ohs-player-web-core';
 import {
   Button,
+  describeError,
   EmptyState,
   ErrorState,
   Inline,
@@ -47,12 +48,11 @@ export function HierarchyErrorState({
   onRetry,
 }: Readonly<{ error: HierarchyError; onRetry: () => void }>): React.ReactElement {
   const { t } = useTranslation();
-  const detail = error.message;
+  const described = describeError(error.source ?? error, t, { titleKey: 'locationsErrorTitle' });
   return (
     <ErrorState
+      {...described}
       icon={<IconWarning size={28} />}
-      title={t('locationsErrorTitle')}
-      description={detail || t('locationsErrorDescription')}
       action={
         <Inline justify="start">
           <Button variant="outlined" type="button" disabled>
