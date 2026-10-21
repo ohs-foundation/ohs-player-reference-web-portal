@@ -109,11 +109,11 @@ graph TD
 
 | Fact | Source |
 | --- | --- |
-| `PractitionerRole.location` is `0..*` `Reference(Location)`. `PractitionerRole.organization` and `PractitionerRole.practitioner` are `0..1`. `PractitionerRole.period` is `0..1`. | https://hl7.org/fhir/R4/practitionerrole.html |
-| `PractitionerRole` search parameters `location`, `organization` and `practitioner` exist, all of type reference. | https://hl7.org/fhir/R4/practitionerrole.html#search |
-| A comma separated value in one parameter is an OR search. | https://hl7.org/fhir/R4/search.html#combining |
-| `Location.managingOrganization` is `0..1` `Reference(Organization)` and `Location.partOf` is `0..1` `Reference(Location)`. Search parameters `organization` and `partof` exist. | https://hl7.org/fhir/R4/location.html#search |
-| `CareTeam.managingOrganization` is `0..*` `Reference(Organization)`. `CareTeam.participant.member` is `0..1` and may reference Practitioner, PractitionerRole, RelatedPerson, Patient, Organization or CareTeam. No `CareTeam` search parameter targets Location. | https://hl7.org/fhir/R4/careteam.html#search |
+| `PractitionerRole.location` is `0..*` `Reference(Location)`. `PractitionerRole.organization` and `PractitionerRole.practitioner` are `0..1`. `PractitionerRole.period` is `0..1`. | <https://hl7.org/fhir/R4/practitionerrole.html> |
+| `PractitionerRole` search parameters `location`, `organization` and `practitioner` exist, all of type reference. | <https://hl7.org/fhir/R4/practitionerrole.html#search> |
+| A comma separated value in one parameter is an OR search. | <https://hl7.org/fhir/R4/search.html#combining> |
+| `Location.managingOrganization` is `0..1` `Reference(Organization)` and `Location.partOf` is `0..1` `Reference(Location)`. Search parameters `organization` and `partof` exist. | <https://hl7.org/fhir/R4/location.html#search> |
+| `CareTeam.managingOrganization` is `0..*` `Reference(Organization)`. `CareTeam.participant.member` is `0..1` and may reference Practitioner, PractitionerRole, RelatedPerson, Patient, Organization or CareTeam. No `CareTeam` search parameter targets Location. | <https://hl7.org/fhir/R4/careteam.html#search> |
 
 D3 keeps the searches the pages already run, so this ticket adds no new search parameter. The `location` parameter on `PractitionerRole` is the server side path once the backend scopes its queries.
 
@@ -168,15 +168,18 @@ D3 keeps the searches the pages already run, so this ticket adds no new search p
 Every step ends in one commit that leaves `pnpm typecheck`, `pnpm lint` and `pnpm test` green. After any shell change the example app is built and tested too.
 
 ### Phase 0, this plan
+
 - `docs/ADMIN_SCOPE_PLAN.md`
 - Commit `docs: plan district level admin scoping`
 
 ### Phase 1, scope model, pure and tested first
-- `apps/ohs-player-web/src/features/scope/scope.ts` with `scopeLocationIds`, `districtsFrom`, `descendantIds`, `inScopePractitionerIds`, `inScopeOrganizationIds`, `organizationInScope`, `careTeamInScope`, `scopedOptions`
+
+- `apps/ohs-player-web/src/features/scope/scope.ts` with `idOf`, `districtsFrom`, `descendantIds`, `resolveScopeIds`, `organizationInScope`, `careTeamInScope`, `scopedOptions`. `districtsFrom` carries the district ids, so no separate location id function exists. `resolveScopeIds` returns the practitioner, role and organisation sets in one pass. The Users page reads `practitionerIds` directly, so no practitioner predicate exists.
 - `apps/ohs-player-web/src/features/scope/scope.test.ts`
 - Commit `feat(scope): pure scope resolution from practitioner roles and the location tree`
 
 ### Phase 2, the providers prop, then the provider and hook
+
 - Shell `host/PortalHost.tsx` gains `providers?: ComponentType<{ children: ReactNode }>`, with JSDoc and a `PortalHost.test.tsx` case. `docs/EXTENDING.md` documents it.
 - Commit `feat(shell): let an application wrap the routes in its own providers`
 - App `features/scope/ScopeProvider.tsx`, `useAdminScope.ts`, `useResolvedScope.ts`, `districtStore.ts`, tests, i18n keys in `appMessages.ts`
@@ -185,32 +188,38 @@ Every step ends in one commit that leaves `pnpm typecheck`, `pnpm lint` and `pnp
 - Commit `feat(scope): resolve the signed in user's district scope once per session`
 
 ### Phase 3, the indicator in the app bar
+
 - Shell `host/types.ts` gains `'topbar.actions': Record<string, never>` and the name in `SLOT_NAMES`. `layout/AppLayout.tsx` renders the slot. Cases in `types.test.ts` and `Slot.test.tsx`. `docs/EXTENDING.md` lists the slot.
 - Commit `feat(shell): topbar.actions slot`
 - App `features/scope/ScopeIndicator.tsx`, `manifest.ts`, `manifest.test.ts`, the indicator test, and the install line in `extensions.ts`
 - Commit `feat(scope): district indicator and picker in the app bar`
 
 ### Phase 4, the lists, one commit and one test per page
+
 - `features/scope/ScopeNote.tsx`, rendered once under each page header
 - `UsersPage.tsx`, `features/locations/LocationsHierarchyPage.tsx` (with `enabled` on `useLocationRoots`), `OrganizationsPage.tsx`, `CareTeamsPage.tsx`, each with a scoped and an unscoped test case
 - Commits `feat(scope): filter the users list`, `feat(scope): root the locations tree at the district`, `feat(scope): filter the organisations list`, `feat(scope): filter the care teams list`
 
 ### Phase 5, create flows, after #90
+
 - Rebase onto `origin/main` and read the #90 diff first. Editing the user drawers before #90 merges needs an explicit go ahead.
 - `scopedOptions` applied to `locOptions` and `orgOptions` in `useUserCreateForm.ts` and `UserEditDrawer.tsx`, keeping values already selected
 - `LocationCreateDrawer.tsx` scopes the parent options and defaults the parent to the district
 - Commit `feat(scope): scope the pickers in the user drawers and default a new location's parent`
 
 ### Phase 6, seed data, docs, live walk
+
 - `infra/keycloak/ohs-realm.json` fixed `id` for `manager-user`, and `scripts/seed.ts` data
 - Commit `feat(seed): a district scoped practitioner for manager-user`
 - `docs/ARCHITECTURE.md` scope section, `docs/QUICKSTART.md` scoped sign in, `docs/EXTENDING.md` worked example
 - Commit `docs: describe admin scope as a convenience filter`
 
 ### Phase 7, bug hunt
+
 Findings and fixes recorded below, each fix with a regression test and a `fix(scope): ...` commit.
 
 ### Phase 8, push and pull request
+
 Full gates, push, and a pull request that opens with `Fixes #92`.
 
 ---
