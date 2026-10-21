@@ -2,7 +2,8 @@ import type { Practitioner } from '@medplum/fhirtypes';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { FhirError } from 'ohs-player-web-core';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AdminScopeContext, UNSCOPED, type AdminScope } from '../scope/useAdminScope';
 
 const mockTransaction = vi.fn();
 const mockWriteAuditEvent = vi.fn();
@@ -699,5 +700,87 @@ describe('UsersPage row actions slot', () => {
     expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     vi.restoreAllMocks();
+  });
+});
+
+describe('UsersPage scope', () => {
+  const kisumu = { id: 'd1', name: 'Kisumu' };
+
+  function inDistrict(practitionerIds: string[], status: AdminScope['status'] = 'scoped') {
+    return {
+      ...UNSCOPED,
+      status,
+      districts: [kisumu],
+      current: kisumu,
+      practitionerIds: new Set(practitionerIds),
+    };
+  }
+
+  function renderWith(scope: AdminScope) {
+    return render(
+      <MemoryRouter>
+        <AdminScopeContext.Provider value={scope}>
+          <UsersPage />
+        </AdminScopeContext.Provider>
+      </MemoryRouter>,
+    );
+  }
+
+  const nurseRole = (id: string, practitioner: string) => ({
+    resource: {
+      resourceType: 'PractitionerRole',
+      id,
+      practitioner: { reference: `Practitioner/${practitioner}` },
+      code: [{ coding: [{ code: 'nurse' }] }],
+    },
+  });
+
+  beforeEach(() => {
+    searchBundles.PractitionerRole = { entry: [nurseRole('r1', 'p1'), nurseRole('r2', 'p2')] };
+  });
+
+  afterEach(() => {
+    delete searchBundles.PractitionerRole;
+  });
+
+  it('shows every user and no note to an unscoped user', () => {
+    renderWith(UNSCOPED);
+
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.queryByText('scopeConvenienceNote')).toBeNull();
+  });
+
+  it('shows a scoped user only the users with a role in the district, with the note', () => {
+    renderWith(inDistrict(['p2']));
+
+    expect(screen.queryByText('Jane Smith')).toBeNull();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText('scopeConvenienceNote')).toBeInTheDocument();
+  });
+
+  it('shows no row until the scope has resolved', () => {
+    renderWith(inDistrict([], 'loading'));
+
+    expect(screen.queryByText('Jane Smith')).toBeNull();
+    expect(screen.queryByText('John Doe')).toBeNull();
+    expect(screen.queryByText('scopeEmptyTitle')).toBeNull();
+  });
+
+  it('says the district has nobody when no user is in scope', () => {
+    renderWith(inDistrict([]));
+
+    expect(screen.getByText('scopeEmptyTitle')).toBeInTheDocument();
+    expect(screen.getByText('scopeEmptyDescription')).toBeInTheDocument();
+  });
+
+  it('applies the role chip on top of the scope', () => {
+    renderWith(inDistrict(['p2']));
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'filterRole' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Nurse' }));
+
+    expect(screen.queryByText('Jane Smith')).toBeNull();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
   });
 });
