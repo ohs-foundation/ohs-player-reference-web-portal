@@ -45,5 +45,5 @@ export function scopedIds(
   scope: AdminScope,
   kind: 'locationIds' | 'organizationIds',
 ): ReadonlySet<string> | null {
-  return scope.status === 'scoped' ? scope[kind] : null;
+  return scope.current ? scope[kind] : null;
 }
