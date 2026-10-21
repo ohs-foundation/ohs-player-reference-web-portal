@@ -29,6 +29,7 @@ export interface PractitionerContext {
   roles: PractitionerRole[];
   careTeams: CareTeam[];
   isLoading: boolean;
+  isFetched: boolean;
   error: unknown;
 }
 
@@ -36,9 +37,15 @@ export function isNotFound(error: unknown): boolean {
   return error instanceof FhirError && error.status === 404;
 }
 
-function retryUnlessNotFound(failureCount: number, error: unknown): boolean {
-  return !isNotFound(error) && failureCount < 3;
+function retryOnceUnlessNotFound(failureCount: number, error: unknown): boolean {
+  return !isNotFound(error) && failureCount < 1;
 }
+
+const SELF_LOOKUP_OPTIONS = {
+  retry: retryOnceUnlessNotFound,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+};
 
 function careTeamsFromBundle(bundle: unknown): CareTeam[] {
   return ((bundle as Bundle<CareTeam> | undefined)?.entry ?? [])
@@ -63,7 +70,7 @@ function usePractitionerContext(
   const query = useCustomResource(
     PRACTITIONER_DETAILS_ALIAS,
     isSelfLookup ? undefined : { 'practitioner-id': practitionerId },
-    isSelfLookup ? { enabled, retry: retryUnlessNotFound } : { enabled },
+    isSelfLookup ? { ...SELF_LOOKUP_OPTIONS, enabled } : { enabled },
   );
   const response = query.data as PractitionerDetailsResponse | undefined;
   const roleDetails = useMemo(() => response?.practitionerRoles ?? [], [response]);
@@ -100,6 +107,7 @@ function usePractitionerContext(
     roles,
     careTeams,
     isLoading: query.isLoading || fallbackRead.isLoading || careTeamSearch.isLoading,
+    isFetched: query.isFetched,
     error: missing ? fallbackRead.error : query.error,
   };
 }

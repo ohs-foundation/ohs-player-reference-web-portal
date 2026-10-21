@@ -174,7 +174,7 @@ describe('useMyPractitionerDetails', () => {
     );
   });
 
-  it('takes a 404 as the answer instead of retrying it', () => {
+  it('takes a 404 as the answer and retries any other failure once', () => {
     renderHook(() => useMyPractitionerDetails());
     const { retry } = mockUseCustomResource.mock.calls[0][2] as {
       retry: (failureCount: number, error: unknown) => boolean;
@@ -182,6 +182,15 @@ describe('useMyPractitionerDetails', () => {
 
     expect(retry(0, new FhirError('No practitioner found', 404, {}))).toBe(false);
     expect(retry(0, new FhirError('Bad gateway', 502, {}))).toBe(true);
-    expect(retry(3, new FhirError('Bad gateway', 502, {}))).toBe(false);
+    expect(retry(1, new FhirError('Bad gateway', 502, {}))).toBe(false);
+  });
+
+  it('reads once per session, not again on focus or reconnect', () => {
+    renderHook(() => useMyPractitionerDetails());
+
+    expect(mockUseCustomResource.mock.calls[0][2]).toMatchObject({
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    });
   });
 });

@@ -83,6 +83,7 @@ function self(
     roles: roleDetails.map((d) => d.practitionerRole),
     careTeams: [],
     isLoading: false,
+    isFetched: true,
     error: undefined,
     ...fields,
   };
@@ -146,7 +147,7 @@ describe('useResolvedScope', () => {
 
   it('waits for a session before looking the user up', () => {
     authStatus = 'unauthenticated';
-    mockSelf.mockReturnValue(self([]));
+    mockSelf.mockReturnValue(self([], { isFetched: false }));
 
     const { result } = renderHook(() => useResolvedScope());
 
@@ -155,7 +156,7 @@ describe('useResolvedScope', () => {
   });
 
   it('is loading while the self lookup runs', () => {
-    mockSelf.mockReturnValue(self([], { isLoading: true }));
+    mockSelf.mockReturnValue(self([], { isLoading: true, isFetched: false }));
 
     const { result } = renderHook(() => useResolvedScope());
 

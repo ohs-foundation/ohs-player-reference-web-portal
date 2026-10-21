@@ -38,7 +38,8 @@ export function useResolvedScope(): AdminScope {
     if (failure && !reportedByClient(failure)) onError?.(failure);
   }, [failure, onError]);
 
-  const lookupPending = signedIn && self.isLoading && self.roleDetails.length === 0;
+  const lookupPending = signedIn && !self.isFetched;
+  const treePending = tree.isLoading && !tree.isFetched;
 
   return useMemo((): AdminScope => {
     if (!current) {
@@ -55,7 +56,7 @@ export function useResolvedScope(): AdminScope {
       ...resourcesOf<PractitionerRole>(roleSearch.data, 'PractitionerRole'),
     ];
     const locations = resourcesOf<Location>(locationSearch.data, 'Location');
-    const loading = tree.isLoading || roleSearch.isLoading || locationSearch.isLoading;
+    const loading = treePending || roleSearch.isLoading || locationSearch.isLoading;
     return {
       ...resolveScopeIds(locationIds, roles, locations),
       status: loading ? 'loading' : 'scoped',
@@ -75,7 +76,7 @@ export function useResolvedScope(): AdminScope {
     lookupError,
     self.roles,
     tree.data,
-    tree.isLoading,
+    treePending,
     tree.error,
     roleSearch.data,
     roleSearch.isLoading,
