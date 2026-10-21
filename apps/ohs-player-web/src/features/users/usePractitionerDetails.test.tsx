@@ -16,8 +16,9 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   };
 });
 
-const { usePractitionerDetails, useMyPractitionerDetails } =
-  await import('./usePractitionerDetails');
+const { usePractitionerDetails, useMyPractitionerDetails } = await import(
+  './usePractitionerDetails'
+);
 
 const idle = { data: undefined, isLoading: false, error: undefined };
 
