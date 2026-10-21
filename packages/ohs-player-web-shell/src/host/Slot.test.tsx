@@ -90,7 +90,6 @@ describe('Slot', () => {
   });
 
   it('renders only the contributions for its own name', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
     render(
       <CorePlatformProvider config={testPlatformConfig}>
         <ExtensionsContext.Provider

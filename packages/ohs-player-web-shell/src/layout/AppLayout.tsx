@@ -227,9 +227,7 @@ function UserMenu({
       <OhsDropdownMenu.Portal>
         <OhsDropdownMenu.Content className="ohs-dropdown-content" sideOffset={6} align="end">
           {email ? (
-            <OhsDropdownMenu.Label className="app-topbar__user-email">
-              {email}
-            </OhsDropdownMenu.Label>
+            <OhsDropdownMenu.Label className="app-topbar__user-email">{email}</OhsDropdownMenu.Label>
           ) : null}
           <OhsDropdownMenu.Separator className="app-topbar__divider" />
           <OhsDropdownMenu.Item className="ohs-dropdown-item" onSelect={onSignOut}>
@@ -240,3 +238,4 @@ function UserMenu({
     </OhsDropdownMenu.Root>
   );
 }
+
