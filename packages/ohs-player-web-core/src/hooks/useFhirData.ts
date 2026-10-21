@@ -5,6 +5,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type UseQueryOptions,
   type UseQueryResult,
 } from '@tanstack/react-query';
 import type { SearchParams } from '../client/FhirClient';
@@ -389,7 +390,8 @@ export function useOptimisticInsert(): (
  * event-driven reads. Params with an `undefined` value are dropped from the query string by
  * `FhirClient.customGet`, so an optional filter can be passed straight through.
  *
- * The resolved value is `unknown` — narrow it at the call site.
+ * The resolved value is `unknown` — narrow it at the call site. `retry` takes TanStack's retry value
+ * and overrides the client default for this query, for example to stop retrying a definitive `404`.
  *
  * @example
  * const q = useCustomResource('practitionerDetails', { 'practitioner-id': id }, { enabled: Boolean(id) });
@@ -400,12 +402,13 @@ export function useOptimisticInsert(): (
 export function useCustomResource(
   alias: string,
   params?: Record<string, string | number | boolean | undefined>,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; retry?: UseQueryOptions['retry'] },
 ): UseQueryResult<unknown> {
   const client = useFhirClient();
   return useQuery({
     queryKey: ['custom', alias, params],
     enabled: options?.enabled ?? true,
+    ...(options?.retry === undefined ? {} : { retry: options.retry }),
     queryFn: async () => client.customGet(alias, params),
   });
 }

@@ -49,6 +49,37 @@ describe('useCustomResource', () => {
     expect(result.current.data).toBeUndefined();
   });
 
+  it('lets the caller override the client retry policy', async () => {
+    mockCustomGet.mockReset().mockRejectedValue(new Error('not found'));
+    const retrying = new QueryClient({ defaultOptions: { queries: { retry: 2, retryDelay: 0 } } });
+    const withRetries = ({ children }: { children: ReactNode }): React.ReactElement => (
+      <QueryClientProvider client={retrying}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(
+      () => useCustomResource('practitionerDetails', undefined, { retry: false }),
+      { wrapper: withRetries },
+    );
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(mockCustomGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the client retry policy when the caller sets none', async () => {
+    mockCustomGet.mockReset().mockRejectedValue(new Error('gateway down'));
+    const retrying = new QueryClient({ defaultOptions: { queries: { retry: 2, retryDelay: 0 } } });
+    const withRetries = ({ children }: { children: ReactNode }): React.ReactElement => (
+      <QueryClientProvider client={retrying}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useCustomResource('practitionerDetails'), {
+      wrapper: withRetries,
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(mockCustomGet).toHaveBeenCalledTimes(3);
+  });
+
   it('surfaces a rejected request as the query error', async () => {
     const failure = new Error('gateway down');
     mockCustomGet.mockReset().mockRejectedValue(failure);
