@@ -16,9 +16,8 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
   };
 });
 
-const { usePractitionerDetails, useMyPractitionerDetails } = await import(
-  './usePractitionerDetails'
-);
+const { usePractitionerDetails, useMyPractitionerDetails } =
+  await import('./usePractitionerDetails');
 
 const idle = { data: undefined, isLoading: false, error: undefined };
 
@@ -159,6 +158,14 @@ describe('useMyPractitionerDetails', () => {
 
     expect(mockUseCustomResource).toHaveBeenCalledWith('practitionerDetails', undefined, {
       enabled: true,
+    });
+  });
+
+  it('sends nothing while disabled, so a signed out page makes no request', () => {
+    renderHook(() => useMyPractitionerDetails(false));
+
+    expect(mockUseCustomResource).toHaveBeenCalledWith('practitionerDetails', undefined, {
+      enabled: false,
     });
   });
 });

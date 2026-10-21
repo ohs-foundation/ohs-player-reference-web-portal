@@ -195,7 +195,10 @@ describe('careTeamInScope', () => {
       careTeamInScope(
         team({
           managingOrganization: [{ reference: 'Organization/o9' }],
-          participant: [{ member: { reference: 'Practitioner/p9' } }, { member: { reference: 'r1' } }],
+          participant: [
+            { member: { reference: 'Practitioner/p9' } },
+            { member: { reference: 'r1' } },
+          ],
         }),
         ids,
       ),

@@ -182,7 +182,7 @@ Every step ends in one commit that leaves `pnpm typecheck`, `pnpm lint` and `pnp
 
 - Shell `host/PortalHost.tsx` gains `providers?: ComponentType<{ children: ReactNode }>`, with JSDoc and a `PortalHost.test.tsx` case. `docs/EXTENDING.md` documents it.
 - Commit `feat(shell): let an application wrap the routes in its own providers`
-- App `features/scope/ScopeProvider.tsx`, `useAdminScope.ts`, `useResolvedScope.ts`, `districtStore.ts`, tests, i18n keys in `appMessages.ts`
+- App `features/scope/ScopeProvider.tsx`, `useAdminScope.ts` (context, unscoped default, `rowsInScope`), `useResolvedScope.ts`, `useCurrentDistrict.ts` (the `sessionStorage` choice), and `useResolvedScope.test.tsx`. The i18n keys arrive with the indicator and the note that use them, so no key ships unused.
 - `features/users/usePractitionerDetails.ts` gains the `enabled` argument on `useMyPractitionerDetails`
 - `App.tsx` passes `providers={ScopeProvider}`
 - Commit `feat(scope): resolve the signed in user's district scope once per session`

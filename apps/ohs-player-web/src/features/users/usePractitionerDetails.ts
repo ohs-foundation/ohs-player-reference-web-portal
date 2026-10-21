@@ -32,7 +32,7 @@ export interface PractitionerContext {
   error: unknown;
 }
 
-function isNotFound(error: unknown): boolean {
+export function isNotFound(error: unknown): boolean {
   return error instanceof FhirError && error.status === 404;
 }
 
@@ -53,8 +53,9 @@ function dedupeById(careTeams: CareTeam[]): CareTeam[] {
 function usePractitionerContext(
   practitionerId: string | undefined,
   isSelfLookup: boolean,
+  selfLookupEnabled = true,
 ): PractitionerContext {
-  const enabled = isSelfLookup || Boolean(practitionerId);
+  const enabled = isSelfLookup ? selfLookupEnabled : Boolean(practitionerId);
   const query = useCustomResource(
     PRACTITIONER_DETAILS_ALIAS,
     isSelfLookup ? undefined : { 'practitioner-id': practitionerId },
@@ -104,7 +105,10 @@ export function usePractitionerDetails(practitionerId: string | undefined): Prac
   return usePractitionerContext(practitionerId, false);
 }
 
-/** Full practitioner context for the signed-in user; the gateway resolves them from the JWT. */
-export function useMyPractitionerDetails(): PractitionerContext {
-  return usePractitionerContext(undefined, true);
+/**
+ * Full practitioner context for the signed-in user, resolved by the gateway from the JWT.
+ * Pass `false` to send nothing until a session exists.
+ */
+export function useMyPractitionerDetails(enabled = true): PractitionerContext {
+  return usePractitionerContext(undefined, true, enabled);
 }
