@@ -113,6 +113,7 @@ A slot is a named place on a screen that renders every contribution registered f
 | Slot | Where | Context |
 | --- | --- | --- |
 | `users.rowActions` | The row menu of a users table | `{ practitioner: Practitioner }` |
+| `topbar.actions` | The app bar, before global search | `{}` |
 
 ```tsx
 import { FeatureGuard, OhsDropdownMenu, PermissionGuard, useTranslation } from 'ohs-player-web-core';
@@ -143,7 +144,7 @@ export function ViewSchedulesAction({
 }
 ```
 
-Contributions carry no `requires`; gate one yourself, as above. One that throws renders an error in its own place and the screen around it is untouched. The application that owns a screen places its slot with `<Slot name="users.rowActions" context={{ practitioner }} />`.
+Contributions carry no `requires`; gate one yourself, as above. One that throws renders an error in its own place and the screen around it is untouched. The application that owns a screen places its slot with `<Slot name="users.rowActions" context={{ practitioner }} />`. The shell places `topbar.actions` itself, so a contribution there appears in the app bar on every signed in screen.
 
 ### Messages, flags, permissions, endpoints and questionnaires
 

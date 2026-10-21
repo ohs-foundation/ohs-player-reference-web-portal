@@ -39,6 +39,7 @@ import type { NavId } from '../config/navigation';
 import { usePortalConfig } from '../config/portalConfigContext';
 import { RouteFallback } from '../routes/RouteFallback';
 import { useExtensions } from '../host/extensionsContext';
+import { Slot } from '../host/Slot';
 import { useRequirement } from '../auth/useRequirement';
 
 const ICON_SIZE = 24;
@@ -119,6 +120,7 @@ export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
           </span>
         </div>
         <div className="app-topbar__actions">
+          <Slot name="topbar.actions" context={{}} />
           <GlobalSearch />
           <IconButton
             label={mode === 'dark' ? t('themeLight') : t('themeDark')}
@@ -225,7 +227,9 @@ function UserMenu({
       <OhsDropdownMenu.Portal>
         <OhsDropdownMenu.Content className="ohs-dropdown-content" sideOffset={6} align="end">
           {email ? (
-            <OhsDropdownMenu.Label className="app-topbar__user-email">{email}</OhsDropdownMenu.Label>
+            <OhsDropdownMenu.Label className="app-topbar__user-email">
+              {email}
+            </OhsDropdownMenu.Label>
           ) : null}
           <OhsDropdownMenu.Separator className="app-topbar__divider" />
           <OhsDropdownMenu.Item className="ohs-dropdown-item" onSelect={onSignOut}>
@@ -236,4 +240,3 @@ function UserMenu({
     </OhsDropdownMenu.Root>
   );
 }
-

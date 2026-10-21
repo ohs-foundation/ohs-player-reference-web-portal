@@ -1,5 +1,5 @@
 import type { ExtensionSlotContribution } from 'ohs-player-web-core';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { ErrorState } from '../components/ui';
 import { ContributionBoundary } from './ContributionBoundary';
 import { useExtensions } from './extensionsContext';
@@ -26,9 +26,12 @@ export function Slot<Name extends SlotName>({
   return slots
     .filter(isFor(name))
     .sort((a, b) => a.order - b.order)
-    .map(({ id, component: Contributed }) => (
-      <ContributionBoundary key={id} fallback={<ErrorState />}>
-        <Contributed context={context} />
-      </ContributionBoundary>
-    ));
+    .map(({ id, component }) => {
+      const Contributed = component as ComponentType<{ context: SlotContexts[Name] }>;
+      return (
+        <ContributionBoundary key={id} fallback={<ErrorState />}>
+          <Contributed context={context} />
+        </ContributionBoundary>
+      );
+    });
 }

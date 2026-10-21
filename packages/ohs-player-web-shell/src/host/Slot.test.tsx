@@ -88,4 +88,32 @@ describe('Slot', () => {
 
     expect(screen.getByTestId('row-actions')).toBeEmptyDOMElement();
   });
+
+  it('renders only the contributions for its own name', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(
+      <CorePlatformProvider config={testPlatformConfig}>
+        <ExtensionsContext.Provider
+          value={{
+            ...contributions,
+            slots: [
+              ...contributions.slots,
+              {
+                id: 'scope.indicator',
+                slot: 'topbar.actions',
+                order: 10,
+                component: () => 'Kisumu',
+              },
+            ],
+          }}
+        >
+          <div data-testid="topbar">
+            <Slot name="topbar.actions" context={{}} />
+          </div>
+        </ExtensionsContext.Provider>
+      </CorePlatformProvider>,
+    );
+
+    expect(screen.getByTestId('topbar')).toHaveTextContent(/^Kisumu$/);
+  });
 });
