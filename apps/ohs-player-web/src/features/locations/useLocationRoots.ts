@@ -14,11 +14,12 @@ export const LOCATION_ROOTS_QUERY_KEY = ['fhir', 'search', 'Location', 'roots'] 
 export const LOCATION_ALL_LEAN_QUERY_KEY = ['fhir', 'search', 'Location', 'all-lean'] as const;
 
 /** All hierarchy roots for the root-location dropdown — paginated, not a single `_count` page. */
-export function useLocationRoots() {
+export function useLocationRoots(enabled = true) {
   const client = useFhirClient();
   const { t } = useTranslation();
   return useQuery<LocationRootOption[]>({
     queryKey: LOCATION_ROOTS_QUERY_KEY,
+    enabled,
     queryFn: () => fetchLocationRoots(client, (id) => t('locationsUnnamed', { id })),
   });
 }

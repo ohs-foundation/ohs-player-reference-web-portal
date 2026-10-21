@@ -1,10 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
+import { AdminScopeContext, UNSCOPED, type AdminScope } from '../scope/useAdminScope';
 import type { LocationNode } from './hierarchy';
 
 const refreshSpy = vi.fn().mockResolvedValue(undefined);
 const refreshHierarchySpy = vi.fn().mockResolvedValue(undefined);
+const rootsEnabled = vi.fn();
+const hierarchyRoot = vi.fn();
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
@@ -23,10 +26,10 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
 });
 
 vi.mock('./useLocationRoots', () => ({
-  useLocationRoots: () => ({
-    data: [{ value: 'ke', label: 'Kenya' }],
-    isLoading: false,
-  }),
+  useLocationRoots: (enabled?: boolean) => {
+    rootsEnabled(enabled);
+    return { data: [{ value: 'ke', label: 'Kenya' }], isLoading: false };
+  },
 }));
 
 const rootNode: LocationNode = {
@@ -67,13 +70,16 @@ const rootNode: LocationNode = {
 vi.mock('./useLocationHierarchy', () => ({
   useApplyHierarchyEdit: () => vi.fn(),
   useRefreshHierarchy: () => refreshHierarchySpy,
-  useLocationHierarchy: () => ({
-    data: { root: rootNode, meta: { nodeCount: 1, depth: 0, truncated: false, builtAt: null } },
-    isLoading: false,
-    isError: false,
-    error: null,
-    refetch: vi.fn().mockResolvedValue(undefined),
-  }),
+  useLocationHierarchy: (rootId: string | undefined) => {
+    hierarchyRoot(rootId);
+    return {
+      data: { root: rootNode, meta: { nodeCount: 1, depth: 0, truncated: false, builtAt: null } },
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn().mockResolvedValue(undefined),
+    };
+  },
 }));
 
 vi.mock('../bulk-import/BulkImportDrawer', () => ({
@@ -143,5 +149,46 @@ describe('LocationsHierarchyPage import completion', () => {
     fireEvent.click(screen.getByRole('button', { name: 'finish-import' }));
     expect(refreshSpy).toHaveBeenCalledWith('Location');
     expect(refreshHierarchySpy).toHaveBeenCalled();
+  });
+});
+
+describe('LocationsHierarchyPage scope', () => {
+  const nairobi = { id: 'nrb', name: 'Nairobi' };
+
+  function renderWith(scope: AdminScope) {
+    rootsEnabled.mockClear();
+    hierarchyRoot.mockClear();
+    return render(
+      <MemoryRouter initialEntries={['/locations']}>
+        <AdminScopeContext.Provider value={scope}>
+          <LocationsHierarchyPage />
+        </AdminScopeContext.Provider>
+      </MemoryRouter>,
+    );
+  }
+
+  it('keeps the root picker and the first root for an unscoped user', () => {
+    renderWith(UNSCOPED);
+
+    expect(screen.getByLabelText('locationsRoot')).toBeInTheDocument();
+    expect(rootsEnabled).toHaveBeenLastCalledWith(true);
+    expect(hierarchyRoot).toHaveBeenLastCalledWith('ke');
+    expect(screen.queryByText(/scopeConvenienceNote/)).toBeNull();
+  });
+
+  it('roots the tree at the district, even one that is not a hierarchy root', () => {
+    renderWith({ ...UNSCOPED, status: 'scoped', districts: [nairobi], current: nairobi });
+
+    expect(screen.queryByLabelText('locationsRoot')).toBeNull();
+    expect(rootsEnabled).toHaveBeenLastCalledWith(false);
+    expect(hierarchyRoot).toHaveBeenLastCalledWith('nrb');
+    expect(screen.getByText(/scopeConvenienceNote/)).toBeInTheDocument();
+  });
+
+  it('reads no tree until the scope has resolved', () => {
+    renderWith({ ...UNSCOPED, status: 'loading' });
+
+    expect(rootsEnabled).toHaveBeenLastCalledWith(false);
+    expect(hierarchyRoot.mock.calls.every(([id]) => id === undefined)).toBe(true);
   });
 });
