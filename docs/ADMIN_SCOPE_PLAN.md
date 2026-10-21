@@ -191,7 +191,7 @@ Every step ends in one commit that leaves `pnpm typecheck`, `pnpm lint` and `pnp
 
 - Shell `host/types.ts` gains `'topbar.actions': Record<string, never>` and the name in `SLOT_NAMES`. `layout/AppLayout.tsx` renders the slot. Cases in `types.test.ts` and `Slot.test.tsx`. `docs/EXTENDING.md` lists the slot.
 - Commit `feat(shell): topbar.actions slot`
-- App `features/scope/ScopeIndicator.tsx`, `manifest.ts`, `manifest.test.ts`, the indicator test, and the install line in `extensions.ts`
+- App `features/scope/ScopeIndicator.tsx`, `manifest.ts`, `manifest.test.ts`, the indicator test, and the install line in `extensions.ts`. The indicator stays mounted while a newly chosen district's tree loads, so a keyboard user switching districts keeps focus on the picker. Its copy lives in `appMessages.ts` because the pages share it, so the manifest declares no `messages`.
 - Commit `feat(scope): district indicator and picker in the app bar`
 
 ### Phase 4, the lists, one commit and one test per page
