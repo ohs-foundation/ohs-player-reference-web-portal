@@ -71,6 +71,7 @@
       "realmRoles": ["admin", "location-hierarchy.view", "bulk-import.manage", "users.manage", "groups.manage", "roles.view", "practitioner-details.view"]
     },
     {
+      "id": "5f1c2a9e-7b3d-4e8a-9c21-6d0b4f3e8a71",
       "username": "manager-user",
       "enabled": true,
       "emailVerified": true,
