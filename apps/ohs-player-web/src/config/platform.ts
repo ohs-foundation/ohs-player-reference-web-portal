@@ -45,16 +45,7 @@ export const platformConfig: CorePlatformConfig = {
   },
   flags: {
     defaultValue: false,
-    flags: {
-      userMgmt: env.flags.userMgmt,
-      locationMgmt: env.flags.locationMgmt,
-      careTeams: env.flags.careTeams,
-      dashboard: env.flags.dashboard,
-      orgMgmt: env.flags.orgMgmt,
-      setupWizard: env.flags.setupWizard,
-      fhirViewer: env.flags.fhirViewer,
-      auditLog: env.flags.auditLog,
-    },
+    flags: { ...env.flags },
   },
   i18n: {
     locale: 'en',

@@ -148,7 +148,7 @@ Contributions carry no `requires`; gate one yourself, as above. One that throws 
 ### Messages, flags, permissions, endpoints and questionnaires
 
 - **`messages`**: flat camelCase keys, in the same style as the app's catalogue. Use them with `useTranslation().t(key)`.
-- **`flags`**: defaults for your flags. Read them with `useFlag` or `FeatureGuard`.
+- **`flags`**: defaults for your flags. Read them with `useFlag` or `FeatureGuard`. A default holds until the configuration document sets the same name, so a deployment turns your feature off with `"flags": { "schedules": false }` and a reload, and every route, sidebar entry and widget that requires the flag goes with it.
 - **`permissions`**: permission key to the roles that hold it. Every `requires.permission` on a route, nav entry or widget must exist in the merged map.
 - **`customEndpoints`**: gateway aliases for `useCustomEndpoint(alias)`.
 - **`questionnaires`**: FHIR Questionnaires under keys of your choosing. Read them with `useExtensionQuestionnaire(manifestId, key)`.
@@ -220,11 +220,8 @@ The host also checks the configuration document's `messages` once every manifest
 
 A feature that every deployment of the reference app ships goes in its own folder under `apps/ohs-player-web/src/features/`.
 
-1. Add `VITE_FLAG_MY_FEATURE=true` to `.env` (see `.env.example`).
-2. In [`config/env.ts`](../apps/ohs-player-web/src/config/env.ts), expose the flag (e.g. `myFeature: import.meta.env.VITE_FLAG_MY_FEATURE !== 'false'`).
-3. In [`config/platform.ts`](../apps/ohs-player-web/src/config/platform.ts), add the key to `flags.flags` (e.g. `myFeature: env.flags.myFeature`).
-4. Add the name to `FLAG_NAMES` in [`config/portalConfigSchema.ts`](../apps/ohs-player-web/src/config/portalConfigSchema.ts) so the configuration document can set it at runtime, then run `pnpm config-schema:generate`.
-5. Add the page to `appRoutes` in [`AppRoutes.tsx`](../apps/ohs-player-web/src/AppRoutes.tsx) with `requires: { flag: 'myFeature', permission: '…' }`. The host gates it in the same order as an extension route.
+1. Add a flag for it with the checklist in [DEPLOYMENT.md, Feature flags](./DEPLOYMENT.md#feature-flags).
+2. Add the page to `appRoutes` in [`AppRoutes.tsx`](../apps/ohs-player-web/src/AppRoutes.tsx) with `requires: { flag: 'myFeature', permission: '…' }`. The host gates it in the same order as an extension route.
 
 A sidebar entry for a built-in feature is a shell change: add its id to `NAV_IDS` and `DEFAULT_NAVIGATION` in the shell's [`config/navigation.ts`](../packages/ohs-player-web-shell/src/config/navigation.ts), give it icons in `NAV_ICONS` in the shell's `layout/AppLayout.tsx`, and list it in `public/portal-config.json` with an `order` between its neighbours. If only some deployments need the feature, write it as an extension instead.
 
