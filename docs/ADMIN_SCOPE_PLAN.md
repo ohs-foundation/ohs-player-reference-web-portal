@@ -275,6 +275,8 @@ Risks recorded, not changed.
 
 Checked and fine. Hook order through changing role lists. The `404` path asks for no tree and no search. A hierarchy `403` keeps the user scoped to the district with the incomplete note on every page, and the Locations page shows its no access state with Retry. Truncation sets `incomplete`. Bare, typed, absolute and versioned references normalise. Edit user keeps an original out of scope link. Create user never preselects. `useCurrentDistrict` resets on a new `sub`, survives a throwing `sessionStorage` and is safe under StrictMode. Memo dependencies are complete. A district switch shows progress without a stuck state, and the indicator stays mounted. The `Slot` assertion is sound, the `providers` prop wraps only the routes, and the example app is untouched and passes. Every new message key is used and declared, with no hardcoded copy. The doc counts match the seed.
 
+Bundle. No dependency was added. The provider and the indicator mount at the root, so they ship in the reference app's main chunk, which grew from 207.18 kB to 210.91 kB gzipped. `ScopeNote` is a 0.24 kB shared chunk for the lazy pages. The library grew from 50,622 to 50,692 bytes gzipped, inside its 65,536 byte budget.
+
 ---
 
 ## Files intentionally not touched
