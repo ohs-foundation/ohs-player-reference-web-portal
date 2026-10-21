@@ -377,7 +377,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
         <LocationCreateDrawer
           onClose={() => setCreateOpen(false)}
           onSuccess={() => {
-            void rootsSearch.refetch();
+            if (!district) void rootsSearch.refetch();
             void refreshResources(['Location']);
             void refreshHierarchy();
           }}

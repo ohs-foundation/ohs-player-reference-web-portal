@@ -7,6 +7,7 @@ import type { LocationNode } from './hierarchy';
 const refreshSpy = vi.fn().mockResolvedValue(undefined);
 const refreshHierarchySpy = vi.fn().mockResolvedValue(undefined);
 const rootsEnabled = vi.fn();
+const rootsRefetch = vi.fn().mockResolvedValue(undefined);
 const hierarchyRoot = vi.fn();
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
@@ -28,7 +29,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
 vi.mock('./useLocationRoots', () => ({
   useLocationRoots: (enabled?: boolean) => {
     rootsEnabled(enabled);
-    return { data: [{ value: 'ke', label: 'Kenya' }], isLoading: false };
+    return { data: [{ value: 'ke', label: 'Kenya' }], isLoading: false, refetch: rootsRefetch };
   },
 }));
 
@@ -80,6 +81,18 @@ vi.mock('./useLocationHierarchy', () => ({
       refetch: vi.fn().mockResolvedValue(undefined),
     };
   },
+}));
+
+vi.mock('./LocationCreateDrawer', () => ({
+  LocationCreateDrawer: ({
+    onSuccess,
+  }: {
+    onSuccess: (created: { id: string; name: string }) => void;
+  }) => (
+    <button type="button" onClick={() => onSuccess({ id: 'new', name: 'New' })}>
+      finish-create
+    </button>
+  ),
 }));
 
 vi.mock('../bulk-import/BulkImportDrawer', () => ({
@@ -157,6 +170,7 @@ describe('LocationsHierarchyPage scope', () => {
 
   function renderWith(scope: AdminScope) {
     rootsEnabled.mockClear();
+    rootsRefetch.mockClear();
     hierarchyRoot.mockClear();
     return render(
       <MemoryRouter initialEntries={['/locations']}>
@@ -190,5 +204,21 @@ describe('LocationsHierarchyPage scope', () => {
 
     expect(rootsEnabled).toHaveBeenLastCalledWith(false);
     expect(hierarchyRoot.mock.calls.every(([id]) => id === undefined)).toBe(true);
+  });
+
+  it('refreshes the roots after a create while it shows them', () => {
+    renderWith(UNSCOPED);
+    fireEvent.click(screen.getByRole('button', { name: 'dialogCreateLocation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'finish-create' }));
+
+    expect(rootsRefetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips the roots walk after a scoped create, since the district is the only root', () => {
+    renderWith({ ...UNSCOPED, status: 'scoped', districts: [nairobi], current: nairobi });
+    fireEvent.click(screen.getByRole('button', { name: 'dialogCreateLocation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'finish-create' }));
+
+    expect(rootsRefetch).not.toHaveBeenCalled();
   });
 });
