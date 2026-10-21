@@ -182,6 +182,12 @@ installThemeCss(host.portal.theme);
 createRoot(document.getElementById('root')!).render(<PortalHost host={host} />);
 ```
 
+`PortalHost` also takes `providers`, a component that wraps the routes inside the router and the platform providers. Use it for application state that the pages, the frame and the slot contributions all read, when that state needs the session or the FHIR client. `children` render beside the router, so a provider passed as `children` does not reach the pages.
+
+```tsx
+<PortalHost host={host} providers={ScopeProvider} />
+```
+
 ### Validation and failure
 
 At startup the host checks every manifest:

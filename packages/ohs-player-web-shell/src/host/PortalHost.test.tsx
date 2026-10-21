@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PortalDocument } from '../config/resolvePortalConfig';
 import type { PortalExtension } from './types';
@@ -50,6 +51,31 @@ const schedules: PortalExtension = {
   flags: { schedules: true },
   customEndpoints: { schedules: '/api/schedules' },
   questionnaires: { schedule: { resourceType: 'Questionnaire', title: 'Schedule' } },
+};
+
+const Greeting = createContext('no provider');
+
+function GreetingProvider({ children }: Readonly<{ children: ReactNode }>): React.ReactElement {
+  return <Greeting.Provider value="from the app">{children}</Greeting.Provider>;
+}
+
+function GreetingLine({ where }: Readonly<{ where: string }>): React.ReactElement {
+  return (
+    <p>
+      {where} {useContext(Greeting)}
+    </p>
+  );
+}
+
+const greeting: PortalExtension = {
+  id: 'greeting',
+  routes: [
+    {
+      id: 'page',
+      path: '/greeting',
+      load: () => Promise.resolve({ default: () => <GreetingLine where="page" /> }),
+    },
+  ],
 };
 
 const defaults = {
@@ -116,6 +142,24 @@ describe('PortalHost', () => {
 
     expect(await screen.findByText('Unknown message keys')).toBeInTheDocument();
     expect(screen.getByText('navSchedles (did you mean navSchedules?)')).toBeInTheDocument();
+  });
+
+  it('wraps the pages and the frame in the providers an application passes', async () => {
+    window.history.pushState({}, '', '/greeting');
+    const host = createPortalHost({ defaults, extensions: [greeting], development: true });
+    render(
+      <PortalHost
+        host={host}
+        providers={GreetingProvider}
+        layoutChildren={<GreetingLine where="frame" />}
+      >
+        <GreetingLine where="outside" />
+      </PortalHost>,
+    );
+
+    expect(await screen.findByText('page from the app')).toBeInTheDocument();
+    expect(screen.getByText('frame from the app')).toBeInTheDocument();
+    expect(screen.getByText('outside no provider')).toBeInTheDocument();
   });
 
   it('shows no warning when every document message key is declared', async () => {
