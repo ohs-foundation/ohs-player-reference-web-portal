@@ -74,7 +74,7 @@ graph TD
 
 | Layer | What this ticket adds |
 | --- | --- |
-| Library | Nothing. |
+| Library | An optional `retry` on `useCustomResource`, added after the live walk (B1). Additive. |
 | Shell | `topbar.actions` in `SlotContexts` and `SLOT_NAMES`, a `Slot` in `AppLayout`, and an optional `providers` component on `PortalHostProps` that wraps the routes. Both additive. |
 | Reference app | `features/scope/` with the pure scope model, the provider and hook, the indicator, the note and an in app manifest. Filters in four pages, the picker helper, an `enabled` argument on `useMyPractitionerDetails`, an `enabled` argument on `useLocationRoots`, i18n keys, seed data and docs. |
 | Second app | Untouched. It must still build and pass `host.test.tsx`. |
@@ -134,12 +134,12 @@ D3 keeps the searches the pages already run, so this ticket adds no new search p
 
 | Case | Answer | Proof |
 | --- | --- | --- |
-| No Practitioner for the signed in user (`404`) | Unscoped, identical to `main`, one request | provider test counts requests |
+| No Practitioner for the signed in user (`404`) | Unscoped, identical to `main`, one request | `ScopeProvider.test.tsx` counts requests through focus and reconnect, `useResolvedScope.test.tsx` checks no tree or search is asked for |
 | Practitioner with no role (`404` at line 135) | Unscoped | same test |
 | A role with no `location` | Contributes nothing. All roles without a location means unscoped | `scope.test.ts` |
 | A role whose location is not a hierarchy root | The tree is fetched with that location as root, and the Locations page shows it as the only root | page test |
 | Two roles sharing a location | One district | `scope.test.ts` |
-| Truncated tree (`meta.truncated` or a node with `hasMoreChildren`) | Scope is incomplete and the note says so | provider and note tests |
+| Truncated tree (`meta.truncated` or a node with `hasMoreChildren`) | Scope is incomplete and the note says so | `useResolvedScope.test.tsx` and `ScopeNote.test.tsx` |
 | Hierarchy fails (`403`, `5xx`) | Scoped to the district id alone, note says incomplete | provider test |
 | Self lookup fails other than `404` | Unscoped with a notice in the indicator | provider test |
 | `PractitionerRole` beyond the first 500 | Its practitioner reads as out of scope. The note and the docs say the list is capped | documented |
@@ -159,7 +159,7 @@ D3 keeps the searches the pages already run, so this ticket adds no new search p
 2. Scope follows the roles a user holds, whatever their permissions. An `admin` with a location role is scoped too.
 3. `PractitionerRole.active` and `period` are not read. The backend ticket decides whether an inactive role grants scope.
 4. An inactive Location does not bring its managing organisation into scope for the care teams page, because the shared `Location` search asks for `status=active`. The Organisations page still matches it through `_revinclude`.
-5. The hierarchy cache (`staleTime: Infinity`) and the self lookup cache are not refreshed by this ticket. A role or tree change after sign in shows after a reload. The bug hunt checks this.
+5. The self lookup runs once per session, with no refetch on focus or reconnect (B2). The district's tree keeps `staleTime: Infinity` and refreshes only through the Locations page's own create, import, edit and retry paths. A role change, or a tree change made elsewhere, shows after a reload. The `PractitionerRole` and `Location` searches behind the people and organisation sets refetch on focus as before, so those sets can change during a session.
 
 ---
 
@@ -204,7 +204,7 @@ Every step ends in one commit that leaves `pnpm typecheck`, `pnpm lint` and `pnp
 
 - Rebase onto `origin/main` and read the #90 diff first. Editing the user drawers before #90 merges needs an explicit go ahead.
 - `scopedOptions` applied to `locOptions` and `orgOptions` in `useUserCreateForm.ts` and `UserEditDrawer.tsx`, keeping values already selected
-- `LocationCreateDrawer.tsx` scopes the parent options and defaults the parent to the district
+- `LocationCreateDrawer.tsx` scopes the parent options and defaults the parent to the district. `LocationForm.tsx` gained an optional `emptyParent`, so a cleared parent falls back to the district (B4)
 - Commit `feat(scope): scope the pickers in the user drawers and default a new location's parent`
 
 ### Phase 6, seed data, docs, live walk
@@ -226,17 +226,60 @@ Full gates, push, and a pull request that opens with `Fixes #92`.
 
 ## Live walk
 
-Filled in during Phase 6.
+Run on 21 October 2026 against HAPI on `:8080`, Keycloak on `:8090`, the gateway built from `ohs-player-reference-backend` on `:8180`, the reference app on `:5173`, and `pnpm seed` data. A headless Chrome signed in through Keycloak. The running Keycloak predates the fixed `manager-user` id, so for this walk the seeded practitioner's identifier was pointed at the live id instead of recreating the container. The next `pnpm seed` restores it.
+
+| Check | `manager-user`, scoped | `admin-user`, unscoped |
+| --- | --- | --- |
+| App bar | `Demo District` chip, with the convenience note for screen readers | Nothing |
+| Users | Two rows, District Manager and Seed User1, with the note under the header | Every practitioner, no note |
+| Locations | Tree rooted at Demo District, no root picker | Tree rooted at Demo Country, root picker shown |
+| Organisations | Demo Health Organization only | Both organisations |
+| Care teams | Primary Care Team only | Both care teams |
+| Add user pickers | Organisation offers Demo Health Organization. Location offers Demo District, Demo Facility and Demo Clinic. Nothing preselected | Unchanged code path, covered by tests |
+| New location | Parent defaults to Demo District and offers only the district and its descendants | Unchanged code path, covered by tests |
+| `/api` requests | One `practitioner-details` and one `location-hierarchy/seed-loc-district` | One `practitioner-details` after B1, plus the Locations page's own tree |
+| axe with colour contrast, light and dark | `label-content-name-mismatch` on the user menu trigger and `empty-table-header` | The same two, so both are pre-existing |
+
+The Add user and New location checks granted `users.create`, `users.edit` and `locations.edit` to `care-team-manager` by intercepting `/portal-config.json`, because the seeded manager holds none of them. No file or record changed for that.
 
 ## Bug hunt
 
-Filled in during Phase 7.
+**B1. An unscoped user waited about seven seconds for every list (fixed).** Found in the live walk. `admin-user` made four self lookup requests. `CorePlatformProvider` builds a default `QueryClient`, which retries a failed query three times with backoff, and the lists hold their rows while scope loads. A `404` is the definitive unscoped answer, so the library's `useCustomResource` gained an optional `retry` (approved in session) and the self lookup passes one that never retries a `404`. Tests in `useFhirData.test.tsx` and `usePractitionerDetails.test.tsx`. The live walk then showed one request.
+
+The rest was a separate review over the finished branch. It read every changed file in full, checked each item of the ticket's bug hunt list, and proved its bugs with throwaway tests, which it deleted afterwards.
+
+**B2. An unscoped user's lists went blank and the `404` was sent again on every window focus or reconnect (fixed).** A failed query holds no data, so TanStack counts it as stale and refetches it on focus and reconnect, and the refetch puts it back to pending. The library's `useCustomResource` gained optional `refetchOnWindowFocus` and `refetchOnReconnect` (approved in session), the self lookup turns both off, and the provider now counts scope as loading only until the self lookup and the tree first settle. `ScopeProvider.test.tsx` runs the real client against a stubbed gateway and counts one request through focus and reconnect.
+
+**B3. A self lookup failure other than `404` held every list blank for about seven seconds (fixed).** B1 still allowed three retries for any other status. The self lookup now retries once. `ScopeProvider.test.tsx` reaches unscoped with the notice after two requests.
+
+**B4. Clearing the parent in the location create drawer while scoped created a root location outside the district (fixed).** The parent picker fell back to the root on clear, which a scoped user is not offered. `LocationFormFields` takes an optional `emptyParent`, and the create drawer passes the district. `LocationCreateDrawer.test.tsx` submits after a clear and gets `partOf` the district.
+
+**B5. A create drawer opened while scope was loading was not scoped and never took the district as its parent (fixed).** `scopedIds` waited for `scoped`, and the form read its initial parent once. `scopedIds` now applies as soon as the district is known, which only ever narrows, and the create form remounts when the district becomes known. Two tests in `LocationCreateDrawer.test.tsx`.
+
+**B6. A scoped location create walked the whole store for root locations it never showed (fixed).** An explicit `refetch` ignores `enabled`. It now runs only while the roots are shown. Two tests in `LocationsHierarchyPage.test.tsx`.
+
+**B7. Docs that did not match the code (fixed).** The plan claimed a provider test counted requests and that the self lookup never refreshed. Both are now true and say which test proves them. The plan's library row is corrected.
+
+**B8. Small fixes.** A versioned original link (`Location/x/_history/2`) was not kept in the edit drawer's picker, now it is, with a test. The district picker could not shrink in the app bar, now it can. The incomplete note said "could not be read" for a tree the gateway truncated, it now says "was not loaded". `ScopeNote.test.tsx` covers the note with and without `incomplete`. Formatting churn in `AppLayout.tsx` and an unneeded console spy in `Slot.test.tsx` are gone.
+
+Risks recorded, not changed.
+
+- **R1. Freshness.** See assumption 5.
+- **R2. Records a scoped admin creates can leave their list.** A user created with no location in the district, or an organisation or care team created with no in scope link, disappears after the success message. Follow up 8.
+- **R3. Phone width.** At 360 px the app bar is 489 px wide on `main` and 597 px with the district chip. The overflow predates this ticket. Follow up 9.
+- **R4. Switching district with a drawer open** is not reachable, because `Drawer` is a modal Radix dialog that blocks the app bar. Create pickers keep any value already chosen in state.
+- **R5. Other pickers stay unscoped**, as the plan chose. Follow up 10.
+- **R6. The Users role chip** offers every role code. Follow up 11.
+- **R7. The self lookup cache key does not carry the user.** Not reachable today, because sign in and sign out both reload the page.
+- **R8. A slot contribution that throws** shows a full error block in the app bar, which is the existing `ContributionBoundary` contract.
+
+Checked and fine. Hook order through changing role lists. The `404` path asks for no tree and no search. A hierarchy `403` keeps the user scoped to the district with the incomplete note on every page, and the Locations page shows its no access state with Retry. Truncation sets `incomplete`. Bare, typed, absolute and versioned references normalise. Edit user keeps an original out of scope link. Create user never preselects. `useCurrentDistrict` resets on a new `sub`, survives a throwing `sessionStorage` and is safe under StrictMode. Memo dependencies are complete. A district switch shows progress without a stuck state, and the indicator stays mounted. The `Slot` assertion is sound, the `providers` prop wraps only the routes, and the example app is untouched and passes. Every new message key is used and declared, with no hardcoded copy. The doc counts match the seed.
 
 ---
 
 ## Files intentionally not touched
 
-- `packages/ohs-player-web-core`, the library. Nothing in it changes.
+- `packages/ohs-player-web-core` beyond the `retry` option that B1 needed.
 - `DashboardPage.tsx` and the shell's dashboard counts, a non goal.
 - The shell's global search, which stays unscoped.
 - `docker-compose.yml`. The local change in the working tree is not part of this branch.
@@ -249,16 +292,20 @@ Filled in during Phase 7.
 2. Scoped dashboard counts, which need scoped `_summary=count` queries.
 3. Scope aware global search.
 4. Server side scoped searches once the backend can answer them, replacing the 500 row caps.
-5. The self lookup `404` reaches `onError` for every user with no practitioner (F4). Either a way for a call to mark a status as expected, or a `200` with no roles from the backend.
+5. The self lookup `404` reaches `onError` once per sign in for every user with no practitioner (F4). Either a way for a call to mark a status as expected, or a `200` with no roles from the backend.
 6. The Locations page "load more" re-root falls back to the first root (F9).
 7. Refreshing scope when a role or the tree changes during a session.
+8. A record a scoped admin creates without an in scope link leaves their list after the success message (R2). Defaulting the Add user location to the district would close most of it.
+9. The app bar overflows at phone width on `main` already (R3). The district chip adds about 108 px to it.
+10. The location edit drawer's parent, the organisation form's location picker and the care team form's pickers stay unscoped (R5).
+11. The Users role chip lists every role code, not only those in scope (R6).
 
 ## Risk assessment
 
 | Risk | Mitigation |
 | --- | --- |
 | Two shell contract additions (`topbar.actions`, `providers`) | Both optional and additive. Example app built and tested after each. |
-| Unscoped users see a change | The default context is unscoped, the self lookup is the only new request, and a provider test counts requests. |
+| Unscoped users see a change | The default context is unscoped, the self lookup is the only new request and never repeats, and `ScopeProvider.test.tsx` counts requests. |
 | A scoped user briefly sees every row | Pages treat a loading scope as loading and render no rows until it settles. |
 | Hook order changes with the role list | One hierarchy hook, one search per type, no hooks in loops. A re-render test changes the role list. |
 | Merge conflicts with #111, #113 and #90 | Small, page level edits. Rebase before Phase 5 and before the pull request. |

@@ -48,7 +48,7 @@ Open `http://localhost:5173`, sign in with Keycloak (e.g. `admin-user` / `admin`
 
 Scope needs the real gateway, because it reads `/api/practitioner-details` and `/api/location-hierarchy` (see [OHS Info Gateway](#ohs-info-gateway)). With the bundled nginx proxy every user is unscoped.
 
-The seed finds `manager-user` through the fixed Keycloak `id` in `infra/keycloak/ohs-realm.json`. A Keycloak container created before that id existed keeps the old one, so recreate it once with `docker compose up -d --force-recreate keycloak`. Recreating it also drops any user or role added by hand since the realm was imported.
+The seeded practitioner's identifier matches the fixed Keycloak `id` that `infra/keycloak/ohs-realm.json` gives `manager-user`, which becomes the `sub` of its token. A Keycloak container created before that id existed keeps the old one, so recreate it once with `docker compose up -d --force-recreate keycloak`. Recreating it also drops any user or role added by hand since the realm was imported.
 
 To customize or extend the portal, continue with [CUSTOMIZING.md](./CUSTOMIZING.md).
 
