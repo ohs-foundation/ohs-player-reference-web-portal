@@ -36,6 +36,10 @@ export function isNotFound(error: unknown): boolean {
   return error instanceof FhirError && error.status === 404;
 }
 
+function retryUnlessNotFound(failureCount: number, error: unknown): boolean {
+  return !isNotFound(error) && failureCount < 3;
+}
+
 function careTeamsFromBundle(bundle: unknown): CareTeam[] {
   return ((bundle as Bundle<CareTeam> | undefined)?.entry ?? [])
     .map((entry) => entry.resource)
@@ -59,7 +63,7 @@ function usePractitionerContext(
   const query = useCustomResource(
     PRACTITIONER_DETAILS_ALIAS,
     isSelfLookup ? undefined : { 'practitioner-id': practitionerId },
-    { enabled },
+    isSelfLookup ? { enabled, retry: retryUnlessNotFound } : { enabled },
   );
   const response = query.data as PractitionerDetailsResponse | undefined;
   const roleDetails = useMemo(() => response?.practitionerRoles ?? [], [response]);
