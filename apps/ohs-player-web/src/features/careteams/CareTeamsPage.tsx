@@ -33,6 +33,9 @@ import {
 } from 'ohs-player-web-shell';
 import { CareTeamDetailsDrawer, type CareTeamRow } from './CareTeamDetailsDrawer';
 import { CareTeamFormDrawer } from './CareTeamFormDrawer';
+import { careTeamInScope } from '../scope/scope';
+import { ScopeNote } from '../scope/ScopeNote';
+import { rowsInScope, useAdminScope } from '../scope/useAdminScope';
 
 const STATUS_VALUES = ['active', 'inactive'] as const;
 
@@ -58,6 +61,9 @@ export function CareTeamsPage() {
   const teams = useSearch('CareTeam', { _count: '200' });
   const pract = useSearch('Practitioner', { _count: '500' });
   const orgs = useSearch('Organization', { _count: '500' });
+  const scope = useAdminScope();
+  const loading = teams.isLoading || scope.status === 'loading';
+  const scoped = scope.status === 'scoped';
 
   const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useFilterParam('status', STATUS_VALUES);
@@ -104,12 +110,16 @@ export function CareTeamsPage() {
   };
 
   const teamList = useMemo(() => resourcesOf<CareTeamRow>(teams.data), [teams.data]);
+  const scopedTeams = useMemo(
+    () => rowsInScope(teamList, scope, (team) => careTeamInScope(team, scope)),
+    [teamList, scope],
+  );
 
   const isActive = (team: CareTeamRow): boolean => (team.status ?? 'active') === 'active';
 
   const filteredRows = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return teamList.filter((team) => {
+    return scopedTeams.filter((team) => {
       if (!team.id) return false;
       if (term && !`${team.name ?? ''} ${team.id}`.toLowerCase().includes(term)) return false;
       if (statusFilter === 'active' && !isActive(team)) return false;
@@ -117,12 +127,12 @@ export function CareTeamsPage() {
       return true;
     });
     // isActive is a pure derivation of stable inputs
-  }, [teamList, q, statusFilter]);
+  }, [scopedTeams, q, statusFilter]);
 
   const teamsError = teams.error ? describeError(teams.error, t) : null;
 
   const isFiltering = q.trim() !== '' || statusFilter !== null;
-  const noTeams = !teams.isLoading && !teamsError && teamList.length === 0 && !isFiltering;
+  const noTeams = !loading && !teamsError && scopedTeams.length === 0 && !isFiltering;
   const viewTeam = teamList.find((tm) => tm.id === viewId) ?? null;
   const editTeam = teamList.find((tm) => tm.id === editId) ?? null;
 
@@ -137,7 +147,7 @@ export function CareTeamsPage() {
         description={t('pageCareTeamsDescription')}
         actions={
           <>
-            {teamList.length > 0 ? (
+            {scopedTeams.length > 0 ? (
               <Button
                 variant="secondary"
                 type="button"
@@ -156,7 +166,9 @@ export function CareTeamsPage() {
         }
       />
 
-      {teams.isLoading ? <LinearProgress /> : null}
+      <ScopeNote />
+
+      {loading ? <LinearProgress /> : null}
 
       {createOpen ? (
         <CareTeamFormDrawer
@@ -192,8 +204,12 @@ export function CareTeamsPage() {
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <EmptyState
             illustration={<img src={careTeamsEmptyIllustration} alt="" width={110} height={104} />}
-            title={t('careTeamsEmptyTitle')}
-            description={t('careTeamsEmptyDescription')}
+            title={
+              scoped
+                ? t('scopeEmptyTitle', { district: scope.current?.name ?? '' })
+                : t('careTeamsEmptyTitle')
+            }
+            description={scoped ? t('scopeEmptyDescription') : t('careTeamsEmptyDescription')}
             action={
               <PermissionGuard permission="careteams.manage">
                 <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
@@ -345,7 +361,7 @@ export function CareTeamsPage() {
           ]}
           rows={filteredRows}
           rowKey={(tm) => tm.id ?? ''}
-          loading={teams.isLoading}
+          loading={loading}
           selectable
           selectedKeys={selectedIds}
           onSelectionChange={setSelectedIds}

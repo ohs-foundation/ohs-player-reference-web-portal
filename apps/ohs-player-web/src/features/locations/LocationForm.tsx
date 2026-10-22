@@ -23,6 +23,7 @@ export interface ParentOption {
 export interface LocationFormFieldsProps {
   parentOptions: ParentOption[];
   initialAnswers?: Record<string, string>;
+  emptyParent?: string;
   selfId?: string;
   draftLocations?: DraftLocation[];
   onSubmit: (answers: Record<string, string>) => void;
@@ -40,6 +41,7 @@ export interface LocationFormFieldsProps {
 export function LocationFormFields({
   parentOptions,
   initialAnswers,
+  emptyParent = '__root__',
   selfId,
   draftLocations = [],
   onSubmit,
@@ -55,7 +57,7 @@ export function LocationFormFields({
     [LOCATION_LINK_IDS.status]: 'active',
     [LOCATION_LINK_IDS.mode]: 'instance',
     [LOCATION_LINK_IDS.addressLine]: '',
-    [LOCATION_LINK_IDS.parent]: '__root__',
+    [LOCATION_LINK_IDS.parent]: emptyParent,
   });
   const [answers, setAnswers] = useState<Record<string, string>>(() => ({
     ...emptyAnswers(),
@@ -152,8 +154,8 @@ export function LocationFormFields({
         <Combobox
           full
           label={t('locationsParentLocation')}
-          value={answers[LOCATION_LINK_IDS.parent] ?? '__root__'}
-          onChange={(v) => setAnswer(LOCATION_LINK_IDS.parent, v || '__root__')}
+          value={answers[LOCATION_LINK_IDS.parent] ?? emptyParent}
+          onChange={(v) => setAnswer(LOCATION_LINK_IDS.parent, v || emptyParent)}
           options={parentOptions}
           placeholder={t('locationsParentSearch')}
         />

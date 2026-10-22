@@ -47,6 +47,8 @@ import {
 } from './userFormOptions';
 import { todayIso, type UserFormErrors, validateUserForm } from './userFormSchema';
 import { usePractitionerDetails } from './usePractitionerDetails';
+import { scopedOptions } from '../scope/scope';
+import { scopedIds, useAdminScope } from '../scope/useAdminScope';
 
 interface SearchBundle {
   entry?: { resource?: Record<string, unknown> }[];
@@ -85,14 +87,27 @@ export function UserEditDrawer({
   const locSearch = useSearch('Location', { _count: '500', status: 'active' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
 
-  const orgOptions = useMemo(() => referenceOptions(orgSearch.data, 'Organization'), [orgSearch.data]);
+  const scope = useAdminScope();
+  const orgOptions = useMemo(
+    () =>
+      scopedOptions(
+        referenceOptions(orgSearch.data, 'Organization'),
+        scopedIds(scope, 'organizationIds'),
+        roles.map((r) => r.organization?.reference ?? ''),
+      ),
+    [orgSearch.data, scope, roles],
+  );
   const locOptions = useMemo(
     () =>
-      locationOptions(
-        [...roleDetails.flatMap((d) => d.locations ?? []), ...locationsFromBundle(locSearch.data)],
-        t,
+      scopedOptions(
+        locationOptions(
+          [...roleDetails.flatMap((d) => d.locations ?? []), ...locationsFromBundle(locSearch.data)],
+          t,
+        ),
+        scopedIds(scope, 'locationIds'),
+        roles.flatMap((r) => (r.location ?? []).map((l) => l.reference ?? '')),
       ),
-    [roleDetails, locSearch.data, t],
+    [roleDetails, locSearch.data, t, scope, roles],
   );
   const careTeamOptions = useMemo<Option[]>(
     () =>

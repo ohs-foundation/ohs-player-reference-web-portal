@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'vitest-axe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NavEntry } from '../config/navigation';
+import type { ExtensionContributions } from '../host/types';
 
 let flagsOff = new Set<string>();
 let deniedPermissions = new Set<string>();
@@ -43,12 +44,14 @@ const { AppLayout } = await import('./AppLayout');
 interface LayoutOptions {
   navigation?: NavEntry[];
   extensionNav?: ExtensionNavEntry[];
+  slots?: ExtensionContributions['slots'];
   path?: string;
 }
 
 function renderSidebar({
   navigation,
   extensionNav = [],
+  slots = [],
   path = '/',
 }: LayoutOptions = {}): HTMLElement {
   render(
@@ -58,7 +61,7 @@ function renderSidebar({
           value={resolvePortalConfig(testPortalDefaults, navigation ? { navigation } : {})}
         >
           <ExtensionsContext.Provider
-            value={{ nav: extensionNav, routes: [], widgets: [], slots: [], questionnaires: {} }}
+            value={{ nav: extensionNav, routes: [], widgets: [], slots, questionnaires: {} }}
           >
             <AppLayout />
           </ExtensionsContext.Provider>
@@ -184,5 +187,23 @@ describe('AppLayout sidebar', () => {
 
     const result = await axe(sidebar, { rules: { 'color-contrast': { enabled: false } } });
     expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
+  });
+});
+
+describe('AppLayout top bar', () => {
+  it('renders topbar.actions contributions in the app bar before global search', () => {
+    renderSidebar({
+      slots: [
+        {
+          id: 'scope.indicator',
+          slot: 'topbar.actions',
+          order: 10,
+          component: () => <p>District</p>,
+        },
+      ],
+    });
+
+    const actions = screen.getByRole('banner').querySelector('.app-topbar__actions');
+    expect(actions?.firstElementChild).toHaveTextContent('District');
   });
 });

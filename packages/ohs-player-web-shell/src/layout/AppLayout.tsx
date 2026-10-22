@@ -39,6 +39,7 @@ import type { NavId } from '../config/navigation';
 import { usePortalConfig } from '../config/portalConfigContext';
 import { RouteFallback } from '../routes/RouteFallback';
 import { useExtensions } from '../host/extensionsContext';
+import { Slot } from '../host/Slot';
 import { useRequirement } from '../auth/useRequirement';
 
 const ICON_SIZE = 24;
@@ -119,6 +120,7 @@ export function AppLayout({ children }: Readonly<{ children?: ReactNode }>) {
           </span>
         </div>
         <div className="app-topbar__actions">
+          <Slot name="topbar.actions" context={{}} />
           <GlobalSearch />
           <IconButton
             label={mode === 'dark' ? t('themeLight') : t('themeDark')}

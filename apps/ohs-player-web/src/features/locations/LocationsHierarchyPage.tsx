@@ -40,6 +40,8 @@ import { LocationEditDrawer } from './LocationEditDrawer';
 import { BulkImportDrawer } from '../bulk-import/BulkImportDrawer';
 import { locationTemplate } from '../bulk-import/importTemplates';
 import { LocationsNoAccess } from './LocationsNoAccess';
+import { ScopeNote } from '../scope/ScopeNote';
+import { useAdminScope } from '../scope/useAdminScope';
 import {
   HierarchyEmpty,
   HierarchyErrorState,
@@ -122,9 +124,15 @@ export function LocationsHierarchyPage(): React.ReactElement {
   const [createOpen, setCreateOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
+  const scope = useAdminScope();
+  const district = scope.current;
+  const scopeLoading = scope.status === 'loading' && !district;
   // Paginated roots (not a single `_count` page) so large imports cannot hide older countries.
-  const rootsSearch = useLocationRoots();
-  const roots = rootsSearch.data ?? [];
+  const rootsSearch = useLocationRoots(scope.status === 'unscoped');
+  const roots = useMemo(() => {
+    if (district) return [{ value: district.id, label: district.name }];
+    return scope.status === 'unscoped' ? (rootsSearch.data ?? []) : [];
+  }, [district, scope.status, rootsSearch.data]);
   // Keep a user-chosen root when it still exists; otherwise fall back to the first sorted root.
   const effectiveRoot =
     (rootId && roots.some((r) => r.value === rootId) ? rootId : '') || roots[0]?.value || '';
@@ -239,23 +247,26 @@ export function LocationsHierarchyPage(): React.ReactElement {
   return (
     <Page>
       {header}
+      <ScopeNote />
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="w-64">
-            <SelectField
-              variant="pill"
-              label={t('locationsRoot')}
-              value={effectiveRoot}
-              options={roots}
-              placeholder={t('locationsRootPlaceholder')}
-              onChange={(e) => {
-                setRootId(e.target.value);
-                setSelectedId(null);
-                setExpanded(new Set());
-              }}
-            />
-          </div>
+          {district ? null : (
+            <div className="w-64">
+              <SelectField
+                variant="pill"
+                label={t('locationsRoot')}
+                value={effectiveRoot}
+                options={roots}
+                placeholder={t('locationsRootPlaceholder')}
+                onChange={(e) => {
+                  setRootId(e.target.value);
+                  setSelectedId(null);
+                  setExpanded(new Set());
+                }}
+              />
+            </div>
+          )}
           <SearchField
             label={t('locationsSearch')}
             placeholder={t('locationsSearch')}
@@ -315,10 +326,11 @@ export function LocationsHierarchyPage(): React.ReactElement {
 
       <div className="min-h-80 overflow-hidden rounded border border-border">
         {renderBody({
-          loading: rootsSearch.isLoading || (Boolean(effectiveRoot) && query.isLoading),
+          loading:
+            scopeLoading || rootsSearch.isLoading || (Boolean(effectiveRoot) && query.isLoading),
           error: query.isError ? query.error : null,
           tree: displayed?.tree ?? null,
-          emptyStore: !rootsSearch.isLoading && roots.length === 0,
+          emptyStore: !scopeLoading && !rootsSearch.isLoading && roots.length === 0,
           view,
           expanded: effectiveExpanded,
           selectedId,
@@ -365,7 +377,7 @@ export function LocationsHierarchyPage(): React.ReactElement {
         <LocationCreateDrawer
           onClose={() => setCreateOpen(false)}
           onSuccess={() => {
-            void rootsSearch.refetch();
+            if (!district) void rootsSearch.refetch();
             void refreshResources(['Location']);
             void refreshHierarchy();
           }}

@@ -5,6 +5,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type UseQueryOptions,
   type UseQueryResult,
 } from '@tanstack/react-query';
 import type { SearchParams } from '../client/FhirClient';
@@ -389,7 +390,10 @@ export function useOptimisticInsert(): (
  * event-driven reads. Params with an `undefined` value are dropped from the query string by
  * `FhirClient.customGet`, so an optional filter can be passed straight through.
  *
- * The resolved value is `unknown` — narrow it at the call site.
+ * The resolved value is `unknown` — narrow it at the call site. `retry` takes TanStack's retry value
+ * and overrides the client default for this query, for example to stop retrying a definitive `404`.
+ * `refetchOnWindowFocus` and `refetchOnReconnect` set to `false` keep a once per session read from
+ * running again when the window regains focus or the network returns.
  *
  * @example
  * const q = useCustomResource('practitionerDetails', { 'practitioner-id': id }, { enabled: Boolean(id) });
@@ -400,12 +404,21 @@ export function useOptimisticInsert(): (
 export function useCustomResource(
   alias: string,
   params?: Record<string, string | number | boolean | undefined>,
-  options?: { enabled?: boolean },
+  options?: {
+    enabled?: boolean;
+    retry?: UseQueryOptions['retry'];
+    refetchOnWindowFocus?: boolean;
+    refetchOnReconnect?: boolean;
+  },
 ): UseQueryResult<unknown> {
   const client = useFhirClient();
+  const { enabled = true, retry, refetchOnWindowFocus, refetchOnReconnect } = options ?? {};
   return useQuery({
     queryKey: ['custom', alias, params],
-    enabled: options?.enabled ?? true,
+    enabled,
+    ...(retry === undefined ? {} : { retry }),
+    ...(refetchOnWindowFocus === undefined ? {} : { refetchOnWindowFocus }),
+    ...(refetchOnReconnect === undefined ? {} : { refetchOnReconnect }),
     queryFn: async () => client.customGet(alias, params),
   });
 }

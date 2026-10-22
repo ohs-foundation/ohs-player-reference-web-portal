@@ -42,6 +42,14 @@ Run one application at a time. Both serve on port 5173 with a strict port, becau
 
 Open `http://localhost:5173`, sign in with Keycloak (e.g. `admin-user` / `admin` from the imported realm). With `.env` copied from `.env.example`, `VITE_FHIR_BASE_URL` is `http://localhost:5173/fhir`, and the Vite dev server proxies `/fhir` to HAPI (`VITE_DEV_FHIR_TARGET`, default `http://localhost:8080`) and `/api` to the gateway (`VITE_DEV_API_TARGET`, default `http://localhost:8180`).
 
+## Sign in as a district scoped user
+
+`pnpm seed` gives `manager-user` a practitioner with a role at **Demo District**. Sign in as `manager-user` / `manager` and the app bar shows the district, the Locations tree starts at it, and the Users, Organisations and Care teams lists keep only its records. With the seeded data that is two users, one organisation and one care team. `admin-user` has no practitioner, so it sees every record. See [ARCHITECTURE.md](./ARCHITECTURE.md#admin-scope) for how scope is resolved and why it is only a convenience filter.
+
+Scope needs the real gateway, because it reads `/api/practitioner-details` and `/api/location-hierarchy` (see [OHS Info Gateway](#ohs-info-gateway)). With the bundled nginx proxy every user is unscoped.
+
+The seeded practitioner's identifier matches the fixed Keycloak `id` that `infra/keycloak/ohs-realm.json` gives `manager-user`, which becomes the `sub` of its token. A Keycloak container created before that id existed keeps the old one, so recreate it once with `docker compose up -d --force-recreate keycloak`. Recreating it also drops any user or role added by hand since the realm was imported.
+
 To customize or extend the portal, continue with [CUSTOMIZING.md](./CUSTOMIZING.md).
 
 ## Troubleshooting

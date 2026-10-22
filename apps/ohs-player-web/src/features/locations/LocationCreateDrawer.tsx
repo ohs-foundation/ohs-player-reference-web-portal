@@ -17,6 +17,8 @@ import {
 } from 'ohs-player-web-shell';
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { locationBodyFromAnswers } from '../sdc/resourceFromAnswers';
+import { scopedOptions } from '../scope/scope';
+import { scopedIds, useAdminScope } from '../scope/useAdminScope';
 import { LocationFormFields } from './LocationForm';
 import { answersToDraftLocation } from './locationDraft';
 import { locationOptions } from '../users/userFormOptions';
@@ -40,14 +42,16 @@ export function LocationCreateDrawer({
   const locList = useMemo(() => all.data ?? [], [all.data]);
   const [error, setError] = useState<ErrorDescription | null>(null);
   const [saving, setSaving] = useState(false);
+  const scope = useAdminScope();
+  const district = scope.current;
 
   const parentOptions = useMemo(() => {
     const root = { value: '__root__', label: t('rootLocation') };
     const rest = locationOptions(locList, t).sort((a, b) =>
       a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
     );
-    return [root, ...rest];
-  }, [locList, t]);
+    return scopedOptions([root, ...rest], scopedIds(scope, 'locationIds'));
+  }, [locList, t, scope]);
 
   const submitAnswers = (answers: Record<string, string>): void => {
     if (saving) return;
@@ -93,8 +97,10 @@ export function LocationCreateDrawer({
       {error ? <ErrorState {...error} /> : null}
       {saving ? <p>{t('saving')}</p> : null}
       <LocationFormFields
+        key={district?.id ?? 'unscoped'}
         formId={FORM_ID}
         parentOptions={parentOptions}
+        emptyParent={district ? `Location/${district.id}` : undefined}
         submitLabel={t('create')}
         onSubmit={submitAnswers}
       />

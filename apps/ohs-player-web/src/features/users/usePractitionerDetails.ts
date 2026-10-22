@@ -29,12 +29,23 @@ export interface PractitionerContext {
   roles: PractitionerRole[];
   careTeams: CareTeam[];
   isLoading: boolean;
+  isFetched: boolean;
   error: unknown;
 }
 
-function isNotFound(error: unknown): boolean {
+export function isNotFound(error: unknown): boolean {
   return error instanceof FhirError && error.status === 404;
 }
+
+function retryOnceUnlessNotFound(failureCount: number, error: unknown): boolean {
+  return !isNotFound(error) && failureCount < 1;
+}
+
+const SELF_LOOKUP_OPTIONS = {
+  retry: retryOnceUnlessNotFound,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+};
 
 function careTeamsFromBundle(bundle: unknown): CareTeam[] {
   return ((bundle as Bundle<CareTeam> | undefined)?.entry ?? [])
@@ -53,12 +64,13 @@ function dedupeById(careTeams: CareTeam[]): CareTeam[] {
 function usePractitionerContext(
   practitionerId: string | undefined,
   isSelfLookup: boolean,
+  selfLookupEnabled = true,
 ): PractitionerContext {
-  const enabled = isSelfLookup || Boolean(practitionerId);
+  const enabled = isSelfLookup ? selfLookupEnabled : Boolean(practitionerId);
   const query = useCustomResource(
     PRACTITIONER_DETAILS_ALIAS,
     isSelfLookup ? undefined : { 'practitioner-id': practitionerId },
-    { enabled },
+    isSelfLookup ? { ...SELF_LOOKUP_OPTIONS, enabled } : { enabled },
   );
   const response = query.data as PractitionerDetailsResponse | undefined;
   const roleDetails = useMemo(() => response?.practitionerRoles ?? [], [response]);
@@ -95,6 +107,7 @@ function usePractitionerContext(
     roles,
     careTeams,
     isLoading: query.isLoading || fallbackRead.isLoading || careTeamSearch.isLoading,
+    isFetched: query.isFetched,
     error: missing ? fallbackRead.error : query.error,
   };
 }
@@ -104,7 +117,10 @@ export function usePractitionerDetails(practitionerId: string | undefined): Prac
   return usePractitionerContext(practitionerId, false);
 }
 
-/** Full practitioner context for the signed-in user; the gateway resolves them from the JWT. */
-export function useMyPractitionerDetails(): PractitionerContext {
-  return usePractitionerContext(undefined, true);
+/**
+ * Full practitioner context for the signed-in user, resolved by the gateway from the JWT.
+ * Pass `false` to send nothing until a session exists.
+ */
+export function useMyPractitionerDetails(enabled = true): PractitionerContext {
+  return usePractitionerContext(undefined, true, enabled);
 }

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AdminScopeContext, UNSCOPED, type AdminScope } from '../scope/useAdminScope';
 
 const searchBundles: Record<string, { entry: { resource: Record<string, unknown> }[] }> = {
   CareTeam: {
@@ -78,5 +79,89 @@ describe('CareTeamsPage status filter', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Maternity Team')).toBeInTheDocument();
     expect(screen.queryByText('Archived Team')).toBeNull();
+  });
+});
+
+describe('CareTeamsPage scope', () => {
+  const kisumu = { id: 'd1', name: 'Kisumu' };
+  const original = searchBundles.CareTeam;
+
+  function inDistrict(fields: { organizationIds?: string[]; practitionerIds?: string[] }) {
+    return {
+      ...UNSCOPED,
+      status: 'scoped' as const,
+      districts: [kisumu],
+      current: kisumu,
+      organizationIds: new Set(fields.organizationIds ?? []),
+      practitionerIds: new Set(fields.practitionerIds ?? []),
+    };
+  }
+
+  function renderWith(scope: AdminScope) {
+    return render(
+      <MemoryRouter initialEntries={['/care-teams']}>
+        <AdminScopeContext.Provider value={scope}>
+          <CareTeamsPage />
+        </AdminScopeContext.Provider>
+      </MemoryRouter>,
+    );
+  }
+
+  beforeEach(() => {
+    searchBundles.CareTeam = {
+      entry: [
+        {
+          resource: {
+            resourceType: 'CareTeam',
+            id: 'by-org',
+            name: 'Org Team',
+            managingOrganization: [{ reference: 'Organization/o1' }],
+          },
+        },
+        {
+          resource: {
+            resourceType: 'CareTeam',
+            id: 'by-member',
+            name: 'Member Team',
+            participant: [{ member: { reference: 'Practitioner/p1' } }],
+          },
+        },
+        {
+          resource: {
+            resourceType: 'CareTeam',
+            id: 'elsewhere',
+            name: 'Elsewhere Team',
+            participant: [{ member: { reference: 'Practitioner/p9' } }],
+          },
+        },
+      ],
+    };
+  });
+
+  afterEach(() => {
+    searchBundles.CareTeam = original;
+  });
+
+  it('lists every care team for an unscoped user', () => {
+    renderWith(UNSCOPED);
+
+    expect(screen.getByText('Org Team')).toBeInTheDocument();
+    expect(screen.getByText('Member Team')).toBeInTheDocument();
+    expect(screen.getByText('Elsewhere Team')).toBeInTheDocument();
+  });
+
+  it('keeps teams managed by or including someone in the district', () => {
+    renderWith(inDistrict({ organizationIds: ['o1'], practitionerIds: ['p1'] }));
+
+    expect(screen.getByText('Org Team')).toBeInTheDocument();
+    expect(screen.getByText('Member Team')).toBeInTheDocument();
+    expect(screen.queryByText('Elsewhere Team')).toBeNull();
+    expect(screen.getByText(/scopeConvenienceNote/)).toBeInTheDocument();
+  });
+
+  it('says the district has no care team when none is in scope', () => {
+    renderWith(inDistrict({}));
+
+    expect(screen.getByText('scopeEmptyTitle {"district":"Kisumu"}')).toBeInTheDocument();
   });
 });

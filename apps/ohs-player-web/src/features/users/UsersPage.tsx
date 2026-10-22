@@ -41,6 +41,8 @@ import { UserEditDrawer } from './UserEditDrawer';
 import { UserDetailsDrawer } from './UserDetailsDrawer';
 import { BulkImportDrawer } from '../bulk-import/BulkImportDrawer';
 import { userTemplate } from '../bulk-import/importTemplates';
+import { ScopeNote } from '../scope/ScopeNote';
+import { rowsInScope, useAdminScope } from '../scope/useAdminScope';
 
 type Bundle = { entry?: { resource?: { resourceType?: string; id?: string } }[]; total?: number };
 
@@ -150,12 +152,18 @@ export function UsersPage() {
   }, [debouncedQ]);
   const search = useSearch('Practitioner', searchParams);
   const roleSearch = useSearch('PractitionerRole', { _count: '500' });
+  const scope = useAdminScope();
+  const loading = search.isLoading || scope.status === 'loading';
   const orgSearch = useSearch('Organization', { _count: '500' });
 
   const bundle = search.data as Bundle | undefined;
   const rawRows = useMemo(
     () => (bundle?.entry?.map((e) => e.resource).filter(Boolean) ?? []) as Practitioner[],
     [bundle?.entry],
+  );
+  const rows = useMemo(
+    () => rowsInScope(rawRows, scope, (p) => Boolean(p.id && scope.practitionerIds.has(p.id))),
+    [rawRows, scope],
   );
 
   const roleMap = useMemo(
@@ -194,7 +202,7 @@ export function UsersPage() {
   // Name matching is done server-side via `name:contains`; here we only apply the status/role filters
   // to the returned set.
   const filteredRows = useMemo(() => {
-    return rawRows.filter((p) => {
+    return rows.filter((p) => {
       if (!p.id) return false;
       if (statusFilter === 'active' && p.active === false) return false;
       if (statusFilter === 'inactive' && p.active !== false) return false;
@@ -204,7 +212,7 @@ export function UsersPage() {
       }
       return true;
     });
-  }, [rawRows, statusFilter, roleFilter, roleMap]);
+  }, [rows, statusFilter, roleFilter, roleMap]);
 
   const searchError = search.error ? describeError(search.error, t) : null;
 
@@ -227,7 +235,8 @@ export function UsersPage() {
 
   const isFiltering = q.trim() !== '' || hasChipFilters;
   // Only the genuine "no users at all" case hides the toolbar; a no-match search keeps it.
-  const noUsers = !search.isLoading && !searchError && rawRows.length === 0 && !isFiltering;
+  const noUsers = !loading && !searchError && rows.length === 0 && !isFiltering;
+  const scoped = scope.status === 'scoped';
 
   return (
     <Page>
@@ -236,7 +245,7 @@ export function UsersPage() {
         description={t('pageUsersDescription')}
         actions={
           <>
-            {rawRows.length > 0 ? (
+            {rows.length > 0 ? (
               <Button
                 variant="secondary"
                 type="button"
@@ -265,7 +274,9 @@ export function UsersPage() {
         }
       />
 
-      {search.isLoading ? <LinearProgress /> : null}
+      <ScopeNote />
+
+      {loading ? <LinearProgress /> : null}
 
       {createOpen ? (
         <UserCreateEntryDrawer onClose={() => setCreateOpen(false)} onSuccess={handleUserCreated} />
@@ -275,8 +286,12 @@ export function UsersPage() {
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <EmptyState
             illustration={<img src={usersEmptyIllustration} alt="" width={112} height={130} />}
-            title={t('usersEmptyTitle')}
-            description={t('usersEmptyDescription')}
+            title={
+              scoped
+                ? t('scopeEmptyTitle', { district: scope.current?.name ?? '' })
+                : t('usersEmptyTitle')
+            }
+            description={scoped ? t('scopeEmptyDescription') : t('usersEmptyDescription')}
             action={
               <PermissionGuard permission="users.create">
                 <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
@@ -448,7 +463,7 @@ export function UsersPage() {
           ]}
           rows={filteredRows}
           rowKey={(p) => p.id ?? ''}
-          loading={search.isLoading}
+          loading={loading}
           selectable
           selectedKeys={selectedIds}
           onSelectionChange={setSelectedIds}

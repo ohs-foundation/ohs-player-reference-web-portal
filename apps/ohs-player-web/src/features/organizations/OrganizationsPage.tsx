@@ -41,6 +41,9 @@ import { OrganizationFormDrawer } from './OrganizationFormDrawer';
 import { BulkImportDrawer } from '../bulk-import/BulkImportDrawer';
 import { organizationTemplate } from '../bulk-import/importTemplates';
 import { type Option, locationOptions } from '../users/userFormOptions';
+import { organizationInScope } from '../scope/scope';
+import { ScopeNote } from '../scope/ScopeNote';
+import { rowsInScope, useAdminScope } from '../scope/useAdminScope';
 
 const STATUS_VALUES = ['active', 'inactive'] as const;
 
@@ -76,6 +79,9 @@ export function OrganizationsPage() {
     _revinclude: 'Location:organization',
   });
   const locs = useSearch('Location', { _count: '500', status: 'active' });
+  const scope = useAdminScope();
+  const loading = orgs.isLoading || scope.status === 'loading';
+  const scoped = scope.status === 'scoped';
 
   const [q, setQ] = useState(useInitialSearchTerm());
   const [statusFilter, setStatusFilter] = useFilterParam('status', STATUS_VALUES);
@@ -136,23 +142,28 @@ export function OrganizationsPage() {
     }));
   }, [orgs.data, locationsByOrgId]);
 
+  const scopedOrgs = useMemo(
+    () => rowsInScope(orgList, scope, (org) => organizationInScope(org, scope)),
+    [orgList, scope],
+  );
+
   const isActive = (org: OrgRow): boolean => org.active !== false;
 
   const filteredRows = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return orgList.filter((org) => {
+    return scopedOrgs.filter((org) => {
       if (!org.id) return false;
       if (term && !`${org.name ?? ''} ${org.id}`.toLowerCase().includes(term)) return false;
       if (statusFilter === 'active' && !isActive(org)) return false;
       if (statusFilter === 'inactive' && isActive(org)) return false;
       return true;
     });
-  }, [orgList, q, statusFilter]);
+  }, [scopedOrgs, q, statusFilter]);
 
   const orgsError = orgs.error ? describeError(orgs.error, t) : null;
 
   const isFiltering = q.trim() !== '' || statusFilter !== null;
-  const noOrgs = !orgs.isLoading && !orgsError && orgList.length === 0 && !isFiltering;
+  const noOrgs = !loading && !orgsError && scopedOrgs.length === 0 && !isFiltering;
   const viewOrg = orgList.find((o) => o.id === viewId) ?? null;
   const editOrg = orgList.find((o) => o.id === editId) ?? null;
 
@@ -167,7 +178,7 @@ export function OrganizationsPage() {
         description={t('pageOrganizationsDescription')}
         actions={
           <>
-            {orgList.length > 0 ? (
+            {scopedOrgs.length > 0 ? (
               <Button
                 variant="secondary"
                 type="button"
@@ -196,7 +207,9 @@ export function OrganizationsPage() {
         }
       />
 
-      {orgs.isLoading ? <LinearProgress /> : null}
+      <ScopeNote />
+
+      {loading ? <LinearProgress /> : null}
 
       {createOpen ? (
         <OrganizationFormDrawer
@@ -226,8 +239,12 @@ export function OrganizationsPage() {
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <EmptyState
             illustration={<img src={orgEmptyIllustration} alt="" width={112} height={105} />}
-            title={t('emptyTitle')}
-            description={t('organizationsEmptyDescription')}
+            title={
+              scoped
+                ? t('scopeEmptyTitle', { district: scope.current?.name ?? '' })
+                : t('emptyTitle')
+            }
+            description={scoped ? t('scopeEmptyDescription') : t('organizationsEmptyDescription')}
             action={
               <PermissionGuard permission="orgs.create">
                 <Button type="button" iconLeft={<IconAddCircle size={20} />} onClick={openCreate}>
@@ -348,7 +365,7 @@ export function OrganizationsPage() {
           ]}
           rows={filteredRows}
           rowKey={(o) => o.id ?? ''}
-          loading={orgs.isLoading}
+          loading={loading}
           selectable
           selectedKeys={selectedIds}
           onSelectionChange={setSelectedIds}

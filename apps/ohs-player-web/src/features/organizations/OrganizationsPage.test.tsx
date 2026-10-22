@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { AdminScopeContext, UNSCOPED, type AdminScope } from '../scope/useAdminScope';
 import { axe } from 'vitest-axe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -275,5 +276,60 @@ describe('OrganizationsPage', () => {
     renderPage();
     expect(await screen.findByText('Ministry of Health')).toBeInTheDocument();
     expect(screen.queryByRole('cell', { name: 'Addis Ababa' })).toBeNull();
+  });
+});
+
+describe('OrganizationsPage scope', () => {
+  const kisumu = { id: 'd1', name: 'Kisumu' };
+
+  function inDistrict(fields: { locationIds?: string[]; organizationIds?: string[] }): AdminScope {
+    return {
+      ...UNSCOPED,
+      status: 'scoped',
+      districts: [kisumu],
+      current: kisumu,
+      locationIds: new Set(fields.locationIds ?? []),
+      organizationIds: new Set(fields.organizationIds ?? []),
+    };
+  }
+
+  function renderWith(scope: AdminScope) {
+    return render(
+      <MemoryRouter>
+        <AdminScopeContext.Provider value={scope}>
+          <OrganizationsPage />
+        </AdminScopeContext.Provider>
+      </MemoryRouter>,
+    );
+  }
+
+  it('lists every organisation for an unscoped user', async () => {
+    renderWith(UNSCOPED);
+
+    expect(await screen.findByText('Ministry of Health')).toBeInTheDocument();
+    expect(screen.getByText('Addis Ababa Health Bureau')).toBeInTheDocument();
+    expect(screen.getByText('Retired Bureau')).toBeInTheDocument();
+  });
+
+  it('keeps an organisation that manages a location in the district', async () => {
+    renderWith(inDistrict({ locationIds: ['l99'] }));
+
+    expect(await screen.findByText('Addis Ababa Health Bureau')).toBeInTheDocument();
+    expect(screen.queryByText('Ministry of Health')).toBeNull();
+    expect(screen.queryByText('Retired Bureau')).toBeNull();
+    expect(screen.getByText(/scopeConvenienceNote/)).toBeInTheDocument();
+  });
+
+  it('keeps an organisation named by a role in the district', async () => {
+    renderWith(inDistrict({ organizationIds: ['o3'] }));
+
+    expect(await screen.findByText('Retired Bureau')).toBeInTheDocument();
+    expect(screen.queryByText('Ministry of Health')).toBeNull();
+  });
+
+  it('says the district has no organisation when none is in scope', () => {
+    renderWith(inDistrict({}));
+
+    expect(screen.getByText('scopeEmptyTitle {"district":"Kisumu"}')).toBeInTheDocument();
   });
 });

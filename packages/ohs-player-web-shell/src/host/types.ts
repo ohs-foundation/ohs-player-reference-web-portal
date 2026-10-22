@@ -16,11 +16,13 @@ export type DashboardRegion = (typeof DASHBOARD_REGIONS)[number];
 /** The context each slot passes to its contributions, keyed by slot name. */
 export type SlotContexts = {
   'users.rowActions': { practitioner: Practitioner };
+  /** The app bar, before global search. Its context is empty. */
+  'topbar.actions': Record<string, never>;
 };
 
 export type SlotName = keyof SlotContexts;
 
-export const SLOT_NAMES: readonly SlotName[] = ['users.rowActions'];
+export const SLOT_NAMES: readonly SlotName[] = ['users.rowActions', 'topbar.actions'];
 
 /** An extension manifest bound to this shell's dashboard regions and slots. */
 export type PortalExtension = ExtensionManifest<DashboardRegion, SlotContexts>;

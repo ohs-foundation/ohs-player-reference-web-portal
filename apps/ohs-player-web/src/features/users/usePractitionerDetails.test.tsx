@@ -157,8 +157,40 @@ describe('useMyPractitionerDetails', () => {
   it('calls the endpoint with no params so the gateway resolves the caller', () => {
     renderHook(() => useMyPractitionerDetails());
 
-    expect(mockUseCustomResource).toHaveBeenCalledWith('practitionerDetails', undefined, {
-      enabled: true,
+    expect(mockUseCustomResource).toHaveBeenCalledWith(
+      'practitionerDetails',
+      undefined,
+      expect.objectContaining({ enabled: true }),
+    );
+  });
+
+  it('sends nothing while disabled, so a signed out page makes no request', () => {
+    renderHook(() => useMyPractitionerDetails(false));
+
+    expect(mockUseCustomResource).toHaveBeenCalledWith(
+      'practitionerDetails',
+      undefined,
+      expect.objectContaining({ enabled: false }),
+    );
+  });
+
+  it('takes a 404 as the answer and retries any other failure once', () => {
+    renderHook(() => useMyPractitionerDetails());
+    const { retry } = mockUseCustomResource.mock.calls[0][2] as {
+      retry: (failureCount: number, error: unknown) => boolean;
+    };
+
+    expect(retry(0, new FhirError('No practitioner found', 404, {}))).toBe(false);
+    expect(retry(0, new FhirError('Bad gateway', 502, {}))).toBe(true);
+    expect(retry(1, new FhirError('Bad gateway', 502, {}))).toBe(false);
+  });
+
+  it('reads once per session, not again on focus or reconnect', () => {
+    renderHook(() => useMyPractitionerDetails());
+
+    expect(mockUseCustomResource.mock.calls[0][2]).toMatchObject({
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     });
   });
 });

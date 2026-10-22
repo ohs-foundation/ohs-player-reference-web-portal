@@ -499,4 +499,12 @@ export const appMessageOverrides = {
   auditOutcomeMinorFailure: 'Minor failure',
   auditOutcomeSeriousFailure: 'Serious failure',
   auditOutcomeMajorFailure: 'Major failure',
+  scopeLabel: 'Your district',
+  scopeChoose: 'Choose a district',
+  scopeConvenienceNote:
+    'Lists show records in {{district}} only. This is a convenience filter. The API still returns every record, and each list reads a limited number of rows.',
+  scopeLoadFailed: 'District not loaded, showing every record',
+  scopeIncomplete: 'Part of this district was not loaded, so some of its records may be missing.',
+  scopeEmptyTitle: 'Nothing in {{district}}',
+  scopeEmptyDescription: 'No records on this list belong to your district.',
 } as const satisfies Partial<MessageCatalog>;

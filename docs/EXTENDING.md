@@ -113,6 +113,7 @@ A slot is a named place on a screen that renders every contribution registered f
 | Slot | Where | Context |
 | --- | --- | --- |
 | `users.rowActions` | The row menu of a users table | `{ practitioner: Practitioner }` |
+| `topbar.actions` | The app bar, before global search | `{}` |
 
 ```tsx
 import { FeatureGuard, OhsDropdownMenu, PermissionGuard, useTranslation } from 'ohs-player-web-core';
@@ -143,7 +144,9 @@ export function ViewSchedulesAction({
 }
 ```
 
-Contributions carry no `requires`; gate one yourself, as above. One that throws renders an error in its own place and the screen around it is untouched. The application that owns a screen places its slot with `<Slot name="users.rowActions" context={{ practitioner }} />`.
+Contributions carry no `requires`; gate one yourself, as above. One that throws renders an error in its own place and the screen around it is untouched. The application that owns a screen places its slot with `<Slot name="users.rowActions" context={{ practitioner }} />`. The shell places `topbar.actions` itself, so a contribution there appears in the app bar on every signed in screen.
+
+The reference app contributes its district indicator to `topbar.actions` from an in app manifest, [`features/scope/manifest.ts`](../apps/ohs-player-web/src/features/scope/manifest.ts), installed in its `extensions.ts` like any extension. The indicator reads the app's own scope context, which the app provides through `PortalHost`'s `providers`, so it shows how an application adds to a shell screen without editing the shell. An extension meant to move between applications reads only the library and shell APIs instead.
 
 ### Messages, flags, permissions, endpoints and questionnaires
 
@@ -180,6 +183,12 @@ const host = createPortalHost({
 });
 installThemeCss(host.portal.theme);
 createRoot(document.getElementById('root')!).render(<PortalHost host={host} />);
+```
+
+`PortalHost` also takes `providers`, a component that wraps the routes inside the router and the platform providers. Use it for application state that the pages, the frame and the slot contributions all read, when that state needs the session or the FHIR client. `children` render beside the router, so a provider passed as `children` does not reach the pages.
+
+```tsx
+<PortalHost host={host} providers={ScopeProvider} />
 ```
 
 ### Validation and failure
