@@ -8,7 +8,7 @@ import type {
 import { useTranslation } from 'ohs-player-web-core';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar, StatusBadge, type DataTableColumn, type DonutSegment } from '../../components/ui';
+import { Avatar, RecordStatusBadge, type DataTableColumn, type DonutSegment } from '../../components/ui';
 import { DistributionCard } from './DistributionCard';
 import type { KpiDefinition } from './kpiCatalogue';
 import { RecentCard } from './RecentCard';
@@ -40,14 +40,6 @@ function codingLabel(concept: CodeableConcept | undefined): string {
   return coding?.display ?? coding?.code ?? '—';
 }
 
-function statusBadge(active: boolean, t: Translate): ReactNode {
-  return (
-    <StatusBadge tone={active ? 'success' : 'neutral'} icon={<span className="ohs-badge__dot" />}>
-      {active ? t('statusActive') : t('statusInactive')}
-    </StatusBadge>
-  );
-}
-
 function activeSplit(
   total: number | undefined,
   active: number | undefined,
@@ -75,7 +67,7 @@ function statusColumn<Row>(t: Translate, isActive: (row: Row) => boolean): DataT
   return {
     key: 'status',
     header: t('columnStatus'),
-    render: (row) => statusBadge(isActive(row), t),
+    render: (row) => <RecordStatusBadge status={isActive(row) ? 'active' : 'inactive'} />,
   };
 }
 

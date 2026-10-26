@@ -76,6 +76,21 @@ describe('LocationColumnTable', () => {
     expect(onSelect).toHaveBeenCalledWith('nrb');
   });
 
+  it('mutes an inactive row name and shows its badge in the neutral tone', () => {
+    const tree = node({
+      id: 'ke',
+      name: 'Kenya',
+      partOf: null,
+      partOfLabel: null,
+      children: [node({ id: 'old', name: 'Old Ward', status: 'inactive' })],
+    });
+    render(<LocationColumnTable root={tree} onSelect={vi.fn()} onEdit={vi.fn()} />);
+    expect(screen.getByText('Old Ward')).toHaveClass('text-text-muted');
+    expect(screen.getByText('Old Ward')).not.toHaveClass('text-primary');
+    const oldRow = screen.getByText('Old Ward').closest('tr') as HTMLElement;
+    expect(within(oldRow).getByText('locationStatusInactive')).toHaveClass('bg-neutral-surface');
+  });
+
   it('has no axe violations', async () => {
     const { container } = render(<LocationColumnTable root={root} onSelect={vi.fn()} onEdit={vi.fn()} />);
     const result = await axe(container, { rules: { 'color-contrast': { enabled: false } } });

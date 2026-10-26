@@ -5,6 +5,7 @@ import type { LocationNode } from './hierarchy';
 import { levelFromType } from './locationLevel';
 import { LocationLevelBadge } from './LocationLevelBadge';
 import { LocationStatusBadge } from './locationStatus';
+import { locationNameClass } from './locationNameClass';
 import { LocationRowMenu } from './LocationRowMenu';
 
 export interface LocationColumnTableProps {
@@ -36,7 +37,7 @@ export function LocationColumnTable({ root, onSelect, onEdit }: Readonly<Locatio
         sortable: true,
         sortValue: (r) => (r.name ?? '').toLowerCase(),
         render: (r) => (
-          <span className={`font-medium ${r.name ? 'text-primary' : 'italic text-text-muted'}`}>
+          <span className={`font-medium ${locationNameClass(r.name, r.status)}`}>
             {r.name ?? t('locationsUnnamed', { id: r.id })}
           </span>
         ),

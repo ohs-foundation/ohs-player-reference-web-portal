@@ -50,6 +50,7 @@ export {
   ErrorDetails,
   ErrorState,
   LinearProgress,
+  RecordStatusBadge,
   Spinner,
   StatusBadge,
 } from './States';
@@ -57,6 +58,7 @@ export type {
   EmptyStateProps,
   ErrorStateProps,
   LinearProgressProps,
+  RecordStatusBadgeProps,
   StatusBadgeProps,
   StatusTone,
 } from './States';
