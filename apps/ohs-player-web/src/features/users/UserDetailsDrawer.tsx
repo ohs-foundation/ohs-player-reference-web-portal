@@ -28,6 +28,7 @@ import {
 import { useWriteAudit } from '../audit/useWriteAudit';
 import { buildDeactivateBundle, NATIONAL_ID_IDENTIFIER_SYSTEM } from '../sdc/resourceFromAnswers';
 import { usePractitionerDetails } from './usePractitionerDetails';
+import { useGrantedRoles } from './useGroups';
 
 function Field({ label, value }: Readonly<{ label: string; value?: string }>): React.ReactElement {
   return (
@@ -69,8 +70,9 @@ export function UserDetailsDrawer({
   const status = useStatusBar();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
-  const { practitioner, roleDetails, roles, careTeams, isLoading, error } =
+  const { practitioner, roleDetails, roles, careTeams, groups, isLoading, error } =
     usePractitionerDetails(id);
+  const granted = useGrantedRoles(groups);
 
   const details = useMemo(() => {
     const name = practitioner?.name?.[0];
@@ -243,6 +245,41 @@ export function UserDetailsDrawer({
                     </span>
                   </div>
                 ))}
+              </div>
+            ) : (
+              <p className="ohs-detail-empty">{t('detailNone')}</p>
+            )}
+          </Section>
+          <Section icon={IconTeam} title={t('sectionGroups')}>
+            {groups.length > 0 ? (
+              <div className="ohs-detail-list">
+                {groups.map((g) => (
+                  <div className="ohs-detail-rel" key={g.id}>
+                    <IconTeam size={20} className="ohs-detail-rel__icon" />
+                    <span className="ohs-detail-rel__title">{g.name}</span>
+                  </div>
+                ))}
+                <h3 className="ohs-detail-field__label">{t('groupsRolesGranted')}</h3>
+                {granted.isLoading ? (
+                  <Spinner label={t('loading')} />
+                ) : granted.error ? (
+                  <p className="ohs-detail-empty">{t('groupsRolesLoadError')}</p>
+                ) : granted.roles.length > 0 ? (
+                  <ul className="ohs-detail-list">
+                    {granted.roles.map((r) => (
+                      <li key={r.key}>
+                        <span className="ohs-detail-rel__title">{r.name}</span>
+                        {r.description ? (
+                          <span className="ohs-detail-rel__sub" style={{ display: 'block' }}>
+                            {r.description}
+                          </span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="ohs-detail-empty">{t('detailNone')}</p>
+                )}
               </div>
             ) : (
               <p className="ohs-detail-empty">{t('detailNone')}</p>

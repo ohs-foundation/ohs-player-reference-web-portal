@@ -7,6 +7,7 @@ import {
   Stack,
 } from 'ohs-player-web-shell';
 import { useTranslation } from 'ohs-player-web-core';
+import { UserGroupPicker } from './UserGroupPicker';
 import { GENDER_OPTIONS, PRACTITIONER_ROLE_CODES } from '../../config/roles';
 import {
   MultiSelect,
@@ -47,6 +48,11 @@ type Form = Pick<
   | 'orgOptions'
   | 'locOptions'
   | 'careTeamOptions'
+  | 'groupIds'
+  | 'setGroupIds'
+  | 'groupOptions'
+  | 'groupsLoading'
+  | 'groupsError'
   | 'fieldErrors'
   | 'clearError'
 >;
@@ -203,6 +209,18 @@ export function UserCareTeamFields({ form }: Readonly<{ form: Form }>): React.Re
         placeholder={form.careTeamOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
       />
     </Section>
+  );
+}
+
+export function UserGroupFields({ form }: Readonly<{ form: Form }>): React.ReactElement {
+  return (
+    <UserGroupPicker
+      options={form.groupOptions}
+      value={form.groupIds}
+      onChange={form.setGroupIds}
+      isLoading={form.groupsLoading}
+      error={form.groupsError}
+    />
   );
 }
 

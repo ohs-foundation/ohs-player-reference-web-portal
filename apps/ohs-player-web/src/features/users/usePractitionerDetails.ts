@@ -8,6 +8,7 @@ import type {
   PractitionerRole,
 } from '@medplum/fhirtypes';
 import { FhirError, useCustomResource, useResource, useSearch } from 'ohs-player-web-core';
+import type { IamGroup } from './useGroups';
 
 const PRACTITIONER_DETAILS_ALIAS = 'practitionerDetails';
 
@@ -21,6 +22,8 @@ export interface PractitionerRoleDetails {
 export interface PractitionerDetailsResponse {
   practitioner: Practitioner;
   practitionerRoles: PractitionerRoleDetails[];
+  /** IAM groups the user belongs to. */
+  groups?: IamGroup[];
 }
 
 export interface PractitionerContext {
@@ -28,6 +31,7 @@ export interface PractitionerContext {
   roleDetails: PractitionerRoleDetails[];
   roles: PractitionerRole[];
   careTeams: CareTeam[];
+  groups: IamGroup[];
   isLoading: boolean;
   error: unknown;
 }
@@ -73,6 +77,7 @@ function usePractitionerContext(
     () => dedupeById(roleDetails.flatMap((detail) => detail.careTeams ?? [])),
     [roleDetails],
   );
+  const groups = useMemo(() => response?.groups ?? [], [response]);
   const roles = useMemo(() => roleDetails.map((detail) => detail.practitionerRole), [roleDetails]);
 
   // The endpoint attaches a CareTeam only when participant.member references PractitionerRole/{id},
@@ -94,6 +99,7 @@ function usePractitionerContext(
     roleDetails,
     roles,
     careTeams,
+    groups,
     isLoading: query.isLoading || fallbackRead.isLoading || careTeamSearch.isLoading,
     error: missing ? fallbackRead.error : query.error,
   };

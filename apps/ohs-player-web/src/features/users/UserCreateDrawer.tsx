@@ -4,6 +4,7 @@ import { Button, Drawer, ErrorState, IconButton, IconClose } from 'ohs-player-we
 import {
   UserBasicInfoFields,
   UserCareTeamFields,
+  UserGroupFields,
   UserLocationFields,
   UserOrganizationFields,
   UserRoleStatusFields,
@@ -74,6 +75,7 @@ export function UserCreateDrawer({
         <UserOrganizationFields form={form} />
         <UserLocationFields form={form} />
         <UserCareTeamFields form={form} />
+        <UserGroupFields form={form} />
       </form>
     </Drawer>
   );

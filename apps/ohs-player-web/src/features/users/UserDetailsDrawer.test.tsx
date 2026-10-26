@@ -28,6 +28,7 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useStatusBar: () => ({ notify: mockNotify }),
     writeAuditEvent: (...args: unknown[]) => mockWriteAuditEvent(...args) as unknown,
     PermissionGuard: ({ children }: { children: ReactNode }) => children,
+    usePermission: () => ({ can: true, roles: [] }),
     useCustomResource: (...args: unknown[]) => mockUseCustomResource(...args) as unknown,
     useResource: (...args: unknown[]) => mockUseResource(...args) as unknown,
     useSearch: (...args: unknown[]) => mockUseSearch(...args) as unknown,
@@ -92,7 +93,11 @@ describe('UserDetailsDrawer', () => {
     mockTransaction.mockReset().mockResolvedValue({});
     mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
     mockNotify.mockReset();
-    mockUseCustomResource.mockReset().mockReturnValue({ ...idle, data: detailsResponse });
+    mockUseCustomResource.mockReset().mockImplementation((alias: string) =>
+      alias === 'roles'
+        ? { ...idle, data: { realmRoles: [{ name: 'GET_PATIENT', description: 'Read patients' }], clients: [] } }
+        : { ...idle, data: detailsResponse },
+    );
     mockUseResource.mockReset().mockReturnValue(idle);
     mockUseSearch.mockReset().mockReturnValue(idle);
   });
@@ -142,7 +147,7 @@ describe('UserDetailsDrawer', () => {
     renderDrawer();
 
     expect(screen.getAllByRole('heading', { name: 'Jane Smith' })).not.toHaveLength(0);
-    expect(screen.getAllByText('detailNone')).toHaveLength(3);
+    expect(screen.getAllByText('detailNone')).toHaveLength(4);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -191,6 +196,26 @@ describe('UserDetailsDrawer', () => {
       resourceId: 'p1',
     });
     await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));
+  });
+
+  it('lists current groups and the roles they grant', () => {
+    mockUseCustomResource.mockImplementation((alias: string) =>
+      alias === 'roles'
+        ? { ...idle, data: { realmRoles: [{ name: 'GET_PATIENT', description: 'Read patients' }], clients: [] } }
+        : {
+            ...idle,
+            data: {
+              ...detailsResponse,
+              groups: [{ id: 'g1', name: 'Clinicians', realmRoles: ['GET_PATIENT'] }],
+            },
+          },
+    );
+
+    renderDrawer();
+
+    expect(screen.getByText('Clinicians')).toBeInTheDocument();
+    expect(screen.getByText('GET_PATIENT')).toBeInTheDocument();
+    expect(screen.getByText('Read patients')).toBeInTheDocument();
   });
 
   it('has no critical accessibility violations', async () => {

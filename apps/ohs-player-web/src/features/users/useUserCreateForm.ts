@@ -18,6 +18,8 @@ import {
   referenceOptions,
 } from './userFormOptions';
 import { type UserFormErrors, validateUserForm } from './userFormSchema';
+import { useGroups } from './useGroups';
+import { usePermission } from 'ohs-player-web-core';
 
 interface SearchBundle {
   entry?: { resource?: { id?: string; name?: string } }[];
@@ -51,6 +53,11 @@ export interface UserCreateFormState {
   orgOptions: Option[];
   locOptions: Option[];
   careTeamOptions: Option[];
+  groupIds: string[];
+  setGroupIds: (v: string[]) => void;
+  groupOptions: Option[];
+  groupsLoading: boolean;
+  groupsError: unknown;
   fieldErrors: UserFormErrors;
   error: string | null;
   submitting: boolean;
@@ -61,6 +68,13 @@ export interface UserCreateFormState {
   labelsForValues: (options: readonly Option[], values: string[]) => string;
 }
 
+export function groupDescription(
+  groups: readonly { id: string; name: string }[],
+  ids: readonly string[],
+): string {
+  return ids.map((id) => groups.find((g) => g.id === id)?.name ?? id).join(', ') || 'none';
+}
+
 export function useUserCreateForm(onSuccess: (created?: { id?: string } & Record<string, unknown>) => void): UserCreateFormState {
   const { t } = useTranslation();
   const client = useFhirClient();
@@ -68,6 +82,8 @@ export function useUserCreateForm(onSuccess: (created?: { id?: string } & Record
   const status = useStatusBar();
   const { post } = useCustomEndpoint('users');
 
+  const canAssignGroups = usePermission('users.edit').can;
+  const groupList = useGroups(canAssignGroups);
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
   const locSearch = useSearch('Location', { _count: '500', status: 'active' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
@@ -108,6 +124,7 @@ export function useUserCreateForm(onSuccess: (created?: { id?: string } & Record
   const [orgs, setOrgs] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [careTeamIds, setCareTeamIds] = useState<string[]>([]);
+  const [groupIds, setGroupIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<UserFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -144,6 +161,7 @@ export function useUserCreateForm(onSuccess: (created?: { id?: string } & Record
     role: role ? { system: PRACTITIONER_ROLE_SYSTEM, code: role } : null,
     organizations: orgs,
     locations,
+    groupIds: canAssignGroups ? groupIds : undefined,
   });
 
   const submit = (): void => {
@@ -176,6 +194,14 @@ export function useUserCreateForm(onSuccess: (created?: { id?: string } & Record
         }
 
         const kcId = (created.identifier as { value?: string }[] | undefined)?.find((i) => i.value)?.value;
+        if (fields.groupIds?.length) {
+          await writeAudit({
+            action: 'update',
+            resourceType: 'Practitioner',
+            resourceId: createdId || undefined,
+            description: `Group membership set: ${groupDescription(groupList.groups, fields.groupIds)}`,
+          });
+        }
         await writeAudit({
           action: 'create',
           resourceType: 'Practitioner',
@@ -231,6 +257,11 @@ export function useUserCreateForm(onSuccess: (created?: { id?: string } & Record
     orgOptions,
     locOptions,
     careTeamOptions,
+    groupIds,
+    setGroupIds,
+    groupOptions: groupList.options,
+    groupsLoading: groupList.isLoading,
+    groupsError: groupList.error,
     fieldErrors,
     error,
     submitting,

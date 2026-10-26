@@ -18,6 +18,7 @@ import {
   commitBundle,
   useCustomEndpoint,
   useFhirClient,
+  usePermission,
   useSearch,
   useStatusBar,
   useTranslation,
@@ -47,6 +48,9 @@ import {
 } from './userFormOptions';
 import { todayIso, type UserFormErrors, validateUserForm } from './userFormSchema';
 import { usePractitionerDetails } from './usePractitionerDetails';
+import { useGroups } from './useGroups';
+import { groupDescription } from './useUserCreateForm';
+import { UserGroupPicker } from './UserGroupPicker';
 
 interface SearchBundle {
   entry?: { resource?: Record<string, unknown> }[];
@@ -78,9 +82,12 @@ export function UserEditDrawer({
     roleDetails,
     roles,
     careTeams,
+    groups: currentGroups,
     isLoading,
     error: loadError,
   } = usePractitionerDetails(id);
+  const canAssignGroups = usePermission('users.edit').can;
+  const groupList = useGroups(canAssignGroups);
   const orgSearch = useSearch('Organization', { _count: '200', active: 'true' });
   const locSearch = useSearch('Location', { _count: '500', status: 'active' });
   const careTeamSearch = useSearch('CareTeam', { _count: '200' });
@@ -110,6 +117,13 @@ export function UserEditDrawer({
     return map;
   }, [careTeamSearch.data]);
 
+  const groupOptionsWithCurrent = useMemo<Option[]>(() => {
+    const extra = currentGroups
+      .filter((g) => !groupList.options.some((o) => o.value === g.id))
+      .map((g) => ({ value: g.id, label: g.name }));
+    return [...groupList.options, ...extra];
+  }, [groupList.options, currentGroups]);
+
   const existingRoleIds = useMemo(
     () => roles.map((r) => r.id).filter((x): x is string => Boolean(x)),
     [roles],
@@ -118,6 +132,8 @@ export function UserEditDrawer({
     () => careTeams.map((ct) => ct.id).filter((x): x is string => Boolean(x)),
     [careTeams],
   );
+
+  const originalGroupIds = useMemo(() => currentGroups.map((g) => g.id), [currentGroups]);
 
   const [given, setGiven] = useState('');
   const [family, setFamily] = useState('');
@@ -134,6 +150,7 @@ export function UserEditDrawer({
   const [orgs, setOrgs] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [careTeamIds, setCareTeamIds] = useState<string[]>([]);
+  const [groupIds, setGroupIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<UserFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -170,8 +187,9 @@ export function UserEditDrawer({
       unique(roles.flatMap((r) => (r.location ?? []).map((l) => l.reference ?? '')).filter(Boolean)),
     );
     setCareTeamIds(originalCareTeamIds);
+    setGroupIds(originalGroupIds);
     setHydrated(true);
-  }, [hydrated, practitioner, isLoading, roles, originalCareTeamIds]);
+  }, [hydrated, practitioner, isLoading, roles, originalCareTeamIds, originalGroupIds]);
 
   const submit = (): void => {
     setError(null);
@@ -213,15 +231,32 @@ export function UserEditDrawer({
       .map((cid) => careTeamById.get(cid))
       .filter((r): r is Record<string, unknown> => Boolean(r));
 
+    const groupsChanged =
+      canAssignGroups &&
+      (groupIds.length !== originalGroupIds.length ||
+        groupIds.some((gid) => !originalGroupIds.includes(gid)));
+
     void (async () => {
       setSubmitting(true);
       try {
         // Gateway owns the Keycloak user + Practitioner demographics; preserve the username.
-        await put.mutateAsync({ id, body: buildNewUserPayload(fields, originalUsername) });
+        const payload = buildNewUserPayload(fields, originalUsername);
+        // `[]` is meaningful here: the backend treats it as "remove from every group".
+        if (groupsChanged) payload.groupIds = groupIds;
+        await put.mutateAsync({ id, body: payload });
         // FHIR handles only what the gateway doesn't: PractitionerRoles + CareTeam membership.
         const bundle = buildUserEditBundle(id, fields, { existingRoleIds, careTeamAdds, careTeamRemoves });
         if (bundle.entry.length > 0) await commitBundle(client, bundle.entry);
         await writeAudit({ action: 'update', resourceType: 'Practitioner', resourceId: id });
+        if (groupsChanged) {
+          const known = [...currentGroups, ...groupList.groups];
+          await writeAudit({
+            action: 'update',
+            resourceType: 'Practitioner',
+            resourceId: id,
+            description: `Group membership changed: from [${groupDescription(known, originalGroupIds)}] to [${groupDescription(known, groupIds)}]`,
+          });
+        }
         onSuccess();
       } catch (err) {
         const message = userErrorMessage(err, t, 'userSaveError');
@@ -393,6 +428,14 @@ export function UserEditDrawer({
               placeholder={careTeamOptions.length > 0 ? t('selectPlaceholder') : t('detailNone')}
             />
           </Section>
+          <UserGroupPicker
+            options={groupOptionsWithCurrent}
+            value={groupIds}
+            onChange={setGroupIds}
+            isLoading={groupList.isLoading}
+            error={groupList.error}
+            warnOnEmpty={originalGroupIds.length > 0}
+          />
         </form>
       )}
     </Drawer>

@@ -94,6 +94,15 @@ export const appMessageOverrides = {
   dateOfBirth: 'Date of birth',
   nationalId: 'National ID',
   detailNone: 'None on record',
+  sectionGroups: 'Groups',
+  groupsLabel: 'Groups',
+  groupsNone: 'No groups available.',
+  groupsLoading: 'Loading groups…',
+  groupsLoadError: 'Groups could not be loaded. Close and reopen this form to try again.',
+  groupsRemoveAllWarning:
+    'No groups selected. Saving will remove this user from every group and revoke the roles they grant.',
+  groupsRolesGranted: 'Roles granted',
+  groupsRolesLoadError: 'The roles these groups grant could not be loaded.',
   membersCount: '{{count}} Members',
 
   pageLocations: 'Locations',

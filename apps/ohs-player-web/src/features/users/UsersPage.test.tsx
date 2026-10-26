@@ -1,6 +1,7 @@
 import type { Practitioner } from '@medplum/fhirtypes';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { FhirError } from 'ohs-player-web-core';
+import { axe } from 'vitest-axe';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -52,6 +53,20 @@ const searchBundles: Record<string, { entry: { resource: Record<string, unknown>
 // `CareTeam?participant=` is the membership read; a bare `CareTeam` search feeds the picker.
 const careTeamMemberships: { entry: { resource: Record<string, unknown> }[] } = { entry: [] };
 
+const groupsQuery: { data?: unknown; isLoading: boolean; error?: unknown } = {
+  data: [
+    { id: 'g1', name: 'Clinicians', realmRoles: ['GET_PATIENT'] },
+    { id: 'g2', name: 'Managers' },
+  ],
+  isLoading: false,
+  error: undefined,
+};
+const rolesQuery = {
+  data: { realmRoles: [{ id: 'r1', name: 'GET_PATIENT', description: 'Read patients' }], clients: [] },
+  isLoading: false,
+  error: undefined,
+};
+
 const practitionerDetails: { data?: unknown; isLoading: boolean; error?: unknown } = {
   data: undefined,
   isLoading: false,
@@ -90,7 +105,9 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
       put: { mutateAsync: mockPut, isPending: false },
     }),
     useCreateResource: () => ({ mutateAsync: mockCreateResource, isPending: false }),
-    useCustomResource: () => practitionerDetails,
+    usePermission: () => ({ can: !mockDenied.has('users.edit'), roles: [] }),
+    useCustomResource: (alias: string) =>
+      alias === 'groups' ? groupsQuery : alias === 'roles' ? rolesQuery : practitionerDetails,
     useResource: (_resourceType: string | undefined, resourceId?: string) => ({
       data: resourceId ? mockPractitioner : undefined,
       isLoading: false,
@@ -699,5 +716,137 @@ describe('UsersPage row actions slot', () => {
     expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     vi.restoreAllMocks();
+  });
+});
+
+describe('Group assignment', () => {
+  const originalGroups = groupsQuery.data;
+
+  function fillDemographics() {
+    fireEvent.change(screen.getByLabelText(/givenName/), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText(/familyName/), { target: { value: 'Smith' } });
+    fireEvent.change(screen.getByLabelText(/emailAddress/), {
+      target: { value: 'jane@example.com' },
+    });
+  }
+
+  beforeEach(() => {
+    mockTransaction.mockReset().mockResolvedValue({});
+    mockPost.mockReset().mockResolvedValue({ id: 'p9' });
+    mockPut.mockReset().mockResolvedValue({});
+    mockWriteAuditEvent.mockReset().mockResolvedValue(undefined);
+    mockDenied.clear();
+    Object.assign(groupsQuery, { data: originalGroups, isLoading: false, error: undefined });
+    setPractitionerDetails({
+      data: {
+        practitioner: mockPractitioner,
+        practitionerRoles: [],
+        groups: [{ id: 'g1', name: 'Clinicians' }],
+      },
+    });
+  });
+
+  it('assigns a group on create and sends it as groupIds', async () => {
+    render(
+      <MemoryRouter>
+        <UserCreateDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    fillDemographics();
+    fireEvent.click(screen.getByRole('combobox', { name: /groupsLabel/ }));
+    fireEvent.click(screen.getByRole('option', { name: 'Managers' }));
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+    expect((mockPost.mock.calls[0][0] as { groupIds?: string[] }).groupIds).toEqual(['g2']);
+    await waitFor(() =>
+      expect(mockWriteAuditEvent.mock.calls.map((c) => (c[1] as { description?: string }).description)).toContain(
+        'Group membership set: Managers',
+      ),
+    );
+  });
+
+  it('shows a loading state, then an error state, for the picker', () => {
+    Object.assign(groupsQuery, { data: undefined, isLoading: true });
+    const { unmount } = render(
+      <MemoryRouter>
+        <UserCreateDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('status', { name: 'groupsLoading' })).toBeInTheDocument();
+    unmount();
+
+    Object.assign(groupsQuery, { isLoading: false, error: new Error('boom') });
+    render(
+      <MemoryRouter>
+        <UserCreateDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('groupsLoadError')).toBeInTheDocument();
+  });
+
+  it('hides the picker and omits groupIds without users.edit', async () => {
+    mockDenied.add('users.edit');
+    render(
+      <MemoryRouter>
+        <UserCreateDrawer onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('combobox', { name: /groupsLabel/ })).not.toBeInTheDocument();
+    fillDemographics();
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+    expect(mockPost.mock.calls[0][0]).not.toHaveProperty('groupIds');
+  });
+
+  it('pre-selects current groups on edit and leaves groupIds out when unchanged', async () => {
+    render(
+      <MemoryRouter>
+        <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    await screen.findByDisplayValue('Jane');
+    expect(screen.getByRole('button', { name: /removeAssignment Clinicians/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1));
+    expect((mockPut.mock.calls[0][0] as { body: object }).body).not.toHaveProperty('groupIds');
+    await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(1));
+  });
+
+  it('warns, then sends an empty groupIds and audits when every group is removed', async () => {
+    render(
+      <MemoryRouter>
+        <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    await screen.findByDisplayValue('Jane');
+    expect(screen.queryByText('groupsRemoveAllWarning')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /removeAssignment Clinicians/ }));
+    expect(screen.getByText('groupsRemoveAllWarning')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'save' }));
+
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1));
+    expect((mockPut.mock.calls[0][0] as { body: { groupIds?: string[] } }).body.groupIds).toEqual([]);
+    await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalledTimes(2));
+    expect((mockWriteAuditEvent.mock.calls[1][1] as { description?: string }).description).toBe(
+      'Group membership changed: from [Clinicians] to [none]',
+    );
+  });
+
+  it('has no critical accessibility violations with the picker shown', async () => {
+    const { baseElement } = render(
+      <MemoryRouter>
+        <UserEditDrawer id="p1" onClose={vi.fn()} onSuccess={vi.fn()} />
+      </MemoryRouter>,
+    );
+    await screen.findByDisplayValue('Jane');
+
+    const result = await axe(baseElement, { rules: { 'color-contrast': { enabled: false } } });
+    expect(result.violations.filter((v) => v.impact === 'critical')).toEqual([]);
   });
 });
