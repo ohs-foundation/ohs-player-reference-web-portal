@@ -133,6 +133,21 @@ export function validatePortalConfig(input: unknown): PortalConfigValidation {
     : { success: false, error: z.prettifyError(result.error) };
 }
 
+export interface PortalConfigIssue {
+  path: string;
+  message: string;
+}
+
+export function portalConfigIssues(input: unknown): PortalConfigIssue[] {
+  const result = portalConfigSchema.safeParse(input);
+  return result.success
+    ? []
+    : result.error.issues.map((issue) => ({
+        path: z.core.toDotPath(issue.path),
+        message: issue.message,
+      }));
+}
+
 export function portalConfigJsonSchema(): Record<string, unknown> {
   return z.toJSONSchema(portalConfigSchema);
 }

@@ -4,6 +4,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import { env } from './env';
 import {
   FLAG_NAMES,
+  portalConfigIssues,
   portalConfigJsonSchema,
   SYS_COLOR_ROLES,
   validatePortalConfig,
@@ -25,6 +26,28 @@ describe('portal config schema', () => {
     expect(rejection({ flags: { userMgmt: 'yes' } })).toMatch(
       /expected boolean[\s\S]*flags\.userMgmt/,
     );
+  });
+
+  it('lists each issue with the path and message the loader reports', () => {
+    const document = {
+      colour: 'red',
+      flags: { userMgmt: 'yes' },
+      navigation: [{ id: 'users', to: '/users', labelKey: 'navUsers', order: 'ten' }],
+    };
+    const issues = portalConfigIssues(document);
+    const loaderText = rejection(document);
+
+    expect(issues.map((issue) => issue.path).sort()).toEqual(
+      ['', 'flags.userMgmt', 'navigation[0].order'].sort(),
+    );
+    for (const { path, message } of issues) {
+      expect(loaderText).toContain(message);
+      if (path) expect(loaderText).toContain(`at ${path}`);
+    }
+  });
+
+  it('lists no issues for a valid document', () => {
+    expect(portalConfigIssues({ flags: { userMgmt: false } })).toEqual([]);
   });
 
   it('rejects an unknown field', () => {
