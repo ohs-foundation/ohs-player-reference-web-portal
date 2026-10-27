@@ -117,7 +117,7 @@ export function ConfigAssistPanel({ draft, assist }: Readonly<ConfigAssistPanelP
           >
             {t('configAssistAsk')}
           </Button>
-          {draft.canRestore ? (
+          {draft.canRestore && !assist.pending ? (
             <Button variant="outlined" onClick={draft.restore}>
               {t('configAssistRestore')}
             </Button>

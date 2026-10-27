@@ -74,6 +74,12 @@ describe('downloadAuditDescription', () => {
     );
   });
 
+  it('says when the file was downloaded unchanged', () => {
+    expect(downloadAuditDescription([], false)).toBe(
+      'portal-config.json downloaded with no changes',
+    );
+  });
+
   it('lists five paths and counts the rest', () => {
     const before = Object.fromEntries(['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((key) => [key, 1]));
     const after = Object.fromEntries(Object.keys(before).map((key) => [key, 2]));

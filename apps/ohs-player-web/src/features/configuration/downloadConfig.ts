@@ -19,6 +19,7 @@ export function downloadAuditDescription(
   changes: readonly DocumentChange[],
   proposed: boolean,
 ): string {
+  if (changes.length === 0) return `${PORTAL_CONFIG_FILE} downloaded with no changes`;
   const noun = changes.length === 1 ? 'change' : 'changes';
   const origin = proposed ? ' proposed by the assistant' : '';
   const shown = changes

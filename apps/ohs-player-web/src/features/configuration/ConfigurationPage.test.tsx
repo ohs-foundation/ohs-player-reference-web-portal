@@ -198,6 +198,18 @@ describe('ConfigurationPage', () => {
     expect(screen.getByText(/at locale/)).toBeInTheDocument();
   });
 
+  it('lets the last valid copy be downloaded unchanged when the served file is broken', async () => {
+    renderPage({ document: RUNNING, source: 'last-good', error: '✖ Invalid input' });
+
+    expect(downloadButton()).toBeEnabled();
+    fireEvent.click(downloadButton());
+
+    await waitFor(() => expect(mockDownloadDocument).toHaveBeenCalledWith(RUNNING));
+    expect(mockWriteAuditEvent.mock.calls[0][1]).toMatchObject({
+      description: 'portal-config.json downloaded with no changes',
+    });
+  });
+
   it('starts from an empty document when the session runs on built-in settings', () => {
     renderPage({ source: 'baked' });
 
@@ -464,10 +476,42 @@ describe('ConfigurationPage assistant', () => {
     expect(await screen.findByText('configAssistPending')).toBeInTheDocument();
     expect(editor()).toHaveAttribute('readonly');
     expect(askButton()).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'configReset' })).toBeDisabled();
 
     answer({ proposal: { ...RUNNING, locale: 'sw' } });
     await waitFor(() => expect(editor()).not.toHaveAttribute('readonly'));
     expect(screen.queryByText('configAssistPending')).not.toBeInTheDocument();
+  });
+
+  it('offers no Restore while a second request is pending, so the reply cannot undo it', async () => {
+    mockAssistPost.mockResolvedValueOnce({ proposal: { ...RUNNING, locale: 'sw' } });
+    renderPage();
+    ask();
+    await screen.findByRole('button', { name: 'configAssistRestore' });
+
+    let answer: (value: unknown) => void = () => undefined;
+    mockAssistPost.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+    ask('Now make it teal');
+    await screen.findByText('configAssistPending');
+
+    expect(screen.queryByRole('button', { name: 'configAssistRestore' })).not.toBeInTheDocument();
+    answer({ proposal: { ...RUNNING, locale: 'sw', product: { name: 'Teal' } } });
+    await waitFor(() =>
+      expect(JSON.parse(editor().value)).toMatchObject({ product: { name: 'Teal' } }),
+    );
+  });
+
+  it('sends one request for a double click on Ask', async () => {
+    let answer: (value: unknown) => void = () => undefined;
+    mockAssistPost.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    renderPage();
+    fireEvent.change(askField(), { target: { value: 'Switch off the audit log' } });
+    fireEvent.click(askButton());
+    fireEvent.click(askButton());
+
+    expect(mockAssistPost).toHaveBeenCalledOnce();
+    answer({ proposal: RUNNING });
+    await waitFor(() => expect(screen.queryByText('configAssistPending')).not.toBeInTheDocument());
   });
 
   it('keeps Ask off for an empty request or a draft that does not validate', () => {

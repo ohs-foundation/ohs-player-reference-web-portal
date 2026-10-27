@@ -28,16 +28,18 @@ const EMPTY_DOCUMENT: Record<string, unknown> = {};
 interface DraftActionsProps {
   draft: ConfigDraft;
   preview: ConfigPreview;
+  locked: boolean;
+  servedIsBroken: boolean;
 }
 
-function DraftActions({ draft, preview }: Readonly<DraftActionsProps>) {
+function DraftActions({ draft, preview, locked, servedIsBroken }: Readonly<DraftActionsProps>) {
   const { t } = useTranslation();
   const download = useConfigDownload();
   const { parsed, changes } = draft;
-  const ready = parsed.kind === 'valid' && changes.length > 0;
+  const ready = parsed.kind === 'valid' && (changes.length > 0 || servedIsBroken);
   return (
     <Inline>
-      <Button variant="outlined" onClick={draft.reset}>
+      <Button variant="outlined" disabled={locked} onClick={draft.reset}>
         {t('configReset')}
       </Button>
       <Button
@@ -86,7 +88,14 @@ export function ConfigurationPage() {
         <ConfigSection
           title={t('configEditorTitle')}
           description={t('configEditorDescription')}
-          actions={<DraftActions draft={draft} preview={preview} />}
+          actions={
+            <DraftActions
+              draft={draft}
+              preview={preview}
+              locked={assist.pending}
+              servedIsBroken={running.source === 'last-good'}
+            />
+          }
         >
           <ConfigEditor draft={draft} readOnly={assist.pending} />
         </ConfigSection>
