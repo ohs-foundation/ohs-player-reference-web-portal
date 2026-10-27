@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { FhirError, useStatusBar, useTranslation } from 'ohs-player-web-core';
 import {
   Button,
@@ -75,8 +75,16 @@ export function ConfigAssistPanel({ draft, assist }: Readonly<ConfigAssistPanelP
   const status = useStatusBar();
   const [request, setRequest] = useState('');
   const [outcome, setOutcome] = useState<AssistOutcome>();
+  const mounted = useRef(true);
   const sent = draft.parsed.kind === 'valid' ? draft.parsed.document : undefined;
   const canAsk = sent !== undefined && request.trim().length > 0 && !assist.pending;
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -84,6 +92,7 @@ export function ConfigAssistPanel({ draft, assist }: Readonly<ConfigAssistPanelP
     setOutcome(undefined);
     try {
       const reply = await assist.ask(request.trim(), sent);
+      if (!mounted.current) return;
       const guarded = guardedChanges(diffDocuments(sent, reply.proposal));
       if (guarded.length > 0) {
         setOutcome({ kind: 'guarded', paths: guarded.map((change) => change.path) });
@@ -93,7 +102,7 @@ export function ConfigAssistPanel({ draft, assist }: Readonly<ConfigAssistPanelP
       setOutcome({ kind: 'placed', summary: reply.summary });
       status.notify({ tone: 'info', title: t('configAssistPlaced') });
     } catch (error) {
-      setOutcome({ kind: 'failed', failure: assistFailure(error, t) });
+      if (mounted.current) setOutcome({ kind: 'failed', failure: assistFailure(error, t) });
     }
   };
 
@@ -127,7 +136,7 @@ export function ConfigAssistPanel({ draft, assist }: Readonly<ConfigAssistPanelP
           <p className="m-0 text-sm text-text-muted">{t('configAssistDraftInvalid')}</p>
         )}
         {assist.pending ? (
-          <p role="status" className="m-0 text-text">
+          <p aria-hidden="true" className="m-0 text-text">
             {t('configAssistPending')}
           </p>
         ) : null}

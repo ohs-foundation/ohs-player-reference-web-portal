@@ -24,7 +24,7 @@ export function ConfigPreviewPanel({ document, onEnd }: Readonly<ConfigPreviewPa
         </Button>
       }
     >
-      <p role="status" className="m-0 text-text">
+      <p aria-hidden="true" className="m-0 text-text">
         {t('configPreviewActive')}
       </p>
       <p id={listLabelId} className="m-0 font-semibold text-text">

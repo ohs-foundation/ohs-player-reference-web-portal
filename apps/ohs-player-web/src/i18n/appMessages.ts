@@ -511,7 +511,6 @@ export const appMessageOverrides = {
   configInvalidJson: 'This is not valid JSON.',
   configNotAnObject: 'The document must be a JSON object, starting with {.',
   configIssueCount: 'Problems to fix before you can download: {{count}}',
-  configIssueTopLevel: '(top level)',
   configChangesTitle: 'Changes',
   configChangesDescription: 'Compared with the configuration this session is running.',
   configChangesUnavailable: 'Fix the document to see what changed.',

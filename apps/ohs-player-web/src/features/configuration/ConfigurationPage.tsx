@@ -55,8 +55,7 @@ function DraftActions({ draft, preview, locked, servedIsBroken }: Readonly<Draft
         disabled={!ready}
         iconLeft={<IconDownload size={20} />}
         onClick={() => {
-          if (parsed.kind === 'valid')
-            void download(parsed.document, changes, draft.origin === 'proposal');
+          if (parsed.kind === 'valid') void download(parsed.document, changes, draft.assisted);
         }}
       >
         {t('configDownload')}
@@ -74,6 +73,11 @@ export function ConfigurationPage() {
   const assistOn = useFlag('configAssist');
   const guarded = guardedChanges(draft.changes);
   const { end: endPreview } = preview;
+  const announcement = assist.pending
+    ? t('configAssistPending')
+    : preview.document
+      ? t('configPreviewActive')
+      : '';
 
   useEffect(() => {
     endPreview();
@@ -82,6 +86,9 @@ export function ConfigurationPage() {
   return (
     <Page>
       <PageHeader title={t('pageConfiguration')} description={t('pageConfigurationDescription')} />
+      <p role="status" className="ohs-visually-hidden">
+        {announcement}
+      </p>
       <Stack gap={5}>
         <ConfigSourceNotice source={running.source} error={running.error} />
         {assistOn ? <ConfigAssistPanel draft={draft} assist={assist} /> : null}

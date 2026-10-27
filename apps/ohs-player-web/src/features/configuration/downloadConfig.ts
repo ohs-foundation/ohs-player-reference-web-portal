@@ -17,11 +17,11 @@ export function downloadDocument(document: PortalConfig): void {
 
 export function downloadAuditDescription(
   changes: readonly DocumentChange[],
-  proposed: boolean,
+  assisted: boolean,
 ): string {
   if (changes.length === 0) return `${PORTAL_CONFIG_FILE} downloaded with no changes`;
   const noun = changes.length === 1 ? 'change' : 'changes';
-  const origin = proposed ? ' proposed by the assistant' : '';
+  const origin = assisted ? ', including an assistant proposal' : '';
   const shown = changes
     .slice(0, SUMMARY_LIMIT)
     .map((entry) => entry.path)

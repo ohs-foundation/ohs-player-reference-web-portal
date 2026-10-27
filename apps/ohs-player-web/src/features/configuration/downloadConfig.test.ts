@@ -60,7 +60,7 @@ describe('downloadDocument', () => {
 });
 
 describe('downloadAuditDescription', () => {
-  it('names each changed path and says who proposed them', () => {
+  it('names each changed path and says when an assistant proposal is in the file', () => {
     const changes = diffDocuments(
       { locale: 'en', flags: { auditLog: true } },
       { locale: 'sw', flags: { auditLog: false } },
@@ -70,7 +70,7 @@ describe('downloadAuditDescription', () => {
       'portal-config.json downloaded with 2 changes: locale, flags.auditLog',
     );
     expect(downloadAuditDescription(changes.slice(0, 1), true)).toBe(
-      'portal-config.json downloaded with 1 change proposed by the assistant: locale',
+      'portal-config.json downloaded with 1 change, including an assistant proposal: locale',
     );
   });
 

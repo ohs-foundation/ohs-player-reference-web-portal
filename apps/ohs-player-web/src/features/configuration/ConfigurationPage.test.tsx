@@ -65,6 +65,17 @@ function renderPage(running: LoadedPortalConfig = { document: RUNNING, source: '
 const editor = () => screen.getByLabelText<HTMLTextAreaElement>('configEditorLabel');
 const downloadButton = () => screen.getByRole('button', { name: 'configDownload' });
 const changesSection = () => screen.getByRole('region', { name: 'configChangesTitle' });
+const announcement = () => {
+  const region = document.querySelector('p.ohs-visually-hidden[role="status"]');
+  if (!region) throw new Error('the page has no status region');
+  return region;
+};
+const describedBy = () => {
+  const id = editor().getAttribute('aria-describedby');
+  const element = id ? document.getElementById(id) : null;
+  if (!element) throw new Error('the editor describes itself with nothing');
+  return element;
+};
 
 function edit(document: unknown) {
   fireEvent.change(editor(), {
@@ -93,8 +104,9 @@ describe('ConfigurationPage', () => {
     renderPage();
     edit('{ "locale": ');
 
-    expect(screen.getByRole('alert')).toHaveTextContent('configInvalidJson');
+    expect(describedBy()).toHaveTextContent('configInvalidJson');
     expect(editor()).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(within(changesSection()).getByText('configChangesUnavailable')).toBeInTheDocument();
     expect(downloadButton()).toBeDisabled();
   });
@@ -103,7 +115,7 @@ describe('ConfigurationPage', () => {
     renderPage();
     edit('[]');
 
-    expect(screen.getByRole('alert')).toHaveTextContent('configNotAnObject');
+    expect(describedBy()).toHaveTextContent('configNotAnObject');
     expect(downloadButton()).toBeDisabled();
   });
 
@@ -111,11 +123,19 @@ describe('ConfigurationPage', () => {
     renderPage();
     edit({ ...RUNNING, flags: { auditLog: 'yes' }, colour: 'red' });
 
-    expect(screen.getByRole('alert')).toHaveTextContent('configIssueCount {"count":2}');
-    const issues = document.getElementById(editor().getAttribute('aria-describedby') ?? '');
+    const issues = describedBy();
+    expect(issues).toHaveTextContent('configIssueCount {"count":2}');
     expect(issues).toHaveTextContent('flags.auditLog');
-    expect(issues).toHaveTextContent('configIssueTopLevel');
     expect(issues).toHaveTextContent('Unrecognized key: "colour"');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(downloadButton()).toBeDisabled();
+  });
+
+  it('fails a dashboard id the portal would reject at startup, though the schema accepts it', () => {
+    renderPage();
+    edit({ ...RUNNING, dashboard: { layout: { kpi: ['kpi.userz'] } } });
+
+    expect(describedBy()).toHaveTextContent('"kpi.userz" is not a dashboard widget');
     expect(downloadButton()).toBeDisabled();
   });
 
@@ -243,12 +263,12 @@ describe('ConfigurationPage preview', () => {
     fireEvent.click(previewButton());
 
     expect(themeText()).toContain('--ohs-sys-color-primary: #0F766E;');
-    expect(screen.getByRole('status')).toHaveTextContent('configPreviewActive');
+    expect(announcement()).toHaveTextContent('configPreviewActive');
 
     fireEvent.click(screen.getByRole('button', { name: 'configPreviewEnd' }));
 
     expect(themeText()).toContain('--ohs-sys-color-primary: #094F9A;');
-    expect(screen.queryByText('configPreviewActive')).not.toBeInTheDocument();
+    expect(announcement()).toBeEmptyDOMElement();
   });
 
   it('lists the draft sidebar in order and marks a screen the draft switches off', () => {
@@ -281,7 +301,7 @@ describe('ConfigurationPage preview', () => {
     edit({ ...RUNNING, brand: draftBrand, locale: 'sw' });
 
     expect(themeText()).toContain('--ohs-sys-color-primary: #094F9A;');
-    expect(screen.queryByText('configPreviewActive')).not.toBeInTheDocument();
+    expect(announcement()).toBeEmptyDOMElement();
   });
 
   it('puts the running brand back when the page is left mid preview', () => {
@@ -293,7 +313,7 @@ describe('ConfigurationPage preview', () => {
     expect(themeText()).toContain('--ohs-sys-color-primary: #094F9A;');
   });
 
-  it('previews only the brand, never connection or endpoint settings', () => {
+  it('leaves the theme as it is for a draft with no brand change', () => {
     const before = themeText();
     renderPage();
     edit({
@@ -328,6 +348,7 @@ describe('ConfigurationPage assistant', () => {
     flagsOn = new Set(['configAssist']);
     mockAssistPost.mockReset();
     mockNotify.mockReset();
+    mockWriteAuditEvent.mockReset().mockResolvedValue({ id: 'ae1' });
   });
 
   it('leaves the page as it is without the configAssist flag, and never calls the relay', () => {
@@ -372,17 +393,47 @@ describe('ConfigurationPage assistant', () => {
     expect(mockNotify).toHaveBeenCalledWith({ tone: 'info', title: 'configAssistPlaced' });
   });
 
-  it('records a downloaded proposal as proposed by the assistant', async () => {
+  it('records that a download holds an assistant proposal, even after later hand edits', async () => {
     mockAssistPost.mockResolvedValue({ proposal: { ...RUNNING, locale: 'sw' } });
     renderPage();
     ask();
-    await waitFor(() => expect(downloadButton()).toBeEnabled());
+    await waitFor(() => expect(JSON.parse(editor().value)).toMatchObject({ locale: 'sw' }));
+    edit({ ...RUNNING, locale: 'sw', product: { name: 'OHS Kenya' } });
     fireEvent.click(downloadButton());
 
     await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalled());
     expect(mockWriteAuditEvent.mock.calls[0][1]).toMatchObject({
-      description: 'portal-config.json downloaded with 1 change proposed by the assistant: locale',
+      description:
+        'portal-config.json downloaded with 2 changes, including an assistant proposal: product.name, locale',
     });
+  });
+
+  it('drops the assistant attribution once the draft is reset', async () => {
+    mockAssistPost.mockResolvedValue({ proposal: { ...RUNNING, locale: 'sw' } });
+    renderPage();
+    ask();
+    await waitFor(() => expect(JSON.parse(editor().value)).toMatchObject({ locale: 'sw' }));
+    fireEvent.click(screen.getByRole('button', { name: 'configReset' }));
+    edit({ ...RUNNING, locale: 'fr' });
+    fireEvent.click(downloadButton());
+
+    await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalled());
+    expect(mockWriteAuditEvent.mock.calls[0][1]).toMatchObject({
+      description: 'portal-config.json downloaded with 1 change: locale',
+    });
+  });
+
+  it('does nothing with a reply that lands after the page is left', async () => {
+    let answer: (value: unknown) => void = () => undefined;
+    mockAssistPost.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    const { unmount } = renderPage();
+    ask();
+    unmount();
+    answer({ proposal: { ...RUNNING, locale: 'sw' } });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockNotify).not.toHaveBeenCalled();
   });
 
   it('shows the field errors of an invalid proposal, blocks download and can restore the draft', async () => {
@@ -390,9 +441,8 @@ describe('ConfigurationPage assistant', () => {
     renderPage();
     ask();
 
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('configIssueCount'));
-    const issues = document.getElementById(editor().getAttribute('aria-describedby') ?? '');
-    expect(issues).toHaveTextContent('flags.auditLog');
+    await waitFor(() => expect(describedBy()).toHaveTextContent('configIssueCount'));
+    expect(describedBy()).toHaveTextContent('flags.auditLog');
     expect(downloadButton()).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: 'configAssistRestore' }));
@@ -473,14 +523,14 @@ describe('ConfigurationPage assistant', () => {
     renderPage();
     ask();
 
-    expect(await screen.findByText('configAssistPending')).toBeInTheDocument();
+    await waitFor(() => expect(announcement()).toHaveTextContent('configAssistPending'));
     expect(editor()).toHaveAttribute('readonly');
     expect(askButton()).toBeDisabled();
     expect(screen.getByRole('button', { name: 'configReset' })).toBeDisabled();
 
     answer({ proposal: { ...RUNNING, locale: 'sw' } });
     await waitFor(() => expect(editor()).not.toHaveAttribute('readonly'));
-    expect(screen.queryByText('configAssistPending')).not.toBeInTheDocument();
+    expect(announcement()).toBeEmptyDOMElement();
   });
 
   it('offers no Restore while a second request is pending, so the reply cannot undo it', async () => {
@@ -492,7 +542,7 @@ describe('ConfigurationPage assistant', () => {
     let answer: (value: unknown) => void = () => undefined;
     mockAssistPost.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
     ask('Now make it teal');
-    await screen.findByText('configAssistPending');
+    await waitFor(() => expect(announcement()).toHaveTextContent('configAssistPending'));
 
     expect(screen.queryByRole('button', { name: 'configAssistRestore' })).not.toBeInTheDocument();
     answer({ proposal: { ...RUNNING, locale: 'sw', product: { name: 'Teal' } } });
@@ -511,7 +561,7 @@ describe('ConfigurationPage assistant', () => {
 
     expect(mockAssistPost).toHaveBeenCalledOnce();
     answer({ proposal: RUNNING });
-    await waitFor(() => expect(screen.queryByText('configAssistPending')).not.toBeInTheDocument());
+    await waitFor(() => expect(announcement()).toBeEmptyDOMElement());
   });
 
   it('keeps Ask off for an empty request or a draft that does not validate', () => {

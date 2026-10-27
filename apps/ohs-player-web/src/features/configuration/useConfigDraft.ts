@@ -1,14 +1,18 @@
 import { useCallback, useMemo, useState } from 'react';
-import { draftObject, draftText, parseDraft, type ParsedDraft } from './configDraft';
+import { draftObject, draftText, type ParsedDraft } from './configDraft';
+import { checkDraft } from './draftChecks';
 import { diffDocuments, type DocumentChange } from './documentDiff';
 
-export type DraftOrigin = 'edit' | 'proposal';
+interface DraftSnapshot {
+  text: string;
+  assisted: boolean;
+}
 
 export interface ConfigDraft {
   text: string;
   parsed: ParsedDraft;
   changes: DocumentChange[];
-  origin: DraftOrigin;
+  assisted: boolean;
   canRestore: boolean;
   setText: (text: string) => void;
   reset: () => void;
@@ -19,10 +23,10 @@ export interface ConfigDraft {
 export function useConfigDraft(running: Record<string, unknown>): ConfigDraft {
   const initial = useMemo(() => draftText(running), [running]);
   const [text, setTextState] = useState(initial);
-  const [previous, setPrevious] = useState<string>();
-  const [origin, setOrigin] = useState<DraftOrigin>('edit');
+  const [assisted, setAssisted] = useState(false);
+  const [previous, setPrevious] = useState<DraftSnapshot>();
 
-  const parsed = useMemo(() => parseDraft(text), [text]);
+  const parsed = useMemo(() => checkDraft(text), [text]);
   const changes = useMemo(() => {
     const value = draftObject(parsed);
     return value ? diffDocuments(running, value) : [];
@@ -31,30 +35,35 @@ export function useConfigDraft(running: Record<string, unknown>): ConfigDraft {
   const setText = useCallback((next: string) => {
     setTextState(next);
     setPrevious(undefined);
-    setOrigin('edit');
   }, []);
 
-  const reset = useCallback(() => setText(initial), [initial, setText]);
+  const reset = useCallback(() => {
+    setTextState(initial);
+    setAssisted(false);
+    setPrevious(undefined);
+  }, [initial]);
 
   const replaceWith = useCallback(
     (document: Record<string, unknown>) => {
-      setPrevious(text);
+      setPrevious({ text, assisted });
       setTextState(draftText(document));
-      setOrigin('proposal');
+      setAssisted(true);
     },
-    [text],
+    [text, assisted],
   );
 
   const restore = useCallback(() => {
-    if (previous === undefined) return;
-    setText(previous);
-  }, [previous, setText]);
+    if (!previous) return;
+    setTextState(previous.text);
+    setAssisted(previous.assisted);
+    setPrevious(undefined);
+  }, [previous]);
 
   return {
     text,
     parsed,
     changes,
-    origin,
+    assisted,
     canRestore: previous !== undefined,
     setText,
     reset,

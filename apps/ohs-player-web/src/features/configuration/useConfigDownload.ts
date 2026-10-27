@@ -10,20 +10,20 @@ const SYSTEM_OBJECT = { system: AUDIT_ENTITY_TYPE_SYSTEM, code: '2', display: 'S
 export function useConfigDownload(): (
   document: PortalConfig,
   changes: readonly DocumentChange[],
-  proposed: boolean,
+  assisted: boolean,
 ) => Promise<void> {
   const writeAudit = useWriteAudit();
   const status = useStatusBar();
   const { t } = useTranslation();
 
   return useCallback(
-    async (document, changes, proposed) => {
+    async (document, changes, assisted) => {
       downloadDocument(document);
       try {
         await writeAudit({
           action: 'execute',
           entityType: SYSTEM_OBJECT,
-          description: downloadAuditDescription(changes, proposed),
+          description: downloadAuditDescription(changes, assisted),
         });
         status.notify({ tone: 'success', title: t('configDownloaded') });
       } catch {
