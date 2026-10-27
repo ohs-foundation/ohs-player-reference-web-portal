@@ -538,6 +538,27 @@ export const appMessageOverrides = {
   configPreviewSidebar: 'Sidebar order in the draft',
   configPreviewSwitchedOff: 'Switched off',
   configPreviewEnd: 'End preview',
+  configAssistTitle: 'Ask the assistant',
+  configAssistDisclosure:
+    'Your request and the current document are sent to the assistant this deployment set up. Its answer is a proposal you review here. Nothing is applied until you download the file.',
+  configAssistLabel: 'Describe the change',
+  configAssistInstructions:
+    'For example, switch off the audit log and make the primary colour #0F766E.',
+  configAssistAsk: 'Ask',
+  configAssistPending: 'Waiting for the assistant…',
+  configAssistPlaced: 'Proposal placed in the editor. Review the changes before downloading.',
+  configAssistSummary: 'Assistant:',
+  configAssistRestore: 'Restore previous draft',
+  configAssistDraftInvalid:
+    'Fix the document before asking, so the assistant starts from a valid one.',
+  configAssistFailedTitle: 'The assistant could not help',
+  configAssistNotADocument: 'Its answer was not a configuration document. The editor is unchanged.',
+  configAssistUnavailableTitle: 'The assistant is not set up',
+  configAssistUnavailable:
+    'This deployment has no assistant relay. Ask your administrator, or edit the document by hand.',
+  configAssistGuardedTitle: 'Proposal not used',
+  configAssistGuarded:
+    'The assistant tried to change {{paths}}. Connection, permission and endpoint settings need an engineer, so the editor is unchanged.',
   configDownload: 'Download',
   configDownloaded: 'portal-config.json downloaded',
   configAuditFailed: 'The file was downloaded, but its audit record could not be saved.',

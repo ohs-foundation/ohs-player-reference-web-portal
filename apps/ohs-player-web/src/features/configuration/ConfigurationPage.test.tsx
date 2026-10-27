@@ -7,6 +7,8 @@ import type { LoadedPortalConfig } from '../../config/loadPortalConfig';
 const mockWriteAuditEvent = vi.fn();
 const mockNotify = vi.fn();
 const mockDownloadDocument = vi.fn();
+const mockAssistPost = vi.fn();
+let flagsOn = new Set<string>();
 
 vi.mock('ohs-player-web-core', async (): Promise<object> => {
   const actual = await vi.importActual<object>('ohs-player-web-core');
@@ -22,6 +24,10 @@ vi.mock('ohs-player-web-core', async (): Promise<object> => {
     useAuth: () => ({ status: 'authenticated', user: { preferred_username: 'tester' } }),
     useStatusBar: () => ({ notify: mockNotify }),
     writeAuditEvent: (...args: unknown[]): unknown => mockWriteAuditEvent(...args),
+    useFlag: (flag: string) => flagsOn.has(flag),
+    useCustomEndpoint: (alias: string) => ({
+      post: { mutateAsync: (body: unknown): unknown => mockAssistPost(alias, body) },
+    }),
   };
 });
 
@@ -33,7 +39,7 @@ vi.mock(
   }),
 );
 
-const { installThemeCss } = await import('ohs-player-web-core');
+const { FhirError, installThemeCss } = await import('ohs-player-web-core');
 const { createPortalHost, PortalConfigContext } = await import('ohs-player-web-shell');
 const { portalDefaults } = await import('../../config/platform');
 const { ConfigurationPage } = await import('./ConfigurationPage');
@@ -71,6 +77,8 @@ describe('ConfigurationPage', () => {
     mockWriteAuditEvent.mockReset().mockResolvedValue({ id: 'ae1' });
     mockNotify.mockReset();
     mockDownloadDocument.mockReset();
+    mockAssistPost.mockReset();
+    flagsOn = new Set();
   });
 
   it('opens on the running document with no changes and nothing to download', () => {
@@ -291,5 +299,199 @@ describe('ConfigurationPage preview', () => {
     edit({ ...RUNNING, flags: { auditLog: 'yes' } });
 
     expect(previewButton()).toBeDisabled();
+  });
+});
+
+describe('ConfigurationPage assistant', () => {
+  const askField = () => screen.getByLabelText('configAssistLabel');
+  const askButton = () => screen.getByRole('button', { name: 'configAssistAsk' });
+  const assistSection = () => screen.getByRole('region', { name: 'configAssistTitle' });
+
+  function ask(request = 'Switch the portal to Swahili') {
+    fireEvent.change(askField(), { target: { value: request } });
+    fireEvent.click(askButton());
+  }
+
+  beforeEach(() => {
+    flagsOn = new Set(['configAssist']);
+    mockAssistPost.mockReset();
+    mockNotify.mockReset();
+  });
+
+  it('leaves the page as it is without the configAssist flag, and never calls the relay', () => {
+    flagsOn = new Set();
+    renderPage();
+
+    expect(screen.queryByRole('region', { name: 'configAssistTitle' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('configAssistLabel')).not.toBeInTheDocument();
+    expect(editor()).toBeInTheDocument();
+    expect(changesSection()).toBeInTheDocument();
+    expect(mockAssistPost).not.toHaveBeenCalled();
+  });
+
+  it('sends the request, the draft and the schema, and nothing else, to the configAssist alias', async () => {
+    mockAssistPost.mockResolvedValue({ proposal: { ...RUNNING, locale: 'sw' } });
+    renderPage();
+    ask('  Switch the portal to Swahili  ');
+
+    await waitFor(() => expect(mockAssistPost).toHaveBeenCalledOnce());
+    const [alias, body] = mockAssistPost.mock.calls[0] as [string, Record<string, unknown>];
+    expect(alias).toBe('configAssist');
+    expect(Object.keys(body).sort()).toEqual(['document', 'request', 'schema']);
+    expect(body.request).toBe('Switch the portal to Swahili');
+    expect(body.document).toEqual(RUNNING);
+    expect(body.schema).toMatchObject({ type: 'object', additionalProperties: false });
+  });
+
+  it('places a valid proposal in the editor, where it is checked, diffed and downloadable', async () => {
+    mockAssistPost.mockResolvedValue({
+      proposal: { ...RUNNING, locale: 'sw' },
+      summary: 'Switched the locale to Swahili.',
+    });
+    renderPage();
+    ask();
+
+    await waitFor(() => expect(JSON.parse(editor().value)).toEqual({ ...RUNNING, locale: 'sw' }));
+    expect(within(changesSection()).getByText('locale')).toBeInTheDocument();
+    expect(downloadButton()).toBeEnabled();
+    expect(
+      within(assistSection()).getByText('Switched the locale to Swahili.'),
+    ).toBeInTheDocument();
+    expect(mockNotify).toHaveBeenCalledWith({ tone: 'info', title: 'configAssistPlaced' });
+  });
+
+  it('records a downloaded proposal as proposed by the assistant', async () => {
+    mockAssistPost.mockResolvedValue({ proposal: { ...RUNNING, locale: 'sw' } });
+    renderPage();
+    ask();
+    await waitFor(() => expect(downloadButton()).toBeEnabled());
+    fireEvent.click(downloadButton());
+
+    await waitFor(() => expect(mockWriteAuditEvent).toHaveBeenCalled());
+    expect(mockWriteAuditEvent.mock.calls[0][1]).toMatchObject({
+      description: 'portal-config.json downloaded with 1 change proposed by the assistant: locale',
+    });
+  });
+
+  it('shows the field errors of an invalid proposal, blocks download and can restore the draft', async () => {
+    mockAssistPost.mockResolvedValue({ proposal: { ...RUNNING, flags: { auditLog: 'yes' } } });
+    renderPage();
+    ask();
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('configIssueCount'));
+    const issues = document.getElementById(editor().getAttribute('aria-describedby') ?? '');
+    expect(issues).toHaveTextContent('flags.auditLog');
+    expect(downloadButton()).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'configAssistRestore' }));
+    expect(JSON.parse(editor().value)).toEqual(RUNNING);
+  });
+
+  it('explains a provider failure in plain words and leaves the editor alone', async () => {
+    mockAssistPost.mockRejectedValue(new FhirError('upstream model timed out', 502, undefined));
+    renderPage();
+    const before = editor().value;
+    ask();
+
+    const failure = await within(assistSection()).findByRole('alert');
+    expect(failure).toHaveTextContent('configAssistFailedTitle');
+    expect(failure).toHaveTextContent('errorCauseServer');
+    expect(failure).toHaveTextContent('upstream model timed out');
+    expect(editor().value).toBe(before);
+  });
+
+  it.each([404, 503])(
+    'says the assistant is not set up when the relay answers %i',
+    async (code) => {
+      mockAssistPost.mockRejectedValue(new FhirError('Not Found', code, undefined));
+      renderPage();
+      ask();
+
+      const failure = await within(assistSection()).findByRole('alert');
+      expect(failure).toHaveTextContent('configAssistUnavailableTitle');
+      expect(failure).toHaveTextContent('configAssistUnavailable');
+    },
+  );
+
+  it.each([
+    { reply: { proposal: '{"locale":"sw"}' } },
+    { reply: { proposal: [RUNNING] } },
+    { reply: null },
+    { reply: { summary: 'Done' } },
+  ])('refuses a reply that is not a configuration document: $reply', async ({ reply }) => {
+    mockAssistPost.mockResolvedValue(reply);
+    renderPage();
+    const before = editor().value;
+    ask();
+
+    const failure = await within(assistSection()).findByRole('alert');
+    expect(failure).toHaveTextContent('configAssistNotADocument');
+    expect(editor().value).toBe(before);
+  });
+
+  it.each([
+    { field: 'oidcIssuer', change: { oidcIssuer: 'https://idp.example/realms/ohs' } },
+    { field: 'permissionMap', change: { permissionMap: { 'users.edit': ['nurse'] } } },
+    { field: 'customEndpoints', change: { customEndpoints: { users: '/relay/users' } } },
+  ])('refuses a proposal that changes $field and names it', async ({ field, change }) => {
+    mockAssistPost.mockResolvedValue({ proposal: { ...RUNNING, ...change } });
+    renderPage();
+    const before = editor().value;
+    ask();
+
+    const failure = await within(assistSection()).findByRole('alert');
+    expect(failure).toHaveTextContent('configAssistGuardedTitle');
+    expect(failure).toHaveTextContent(field);
+    expect(editor().value).toBe(before);
+  });
+
+  it('judges guarded fields against the draft it sent, not the running document', async () => {
+    renderPage();
+    const handEdit = { ...RUNNING, oidcIssuer: 'https://idp.example/realms/ohs' };
+    edit(handEdit);
+    mockAssistPost.mockResolvedValue({ proposal: { ...handEdit, locale: 'sw' } });
+    ask();
+
+    await waitFor(() => expect(JSON.parse(editor().value)).toEqual({ ...handEdit, locale: 'sw' }));
+  });
+
+  it('locks the editor and the Ask button while the assistant works', async () => {
+    let answer: (value: unknown) => void = () => undefined;
+    mockAssistPost.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    renderPage();
+    ask();
+
+    expect(await screen.findByText('configAssistPending')).toBeInTheDocument();
+    expect(editor()).toHaveAttribute('readonly');
+    expect(askButton()).toBeDisabled();
+
+    answer({ proposal: { ...RUNNING, locale: 'sw' } });
+    await waitFor(() => expect(editor()).not.toHaveAttribute('readonly'));
+    expect(screen.queryByText('configAssistPending')).not.toBeInTheDocument();
+  });
+
+  it('keeps Ask off for an empty request or a draft that does not validate', () => {
+    renderPage();
+    expect(askButton()).toBeDisabled();
+
+    fireEvent.change(askField(), { target: { value: 'Hide the setup wizard' } });
+    expect(askButton()).toBeEnabled();
+
+    edit('{');
+    expect(askButton()).toBeDisabled();
+    expect(screen.getByText('configAssistDraftInvalid')).toBeInTheDocument();
+  });
+
+  it('has no serious accessibility violations with the assistant shown', async () => {
+    mockAssistPost.mockRejectedValue(new FhirError('Bad Gateway', 502, undefined));
+    const { container } = renderPage();
+    ask();
+    await within(assistSection()).findByRole('alert');
+
+    const results = await axe(container);
+    const blocking = results.violations.filter((v) =>
+      ['serious', 'critical'].includes(v.impact ?? ''),
+    );
+    expect(blocking).toEqual([]);
   });
 });

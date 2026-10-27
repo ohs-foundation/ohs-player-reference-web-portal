@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useTranslation } from 'ohs-player-web-core';
+import { useFlag, useTranslation } from 'ohs-player-web-core';
 import {
   Button,
   IconDownload,
@@ -9,6 +9,7 @@ import {
   Stack,
   StatusBadge,
 } from 'ohs-player-web-shell';
+import { ConfigAssistPanel } from './ConfigAssistPanel';
 import { ConfigChanges } from './ConfigChanges';
 import { ConfigEditor } from './ConfigEditor';
 import { ConfigPreviewPanel } from './ConfigPreviewPanel';
@@ -16,6 +17,7 @@ import { ConfigSection } from './ConfigSection';
 import { ConfigSourceNotice } from './ConfigSourceNotice';
 import { draftObject } from './configDraft';
 import { guardedChanges } from './documentDiff';
+import { useConfigAssist } from './useConfigAssist';
 import { useConfigDownload } from './useConfigDownload';
 import { useConfigDraft, type ConfigDraft } from './useConfigDraft';
 import { useConfigPreview, type ConfigPreview } from './useConfigPreview';
@@ -66,6 +68,8 @@ export function ConfigurationPage() {
   const running = useRunningConfig();
   const draft = useConfigDraft(running.document ?? EMPTY_DOCUMENT);
   const preview = useConfigPreview();
+  const assist = useConfigAssist();
+  const assistOn = useFlag('configAssist');
   const guarded = guardedChanges(draft.changes);
   const { end: endPreview } = preview;
 
@@ -78,12 +82,13 @@ export function ConfigurationPage() {
       <PageHeader title={t('pageConfiguration')} description={t('pageConfigurationDescription')} />
       <Stack gap={5}>
         <ConfigSourceNotice source={running.source} error={running.error} />
+        {assistOn ? <ConfigAssistPanel draft={draft} assist={assist} /> : null}
         <ConfigSection
           title={t('configEditorTitle')}
           description={t('configEditorDescription')}
           actions={<DraftActions draft={draft} preview={preview} />}
         >
-          <ConfigEditor draft={draft} />
+          <ConfigEditor draft={draft} readOnly={assist.pending} />
         </ConfigSection>
         {preview.document ? (
           <ConfigPreviewPanel document={preview.document} onEnd={endPreview} />
