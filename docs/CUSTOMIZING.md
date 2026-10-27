@@ -94,13 +94,16 @@ Set `"product": { "name": "Acme Health" }`. The name replaces the `appTopbarTitl
 
 The active sidebar entry draws `primary` text on a `secondary-container` fill, so pin the two together and keep them at a contrast of 4.5 to 1 or more. The generated `secondary-container` is a pale blue, and a new `primary` on it can fall short. Reload, then use the sun and moon button in the top bar to switch schemes. Everything drawn in the primary role changes colour, such as the Schedules KPI badge. The role names are listed in [THEMING.md](./THEMING.md) section 3; the reference app's schema rejects any other name.
 
+A pin must be a CSS colour, such as a hex value, a keyword like `transparent`, or a colour function like `rgb()` or `var()`. Both schemas reject anything else, `url()` included, so a pin cannot load an outside image or add CSS rules.
+
 ### 3. Sidebar order and visibility
 
 `navigation` lists the shell's own sidebar entries. It replaces the built-in list as a whole, and entries are sorted by `order`.
 
 - **Reorder.** Swap the `order` values of `users` and `dashboard` and reload.
 - **Hide.** Remove an entry. Its link disappears, but its page is still served at its path, so use a flag (next step) to switch a feature off entirely.
-- **Allowed ids.** `id` must be one of the shell's screens: `dashboard`, `users`, `locations`, `organizations`, `careTeams`, `fhirViewer`, `setup`, `audit`. A screen also needs a page in the app to be useful; the example app only has Users and the dashboard.
+- **Allowed ids.** `id` must be one of the shell's screens: `dashboard`, `users`, `locations`, `organizations`, `careTeams`, `fhirViewer`, `setup`, `audit`, `configuration`. A screen also needs a page in the app to be useful; the example app only has Users and the dashboard.
+- **Paths.** `to` is a path inside the portal, with one leading slash and no spaces or backslashes. A path that starts with `//` would open another site from the sidebar, so the schema rejects it.
 - **Extension entries** are not listed here. They come from each extension's manifest and are sorted in among these by `order`: the example's Schedules entry, at 15, sits between the two.
 
 ### 4. Feature flags
@@ -113,7 +116,7 @@ The active sidebar entry draws `primary` text on a `secondary-container` fill, s
 
 Reload. The Schedules sidebar entry, its dashboard tile and the "View schedules" row action all disappear, and `/schedules` shows Page not found, the same page as an address nothing serves, so a switched-off feature reads as one that does not exist. The flag is checked before the session, so a signed-out visitor to a switched-off page sees the same page and is not sent to sign-in. Its copy comes from the shell keys `pageNotFound` and `pageNotFoundDescription`, which `messages` can override. Set it back to `true`.
 
-The example app accepts any flag name. The reference app accepts only its own eight flags, listed in [DEPLOYMENT.md](./DEPLOYMENT.md) section 4, until a name is added to its `FLAG_NAMES`.
+The example app accepts any flag name. The reference app accepts only its own ten flags, listed in [DEPLOYMENT.md](./DEPLOYMENT.md) section 4, until a name is added to its `FLAG_NAMES`.
 
 ### 5. Permissions and roles
 
@@ -222,6 +225,18 @@ Try each change below and reload.
 | `"available": ["reports.*"]` | Reported the same way, as `matches no dashboard widget` |
 | `"main": ["visits"]` in `layout` | The document is invalid, as in step 8, with `must be a widget id such as kpi.users or schedules.active` |
 | `"userCustomization": false` | No Configure dashboard button |
+
+### 10. Editing the document in the portal
+
+The reference app has a Configuration screen at `/configuration` for anyone holding `configuration.edit`, which the reference document gives to `admin`. The `configEditor` flag switches it off.
+
+The screen opens on the document this session runs on. Edit it as JSON, and every change is checked with the rules the app applies when it loads, so a mistake shows the same field path and message that `pnpm config:check` prints. The Changes list compares the draft with the running document field by field, and marks changes to `$schema`, the connection settings, `permissionMap` and `customEndpoints` as needing engineering review.
+
+Preview applies the draft's brand colours to this session and lists the draft's sidebar order on the page. It never applies connection, flag, permission, endpoint or message settings, because those could sign you out or send requests somewhere else. Editing the draft, End preview and leaving the page each put the running colours back.
+
+Download saves the draft as `portal-config.json` and records an audit event that names the changed fields. Nothing is written to the server. Deploy the file by replacing the served copy, as section 4 of [DEPLOYMENT.md](./DEPLOYMENT.md) describes, then reload.
+
+**The assistant.** With `configAssist` on, the screen also shows Ask the assistant. Describe a change, and the request, the current draft and the JSON Schema go to the gateway relay behind the `configAssist` alias, which forwards them to the model provider the deployment set up. The answer is treated as untrusted. Only a JSON object is accepted, and a proposal that changes `$schema`, connection, permission or endpoint fields is refused with the fields named. An accepted proposal goes into the editor, where it is checked, compared, previewed and downloaded like a hand edit, and Restore previous draft undoes it. The provider, its endpoint and its key live on the gateway, never in the portal. The flag is off by default because the relay is a separate gateway service.
 
 ## Part 2: Logo, favicon and page title
 
@@ -708,4 +723,5 @@ To test your own extension, follow [EXTENDING.md](./EXTENDING.md#testing-an-exte
 - **Replacing components.** An extension adds UI; it cannot replace a built-in component.
 - **Sidebar ids.** The document's `navigation` only positions the shell's own screens. Extension entries are positioned by their manifest `order`.
 - **Dashboard layouts.** A user's layout lives in one browser, and two open tabs do not merge their changes. Cards are reordered with buttons, not by dragging, and have no settings of their own. A deployment that wants more extends the shell in its own codebase.
+- **Configuration screen.** It edits the document as JSON, with no form for each field, and it downloads the result instead of saving it to the server. The sidebar preview is a list on the page until the portal host lets the app wrap the frame. The assistant answers one request at a time and keeps no history.
 - **Extension flags in the reference app.** The reference app's document only accepts its own flag names until an extension's flag is added to `FLAG_NAMES`.

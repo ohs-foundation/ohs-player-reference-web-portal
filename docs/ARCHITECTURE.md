@@ -81,7 +81,9 @@ The read side is `activityItemFromAuditEvent(resource)` (`src/audit/auditActivit
 
 ## Reference application
 
-[`apps/ohs-player-web`](../apps/ohs-player-web) loads a runtime configuration document (`public/portal-config.json`, validated at build and at boot, with `VITE_*` values as the fallback; see [DEPLOYMENT.md](./DEPLOYMENT.md)). It hands that document, its `portalDefaults`, its feature routes (`AppRoutes.tsx`) and its extension list (`extensions.ts`) to `createPortalHost`, then renders `PortalHost`. Its feature modules cover users, locations, organizations, care teams, the setup wizard and the FHIR viewer.
+[`apps/ohs-player-web`](../apps/ohs-player-web) loads a runtime configuration document (`public/portal-config.json`, validated at build and at boot, with `VITE_*` values as the fallback; see [DEPLOYMENT.md](./DEPLOYMENT.md)). It hands that document, its `portalDefaults`, its feature routes (`AppRoutes.tsx`) and its extension list (`extensions.ts`) to `createPortalHost`, then renders `PortalHost`. Its feature modules cover users, locations, organizations, care teams, the setup wizard, the FHIR viewer, the audit log and the configuration screen.
+
+The configuration screen checks, compares, previews and downloads that document. An optional assistant behind the `configAssist` flag asks a gateway relay for a proposed document, and the proposal goes through the same checks as a hand edit. The request text and the draft leave the browser for the relay and the model provider it calls. The document is already public, since it is served as a static file, but the request text may not be. The provider, its endpoint and its key stay on the gateway.
 
 ### Bundled questionnaires (SDC)
 
