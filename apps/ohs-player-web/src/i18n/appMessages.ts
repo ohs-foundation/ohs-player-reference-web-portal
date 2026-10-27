@@ -531,6 +531,13 @@ export const appMessageOverrides = {
   configSourceBaked:
     'No configuration document is loaded, so this session runs on the built-in settings.',
   configReset: 'Reset',
+  configPreview: 'Preview',
+  configPreviewTitle: 'Preview',
+  configPreviewActive:
+    'This session shows the draft brand colours now. Nothing is saved, and the preview ends when you edit the document or leave the page.',
+  configPreviewSidebar: 'Sidebar order in the draft',
+  configPreviewSwitchedOff: 'Switched off',
+  configPreviewEnd: 'End preview',
   configDownload: 'Download',
   configDownloaded: 'portal-config.json downloaded',
   configAuditFailed: 'The file was downloaded, but its audit record could not be saved.',
