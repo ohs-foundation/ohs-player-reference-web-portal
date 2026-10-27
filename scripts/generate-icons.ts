@@ -69,6 +69,8 @@ const ICONS: Record<string, string> = {
   IconMore: 'more_vert',
   IconNotification: 'notifications',
   IconSearch: 'search',
+  IconSettings: 'settings',
+  IconSettingsFill: 'settings-fill',
   IconSubdirectory: 'subdirectory_arrow_right',
   IconSun: 'light_mode',
   IconTeam: 'groups',

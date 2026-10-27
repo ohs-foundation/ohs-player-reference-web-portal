@@ -193,7 +193,8 @@
               "careTeams",
               "fhirViewer",
               "setup",
-              "audit"
+              "audit",
+              "configuration"
             ]
           },
           "to": {

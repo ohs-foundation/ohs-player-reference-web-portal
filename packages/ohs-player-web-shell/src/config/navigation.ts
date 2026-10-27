@@ -9,6 +9,7 @@ export const NAV_IDS = [
   'fhirViewer',
   'setup',
   'audit',
+  'configuration',
 ] as const;
 
 export type NavId = (typeof NAV_IDS)[number];
@@ -72,5 +73,12 @@ export const DEFAULT_NAVIGATION: readonly NavEntry[] = [
     labelKey: 'navAudit',
     order: 80,
     requires: { flag: 'auditLog', permission: 'audit.view' },
+  },
+  {
+    id: 'configuration',
+    to: '/configuration',
+    labelKey: 'navConfiguration',
+    order: 90,
+    requires: { flag: 'configEditor', permission: 'configuration.edit' },
   },
 ];

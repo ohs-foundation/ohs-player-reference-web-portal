@@ -43,7 +43,7 @@ describe('reference configuration document', () => {
   it('holds the baked sidebar, spaced ten apart in the current order', () => {
     const { navigation } = referenceDocument();
     expect(navigation).toEqual(DEFAULT_NAVIGATION);
-    expect(navigation?.map((entry) => entry.order)).toEqual([10, 20, 30, 40, 50, 60, 70, 80]);
+    expect(navigation?.map((entry) => entry.order)).toEqual([10, 20, 30, 40, 50, 60, 70, 80, 90]);
   });
 
   it('holds the brand pins and product name the app already renders', () => {

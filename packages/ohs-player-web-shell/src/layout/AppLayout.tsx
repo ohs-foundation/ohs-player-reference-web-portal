@@ -21,6 +21,8 @@ import {
   IconMapPinFill,
   IconMenu,
   IconMoon,
+  IconSettings,
+  IconSettingsFill,
   IconSun,
   IconTeam,
   IconTeamFill,
@@ -63,6 +65,7 @@ const NAV_ICONS: Record<NavId, NavIcons> = {
   fhirViewer: { LineIcon: IconDatabase, FillIcon: IconDatabaseFill },
   setup: { LineIcon: IconMagic, FillIcon: IconMagicFill },
   audit: { LineIcon: IconHistory, FillIcon: IconHistoryFill },
+  configuration: { LineIcon: IconSettings, FillIcon: IconSettingsFill },
 };
 
 function extensionIcons({ icon = IconFileList, activeIcon }: ExtensionNavEntry): NavIcons {

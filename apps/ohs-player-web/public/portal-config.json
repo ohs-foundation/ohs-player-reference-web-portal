@@ -85,6 +85,13 @@
       "labelKey": "navAudit",
       "order": 80,
       "requires": { "flag": "auditLog", "permission": "audit.view" }
+    },
+    {
+      "id": "configuration",
+      "to": "/configuration",
+      "labelKey": "navConfiguration",
+      "order": 90,
+      "requires": { "flag": "configEditor", "permission": "configuration.edit" }
     }
   ],
   "permissionMap": {
