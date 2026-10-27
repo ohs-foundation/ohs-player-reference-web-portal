@@ -61,6 +61,18 @@ describe('feature flag precedence', () => {
     expect(await resolvedFlag(FLAG)).toBe(true);
   });
 
+  it('keeps configAssist off when neither the environment nor the document sets it', async () => {
+    vi.stubEnv('VITE_FLAG_CONFIG_ASSIST', undefined);
+
+    expect(await resolvedFlag('configAssist')).toBe(false);
+  });
+
+  it('switches configAssist on from the document alone', async () => {
+    vi.stubEnv('VITE_FLAG_CONFIG_ASSIST', undefined);
+
+    expect(await resolvedFlag('configAssist', { flags: { configAssist: true } })).toBe(true);
+  });
+
   it('falls back to the defaultValue of false for a flag neither layer sets', async () => {
     expect(await resolvedFlag('flagNothingDeclares')).toBe(false);
   });

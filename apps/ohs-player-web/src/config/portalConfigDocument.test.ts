@@ -31,6 +31,15 @@ describe('reference configuration document', () => {
     expect(resolve(referenceDocument())).toEqual(resolve());
   });
 
+  it('lets the document point the assistant at another relay', () => {
+    const { portal } = createPortalHost({
+      defaults: portalDefaults,
+      document: { customEndpoints: { configAssist: '/relay/config-assist' } },
+      development: true,
+    });
+    expect(portal.platform.customEndpoints?.configAssist).toBe('/relay/config-assist');
+  });
+
   it('holds the baked sidebar, spaced ten apart in the current order', () => {
     const { navigation } = referenceDocument();
     expect(navigation).toEqual(DEFAULT_NAVIGATION);
