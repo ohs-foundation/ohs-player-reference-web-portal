@@ -64,6 +64,8 @@ describe('portal config schema', () => {
   it.each([
     '#fff; } body { display: none } :root {',
     'url(https://tracker.example/p.png)',
+    'rgb(/*)',
+    'var(--ohs-ref-palette-primary40, */)',
     'var(--missing, image-set("https://tracker.example/p.png" 1x))',
     'rgb(0 0 0)\n}',
     '#12345',

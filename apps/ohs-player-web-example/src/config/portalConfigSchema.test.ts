@@ -34,6 +34,12 @@ describe('example portal config schema', () => {
     expect(error).toContain('brand.overrides.primary');
   });
 
+  it('rejects a brand pin that opens a CSS comment', () => {
+    expect(rejection({ brand: { overrides: { primary: 'rgb(/*)' } } })).toContain(
+      'brand.overrides.primary',
+    );
+  });
+
   it('rejects a sidebar path that leaves the portal', () => {
     const entry = { id: 'users', to: '//attacker.example/users', labelKey: 'navUsers', order: 10 };
     const error = rejection({ navigation: [entry] });

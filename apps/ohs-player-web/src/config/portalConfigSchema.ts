@@ -67,7 +67,7 @@ const HEX_COLOUR = '#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})';
 const COLOUR_KEYWORD = '[a-zA-Z]+';
 const COLOUR_FUNCTION =
   '(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|light-dark|var)\\(.*\\)';
-const UNSAFE_IN_COLOUR = `[;{}<>\\\\"'\\t\\n\\r\\f\\v]|[uU][rR][lL]\\(`;
+const UNSAFE_IN_COLOUR = `[;{}<>\\\\"'\\t\\n\\r\\f\\v]|\\/\\*|\\*\\/|[uU][rR][lL]\\(`;
 const COLOUR_VALUE = new RegExp(
   `^(?!.*(?:${UNSAFE_IN_COLOUR}))(?:${HEX_COLOUR}|${COLOUR_KEYWORD}|${COLOUR_FUNCTION})$`,
 );
