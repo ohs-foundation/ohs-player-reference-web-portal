@@ -65,4 +65,14 @@ export const appRoutes: readonly PortalRoute[] = [
     requires: { flag: 'auditLog', permission: 'audit.view' },
     permissionFallback: <OrganizationsPermissionFallback />,
   },
+  {
+    id: 'configuration',
+    path: '/configuration',
+    load: () =>
+      import('./features/configuration/ConfigurationPage').then((m) => ({
+        default: m.ConfigurationPage,
+      })),
+    requires: { flag: 'configEditor', permission: 'configuration.edit' },
+    permissionFallback: <OrganizationsPermissionFallback />,
+  },
 ];

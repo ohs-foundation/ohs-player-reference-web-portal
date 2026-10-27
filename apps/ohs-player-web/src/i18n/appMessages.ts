@@ -499,4 +499,7 @@ export const appMessageOverrides = {
   auditOutcomeMinorFailure: 'Minor failure',
   auditOutcomeSeriousFailure: 'Serious failure',
   auditOutcomeMajorFailure: 'Major failure',
+  pageConfiguration: 'Configuration',
+  pageConfigurationDescription:
+    'Check a change to the configuration document, preview it, and download the file to deploy.',
 } as const satisfies Partial<MessageCatalog>;
