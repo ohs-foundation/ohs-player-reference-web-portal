@@ -502,4 +502,36 @@ export const appMessageOverrides = {
   pageConfiguration: 'Configuration',
   pageConfigurationDescription:
     'Check a change to the configuration document, preview it, and download the file to deploy.',
+  configEditorTitle: 'Configuration document',
+  configEditorDescription:
+    'The portal-config.json this session runs on. Edit it here, then download the file to deploy.',
+  configEditorLabel: 'Document (JSON)',
+  configEditorInstructions:
+    'Changes are checked as you type, with the same rules the portal uses when it loads.',
+  configInvalidJson: 'This is not valid JSON.',
+  configNotAnObject: 'The document must be a JSON object, starting with {.',
+  configIssueCount: 'Problems to fix before you can download: {{count}}',
+  configIssueTopLevel: '(top level)',
+  configChangesTitle: 'Changes',
+  configChangesDescription: 'Compared with the configuration this session is running.',
+  configChangesUnavailable: 'Fix the document to see what changed.',
+  configNoChanges: 'No changes yet',
+  configNoChangesDescription: 'Edit the document to see each change listed here.',
+  configChangeAdded: 'Added',
+  configChangeRemoved: 'Removed',
+  configChangeChanged: 'Changed',
+  configChangeBefore: 'Before:',
+  configChangeAfter: 'After:',
+  configGuardedChange: 'Needs engineering review',
+  configGuardedNotice:
+    'This changes connection, permission or endpoint settings. Have an engineer review it before you deploy the file.',
+  configSourceLabel: 'Running configuration',
+  configSourceLastGood:
+    'The served portal-config.json could not be used, so this session runs on the last valid copy this browser kept.',
+  configSourceBaked:
+    'No configuration document is loaded, so this session runs on the built-in settings.',
+  configReset: 'Reset',
+  configDownload: 'Download',
+  configDownloaded: 'portal-config.json downloaded',
+  configAuditFailed: 'The file was downloaded, but its audit record could not be saved.',
 } as const satisfies Partial<MessageCatalog>;
