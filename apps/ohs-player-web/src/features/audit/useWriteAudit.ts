@@ -1,13 +1,8 @@
 import { useCallback } from 'react';
-import { useAuth, useFhirClient, writeAuditEvent } from 'ohs-player-web-core';
+import { type AuditParams, useAuth, useFhirClient, writeAuditEvent } from 'ohs-player-web-core';
 
 /** Params for an audit write, minus the `client` and `agentDisplay` the hook supplies. */
-type AuditInput = {
-  action: 'create' | 'update' | 'delete';
-  resourceType: string;
-  resourceId?: string;
-  description?: string;
-};
+type AuditInput = Omit<AuditParams, 'agentDisplay'>;
 
 /**
  * App wrapper around the library `writeAuditEvent` that injects the current FHIR client and the

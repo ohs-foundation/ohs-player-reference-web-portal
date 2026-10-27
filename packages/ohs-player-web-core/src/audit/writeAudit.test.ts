@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { RESOURCE_TYPES_SYSTEM, writeAuditEvent } from './writeAudit';
+import { AUDIT_ENTITY_TYPE_SYSTEM, RESOURCE_TYPES_SYSTEM, writeAuditEvent } from './writeAudit';
 import type { FhirClient } from '../client/FhirClient';
 
 function clientStub() {
@@ -53,7 +53,11 @@ describe('writeAuditEvent', () => {
     type Agent = { name?: string; who?: { display?: string }; requestor?: boolean };
     const [named] = (client.create.mock.calls[0][0] as { agent: Agent[] }).agent;
     const [fallback] = (client.create.mock.calls[1][0] as { agent: Agent[] }).agent;
-    expect(named).toMatchObject({ name: 'admin-user', who: { display: 'admin-user' }, requestor: true });
+    expect(named).toMatchObject({
+      name: 'admin-user',
+      who: { display: 'admin-user' },
+      requestor: true,
+    });
     expect(fallback).toMatchObject({ name: 'Portal user', who: { display: 'Portal user' } });
   });
 
@@ -88,6 +92,30 @@ describe('writeAuditEvent', () => {
       {
         type: { system: RESOURCE_TYPES_SYSTEM, code: 'Organization', display: 'Organization' },
         description: 'Bulk import of orgs.csv: 48 imported, 2 failed, 50 rows',
+      },
+    ]);
+  });
+
+  it('records an application function on an entity that is not a resource', async () => {
+    const client = clientStub();
+    await writeAuditEvent(client, {
+      action: 'execute',
+      entityType: { system: AUDIT_ENTITY_TYPE_SYSTEM, code: '2', display: 'System Object' },
+      description: 'portal-config.json downloaded with 1 change: locale',
+    });
+    const record = client.create.mock.calls[0][0] as {
+      action: string;
+      entity?: Record<string, unknown>[];
+    };
+    expect(record.action).toBe('E');
+    expect(record.entity).toEqual([
+      {
+        type: {
+          system: 'http://terminology.hl7.org/CodeSystem/audit-entity-type',
+          code: '2',
+          display: 'System Object',
+        },
+        description: 'portal-config.json downloaded with 1 change: locale',
       },
     ]);
   });
