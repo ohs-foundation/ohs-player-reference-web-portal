@@ -23,6 +23,25 @@ describe('example portal config schema', () => {
     expect(validatePortalConfig({ dashboard })).toEqual({ success: true, data: { dashboard } });
   });
 
+  it('rejects a brand pin that is not a colour', () => {
+    const error = rejection({
+      brand: { overrides: { primary: 'url(https://tracker.example/p.png)' } },
+    });
+
+    expect(error).toContain(
+      'must be a CSS colour such as #094F9A, rgb(9 79 154) or a named colour',
+    );
+    expect(error).toContain('brand.overrides.primary');
+  });
+
+  it('rejects a sidebar path that leaves the portal', () => {
+    const entry = { id: 'users', to: '//attacker.example/users', labelKey: 'navUsers', order: 10 };
+    const error = rejection({ navigation: [entry] });
+
+    expect(error).toContain('must be a path inside the portal, such as /users');
+    expect(error).toContain('navigation[0].to');
+  });
+
   it('names the path when a dashboard widget id is malformed', () => {
     const error = rejection({ dashboard: { layout: { kpi: ['schedules'] } } });
 

@@ -63,11 +63,28 @@ export const SYS_COLOR_ROLES = [
   'focus-ring-error',
 ] as const;
 
-const colorPins = z.partialRecord(z.enum(SYS_COLOR_ROLES), z.string().min(1));
+const HEX_COLOUR = '#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})';
+const COLOUR_KEYWORD = '[a-zA-Z]+';
+const COLOUR_FUNCTION =
+  '(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|light-dark|var)\\(.*\\)';
+const UNSAFE_IN_COLOUR = `[;{}<>\\\\"'\\t\\n\\r\\f\\v]|[uU][rR][lL]\\(`;
+const COLOUR_VALUE = new RegExp(
+  `^(?!.*(?:${UNSAFE_IN_COLOUR}))(?:${HEX_COLOUR}|${COLOUR_KEYWORD}|${COLOUR_FUNCTION})$`,
+);
+
+const colourValue = z.string().regex(COLOUR_VALUE, {
+  error: 'must be a CSS colour such as #094F9A, rgb(9 79 154) or a named colour',
+});
+
+const portalPath = z.string().regex(/^\/(?!\/)[^\s\\]*$/, {
+  error: 'must be a path inside the portal, such as /users',
+});
+
+const colorPins = z.partialRecord(z.enum(SYS_COLOR_ROLES), colourValue);
 
 const navEntrySchema = z.strictObject({
   id: z.enum(NAV_IDS),
-  to: z.string().startsWith('/'),
+  to: portalPath,
   labelKey: z.string().min(1),
   order: z.number().int(),
   requires: z

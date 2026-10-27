@@ -50,6 +50,49 @@ describe('portal config schema', () => {
     expect(portalConfigIssues({ flags: { userMgmt: false } })).toEqual([]);
   });
 
+  it.each([
+    '#094F9A',
+    '#fff',
+    '#094F9A80',
+    'rgb(9 79 154 / 50%)',
+    'transparent',
+    'var(--ohs-ref-palette-primary40)',
+  ])('accepts the brand pin %s', (pin) => {
+    expect(validatePortalConfig({ brand: { overrides: { primary: pin } } }).success).toBe(true);
+  });
+
+  it.each([
+    '#fff; } body { display: none } :root {',
+    'url(https://tracker.example/p.png)',
+    'var(--missing, image-set("https://tracker.example/p.png" 1x))',
+    'rgb(0 0 0)\n}',
+    '#12345',
+  ])('rejects the brand pin %s as not a colour', (pin) => {
+    expect(rejection({ brand: { darkOverrides: { primary: pin } } })).toMatch(
+      /must be a CSS colour[\s\S]*brand\.darkOverrides\.primary/,
+    );
+  });
+
+  it.each(['/', '/users', '/care-teams', '/resources/Patient'])(
+    'accepts the sidebar path %s',
+    (to) => {
+      const entry = { id: 'users', to, labelKey: 'navUsers', order: 10 };
+      expect(validatePortalConfig({ navigation: [entry] }).success).toBe(true);
+    },
+  );
+
+  it.each([
+    '//attacker.example/users',
+    '/\\attacker.example/users',
+    '/\t/attacker.example',
+    'users',
+  ])('rejects the sidebar path %j as leaving the portal', (to) => {
+    const entry = { id: 'users', to, labelKey: 'navUsers', order: 10 };
+    expect(rejection({ navigation: [entry] })).toMatch(
+      /must be a path inside the portal[\s\S]*navigation\[0\]\.to/,
+    );
+  });
+
   it('rejects an unknown field', () => {
     expect(rejection({ colour: 'red' })).toContain('Unrecognized key: "colour"');
   });
