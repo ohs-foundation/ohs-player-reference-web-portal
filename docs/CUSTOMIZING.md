@@ -94,7 +94,7 @@ Set `"product": { "name": "Acme Health" }`. The name replaces the `appTopbarTitl
 
 The active sidebar entry draws `primary` text on a `secondary-container` fill, so pin the two together and keep them at a contrast of 4.5 to 1 or more. The generated `secondary-container` is a pale blue, and a new `primary` on it can fall short. Reload, then use the sun and moon button in the top bar to switch schemes. Everything drawn in the primary role changes colour, such as the Schedules KPI badge. The role names are listed in [THEMING.md](./THEMING.md) section 3; the reference app's schema rejects any other name.
 
-A pin must be a CSS colour, such as a hex value, a keyword like `transparent`, or a colour function like `rgb()` or `var()`. Both schemas reject anything else, `url()` included, so a pin cannot load an outside image or add CSS rules.
+A pin must be a CSS colour, such as a hex value, a keyword like `transparent`, or a colour function like `rgb()` or `var()`. Both schemas reject a value that could add CSS rules, open a comment or load an outside image, such as one holding `;`, `}`, `/*` or `url()`. A word that is not a colour name still passes and renders no colour, so check the result in both schemes.
 
 ### 3. Sidebar order and visibility
 
