@@ -1,11 +1,29 @@
+import { colourPinProblems, isThemeColourValue, THEME_COLOUR_PATTERN } from 'ohs-player-web-core';
 import { NAV_IDS } from 'ohs-player-web-shell';
 import { z } from 'zod';
 
-const colorPins = z.record(z.string(), z.string().min(1));
+const COLOUR_ERROR = 'must be a CSS colour such as #094F9A, rgb(9 79 154) or a named colour';
+
+const colourValue = z
+  .string()
+  .regex(THEME_COLOUR_PATTERN, { error: COLOUR_ERROR, abort: true })
+  .refine(isThemeColourValue, { error: COLOUR_ERROR });
+
+function noPinLoops(pins: Partial<Record<string, string>>, context: z.RefinementCtx): void {
+  for (const { role, message } of colourPinProblems(pins)) {
+    context.addIssue({ code: 'custom', path: [role], message });
+  }
+}
+
+const portalPath = z.string().regex(/^\/(?!\/)[^\s\\]*$/, {
+  error: 'must be a path inside the portal, such as /users',
+});
+
+const colorPins = z.record(z.string(), colourValue).superRefine(noPinLoops);
 
 const navEntrySchema = z.strictObject({
   id: z.enum(NAV_IDS),
-  to: z.string().startsWith('/'),
+  to: portalPath,
   labelKey: z.string().min(1),
   order: z.number().int(),
   requires: z

@@ -85,6 +85,13 @@
       "labelKey": "navAudit",
       "order": 80,
       "requires": { "flag": "auditLog", "permission": "audit.view" }
+    },
+    {
+      "id": "configuration",
+      "to": "/configuration",
+      "labelKey": "navConfiguration",
+      "order": 90,
+      "requires": { "flag": "configEditor", "permission": "configuration.edit" }
     }
   ],
   "permissionMap": {
@@ -104,7 +111,8 @@
     "setup.view": ["admin"],
     "fhir-viewer.view": ["admin", "care-team-manager"],
     "fhir-viewer.edit": ["admin"],
-    "audit.view": ["admin"]
+    "audit.view": ["admin"],
+    "configuration.edit": ["admin"]
   },
   "locale": "en",
   "customEndpoints": {
@@ -115,6 +123,7 @@
     "locationsBulkImport": "/api/bulk-import/locations",
     "usersBulkImport": "/api/bulk-import/users",
     "organizationsBulkImport": "/api/bulk-import/organizations",
-    "practitionerDetails": "/api/practitioner-details"
+    "practitionerDetails": "/api/practitioner-details",
+    "configAssist": "/api/config-assist"
   }
 }

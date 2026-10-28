@@ -499,4 +499,66 @@ export const appMessageOverrides = {
   auditOutcomeMinorFailure: 'Minor failure',
   auditOutcomeSeriousFailure: 'Serious failure',
   auditOutcomeMajorFailure: 'Major failure',
+  pageConfiguration: 'Configuration',
+  pageConfigurationDescription:
+    'Check a change to the configuration document, preview it, and download the file to deploy.',
+  configEditorTitle: 'Configuration document',
+  configEditorDescription:
+    'The portal-config.json this session runs on. Edit it here, then download the file to deploy.',
+  configEditorLabel: 'Document (JSON)',
+  configEditorInstructions:
+    'Changes are checked as you type, with the same rules the portal uses when it loads.',
+  configInvalidJson: 'This is not valid JSON.',
+  configNotAnObject: 'The document must be a JSON object, starting with {.',
+  configIssueCount: 'Problems to fix before you can download: {{count}}',
+  configChangesTitle: 'Changes',
+  configChangesDescription: 'Compared with the configuration this session is running.',
+  configChangesUnavailable: 'Fix the document to see what changed.',
+  configNoChanges: 'No changes yet',
+  configNoChangesDescription: 'Edit the document to see each change listed here.',
+  configChangeAdded: 'Added',
+  configChangeRemoved: 'Removed',
+  configChangeChanged: 'Changed',
+  configChangeBefore: 'Before:',
+  configChangeAfter: 'After:',
+  configGuardedChange: 'Needs engineering review',
+  configGuardedNotice:
+    'This changes connection, permission or endpoint settings. Have an engineer review it before you deploy the file.',
+  configSourceLabel: 'Running configuration',
+  configSourceLastGood:
+    'The served portal-config.json could not be used, so this session runs on the last valid copy this browser kept.',
+  configSourceBaked:
+    'No configuration document is loaded, so this session runs on the built-in settings.',
+  configReset: 'Reset',
+  configPreview: 'Preview',
+  configPreviewTitle: 'Preview',
+  configPreviewActive:
+    'This session shows the draft brand colours now. Nothing is saved, and the preview ends when you edit the document or leave the page.',
+  configPreviewSidebar: 'Sidebar order in the draft',
+  configPreviewSwitchedOff: 'Switched off',
+  configPreviewEnd: 'End preview',
+  configAssistTitle: 'Ask the assistant',
+  configAssistDisclosure:
+    'Your request and the current document are sent to the assistant this deployment set up. Its answer is a proposal you review here. Nothing is applied until you download the file.',
+  configAssistLabel: 'Describe the change',
+  configAssistInstructions:
+    'For example, switch off the audit log and make the primary colour #0F766E.',
+  configAssistAsk: 'Ask',
+  configAssistPending: 'Waiting for the assistant…',
+  configAssistPlaced: 'Proposal placed in the editor. Review the changes before downloading.',
+  configAssistSummary: 'Assistant:',
+  configAssistRestore: 'Restore previous draft',
+  configAssistDraftInvalid:
+    'Fix the document before asking, so the assistant starts from a valid one.',
+  configAssistFailedTitle: 'The assistant could not help',
+  configAssistNotADocument: 'Its answer was not a configuration document. The editor is unchanged.',
+  configAssistUnavailableTitle: 'The assistant is not set up',
+  configAssistUnavailable:
+    'This deployment has no assistant relay. Ask your administrator, or edit the document by hand.',
+  configAssistGuardedTitle: 'Proposal not used',
+  configAssistGuarded:
+    'The assistant tried to change {{paths}}. Connection, permission and endpoint settings need an engineer, so the editor is unchanged.',
+  configDownload: 'Download',
+  configDownloaded: 'portal-config.json downloaded',
+  configAuditFailed: 'The file was downloaded, but its audit record could not be saved.',
 } as const satisfies Partial<MessageCatalog>;

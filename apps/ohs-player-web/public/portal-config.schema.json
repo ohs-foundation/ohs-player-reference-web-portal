@@ -93,7 +93,7 @@
           },
           "additionalProperties": {
             "type": "string",
-            "minLength": 1
+            "pattern": "^(?!.*(?:[;{}<>\\\\\"'\\t\\n\\r\\f\\v]|\\/\\*|\\*\\/|[uU][rR][lL]\\())(?:#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|[a-zA-Z]+|(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|light-dark|var)\\(.*\\))$"
           }
         },
         "darkOverrides": {
@@ -151,7 +151,7 @@
           },
           "additionalProperties": {
             "type": "string",
-            "minLength": 1
+            "pattern": "^(?!.*(?:[;{}<>\\\\\"'\\t\\n\\r\\f\\v]|\\/\\*|\\*\\/|[uU][rR][lL]\\())(?:#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|[a-zA-Z]+|(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|light-dark|var)\\(.*\\))$"
           }
         }
       },
@@ -169,7 +169,9 @@
           "orgMgmt",
           "setupWizard",
           "fhirViewer",
-          "auditLog"
+          "auditLog",
+          "configEditor",
+          "configAssist"
         ]
       },
       "additionalProperties": {
@@ -191,12 +193,13 @@
               "careTeams",
               "fhirViewer",
               "setup",
-              "audit"
+              "audit",
+              "configuration"
             ]
           },
           "to": {
             "type": "string",
-            "pattern": "^\\/.*"
+            "pattern": "^\\/(?!\\/)[^\\s\\\\]*$"
           },
           "labelKey": {
             "type": "string",
@@ -220,7 +223,9 @@
                   "orgMgmt",
                   "setupWizard",
                   "fhirViewer",
-                  "auditLog"
+                  "auditLog",
+                  "configEditor",
+                  "configAssist"
                 ]
               },
               "permission": {

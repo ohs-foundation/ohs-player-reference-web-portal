@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { colourPinProblems, isThemeColourValue, THEME_COLOUR_PATTERN } from 'ohs-player-web-core';
 import { BUILTIN_WIDGET_IDS, NAV_IDS } from 'ohs-player-web-shell';
 
 export const FLAG_NAMES = [
@@ -10,6 +11,8 @@ export const FLAG_NAMES = [
   'setupWizard',
   'fhirViewer',
   'auditLog',
+  'configEditor',
+  'configAssist',
 ] as const;
 
 export const SYS_COLOR_ROLES = [
@@ -61,11 +64,28 @@ export const SYS_COLOR_ROLES = [
   'focus-ring-error',
 ] as const;
 
-const colorPins = z.partialRecord(z.enum(SYS_COLOR_ROLES), z.string().min(1));
+const COLOUR_ERROR = 'must be a CSS colour such as #094F9A, rgb(9 79 154) or a named colour';
+
+const colourValue = z
+  .string()
+  .regex(THEME_COLOUR_PATTERN, { error: COLOUR_ERROR, abort: true })
+  .refine(isThemeColourValue, { error: COLOUR_ERROR });
+
+function noPinLoops(pins: Partial<Record<string, string>>, context: z.RefinementCtx): void {
+  for (const { role, message } of colourPinProblems(pins)) {
+    context.addIssue({ code: 'custom', path: [role], message });
+  }
+}
+
+const portalPath = z.string().regex(/^\/(?!\/)[^\s\\]*$/, {
+  error: 'must be a path inside the portal, such as /users',
+});
+
+const colorPins = z.partialRecord(z.enum(SYS_COLOR_ROLES), colourValue).superRefine(noPinLoops);
 
 const navEntrySchema = z.strictObject({
   id: z.enum(NAV_IDS),
-  to: z.string().startsWith('/'),
+  to: portalPath,
   labelKey: z.string().min(1),
   order: z.number().int(),
   requires: z
@@ -129,6 +149,21 @@ export function validatePortalConfig(input: unknown): PortalConfigValidation {
   return result.success
     ? { success: true, data: result.data }
     : { success: false, error: z.prettifyError(result.error) };
+}
+
+export interface PortalConfigIssue {
+  path: string;
+  message: string;
+}
+
+export function portalConfigIssues(input: unknown): PortalConfigIssue[] {
+  const result = portalConfigSchema.safeParse(input);
+  return result.success
+    ? []
+    : result.error.issues.map((issue) => ({
+        path: z.core.toDotPath(issue.path),
+        message: issue.message,
+      }));
 }
 
 export function portalConfigJsonSchema(): Record<string, unknown> {

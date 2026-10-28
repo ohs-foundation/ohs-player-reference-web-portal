@@ -69,6 +69,12 @@ export { defaultMessageCatalog } from './i18n/locales/en';
 export { swMessageCatalogStub } from './i18n/locales/sw';
 
 export { installThemeCss, themeCss } from './theme/themeCss';
+export {
+  colourPinProblems,
+  isThemeColourValue,
+  THEME_COLOUR_PATTERN,
+  type ColourPinProblem,
+} from './theme/colourPins';
 export type { ThemeConfigV2 } from './theme/themeCss';
 export type {
   ShapeToken,
@@ -115,13 +121,7 @@ export type {
 } from './hooks/useFhirData';
 
 export { formatOperationOutcomeMessage } from './ui/operationOutcome';
-export {
-  OhsDialog,
-  OhsDropdownMenu,
-  OhsTabs,
-  OhsToast,
-  OhsTooltip,
-} from './ui/radix';
+export { OhsDialog, OhsDropdownMenu, OhsTabs, OhsToast, OhsTooltip } from './ui/radix';
 export type { OhsDialogProps } from './ui/radix';
 
 export { StatusBarProvider, useStatusBar } from './ui/primitives/StatusBar';
@@ -132,7 +132,13 @@ export type { FhirJsonViewProps } from './ui/primitives/FhirJsonView';
 export { FhirJsonEditor } from './ui/primitives/FhirJsonEditor';
 export type { FhirJsonEditorProps } from './ui/primitives/FhirJsonEditor';
 
-export { RESOURCE_TYPES_SYSTEM, writeAuditEvent } from './audit/writeAudit';
+export {
+  AUDIT_ENTITY_TYPE_SYSTEM,
+  RESOURCE_TYPES_SYSTEM,
+  writeAuditEvent,
+  type AuditEntityType,
+  type AuditParams,
+} from './audit/writeAudit';
 export { activityItemFromAuditEvent } from './audit/auditActivity';
 export type { ActivityItem, AuditAction } from './audit/auditActivity';
 

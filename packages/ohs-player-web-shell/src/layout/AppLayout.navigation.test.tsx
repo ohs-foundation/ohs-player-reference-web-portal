@@ -91,6 +91,7 @@ describe('AppLayout sidebar', () => {
       '/resources',
       '/setup',
       '/audit',
+      '/configuration',
     ]);
   });
 
@@ -102,6 +103,16 @@ describe('AppLayout sidebar', () => {
   it('hides the audit log from a user without audit.view', () => {
     deniedPermissions = new Set(['audit.view']);
     expect(sidebarLinks()).not.toContain('/audit');
+  });
+
+  it('hides the configuration page when its flag is off', () => {
+    flagsOff = new Set(['configEditor']);
+    expect(sidebarLinks()).not.toContain('/configuration');
+  });
+
+  it('hides the configuration page from a user without configuration.edit', () => {
+    deniedPermissions = new Set(['configuration.edit']);
+    expect(sidebarLinks()).not.toContain('/configuration');
   });
 
   it('orders the sidebar by the order values in the document', () => {
@@ -164,7 +175,7 @@ describe('AppLayout sidebar', () => {
       .getAllByRole('link')
       .map((link) => link.getAttribute('href'));
 
-    expect(hrefs.slice(-2)).toEqual(['/audit', '/reports']);
+    expect(hrefs.slice(-3)).toEqual(['/audit', '/reports', '/configuration']);
   });
 
   it('renders every row as a focusable full-row link with a label and an icon', () => {

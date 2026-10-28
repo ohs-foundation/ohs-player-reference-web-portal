@@ -15,7 +15,8 @@ import 'ohs-player-web-shell/theme.css';
 import 'ohs-player-web-shell/index.css';
 import 'ohs-player-web-shell/tailwind.css';
 
-void loadPortalConfig().then(({ document: configDocument, error }) => {
+void loadPortalConfig().then((loaded) => {
+  const { document: configDocument, error } = loaded;
   const host = createPortalHost({
     defaults: portalDefaults,
     document: configDocument,
@@ -30,7 +31,7 @@ void loadPortalConfig().then(({ document: configDocument, error }) => {
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <App host={host} configError={import.meta.env.DEV ? error : undefined} />
+      <App host={host} running={loaded} configError={import.meta.env.DEV ? error : undefined} />
     </StrictMode>,
   );
 });
