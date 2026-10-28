@@ -69,6 +69,12 @@ export { defaultMessageCatalog } from './i18n/locales/en';
 export { swMessageCatalogStub } from './i18n/locales/sw';
 
 export { installThemeCss, themeCss } from './theme/themeCss';
+export {
+  colourPinProblems,
+  isThemeColourValue,
+  THEME_COLOUR_PATTERN,
+  type ColourPinProblem,
+} from './theme/colourPins';
 export type { ThemeConfigV2 } from './theme/themeCss';
 export type {
   ShapeToken,

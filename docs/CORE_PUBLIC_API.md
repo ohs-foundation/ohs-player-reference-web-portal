@@ -101,6 +101,9 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types â
 | --- | --- |
 | `themeCss(config?)` | Serialises a `ThemeConfigV2` to a stylesheet: `:root` for light plus mode-independent tokens, `[data-theme='dark']` for the dark scheme, and `[data-density]` rules that scope `--ohs-sys-density-scale` to a subtree. |
 | `installThemeCss(config?, doc?)` | Installs or replaces that stylesheet in `document.head`. Idempotent; call once at startup, before render. |
+| `THEME_COLOUR_PATTERN` | The shape a brand pin must have: a hex value, a word, or a colour function such as `rgb()`, `oklch()`, `color-mix()` or `var()`, with nothing that could end a declaration, open a comment or load a resource. Plain enough to use as a JSON Schema `pattern`. |
+| `isThemeColourValue(value)` | `THEME_COLOUR_PATTERN`, plus a word must be one of the 148 CSS colour names, `transparent` or `currentcolor`, in any case. Both apps' configuration schemas check pins with it, because `themeCss` writes pins as they are. |
+| `colourPinProblems(pins)` | `{ role, message }[]` for pins in one scheme that refer back to their own role through `var(--ohs-sys-color-<role>)`, directly or through other pins, which would leave the token with no value. A reference to another role is fine. |
 
 `installThemeCss` is the only writer of tokens: nothing in the library sets `--ohs-*` properties inline,
 and `CorePlatformProvider` applies no theme. See [THEMING.md](./THEMING.md).

@@ -65,6 +65,7 @@ describe('portal config schema', () => {
     '#fff; } body { display: none } :root {',
     'url(https://tracker.example/p.png)',
     'rgb(/*)',
+    'banana',
     'var(--ohs-ref-palette-primary40, */)',
     'var(--missing, image-set("https://tracker.example/p.png" 1x))',
     'rgb(0 0 0)\n}',
@@ -73,6 +74,26 @@ describe('portal config schema', () => {
     expect(rejection({ brand: { darkOverrides: { primary: pin } } })).toMatch(
       /must be a CSS colour[\s\S]*brand\.darkOverrides\.primary/,
     );
+  });
+
+  it('accepts a CSS colour name in any case', () => {
+    const brand = { overrides: { primary: 'Teal', error: 'crimson' } };
+    expect(validatePortalConfig({ brand }).success).toBe(true);
+  });
+
+  it('names each pin that refers back to its own role', () => {
+    const error = rejection({
+      brand: {
+        darkOverrides: {
+          primary: 'var(--ohs-sys-color-primary)',
+          'primary-hover': 'rgb(from var(--ohs-sys-color-primary) r g b / 90%)',
+        },
+      },
+    });
+
+    expect(error).toContain('must not refer back to itself: primary → primary');
+    expect(error).toContain('brand.darkOverrides.primary');
+    expect(error).not.toContain('primary-hover');
   });
 
   it.each(['/', '/users', '/care-teams', '/resources/Patient'])(

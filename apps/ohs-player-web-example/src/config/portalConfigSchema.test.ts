@@ -34,6 +34,15 @@ describe('example portal config schema', () => {
     expect(error).toContain('brand.overrides.primary');
   });
 
+  it('rejects a word that is not a colour name, and a pin that refers to itself', () => {
+    expect(rejection({ brand: { overrides: { primary: 'banana' } } })).toContain(
+      'must be a CSS colour',
+    );
+    expect(
+      rejection({ brand: { overrides: { primary: 'var(--ohs-sys-color-primary)' } } }),
+    ).toContain('must not refer back to itself');
+  });
+
   it('rejects a brand pin that opens a CSS comment', () => {
     expect(rejection({ brand: { overrides: { primary: 'rgb(/*)' } } })).toContain(
       'brand.overrides.primary',

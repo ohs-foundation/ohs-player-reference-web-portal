@@ -1,24 +1,25 @@
+import { colourPinProblems, isThemeColourValue, THEME_COLOUR_PATTERN } from 'ohs-player-web-core';
 import { NAV_IDS } from 'ohs-player-web-shell';
 import { z } from 'zod';
 
-const HEX_COLOUR = '#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})';
-const COLOUR_KEYWORD = '[a-zA-Z]+';
-const COLOUR_FUNCTION =
-  '(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|light-dark|var)\\(.*\\)';
-const UNSAFE_IN_COLOUR = `[;{}<>\\\\"'\\t\\n\\r\\f\\v]|\\/\\*|\\*\\/|[uU][rR][lL]\\(`;
-const COLOUR_VALUE = new RegExp(
-  `^(?!.*(?:${UNSAFE_IN_COLOUR}))(?:${HEX_COLOUR}|${COLOUR_KEYWORD}|${COLOUR_FUNCTION})$`,
-);
+const COLOUR_ERROR = 'must be a CSS colour such as #094F9A, rgb(9 79 154) or a named colour';
 
-const colourValue = z.string().regex(COLOUR_VALUE, {
-  error: 'must be a CSS colour such as #094F9A, rgb(9 79 154) or a named colour',
-});
+const colourValue = z
+  .string()
+  .regex(THEME_COLOUR_PATTERN, { error: COLOUR_ERROR, abort: true })
+  .refine(isThemeColourValue, { error: COLOUR_ERROR });
+
+function noPinLoops(pins: Partial<Record<string, string>>, context: z.RefinementCtx): void {
+  for (const { role, message } of colourPinProblems(pins)) {
+    context.addIssue({ code: 'custom', path: [role], message });
+  }
+}
 
 const portalPath = z.string().regex(/^\/(?!\/)[^\s\\]*$/, {
   error: 'must be a path inside the portal, such as /users',
 });
 
-const colorPins = z.record(z.string(), colourValue);
+const colorPins = z.record(z.string(), colourValue).superRefine(noPinLoops);
 
 const navEntrySchema = z.strictObject({
   id: z.enum(NAV_IDS),
