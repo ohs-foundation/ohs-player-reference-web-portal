@@ -122,13 +122,13 @@ FHIR references for D10.
 | D4  | #114 had not merged, so preview takes the fallback. `useConfigPreview` installs the draft brand and the page lists the draft sidebar order, marking screens the draft switches off. Extension entries join the list by `order` through `ExtensionsContext`.                                                              |
 | D5  | As decided. `.env.example` sits at the repository root, not in the app.                                                                                                                                                                                                                                                  |
 | D7  | Stronger than first decided, with a second yes. Colour tokens feed `background` shorthands, so a pin of `url(...)` would load an outside image. A pin must now be a hex value, a keyword or a colour function, with no `url(` or quotes. Paths also reject a backslash or whitespace, which browsers turn into `//host`. |
-| D10 | `AuditParams` and `AuditEntityType` are exported, and the app's `useWriteAudit` takes its input type from `AuditParams`. Library bundle 50,622 to 50,704 bytes gzip.                                                                                                                                                     |
+| D10 | `AuditParams` and `AuditEntityType` are exported, and the app's `useWriteAudit` takes its input type from `AuditParams`. Library bundle 50,622 to 50,704 bytes gzip, then 51,943 with the colour checks added in the bug hunt.                                                                                           |
 
 The rest are as decided.
 
 ## Verification
 
-Automated gates at the last commit. Typecheck, lint, test and build pass in all four packages (library 175 tests, shell 285, reference app 637, example 24). `pnpm bundle:check` and `pnpm config:check` pass. The configuration page is its own lazy chunk at 4.5 KB gzip. The main chunk grew from 207,147 to 210,230 bytes gzip, for the message copy, two icons and the route.
+Automated gates at the last commit. Typecheck, lint, test and build pass in all four packages (library 203 tests, shell 285, reference app 642, example 25). `pnpm bundle:check` and `pnpm config:check` pass. The configuration page is its own lazy chunk at 4.5 KB gzip. The main chunk grew from 207,147 to 210,230 bytes gzip, for the message copy, two icons and the route.
 
 Live walk on 27 October 2026, HAPI, Keycloak and the gateway on the local stack, headless Chrome, a stub relay answering `/api/config-assist` and passing every other `/api/*` call to the gateway. 28 of 28 checks passed.
 
