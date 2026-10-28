@@ -1,18 +1,13 @@
 import { PORTAL_CONFIG_FILE } from '../../config/loadPortalConfig';
 import type { PortalConfig } from '../../config/portalConfigSchema';
+import { saveFile } from '../../lib/saveFile';
 import { draftText } from './configDraft';
 import type { DocumentChange } from './documentDiff';
 
 const SUMMARY_LIMIT = 5;
 
 export function downloadDocument(document: PortalConfig): void {
-  const blob = new Blob([draftText(document)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = window.document.createElement('a');
-  link.href = url;
-  link.download = PORTAL_CONFIG_FILE;
-  link.click();
-  URL.revokeObjectURL(url);
+  saveFile(new Blob([draftText(document)], { type: 'application/json' }), PORTAL_CONFIG_FILE);
 }
 
 export function downloadAuditDescription(

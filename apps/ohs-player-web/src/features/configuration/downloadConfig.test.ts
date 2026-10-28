@@ -1,9 +1,14 @@
 import { readFileSync } from 'node:fs';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { validatePortalConfig } from '../../config/portalConfigSchema';
 import { draftText } from './configDraft';
 import { diffDocuments } from './documentDiff';
 import { downloadAuditDescription, downloadDocument } from './downloadConfig';
+
+const mockSaveFile = vi.fn();
+vi.mock('../../lib/saveFile', () => ({
+  saveFile: (...args: unknown[]): unknown => mockSaveFile(...args),
+}));
 
 function referenceDocument(): unknown {
   return JSON.parse(readFileSync('public/portal-config.json', 'utf8')) as unknown;
@@ -20,37 +25,17 @@ function readText(blob: Blob): Promise<string> {
 }
 
 describe('downloadDocument', () => {
-  afterEach(() => {
-    Reflect.deleteProperty(URL, 'createObjectURL');
-    Reflect.deleteProperty(URL, 'revokeObjectURL');
-    vi.restoreAllMocks();
-  });
-
-  it('saves the document as portal-config.json and releases the object URL', async () => {
+  it('saves the document as portal-config.json, readable by the loader', async () => {
     const parsed = validatePortalConfig(referenceDocument());
     if (!parsed.success) throw new Error(parsed.error);
-    let saved: Blob | undefined;
-    const revokeObjectURL = vi.fn();
-    Object.assign(URL, {
-      createObjectURL: (blob: Blob) => {
-        saved = blob;
-        return 'blob:config';
-      },
-      revokeObjectURL,
-    });
-    const clicked: { download: string; href: string }[] = [];
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
-      this: HTMLAnchorElement,
-    ) {
-      clicked.push({ download: this.download, href: this.getAttribute('href') ?? '' });
-    });
 
     downloadDocument(parsed.data);
 
-    expect(clicked).toEqual([{ download: 'portal-config.json', href: 'blob:config' }]);
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:config');
-    if (!saved) throw new Error('nothing was saved');
-    const text = await readText(saved);
+    expect(mockSaveFile).toHaveBeenCalledOnce();
+    const [blob, fileName] = mockSaveFile.mock.calls[0] as [Blob, string];
+    expect(fileName).toBe('portal-config.json');
+    expect(blob.type).toBe('application/json');
+    const text = await readText(blob);
     expect(text).toBe(draftText(parsed.data));
     expect(validatePortalConfig(JSON.parse(text) as unknown)).toEqual({
       success: true,

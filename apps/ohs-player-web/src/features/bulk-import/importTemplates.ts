@@ -1,3 +1,4 @@
+import { saveFile } from '../../lib/saveFile';
 import { type ImportCompletion } from './importStream';
 
 export interface ImportColumn {
@@ -147,11 +148,5 @@ export function buildImportTemplateCsv(template: ImportTemplate): string {
 }
 
 export function downloadImportTemplate(template: ImportTemplate): void {
-  const blob = new Blob([buildImportTemplateCsv(template)], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = template.fileName;
-  a.click();
-  URL.revokeObjectURL(url);
+  saveFile(new Blob([buildImportTemplateCsv(template)], { type: 'text/csv' }), template.fileName);
 }
