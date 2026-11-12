@@ -6,10 +6,9 @@ import type { ConfigDraft } from './useConfigDraft';
 
 interface ConfigEditorProps {
   draft: ConfigDraft;
-  readOnly?: boolean;
 }
 
-export function ConfigEditor({ draft, readOnly }: Readonly<ConfigEditorProps>) {
+export function ConfigEditor({ draft }: Readonly<ConfigEditorProps>) {
   const { t } = useTranslation();
   const issuesId = useId();
   const invalid = draft.parsed.kind !== 'valid';
@@ -20,7 +19,6 @@ export function ConfigEditor({ draft, readOnly }: Readonly<ConfigEditorProps>) {
         instructions={t('configEditorInstructions')}
         value={draft.text}
         onChange={(event) => draft.setText(event.target.value)}
-        readOnly={readOnly}
         spellCheck={false}
         aria-invalid={invalid ? true : undefined}
         aria-describedby={invalid ? issuesId : undefined}

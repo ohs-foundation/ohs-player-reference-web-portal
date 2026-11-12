@@ -10,17 +10,13 @@ export function downloadDocument(document: PortalConfig): void {
   saveFile(new Blob([draftText(document)], { type: 'application/json' }), PORTAL_CONFIG_FILE);
 }
 
-export function downloadAuditDescription(
-  changes: readonly DocumentChange[],
-  assisted: boolean,
-): string {
+export function downloadAuditDescription(changes: readonly DocumentChange[]): string {
   if (changes.length === 0) return `${PORTAL_CONFIG_FILE} downloaded with no changes`;
   const noun = changes.length === 1 ? 'change' : 'changes';
-  const origin = assisted ? ', including an assistant proposal' : '';
   const shown = changes
     .slice(0, SUMMARY_LIMIT)
     .map((entry) => entry.path)
     .join(', ');
   const more = changes.length > SUMMARY_LIMIT ? ` and ${changes.length - SUMMARY_LIMIT} more` : '';
-  return `${PORTAL_CONFIG_FILE} downloaded with ${changes.length} ${noun}${origin}: ${shown}${more}`;
+  return `${PORTAL_CONFIG_FILE} downloaded with ${changes.length} ${noun}: ${shown}${more}`;
 }

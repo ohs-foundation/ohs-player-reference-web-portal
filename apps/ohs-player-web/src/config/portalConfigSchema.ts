@@ -11,8 +11,6 @@ export const FLAG_NAMES = [
   'setupWizard',
   'fhirViewer',
   'auditLog',
-  'configEditor',
-  'configAssist',
 ] as const;
 
 export const SYS_COLOR_ROLES = [

@@ -169,9 +169,7 @@
           "orgMgmt",
           "setupWizard",
           "fhirViewer",
-          "auditLog",
-          "configEditor",
-          "configAssist"
+          "auditLog"
         ]
       },
       "additionalProperties": {
@@ -223,9 +221,7 @@
                   "orgMgmt",
                   "setupWizard",
                   "fhirViewer",
-                  "auditLog",
-                  "configEditor",
-                  "configAssist"
+                  "auditLog"
                 ]
               },
               "permission": {

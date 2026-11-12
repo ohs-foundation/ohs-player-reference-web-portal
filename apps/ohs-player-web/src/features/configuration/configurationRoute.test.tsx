@@ -37,11 +37,10 @@ const { createPortalHost, PortalHost } = await import('ohs-player-web-shell');
 const { appRoutes } = await import('../../AppRoutes');
 const { portalDefaults } = await import('../../config/platform');
 
-function renderAt(path: string, flags: Record<string, boolean> = {}) {
+function renderAt(path: string) {
   window.history.pushState({}, '', path);
   const host = createPortalHost({
     defaults: portalDefaults,
-    document: { flags },
     routes: appRoutes,
     development: true,
   });
@@ -70,13 +69,6 @@ describe('the configuration route', () => {
 
     expect(await screen.findByRole('heading', { name: 'Configuration page' })).toBeInTheDocument();
     expect((await sidebarHrefs()).at(-1)).toBe('/configuration');
-  });
-
-  it('reads as a missing page when the document turns configEditor off', async () => {
-    renderAt('/configuration', { configEditor: false });
-
-    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
-    expect(await sidebarHrefs()).not.toContain('/configuration');
   });
 
   it('shows the no access page to a user without configuration.edit', async () => {

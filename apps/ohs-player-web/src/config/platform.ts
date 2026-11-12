@@ -61,7 +61,6 @@ export const platformConfig: CorePlatformConfig = {
     usersBulkImport: '/api/bulk-import/users',
     organizationsBulkImport: '/api/bulk-import/organizations',
     practitionerDetails: '/api/practitioner-details',
-    configAssist: '/api/config-assist',
   },
 };
 

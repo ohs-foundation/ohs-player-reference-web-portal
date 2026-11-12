@@ -79,6 +79,6 @@ export const DEFAULT_NAVIGATION: readonly NavEntry[] = [
     to: '/configuration',
     labelKey: 'navConfiguration',
     order: 90,
-    requires: { flag: 'configEditor', permission: 'configuration.edit' },
+    requires: { permission: 'configuration.edit' },
   },
 ];

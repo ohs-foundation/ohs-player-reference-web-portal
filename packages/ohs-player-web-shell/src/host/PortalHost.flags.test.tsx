@@ -67,7 +67,7 @@ describe('PortalHost with a flag from the configuration document', () => {
     renderHostAt('/organizations');
 
     expect(await screen.findByRole('heading', { name: 'Organisations page' })).toBeInTheDocument();
-    expect(await sidebarHrefs()).toEqual(['/users', '/organizations']);
+    expect(await sidebarHrefs()).toEqual(['/users', '/organizations', '/configuration']);
   });
 
   it('removes the page and its sidebar entry when the document turns the flag off', async () => {
@@ -75,6 +75,6 @@ describe('PortalHost with a flag from the configuration document', () => {
 
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     expect(screen.queryByText('Organisations page')).not.toBeInTheDocument();
-    expect(await sidebarHrefs()).toEqual(['/users']);
+    expect(await sidebarHrefs()).toEqual(['/users', '/configuration']);
   });
 });

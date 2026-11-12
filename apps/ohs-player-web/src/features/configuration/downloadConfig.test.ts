@@ -45,31 +45,29 @@ describe('downloadDocument', () => {
 });
 
 describe('downloadAuditDescription', () => {
-  it('names each changed path and says when an assistant proposal is in the file', () => {
+  it('names each changed path', () => {
     const changes = diffDocuments(
       { locale: 'en', flags: { auditLog: true } },
       { locale: 'sw', flags: { auditLog: false } },
     );
 
-    expect(downloadAuditDescription(changes, false)).toBe(
+    expect(downloadAuditDescription(changes)).toBe(
       'portal-config.json downloaded with 2 changes: locale, flags.auditLog',
     );
-    expect(downloadAuditDescription(changes.slice(0, 1), true)).toBe(
-      'portal-config.json downloaded with 1 change, including an assistant proposal: locale',
+    expect(downloadAuditDescription(changes.slice(0, 1))).toBe(
+      'portal-config.json downloaded with 1 change: locale',
     );
   });
 
   it('says when the file was downloaded unchanged', () => {
-    expect(downloadAuditDescription([], false)).toBe(
-      'portal-config.json downloaded with no changes',
-    );
+    expect(downloadAuditDescription([])).toBe('portal-config.json downloaded with no changes');
   });
 
   it('lists five paths and counts the rest', () => {
     const before = Object.fromEntries(['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((key) => [key, 1]));
     const after = Object.fromEntries(Object.keys(before).map((key) => [key, 2]));
 
-    expect(downloadAuditDescription(diffDocuments(before, after), false)).toBe(
+    expect(downloadAuditDescription(diffDocuments(before, after))).toBe(
       'portal-config.json downloaded with 7 changes: a, b, c, d, e and 2 more',
     );
   });

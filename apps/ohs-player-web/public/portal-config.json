@@ -91,7 +91,7 @@
       "to": "/configuration",
       "labelKey": "navConfiguration",
       "order": 90,
-      "requires": { "flag": "configEditor", "permission": "configuration.edit" }
+      "requires": { "permission": "configuration.edit" }
     }
   ],
   "permissionMap": {
@@ -123,7 +123,6 @@
     "locationsBulkImport": "/api/bulk-import/locations",
     "usersBulkImport": "/api/bulk-import/users",
     "organizationsBulkImport": "/api/bulk-import/organizations",
-    "practitionerDetails": "/api/practitioner-details",
-    "configAssist": "/api/config-assist"
+    "practitionerDetails": "/api/practitioner-details"
   }
 }

@@ -105,11 +105,6 @@ describe('AppLayout sidebar', () => {
     expect(sidebarLinks()).not.toContain('/audit');
   });
 
-  it('hides the configuration page when its flag is off', () => {
-    flagsOff = new Set(['configEditor']);
-    expect(sidebarLinks()).not.toContain('/configuration');
-  });
-
   it('hides the configuration page from a user without configuration.edit', () => {
     deniedPermissions = new Set(['configuration.edit']);
     expect(sidebarLinks()).not.toContain('/configuration');
