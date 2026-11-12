@@ -4,6 +4,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import { env } from './env';
 import {
   FLAG_NAMES,
+  portalConfigIssues,
   portalConfigJsonSchema,
   SYS_COLOR_ROLES,
   validatePortalConfig,
@@ -24,6 +25,94 @@ describe('portal config schema', () => {
   it('names the field and the expected type when a value is wrong', () => {
     expect(rejection({ flags: { userMgmt: 'yes' } })).toMatch(
       /expected boolean[\s\S]*flags\.userMgmt/,
+    );
+  });
+
+  it('lists each issue with the path and message the loader reports', () => {
+    const document = {
+      colour: 'red',
+      flags: { userMgmt: 'yes' },
+      navigation: [{ id: 'users', to: '/users', labelKey: 'navUsers', order: 'ten' }],
+    };
+    const issues = portalConfigIssues(document);
+    const loaderText = rejection(document);
+
+    expect(issues.map((issue) => issue.path).sort()).toEqual(
+      ['', 'flags.userMgmt', 'navigation[0].order'].sort(),
+    );
+    for (const { path, message } of issues) {
+      expect(loaderText).toContain(message);
+      if (path) expect(loaderText).toContain(`at ${path}`);
+    }
+  });
+
+  it('lists no issues for a valid document', () => {
+    expect(portalConfigIssues({ flags: { userMgmt: false } })).toEqual([]);
+  });
+
+  it.each([
+    '#094F9A',
+    '#fff',
+    '#094F9A80',
+    'rgb(9 79 154 / 50%)',
+    'transparent',
+    'var(--ohs-ref-palette-primary40)',
+  ])('accepts the brand pin %s', (pin) => {
+    expect(validatePortalConfig({ brand: { overrides: { primary: pin } } }).success).toBe(true);
+  });
+
+  it.each([
+    '#fff; } body { display: none } :root {',
+    'url(https://tracker.example/p.png)',
+    'rgb(/*)',
+    'banana',
+    'var(--ohs-ref-palette-primary40, */)',
+    'var(--missing, image-set("https://tracker.example/p.png" 1x))',
+    'rgb(0 0 0)\n}',
+    '#12345',
+  ])('rejects the brand pin %s as not a colour', (pin) => {
+    expect(rejection({ brand: { darkOverrides: { primary: pin } } })).toMatch(
+      /must be a CSS colour[\s\S]*brand\.darkOverrides\.primary/,
+    );
+  });
+
+  it('accepts a CSS colour name in any case', () => {
+    const brand = { overrides: { primary: 'Teal', error: 'crimson' } };
+    expect(validatePortalConfig({ brand }).success).toBe(true);
+  });
+
+  it('names each pin that refers back to its own role', () => {
+    const error = rejection({
+      brand: {
+        darkOverrides: {
+          primary: 'var(--ohs-sys-color-primary)',
+          'primary-hover': 'rgb(from var(--ohs-sys-color-primary) r g b / 90%)',
+        },
+      },
+    });
+
+    expect(error).toContain('must not refer back to itself: primary → primary');
+    expect(error).toContain('brand.darkOverrides.primary');
+    expect(error).not.toContain('primary-hover');
+  });
+
+  it.each(['/', '/users', '/care-teams', '/resources/Patient'])(
+    'accepts the sidebar path %s',
+    (to) => {
+      const entry = { id: 'users', to, labelKey: 'navUsers', order: 10 };
+      expect(validatePortalConfig({ navigation: [entry] }).success).toBe(true);
+    },
+  );
+
+  it.each([
+    '//attacker.example/users',
+    '/\\attacker.example/users',
+    '/\t/attacker.example',
+    'users',
+  ])('rejects the sidebar path %j as leaving the portal', (to) => {
+    const entry = { id: 'users', to, labelKey: 'navUsers', order: 10 };
+    expect(rejection({ navigation: [entry] })).toMatch(
+      /must be a path inside the portal[\s\S]*navigation\[0\]\.to/,
     );
   });
 

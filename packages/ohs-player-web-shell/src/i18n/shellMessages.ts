@@ -65,6 +65,7 @@ export const SHELL_MESSAGES: Readonly<Record<string, string>> = {
   logoutRedirecting: 'Taking you back to sign in…',
   navAudit: 'Audit log',
   navCareTeams: 'Care Teams',
+  navConfiguration: 'Configuration',
   navDashboard: 'Dashboard',
   navFhirViewer: 'FHIR Viewer',
   navLocations: 'Locations',

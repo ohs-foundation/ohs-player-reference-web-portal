@@ -63,9 +63,9 @@ The image serves `apps/ohs-player-web/public/portal-config.json` at `/portal-con
 | `fhirBaseUrl` | Gateway FHIR base URL (keep it ending in `/fhir`) | `VITE_FHIR_BASE_URL` |
 | `fhirVersion` | `R4`, `R5` or `STU3` | `VITE_FHIR_VERSION` |
 | `oidcIssuer`, `clientId` | Keycloak realm issuer and client id | `VITE_OIDC_ISSUER`, `VITE_CLIENT_ID` |
-| `brand.overrides`, `brand.darkOverrides` | Colour pins per theme role, light and dark (see [THEMING.md](./THEMING.md)) | the built-in pins |
+| `brand.overrides`, `brand.darkOverrides` | Colour pins per theme role, light and dark (see [THEMING.md](./THEMING.md)). Each pin is a CSS colour, such as `#094F9A`, `rgb(9 79 154)`, a colour name or `var(...)`, and may not refer back to its own role | the built-in pins |
 | `flags` | Feature flags by name: `userMgmt`, `locationMgmt`, `careTeams`, `dashboard`, `orgMgmt`, `setupWizard`, `fhirViewer`, `auditLog`. Any other name, including an extension's flag, makes the document invalid until it is added to `FLAG_NAMES` (see [EXTENDING.md](./EXTENDING.md)) | the matching `VITE_FLAG_*` |
-| `navigation` | Sidebar entries: `id`, `to`, `labelKey`, `order`, and `requires` with a `flag` and a `permission` | the built-in sidebar |
+| `navigation` | Sidebar entries: `id`, `to` (a path inside the portal, such as `/users`), `labelKey`, `order`, and `requires` with a `flag` and a `permission` | the built-in sidebar |
 | `permissionMap` | Permission key to the roles that hold it | the built-in map |
 | `locale`, `messages` | Locale and message overrides by key | `en`, the built-in messages |
 | `customEndpoints` | Gateway route alias to path: `users`, `groups`, `roles`, `locationHierarchy`, `practitionerDetails`, and the bulk import routes `usersBulkImport`, `organizationsBulkImport`, `locationsBulkImport` | the built-in aliases |
@@ -139,6 +139,10 @@ A route, its sidebar entry and its dashboard widget that declare the same `requi
 6. Set the flag in `public/portal-config.json` only if the reference document should pin its value. Otherwise leave it to the build value.
 
 An extension's flag needs none of these steps: the manifest declares its default.
+
+### Configuration screen
+
+The Configuration screen at `/configuration` (permission `configuration.edit`, with no flag of its own) checks, compares, previews and downloads this document. It does not write to the server, so applying a change is still a file replacement as described above. Each download records an `AuditEvent` with action `E` and an entity typed `http://terminology.hl7.org/CodeSystem/audit-entity-type` code `2`, System Object, naming the changed fields.
 
 ---
 

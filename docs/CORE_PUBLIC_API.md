@@ -101,6 +101,9 @@ UI types: `OhsDialogProps`, `StatusTone`. (Presentational primitive prop types â
 | --- | --- |
 | `themeCss(config?)` | Serialises a `ThemeConfigV2` to a stylesheet: `:root` for light plus mode-independent tokens, `[data-theme='dark']` for the dark scheme, and `[data-density]` rules that scope `--ohs-sys-density-scale` to a subtree. |
 | `installThemeCss(config?, doc?)` | Installs or replaces that stylesheet in `document.head`. Idempotent; call once at startup, before render. |
+| `THEME_COLOUR_PATTERN` | The shape a brand pin must have: a hex value, a word, or a colour function such as `rgb()`, `oklch()`, `color-mix()` or `var()`, with nothing that could end a declaration, open a comment or load a resource. Plain enough to use as a JSON Schema `pattern`. |
+| `isThemeColourValue(value)` | `THEME_COLOUR_PATTERN`, plus a word must be one of the 148 CSS colour names, `transparent` or `currentcolor`, in any case. Both apps' configuration schemas check pins with it, because `themeCss` writes pins as they are. |
+| `colourPinProblems(pins)` | `{ role, message }[]` for pins in one scheme that refer back to their own role through `var(--ohs-sys-color-<role>)`, directly or through other pins, which would leave the token with no value. A reference to another role is fine. |
 
 `installThemeCss` is the only writer of tokens: nothing in the library sets `--ohs-*` properties inline,
 and `CorePlatformProvider` applies no theme. See [THEMING.md](./THEMING.md).
@@ -200,8 +203,10 @@ Types: `BundleEntryMethod`, `TransactionBundleEntry`, `TransactionResponseBundle
 
 | Export | Description |
 | --- | --- |
-| `writeAuditEvent(client, params)` | `POST` a minimal FHIR `AuditEvent` via `client.create`. `AuditParams`: `action`, `resourceType`, optional `resourceId`, `description`, `agentDisplay`. Writes `agent[0].name` (the display) and types `entity[0]` with `RESOURCE_TYPES_SYSTEM`, so the `agent-name` and `entity-type` search parameters match portal events. With a `description` and no `resourceId`, it records one summary entity with no `what`, still typed with `resourceType` (e.g. a bulk import). |
+| `writeAuditEvent(client, params)` | `POST` a minimal FHIR `AuditEvent` via `client.create`. `AuditParams`: `action` (`create`, `update`, `delete`, or `execute` for an application function that changes no resource, written as `E`), optional `resourceType`, `resourceId`, `description`, `agentDisplay`, `entityType`. Writes `agent[0].name` (the display) and types `entity[0]` with `RESOURCE_TYPES_SYSTEM`, so the `agent-name` and `entity-type` search parameters match portal events. With a `description` and no `resourceId`, it records one summary entity with no `what`, still typed with `resourceType` (e.g. a bulk import). `entityType` replaces that coding for an entity that is not a FHIR resource, such as a downloaded configuration file. |
+| `AuditParams`, `AuditEntityType` | The parameter type of `writeAuditEvent` and the `{ system, code, display? }` coding `entityType` takes. |
 | `RESOURCE_TYPES_SYSTEM` | `'http://hl7.org/fhir/resource-types'`, the `entity.type` system `writeAuditEvent` writes; filter with `entity-type=<system>\|<Type>`. |
+| `AUDIT_ENTITY_TYPE_SYSTEM` | `'http://terminology.hl7.org/CodeSystem/audit-entity-type'`, the `entity.type` system for an entity that is not a resource. The reference app records a configuration download with code `2`, System Object ([R4 value set](https://hl7.org/fhir/R4/valueset-audit-entity-type.html)). |
 | `activityItemFromAuditEvent(resource)` | Pure normaliser from an R4 `AuditEvent` (portal or gateway BALP written, input `unknown`) to `ActivityItem` `{ id, action?, resourceType, resourceId, description?, who, recorded? }`. Picks the `requestor` agent and the first entity whose reference ends in `Type/id`; `action` is `AuditAction` (`C`/`R`/`U`/`D`) or `undefined`. Used by the shell's activity feed and the reference app's audit log. |
 
 ---

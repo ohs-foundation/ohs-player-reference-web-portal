@@ -77,9 +77,9 @@ describe('resolvePortalConfig', () => {
     expect(resolvePortalConfig(testPortalDefaults, { navigation }).navigation).toEqual(navigation);
   });
 
-  it('includes the audit log after Setup in the built-in sidebar', () => {
+  it('ends the built-in sidebar with Setup, the audit log and the configuration page', () => {
     const ids = resolvePortalConfig(testPortalDefaults, {}).navigation.map((entry) => entry.id);
-    expect(ids.slice(-2)).toEqual(['setup', 'audit']);
+    expect(ids.slice(-3)).toEqual(['setup', 'audit', 'configuration']);
   });
 
   it('leaves the dashboard unset when the document has no dashboard field', () => {

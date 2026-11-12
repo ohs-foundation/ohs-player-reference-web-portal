@@ -25,6 +25,7 @@ const permissionMap: PermissionMap = {
   'fhir-viewer.view': ['admin', 'care-team-manager'],
   'fhir-viewer.edit': ['admin'],
   'audit.view': ['admin'],
+  'configuration.edit': ['admin'],
 };
 
 const FHIR_VERSIONS: readonly FhirVersion[] = ['R4', 'R5', 'STU3'];
